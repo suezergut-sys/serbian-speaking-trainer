@@ -6,15 +6,31 @@ from sqlalchemy.orm import Session
 from app.models import Attempt, ErrorEvent, Exercise, ReviewPhrase, TrainingSession, WordLearningItem
 from app.repositories.base import Repository
 
+DEFAULT_USER_ID = "00000000-0000-0000-0000-000000000001"
+
 
 class TrainingSessionRepository(Repository[TrainingSession]):
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, user_id: str = DEFAULT_USER_ID) -> None:
         super().__init__(session, TrainingSession)
+        self.user_id = user_id
+
+    def get_owned(self, session_id: str) -> TrainingSession | None:
+        return self.session.scalar(select(TrainingSession).where(
+            TrainingSession.id == session_id, TrainingSession.user_id == self.user_id,
+        ))
 
 
 class ExerciseRepository(Repository[Exercise]):
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, user_id: str = DEFAULT_USER_ID) -> None:
         super().__init__(session, Exercise)
+        self.user_id = user_id
+
+    def get_owned(self, exercise_id: str) -> Exercise | None:
+        return self.session.scalar(
+            select(Exercise)
+            .join(TrainingSession, TrainingSession.id == Exercise.session_id)
+            .where(Exercise.id == exercise_id, TrainingSession.user_id == self.user_id)
+        )
 
     def list_recent(self, session_id: str, *, limit: int = 8) -> list[Exercise]:
         statement = (
@@ -27,13 +43,20 @@ class ExerciseRepository(Repository[Exercise]):
 
 
 class AttemptRepository(Repository[Attempt]):
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, user_id: str = DEFAULT_USER_ID) -> None:
         super().__init__(session, Attempt)
+        self.user_id = user_id
 
     def list_created_between(self, start: datetime, end: datetime) -> list[Attempt]:
         statement = (
             select(Attempt)
-            .where(Attempt.created_at >= start, Attempt.created_at < end)
+            .join(Exercise, Exercise.id == Attempt.exercise_id)
+            .join(TrainingSession, TrainingSession.id == Exercise.session_id)
+            .where(
+                TrainingSession.user_id == self.user_id,
+                Attempt.created_at >= start,
+                Attempt.created_at < end,
+            )
             .order_by(Attempt.created_at)
         )
         return list(self.session.scalars(statement))
@@ -45,16 +68,25 @@ class ErrorEventRepository(Repository[ErrorEvent]):
 
 
 class ReviewPhraseRepository(Repository[ReviewPhrase]):
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, user_id: str = DEFAULT_USER_ID) -> None:
         super().__init__(session, ReviewPhrase)
+        self.user_id = user_id
+
+    def get_owned(self, phrase_id: str) -> ReviewPhrase | None:
+        return self.session.scalar(select(ReviewPhrase).where(
+            ReviewPhrase.id == phrase_id, ReviewPhrase.user_id == self.user_id,
+        ))
 
     def find_by_source(self, source_normalized: str) -> ReviewPhrase | None:
-        return self.session.scalar(select(ReviewPhrase).where(ReviewPhrase.source_normalized == source_normalized))
+        return self.session.scalar(select(ReviewPhrase).where(
+            ReviewPhrase.user_id == self.user_id,
+            ReviewPhrase.source_normalized == source_normalized,
+        ))
 
     def list_active(self, *, limit: int = 100) -> list[ReviewPhrase]:
         statement = (
             select(ReviewPhrase)
-            .where(ReviewPhrase.status == "active")
+            .where(ReviewPhrase.user_id == self.user_id, ReviewPhrase.status == "active")
             .order_by(ReviewPhrase.updated_at.desc(), ReviewPhrase.id.desc())
             .limit(limit)
         )
@@ -63,7 +95,11 @@ class ReviewPhraseRepository(Repository[ReviewPhrase]):
     def list_active_for_topic(self, topic_id: str, *, limit: int = 100) -> list[ReviewPhrase]:
         statement = (
             select(ReviewPhrase)
-            .where(ReviewPhrase.status == "active", ReviewPhrase.topic_id == topic_id)
+            .where(
+                ReviewPhrase.user_id == self.user_id,
+                ReviewPhrase.status == "active",
+                ReviewPhrase.topic_id == topic_id,
+            )
             .order_by(ReviewPhrase.updated_at.desc(), ReviewPhrase.id.desc())
             .limit(limit)
         )
@@ -71,6 +107,7 @@ class ReviewPhraseRepository(Repository[ReviewPhrase]):
 
     def activate_due(self, now: datetime) -> list[ReviewPhrase]:
         statement = select(ReviewPhrase).where(
+            ReviewPhrase.user_id == self.user_id,
             ReviewPhrase.status == "mastered",
             ReviewPhrase.next_review_at.is_not(None),
             ReviewPhrase.next_review_at <= now,
@@ -87,7 +124,9 @@ class ReviewPhraseRepository(Repository[ReviewPhrase]):
         return due
 
     def count_for_statistics(self) -> int:
-        return int(self.session.scalar(select(func.count()).select_from(ReviewPhrase)) or 0)
+        return int(self.session.scalar(
+            select(func.count()).select_from(ReviewPhrase).where(ReviewPhrase.user_id == self.user_id)
+        ) or 0)
 
     def list_for_statistics(
         self,
@@ -101,6 +140,7 @@ class ReviewPhraseRepository(Repository[ReviewPhrase]):
         statement = (
             select(ReviewPhrase, topic_title)
             .outerjoin(TopicPreset, TopicPreset.id == ReviewPhrase.topic_id)
+            .where(ReviewPhrase.user_id == self.user_id)
             .order_by(topic_title, ReviewPhrase.created_at, ReviewPhrase.id)
             .offset(offset)
         )
@@ -111,25 +151,33 @@ class ReviewPhraseRepository(Repository[ReviewPhrase]):
     def list_mastered_between(self, start: datetime, end: datetime) -> list[ReviewPhrase]:
         statement = (
             select(ReviewPhrase)
-            .where(ReviewPhrase.mastered_at >= start, ReviewPhrase.mastered_at < end)
+            .where(
+                ReviewPhrase.user_id == self.user_id,
+                ReviewPhrase.mastered_at >= start,
+                ReviewPhrase.mastered_at < end,
+            )
             .order_by(ReviewPhrase.mastered_at)
         )
         return list(self.session.scalars(statement))
 
 
 class WordLearningRepository(Repository[WordLearningItem]):
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, user_id: str = DEFAULT_USER_ID) -> None:
         super().__init__(session, WordLearningItem)
+        self.user_id = user_id
 
     def find_by_source(self, source_normalized: str) -> WordLearningItem | None:
         return self.session.scalar(
-            select(WordLearningItem).where(WordLearningItem.source_normalized == source_normalized)
+            select(WordLearningItem).where(
+                WordLearningItem.user_id == self.user_id,
+                WordLearningItem.source_normalized == source_normalized,
+            )
         )
 
     def list_learning(self, *, limit: int = 200) -> list[WordLearningItem]:
         statement = (
             select(WordLearningItem)
-            .where(WordLearningItem.status == "learning")
+            .where(WordLearningItem.user_id == self.user_id, WordLearningItem.status == "learning")
             .order_by(WordLearningItem.last_seen_at.desc(), WordLearningItem.id.desc())
             .limit(limit)
         )

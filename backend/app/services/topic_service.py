@@ -34,12 +34,13 @@ class TopicService:
 
     def create_custom(self, request: CreateTopicRequest) -> TopicListItem:
         title = " ".join(request.title_ru.split())
-        topic_id = self._custom_id(title)
-        topic = self.repository.get(topic_id)
+        topic_id = self._custom_id(title, self.repository.user_id)
+        topic = self.repository.get_visible(topic_id)
         if topic is None:
             topic = self.repository.add(
                 TopicPreset(
                     id=topic_id,
+                    owner_user_id=self.repository.user_id,
                     title_ru=title,
                     description_ru="Пользовательская тема без фраз.",
                     intents_json=[],
@@ -58,7 +59,7 @@ class TopicService:
         )
 
     def preset_context(self, topic_id: str) -> TopicContext:
-        topic = self.repository.get(topic_id)
+        topic = self.repository.get_visible(topic_id)
         if topic is None or not topic.enabled:
             raise TopicNotFoundError(topic_id)
         return self._from_preset(topic)
@@ -70,7 +71,7 @@ class TopicService:
                 normalized = TopicContext.model_validate(self.ai.normalize_topic(clean_text))
                 return normalized.model_copy(
                     update={
-                        "id": self._custom_id(clean_text),
+                        "id": self._custom_id(clean_text, self.repository.user_id),
                         "source": "custom",
                         "title_ru": clean_text[:160],
                         "target_level": "A2",
@@ -78,7 +79,7 @@ class TopicService:
                 )
             except AIServiceError:
                 pass
-        return self._fallback_custom(clean_text)
+        return self._fallback_custom(clean_text, self.repository.user_id)
 
     @staticmethod
     def general_context() -> TopicContext:
@@ -109,9 +110,9 @@ class TopicService:
         )
 
     @classmethod
-    def _fallback_custom(cls, text: str) -> TopicContext:
+    def _fallback_custom(cls, text: str, user_id: str) -> TopicContext:
         return TopicContext(
-            id=cls._custom_id(text),
+            id=cls._custom_id(text, user_id),
             source="custom",
             title_ru=text[:160],
             description_ru=f"Разговорная практика по теме: {text}",
@@ -121,6 +122,6 @@ class TopicService:
         )
 
     @staticmethod
-    def _custom_id(text: str) -> str:
-        digest = sha256(text.casefold().encode("utf-8")).hexdigest()[:12]
+    def _custom_id(text: str, user_id: str) -> str:
+        digest = sha256(f"{user_id}:{text.casefold()}".encode("utf-8")).hexdigest()[:12]
         return f"custom-{digest}"

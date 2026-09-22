@@ -23,6 +23,12 @@ class Settings(BaseSettings):
     default_level: str = "A2"
     default_session_length: int = Field(default=20, ge=1, le=100)
     auto_next: bool = True
+    supabase_url: str | None = None
+    supabase_publishable_key: str | None = None
+    admin_emails: str = "suezergut@gmail.com"
+    free_daily_phrase_limit: int = Field(default=10, ge=1, le=1000)
+    auth_timeout_seconds: float = Field(default=5, gt=0, le=30)
+    auth_max_retries: int = Field(default=1, ge=0, le=3)
 
     openai_api_key: str | None = None
     openai_realtime_model: str | None = None

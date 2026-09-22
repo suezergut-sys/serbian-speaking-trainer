@@ -60,8 +60,9 @@ def update_mastery(
 class LearnerModelService:
     RESULT_CORRECTNESS = {"strong": 1.0, "weak": 0.55, "failed": 0.1}
 
-    def __init__(self, db: Session, settings: Settings | None = None) -> None:
-        self.learner_skills = LearnerSkillRepository(db)
+    def __init__(self, db: Session, user_id: str, settings: Settings | None = None) -> None:
+        self.user_id = user_id
+        self.learner_skills = LearnerSkillRepository(db, user_id)
         self.skills = SkillRepository(db)
         self.settings = settings or get_settings()
 
@@ -83,9 +84,9 @@ class LearnerModelService:
             skill = self.skills.get_by_key(demonstrated.skill_key)
             if skill is None:
                 continue
-            learner = self.learner_skills.get(skill.id)
+            learner = self.learner_skills.get_for_skill(skill.id)
             if learner is None:
-                learner = self.learner_skills.add(LearnerSkill(skill_id=skill.id))
+                learner = self.learner_skills.add(LearnerSkill(user_id=self.user_id, skill_id=skill.id))
             result = update_mastery(
                 old_mastery=learner.mastery,
                 correctness=self.RESULT_CORRECTNESS[demonstrated.result],

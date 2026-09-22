@@ -15,10 +15,11 @@ class SessionNotFoundError(LookupError):
 
 
 class SessionService:
-    def __init__(self, db: Session, ai: StructuredAIProvider) -> None:
-        self.repository = TrainingSessionRepository(db)
-        self.topic_service = TopicService(TopicPresetRepository(db), ai)
-        self.review_phrases = ReviewPhraseRepository(db)
+    def __init__(self, db: Session, ai: StructuredAIProvider, user_id: str) -> None:
+        self.user_id = user_id
+        self.repository = TrainingSessionRepository(db, user_id)
+        self.topic_service = TopicService(TopicPresetRepository(db, user_id), ai)
+        self.review_phrases = ReviewPhraseRepository(db, user_id)
 
     def create(self, request: CreateSessionRequest) -> SessionResponse:
         review_phrase = None
@@ -36,7 +37,7 @@ class SessionService:
             )
         elif request.review_phrase_id:
             self.review_phrases.activate_due(datetime.now(timezone.utc))
-            review_phrase = self.review_phrases.get(request.review_phrase_id)
+            review_phrase = self.review_phrases.get_owned(request.review_phrase_id)
             if review_phrase is None or review_phrase.status != "active":
                 raise TopicNotFoundError(request.review_phrase_id)
             topic = TopicContext(
@@ -57,6 +58,7 @@ class SessionService:
 
         entity = self.repository.add(
             TrainingSession(
+                user_id=self.user_id,
                 topic_id=stored_topic_id,
                 custom_topic_text=request.custom_topic_text,
                 normalized_topic_json={
@@ -78,7 +80,7 @@ class SessionService:
         return self._response(entity)
 
     def get(self, session_id: str) -> SessionResponse:
-        entity = self.repository.get(session_id)
+        entity = self.repository.get_owned(session_id)
         if entity is None:
             raise SessionNotFoundError(session_id)
         return self._response(entity)

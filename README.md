@@ -4,9 +4,11 @@
 
 Сейчас реализованы этапы 0–6: текстовый адаптивный цикл дополнен голосовым вводом через OpenAI Audio Transcriptions. Текстовый режим остаётся доступным как fallback.
 
-Android-прототип использует тот же React-интерфейс в нативном контейнере Capacitor и тот же FastAPI backend. Поэтому каталог фраз, попытки и интервальные повторения не копируются на устройство, а читаются из общей SQLite БД backend. Та же граница данных рассчитана на последующее добавление пользователей.
+Android-приложение использует тот же React-интерфейс в нативном контейнере Capacitor и тот же FastAPI backend. Web и Android регистрируют пользователя и выполняют вход через Google в Supabase Auth; профиль, прогресс, темы, попытки и интервальные повторения изолированы по `user_id`.
 
 Для облачного режима frontend и FastAPI разворачиваются как два Vercel-проекта из одного GitHub-репозитория, а `DATABASE_URL` backend указывает на Supabase PostgreSQL через transaction pooler. Web и Android используют один HTTPS API и, следовательно, одну базу фраз и повторений. Постоянный OpenAI API key хранится только в environment variables backend-проекта Vercel.
+
+Обычному аккаунту доступны 10 проверенных фраз за календарные сутки UTC. Администратор и будущий тариф `premium` не ограничены; сейчас администратором назначается email из `ADMIN_EMAILS` (`suezergut@gmail.com`). Только администратор видит раздел «Пользователи» с датой регистрации, последней активностью и количеством фраз за сегодня. Платёжный провайдер пока не подключён: `access_tier` оставлен отдельным от роли, чтобы позднее webhook Lemon Squeezy или Paddle мог выдавать premium-доступ без изменения Google-входа.
 
 Интерфейс практики построен как единое рабочее пространство: темы находятся слева, упражнение и ответ — в центре, контекстные подсказки — справа. В каждой из восьми готовых учебных тем хранится по 20 разнообразных A2-фраз с постоянным разговорным сербским переводом, поэтому начало тренировки не ждёт генерации. Дополнительно доступна пустая тема «Разное». Пользовательские темы тоже создаются пустыми: приложение не заполняет их автоматически. «Статистика» показывает календарь активности, состав попыток по дням и отдельную вкладку «Фразы» с состоянием интервального повторения. «Прогресс» пока остаётся явно обозначенной заглушкой.
 
@@ -26,6 +28,7 @@ Docker, Redis и PostgreSQL не нужны.
 
 ```powershell
 Copy-Item .env.example .env
+Copy-Item frontend\.env.example frontend\.env.local
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -e ".\backend[dev]"
@@ -37,6 +40,10 @@ Set-Location ..
 ```
 
 `OPENAI_API_KEY` необязателен для готовых тем и текстового локального fallback. Для создания канонического перевода новой пользовательской фразы и семантического анализа задайте `OPENAI_TEXT_MODEL`, а для голосового ввода — `OPENAI_TRANSCRIBE_MODEL`. Ключ читается только backend и `.env` исключён из Git.
+
+Для входа настройте Google provider в Supabase Auth. В Google Auth Platform создайте OAuth client типа Web application, а callback укажите как `https://<project-ref>.supabase.co/auth/v1/callback`. В Supabase Redirect URLs разрешите `http://localhost:5173/**`, production web URL и `com.serbiantalk.trainer://auth/callback`. Публичные `SUPABASE_URL`/`SUPABASE_PUBLISHABLE_KEY` задаются backend, их Vite-версии `VITE_SUPABASE_URL`/`VITE_SUPABASE_PUBLISHABLE_KEY` — frontend. Google Client Secret и любые service-role keys в browser или APK не передаются.
+
+Публичные страницы `/privacy` и `/terms` доступны без входа и используются в Google OAuth consent screen. Они описывают состав данных, сторонние сервисы, дневной лимит и правило хранения аудио только во временной памяти.
 
 ## Запуск
 
@@ -64,11 +71,11 @@ Set-Location frontend
 pnpm android:apk
 ```
 
-Команда собирает web bundle, синхронизирует его с Capacitor и создаёт debug APK в `frontend/android/app/build/outputs/apk/debug/app-debug.apk`. Для эмулятора адрес backend по умолчанию — `http://10.0.2.2:8000`. На физическом устройстве откройте настройки подключения по кнопке-шестерёнке и укажите HTTPS URL развернутого backend либо LAN-адрес компьютера, например `http://192.168.1.10:8000`; backend в таком случае нужно запустить с `--host 0.0.0.0`, а доступ разрешить только в доверенной сети.
+Команда собирает web bundle, синхронизирует его с Capacitor и создаёт debug APK версии 1.4 в `frontend/android/app/build/outputs/apk/debug/SerboTalk-andorid16-1.4.apk`. Для эмулятора адрес backend по умолчанию — `http://10.0.2.2:8000`. На физическом устройстве откройте настройки подключения по кнопке-шестерёнке и укажите HTTPS URL развернутого backend либо LAN-адрес компьютера, например `http://192.168.1.10:8000`; backend в таком случае нужно запустить с `--host 0.0.0.0`, а доступ разрешить только в доверенной сети.
 
 APK содержит только клиент. Постоянный `OPENAI_API_KEY`, база фраз, попытки и состояния повторения остаются на backend. Для записи WebView объявлены Android-разрешения `RECORD_AUDIO` и `MODIFY_AUDIO_SETTINGS`, которые Capacitor проверяет совместно; пользователю показывается только системный запрос доступа к микрофону. Запись остаётся в памяти WebView и после получения transcript освобождается по тем же правилам, что и в browser-версии. Для локальной отладки разрешён cleartext HTTP, а для внешнего backend следует использовать HTTPS.
 
-Облачный APK собирается с публичным URL API из `frontend/.env.android`:
+Облачный APK собирается с публичными `VITE_API_BASE_URL`, `VITE_SUPABASE_URL` и `VITE_SUPABASE_PUBLISHABLE_KEY` из `frontend/.env.android`:
 
 ```powershell
 Set-Location frontend
@@ -95,10 +102,14 @@ Backend environment variables:
 
 - `APP_ENV=production`;
 - `DATABASE_URL` — transaction pooler Supabase на порту 6543 с `sslmode=require`;
+- `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` — проверка пользовательского access token через Supabase Auth;
+- `ADMIN_EMAILS=suezergut@gmail.com`, `FREE_DAILY_PHRASE_LIMIT=10`;
 - `OPENAI_API_KEY`;
 - `OPENAI_TEXT_MODEL` и `OPENAI_TRANSCRIBE_MODEL`;
 - `OPENAI_TIMEOUT_SECONDS`, `OPENAI_MAX_RETRIES`, `MAX_AUDIO_BYTES`;
 - `CORS_ALLOWED_ORIGIN_REGEX` для production/preview доменов frontend.
+
+Frontend environment variables: `VITE_API_BASE_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`. Publishable key предназначен для клиента; backend по-прежнему принимает решения о роли, лимите и доступе к данным.
 
 При production-deploy backend один build-step применяет миграции и идемпотентный seed. PostgreSQL advisory lock не даёт двум production-сборкам изменять схему одновременно. Preview не меняет production-базу. Ту же операцию можно безопасно повторить вручную:
 

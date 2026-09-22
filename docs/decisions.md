@@ -128,3 +128,13 @@
 - Vercel backend использует Supavisor transaction pooler, psycopg 3, `NullPool`, SSL и отключённые prepared statements. Миграции и идемпотентный seed выполняются в production build-step под PostgreSQL advisory lock, а не при импорте ASGI-приложения или его холодном старте.
 - Android и browser получают только HTTPS URL backend. `OPENAI_API_KEY`, пароль PostgreSQL и любые будущие service-role credentials существуют только в environment variables backend-проекта.
 - Переменный API URL остаётся доступен в настройках для диагностики. Ключ localStorage версионирован, поэтому APK облачной сборки не наследует старый LAN URL из установленного прототипа.
+
+# 2026-09-22 — Google Auth, пользователи и дневной доступ
+
+- Supabase Auth выбран как единый issuer Google-сессии для web и Capacitor Android. Browser использует PKCE redirect на свой origin, Android — системный browser и deep link `com.serbiantalk.trainer://auth/callback`; постоянные Google secrets и service-role key в клиент не попадают.
+- FastAPI валидирует bearer token через Supabase Auth `/auth/v1/user` с коротким timeout и ограниченным retry, синхронизирует локальную read-модель пользователя и никогда не доверяет роли из клиентского payload.
+- Персональные сессии, learner state, пользовательские темы, карточки повторения, слова и статистика привязаны к `user_id`. Запрос чужого session/exercise возвращает `404`, чтобы не раскрывать наличие объекта.
+- Бесплатный entitlement ограничен десятью сохранёнными попытками за UTC-сутки. Проверка выполняется до AI-анализа под блокировкой строки пользователя; `admin` и зарезервированный `premium` не ограничены. Роль администратора выдаётся только подтверждённому email из backend `ADMIN_EMAILS`.
+- Старые однопользовательские данные миграция относит к техническому владельцу и один раз передаёт первому вошедшему администратору. Это сохраняет накопленный прогресс при переходе на многопользовательскую схему.
+- Платёжная интеграция намеренно не добавлена. `access_tier` отделён от `role`, поэтому будущий webhook Merchant of Record сможет менять entitlement без смешивания платежей с авторизацией и без смены Google-аккаунта.
+- Google OAuth consent screen публикуется без логотипа и чувствительных scopes, с публичными страницами `/privacy` и `/terms`. Это позволяет принимать обычные Google-аккаунты без помещения каждого пользователя в список тестировщиков; OAuth client secret остаётся только в Google Cloud и Supabase.

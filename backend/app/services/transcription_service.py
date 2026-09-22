@@ -33,13 +33,13 @@ class EmptyAudioError(ValueError):
 
 
 class TranscriptionService:
-    def __init__(self, db: Session, provider: TranscriptionProvider, settings: Settings) -> None:
-        self.exercises = ExerciseRepository(db)
+    def __init__(self, db: Session, provider: TranscriptionProvider, settings: Settings, user_id: str) -> None:
+        self.exercises = ExerciseRepository(db, user_id)
         self.provider = provider
         self.settings = settings
 
     def transcribe(self, *, exercise_id: str, audio: UploadFile) -> TranscriptionResponse:
-        if self.exercises.get(exercise_id) is None:
+        if self.exercises.get_owned(exercise_id) is None:
             raise TranscriptionExerciseNotFoundError(exercise_id)
         if not self.provider.is_available:
             raise TranscriptionServiceError("OpenAI transcription is not configured")

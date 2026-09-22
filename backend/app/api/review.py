@@ -18,6 +18,8 @@ from app.services.review_service import (
     ReviewService,
     WordHintNotFoundError,
 )
+from app.api.dependencies import get_current_user
+from app.models import User
 
 router = APIRouter(tags=["review"])
 
@@ -32,8 +34,9 @@ class RevealWordRequest(BaseModel):
 def list_review_phrases(
     db: Session = Depends(get_db),
     ai: StructuredAIProvider = Depends(get_ai_provider),
+    user: User = Depends(get_current_user),
 ) -> list[ReviewPhraseResponse]:
-    return ReviewService(db, ai).list_phrases()
+    return ReviewService(db, ai, user.id).list_phrases()
 
 
 @router.post("/review-phrases", response_model=ReviewPhraseResponse, status_code=status.HTTP_201_CREATED)
@@ -41,9 +44,10 @@ def create_review_phrase(
     request: CreateReviewPhraseRequest,
     db: Session = Depends(get_db),
     ai: StructuredAIProvider = Depends(get_ai_provider),
+    user: User = Depends(get_current_user),
 ) -> ReviewPhraseResponse:
     try:
-        return ReviewService(db, ai).create_phrase(request)
+        return ReviewService(db, ai, user.id).create_phrase(request)
     except ReviewPhraseNotFoundError as exc:
         raise HTTPException(status_code=404, detail="Topic not found") from exc
 
@@ -53,9 +57,10 @@ def prepare_review_phrase(
     request: PrepareReviewPhraseRequest,
     db: Session = Depends(get_db),
     ai: StructuredAIProvider = Depends(get_ai_provider),
+    user: User = Depends(get_current_user),
 ) -> PreparedReviewPhraseResponse:
     try:
-        return ReviewService(db, ai).prepare_phrase(request)
+        return ReviewService(db, ai, user.id).prepare_phrase(request)
     except PhrasePreparationUnavailableError as exc:
         raise HTTPException(status_code=503, detail="Canonical translation is unavailable") from exc
 
@@ -66,9 +71,10 @@ def reveal_word_hint(
     request: RevealWordRequest,
     db: Session = Depends(get_db),
     ai: StructuredAIProvider = Depends(get_ai_provider),
+    user: User = Depends(get_current_user),
 ) -> WordHintResponse:
     try:
-        return ReviewService(db, ai).reveal_word(exercise_id, request.word)
+        return ReviewService(db, ai, user.id).reveal_word(exercise_id, request.word)
     except WordHintNotFoundError as exc:
         raise HTTPException(status_code=404, detail="Word hint not found") from exc
 
@@ -77,5 +83,6 @@ def reveal_word_hint(
 def list_learning_words(
     db: Session = Depends(get_db),
     ai: StructuredAIProvider = Depends(get_ai_provider),
+    user: User = Depends(get_current_user),
 ) -> list[LearningWordResponse]:
-    return ReviewService(db, ai).list_words()
+    return ReviewService(db, ai, user.id).list_words()

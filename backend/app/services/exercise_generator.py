@@ -97,17 +97,18 @@ LOCAL_WORD_TRANSLATIONS = {
 
 
 class ExerciseGenerator:
-    def __init__(self, db: Session, ai: StructuredAIProvider, scheduler: Scheduler | None = None) -> None:
-        self.sessions = TrainingSessionRepository(db)
-        self.exercises = ExerciseRepository(db)
-        self.review_phrases = ReviewPhraseRepository(db)
+    def __init__(self, db: Session, ai: StructuredAIProvider, user_id: str = "00000000-0000-0000-0000-000000000001", scheduler: Scheduler | None = None) -> None:
+        self.user_id = user_id
+        self.sessions = TrainingSessionRepository(db, user_id)
+        self.exercises = ExerciseRepository(db, user_id)
+        self.review_phrases = ReviewPhraseRepository(db, user_id)
         self.topic_phrases = TopicPhraseRepository(db)
         self.skills = SkillRepository(db)
         self.ai = ai
         self.scheduler = scheduler or Scheduler()
 
     def generate_next(self, session_id: str) -> ExerciseResponse:
-        training_session = self.sessions.get(session_id)
+        training_session = self.sessions.get_owned(session_id)
         if training_session is None:
             raise SessionNotFoundError(session_id)
         topic = SessionService.topic_snapshot(training_session)
@@ -117,7 +118,9 @@ class ExerciseGenerator:
         if training_session.normalized_topic_json.get("review_carousel"):
             return self._next_review_exercise(training_session.id)
         recent = self.exercises.list_recent(session_id, limit=20)
-        targets = self.scheduler.select_target_skills(self.skills.list(limit=200), topic, recent)
+        targets = self.scheduler.select_target_skills(
+            self.skills.list(limit=200), topic, recent, user_id=self.user_id
+        )
         target_keys = [skill.key for skill in targets]
         target_payload = [
             {"key": skill.key, "category": skill.category, "title_ru": skill.title_ru}

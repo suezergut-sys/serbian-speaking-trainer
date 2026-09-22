@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.schemas import MonthlyStatisticsResponse, PhraseStatisticsResponse
 from app.services.statistics_service import StatisticsService
+from app.api.dependencies import get_current_user
+from app.models import User
 
 router = APIRouter(prefix="/statistics", tags=["statistics"])
 
@@ -13,8 +15,9 @@ def monthly_statistics(
     month: str = Query(pattern=r"^\d{4}-(0[1-9]|1[0-2])$"),
     utc_offset_minutes: int = Query(default=0, ge=-840, le=840),
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ) -> MonthlyStatisticsResponse:
-    return StatisticsService(db).monthly(month, utc_offset_minutes)
+    return StatisticsService(db, user.id).monthly(month, utc_offset_minutes)
 
 
 @router.get("/phrases", response_model=PhraseStatisticsResponse)
@@ -22,5 +25,6 @@ def phrase_statistics(
     page: int = Query(default=1, ge=1),
     page_size: str = Query(default="10", pattern=r"^(10|50|all)$"),
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ) -> PhraseStatisticsResponse:
-    return StatisticsService(db).phrases(page=page, page_size=page_size)
+    return StatisticsService(db, user.id).phrases(page=page, page_size=page_size)

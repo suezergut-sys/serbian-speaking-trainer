@@ -1,8 +1,10 @@
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models import LearnerSkill, Skill, TopicPhrase, TopicPreset
 from app.repositories.base import Repository
+
+DEFAULT_USER_ID = "00000000-0000-0000-0000-000000000001"
 
 
 class SkillRepository(Repository[Skill]):
@@ -14,23 +16,40 @@ class SkillRepository(Repository[Skill]):
 
 
 class LearnerSkillRepository(Repository[LearnerSkill]):
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, user_id: str = DEFAULT_USER_ID) -> None:
         super().__init__(session, LearnerSkill)
+        self.user_id = user_id
+
+    def get_for_skill(self, skill_id: str) -> LearnerSkill | None:
+        return self.session.get(LearnerSkill, (self.user_id, skill_id))
 
 
 class TopicPresetRepository(Repository[TopicPreset]):
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, user_id: str = DEFAULT_USER_ID) -> None:
         super().__init__(session, TopicPreset)
+        self.user_id = user_id
+
+    def get_visible(self, topic_id: str) -> TopicPreset | None:
+        return self.session.scalar(select(TopicPreset).where(
+            TopicPreset.id == topic_id,
+            or_(TopicPreset.owner_user_id.is_(None), TopicPreset.owner_user_id == self.user_id),
+        ))
 
     def list_enabled(self) -> list[TopicPreset]:
-        statement = select(TopicPreset).where(TopicPreset.enabled.is_(True)).order_by(TopicPreset.title_ru)
+        statement = select(TopicPreset).where(
+            TopicPreset.enabled.is_(True),
+            or_(TopicPreset.owner_user_id.is_(None), TopicPreset.owner_user_id == self.user_id),
+        ).order_by(TopicPreset.title_ru)
         return list(self.session.scalars(statement))
 
     def phrase_counts(self) -> dict[str, int]:
         from app.models import ReviewPhrase
 
         catalog = select(TopicPhrase.topic_id, func.count(TopicPhrase.id)).where(TopicPhrase.enabled.is_(True)).group_by(TopicPhrase.topic_id)
-        custom = select(ReviewPhrase.topic_id, func.count(ReviewPhrase.id)).where(ReviewPhrase.topic_id.is_not(None)).group_by(ReviewPhrase.topic_id)
+        custom = select(ReviewPhrase.topic_id, func.count(ReviewPhrase.id)).where(
+            ReviewPhrase.user_id == self.user_id,
+            ReviewPhrase.topic_id.is_not(None),
+        ).group_by(ReviewPhrase.topic_id)
         counts: dict[str, int] = {}
         for topic_id, count in self.session.execute(catalog):
             counts[str(topic_id)] = int(count)
