@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SerboTalk</string>
+    <string name="title_activity_main">SerboTalk</string>
+    <string name="package_name">com.serbiantalk.trainer</string>
+    <string name="custom_url_scheme">com.serbiantalk.trainer</string>
+</resources>
