@@ -95,14 +95,14 @@ Backend environment variables:
 - `OPENAI_TIMEOUT_SECONDS`, `OPENAI_MAX_RETRIES`, `MAX_AUDIO_BYTES`;
 - `CORS_ALLOWED_ORIGIN_REGEX` для production/preview доменов frontend.
 
-Миграции и seed выполняются отдельно до production-проверки:
+При production-deploy backend один build-step применяет миграции и идемпотентный seed. PostgreSQL advisory lock не даёт двум production-сборкам изменять схему одновременно. Preview не меняет production-базу. Ту же операцию можно безопасно повторить вручную:
 
 ```powershell
 $env:DATABASE_URL = "postgresql://..."
 python -m app.db.cli seed
 ```
 
-Vercel-функция не запускает миграции при холодном старте: это предотвращает конкурирующие DDL-операции при масштабировании. Для serverless-соединений SQLAlchemy использует `NullPool` и отключает prepared statements; постоянные соединения и DB credentials в browser или APK отсутствуют.
+Vercel-функция не запускает миграции при холодном старте. Для serverless-соединений SQLAlchemy использует `NullPool` и отключает prepared statements; постоянные соединения и DB credentials в browser или APK отсутствуют.
 
 Для обычного локального запуска можно использовать ярлык `Serbian Speaking Trainer` на рабочем столе. Он применяет миграции и seed, перезапускает принадлежащий проекту backend при появлении более нового Python-кода, запускает отсутствующие backend/frontend, ждёт их готовности и открывает приложение в Google Chrome. Чужие процессы на портах приложения ярлык не завершает. Команда, на которую ссылается ярлык:
 

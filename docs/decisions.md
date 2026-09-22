@@ -125,6 +125,6 @@
 
 - Web frontend и FastAPI backend разворачиваются как два Vercel-проекта из одного GitHub-репозитория. Это не зависит от beta-функциональности Vercel Services и даёт backend отдельные secrets и runtime-настройки.
 - Supabase PostgreSQL заменяет SQLite только в cloud environment. Локальная разработка и автоматические тесты сохраняют SQLite; один набор SQLAlchemy-моделей и Alembic-миграций поддерживает оба диалекта.
-- Vercel backend использует Supavisor transaction pooler, psycopg 3, `NullPool`, SSL и отключённые prepared statements. Миграции и идемпотентный seed выполняются отдельно, а не при импорте ASGI-приложения.
+- Vercel backend использует Supavisor transaction pooler, psycopg 3, `NullPool`, SSL и отключённые prepared statements. Миграции и идемпотентный seed выполняются в production build-step под PostgreSQL advisory lock, а не при импорте ASGI-приложения или его холодном старте.
 - Android и browser получают только HTTPS URL backend. `OPENAI_API_KEY`, пароль PostgreSQL и любые будущие service-role credentials существуют только в environment variables backend-проекта.
 - Переменный API URL остаётся доступен в настройках для диагностики. Ключ localStorage версионирован, поэтому APK облачной сборки не наследует старый LAN URL из установленного прототипа.
