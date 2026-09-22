@@ -4,7 +4,8 @@ from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+BACKEND_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = BACKEND_ROOT.parent
 
 
 class Settings(BaseSettings):
@@ -16,6 +17,9 @@ class Settings(BaseSettings):
 
     app_env: str = "development"
     database_url: str = "sqlite:///./data/serbian_trainer.db"
+    cors_allowed_origin_regex: str = (
+        r"https://serbian-speaking-trainer(?:-[a-z0-9-]+)?\.vercel\.app"
+    )
     default_level: str = "A2"
     default_session_length: int = Field(default=20, ge=1, le=100)
     auto_next: bool = True

@@ -9,11 +9,15 @@ from app.api.statistics import router as statistics_router
 from app.api.topics import router as topics_router
 from app.api.transcriptions import router as transcriptions_router
 from app.api.review import router as review_router
+from app.config import get_settings
+
+settings = get_settings()
 
 app = FastAPI(title="Serbian Speaking Trainer API", version="0.1.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost", "https://localhost", "capacitor://localhost"],
+    allow_origin_regex=settings.cors_allowed_origin_regex,
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Content-Type"],

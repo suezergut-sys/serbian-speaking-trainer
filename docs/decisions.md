@@ -121,3 +121,10 @@
 - Адрес backend настраивается в интерфейсе и хранится в localStorage устройства. По умолчанию Android Emulator использует `http://10.0.2.2:8000`; production-развёртывание должно использовать HTTPS.
 - Для origin нативного WebView backend разрешает CORS только с `http://localhost`, `https://localhost` и `capacitor://localhost`. Постоянный OpenAI key в APK не попадает.
 - Голосовой сценарий сохраняет прежнюю модель `MediaRecorder` → временный Blob в памяти → backend transcription. Android получает только разрешение `RECORD_AUDIO`; файловое хранение аудио не добавлено.
+# 2026-09-22 — облачная граница Vercel + Supabase
+
+- Web frontend и FastAPI backend разворачиваются как два Vercel-проекта из одного GitHub-репозитория. Это не зависит от beta-функциональности Vercel Services и даёт backend отдельные secrets и runtime-настройки.
+- Supabase PostgreSQL заменяет SQLite только в cloud environment. Локальная разработка и автоматические тесты сохраняют SQLite; один набор SQLAlchemy-моделей и Alembic-миграций поддерживает оба диалекта.
+- Vercel backend использует Supavisor transaction pooler, psycopg 3, `NullPool`, SSL и отключённые prepared statements. Миграции и идемпотентный seed выполняются отдельно, а не при импорте ASGI-приложения.
+- Android и browser получают только HTTPS URL backend. `OPENAI_API_KEY`, пароль PostgreSQL и любые будущие service-role credentials существуют только в environment variables backend-проекта.
+- Переменный API URL остаётся доступен в настройках для диагностики. Ключ localStorage версионирован, поэтому APK облачной сборки не наследует старый LAN URL из установленного прототипа.

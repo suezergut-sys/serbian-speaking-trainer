@@ -1,6 +1,6 @@
 import { Capacitor } from "@capacitor/core";
 
-const STORAGE_KEY = "serbian-trainer-api-base-url";
+const STORAGE_KEY = "serbian-trainer-api-base-url-v2";
 const EMULATOR_API_URL = "http://10.0.2.2:8000";
 
 function normalizeBaseUrl(value: string): string {

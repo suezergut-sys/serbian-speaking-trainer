@@ -5,12 +5,9 @@ from alembic import command
 from alembic.config import Config
 from sqlalchemy.engine import make_url
 
-from app.config import PROJECT_ROOT, get_settings
+from app.config import BACKEND_ROOT, get_settings
 from app.db.seed import seed_catalog
 from app.db.session import session_scope
-
-BACKEND_ROOT = PROJECT_ROOT / "backend"
-
 
 def alembic_config() -> Config:
     config = Config(BACKEND_ROOT / "alembic.ini")
