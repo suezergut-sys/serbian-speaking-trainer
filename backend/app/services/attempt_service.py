@@ -7,26 +7,40 @@ from app.services.ai_adapter import StructuredAIProvider
 from app.services.answer_analyzer import AnswerAnalyzer
 from app.services.learner_model import LearnerModelService
 from app.services.review_service import ReviewService, normalize_ru
+from app.services.auth_service import UserService
+from app.models import User
 
 
 class ExerciseNotFoundError(LookupError):
     pass
 
 
+class DailyLimitExceededError(RuntimeError):
+    pass
+
+
 class AttemptService:
-    def __init__(self, db: Session, ai: StructuredAIProvider) -> None:
-        self.attempts = AttemptRepository(db)
+    def __init__(self, db: Session, ai: StructuredAIProvider, user: User) -> None:
+        self.db = db
+        self.user = user
+        self.attempts = AttemptRepository(db, user.id)
         self.errors = ErrorEventRepository(db)
-        self.exercises = ExerciseRepository(db)
+        self.exercises = ExerciseRepository(db, user.id)
         self.skills = SkillRepository(db)
         self.analyzer = AnswerAnalyzer(ai)
-        self.learner_model = LearnerModelService(db)
-        self.review = ReviewService(db, ai)
+        self.learner_model = LearnerModelService(db, user.id)
+        self.review = ReviewService(db, ai, user.id)
 
     def create(self, request: CreateAttemptRequest) -> AttemptResponse:
-        exercise = self.exercises.get(request.exercise_id)
+        exercise = self.exercises.get_owned(request.exercise_id)
         if exercise is None:
             raise ExerciseNotFoundError(request.exercise_id)
+        locked_user = UserService(self.db).users.lock(self.user.id)
+        if locked_user is None:
+            raise ExerciseNotFoundError(request.exercise_id)
+        usage = UserService(self.db).usage(locked_user)
+        if usage.remaining == 0:
+            raise DailyLimitExceededError
 
         target_keys = list(exercise.generation_meta_json.get("targeted_skill_keys", []))
         catalog = {skill.key: skill for skill in self.skills.list(limit=500)}

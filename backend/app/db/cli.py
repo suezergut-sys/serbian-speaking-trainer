@@ -3,25 +3,55 @@ from pathlib import Path
 
 from alembic import command
 from alembic.config import Config
+from sqlalchemy import text
 from sqlalchemy.engine import make_url
+from sqlalchemy.orm import Session
 
-from app.config import PROJECT_ROOT, get_settings
+from app.config import BACKEND_ROOT, get_settings
 from app.db.seed import seed_catalog
-from app.db.session import session_scope
+from app.db.session import engine, session_scope
 
-BACKEND_ROOT = PROJECT_ROOT / "backend"
-
+CLOUD_RELEASE_LOCK_ID = 7_323_914_787_421_629_147
 
 def alembic_config() -> Config:
-    config = Config(BACKEND_ROOT / "alembic.ini")
-    config.set_main_option("script_location", str(BACKEND_ROOT / "alembic"))
+    working_directory = Path.cwd()
+    migration_root = (
+        working_directory
+        if (working_directory / "alembic.ini").is_file()
+        else BACKEND_ROOT
+    )
+    config = Config(migration_root / "alembic.ini")
+    config.set_main_option("script_location", str(migration_root / "alembic"))
     return config
 
 
 def seed() -> None:
-    command.upgrade(alembic_config(), "head")
-    with session_scope() as session:
-        skills_added, topics_added, phrases_added = seed_catalog(session)
+    if engine.dialect.name == "postgresql":
+        with engine.connect() as connection:
+            connection.execute(
+                text("SELECT pg_advisory_lock(:lock_id)"),
+                {"lock_id": CLOUD_RELEASE_LOCK_ID},
+            )
+            connection.commit()
+            try:
+                config = alembic_config()
+                config.attributes["connection"] = connection
+                command.upgrade(config, "head")
+                with Session(bind=connection, autoflush=False, expire_on_commit=False) as session:
+                    skills_added, topics_added, phrases_added = seed_catalog(session)
+                    session.commit()
+            finally:
+                if connection.in_transaction():
+                    connection.rollback()
+                connection.execute(
+                    text("SELECT pg_advisory_unlock(:lock_id)"),
+                    {"lock_id": CLOUD_RELEASE_LOCK_ID},
+                )
+                connection.commit()
+    else:
+        command.upgrade(alembic_config(), "head")
+        with session_scope() as session:
+            skills_added, topics_added, phrases_added = seed_catalog(session)
     print(
         f"Seed complete: {skills_added} skills, {topics_added} topics, "
         f"{phrases_added} topic phrases added."

@@ -1,18 +1,22 @@
 {
   "name": "serbian-speaking-trainer-frontend",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.4.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "android:sync": "pnpm build && cap sync android",
     "android:apk": "pnpm android:sync && cd android && gradlew.bat assembleDebug",
+    "android:cloud-apk": "vite build --mode android && cap sync android && cd android && gradlew.bat assembleDebug",
     "lint": "eslint .",
     "test": "vitest"
   },
   "dependencies": {
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/browser": "^8.0.4",
     "@capacitor/core": "^8.5.2",
+    "@supabase/supabase-js": "^2.116.0",
     "react": "latest",
     "react-dom": "latest"
   },

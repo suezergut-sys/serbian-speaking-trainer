@@ -1,19 +1,49 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("../auth", () => ({
+  authenticatedFetch: (input: RequestInfo | URL, init?: RequestInit) => fetch(input, init),
+  initializeAuth: async () => ({ access_token: "test-token" }),
+  isAuthConfigured: () => true,
+  onAuthStateChange: () => () => undefined,
+  signInWithGoogle: async () => undefined,
+  signOut: async () => undefined,
+}));
+
 import App from "../App";
 
 describe("App", () => {
   afterEach(() => {
     cleanup();
+    window.history.replaceState({}, "", "/");
     vi.restoreAllMocks();
   });
 
-  function mockApi(omitLearnerUpdates = false, initialReviewPhrases: Array<Record<string, unknown>> = []) {
+  it("renders public legal pages without authentication", () => {
+    window.history.replaceState({}, "", "/privacy");
+    render(<App />);
+
+    expect(screen.getByRole("heading", { name: "Политика конфиденциальности" })).toBeInTheDocument();
+    expect(screen.getByText(/Записи голоса не сохраняются/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Вернуться в SerboTalk/ })).toHaveAttribute("href", "/");
+  });
+
+  function mockApi(omitLearnerUpdates = false, initialReviewPhrases: Array<Record<string, unknown>> = [], role = "user") {
     return vi.fn().mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
       const url = input.toString();
       let body: unknown;
       if (url === "/api/health") body = { status: "ok", service: "serbian-speaking-trainer" };
+      else if (url === "/api/auth/me") body = {
+        id: "user-1", email: "learner@example.com", display_name: "Ученик", avatar_url: null,
+        role, access_tier: "free", registered_at: "2026-09-01T10:00:00Z",
+        last_active_at: "2026-09-22T10:00:00Z",
+        daily_usage: { used: 2, limit: 10, remaining: 8, resets_at: "2026-09-23T00:00:00Z" },
+      };
+      else if (url === "/api/admin/users") body = [{
+        id: "user-1", email: "learner@example.com", display_name: "Ученик", role: "admin",
+        access_tier: "free", registered_at: "2026-09-01T10:00:00Z",
+        last_active_at: "2026-09-22T10:00:00Z", phrases_today: 12,
+      }];
       else if (url === "/api/review-phrases/prepare" && init?.method === "POST") body = {
         source_ru: "Мне нужно позвонить хозяину.", canonical_sr: "Moram da pozovem vlasnika.",
         intended_sr_variants: ["Moram da pozovem vlasnika."], word_hints: [],
@@ -91,9 +121,19 @@ describe("App", () => {
 
     render(<App />);
 
-    expect(screen.getByRole("heading", { name: /Практикуйтесь в реальных ситуациях/ })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /Практикуйтесь в реальных ситуациях/ })).toBeInTheDocument();
     expect(await screen.findByRole("status", { name: "Backend готов" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /В банке/ })).toBeInTheDocument();
+  });
+
+  it("shows the user list only for an administrator", async () => {
+    vi.stubGlobal("fetch", mockApi(false, [], "admin"));
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /Пользователи/ }));
+    expect(await screen.findByRole("heading", { name: "Пользователи" })).toBeInTheDocument();
+    expect(await screen.findByText("learner@example.com")).toBeInTheDocument();
+    expect(screen.getByText("12 · без лимита")).toBeInTheDocument();
   });
 
   it("starts a session and displays the first exercise", async () => {
@@ -164,7 +204,7 @@ describe("App", () => {
     vi.stubGlobal("fetch", mockApi());
     render(<App />);
 
-    fireEvent.click(screen.getByRole("button", { name: /Статистика/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Статистика/ }));
     expect(screen.getByRole("heading", { name: "Статистика" })).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Календарь занятий" })).toBeInTheDocument();
     expect(screen.getByLabelText("1: 10 переводов")).toHaveClass("is-active", "is-intensive");
@@ -228,6 +268,7 @@ describe("App", () => {
     vi.stubGlobal("fetch", fetchMock);
     render(<App />);
 
+    await screen.findByText("1 требуют практики");
     fireEvent.click(await screen.findByRole("button", { name: /Фразы для повторения/ }));
 
     expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
@@ -256,7 +297,9 @@ describe("App", () => {
     vi.stubGlobal("fetch", fetchMock);
     render(<App />);
 
+    await screen.findByText("1 требуют практики");
     fireEvent.click(await screen.findByRole("button", { name: /Фразы для повторения/ }));
+    await waitFor(() => expect(nextExerciseCalls).toBe(1));
     fireEvent.change(await screen.findByLabelText("Ваш ответ"), { target: { value: "Stari odgovor" } });
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
     expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();

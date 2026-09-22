@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Capacitor } from "@capacitor/core";
 
 import { fetchHealth } from "./api/health";
 import { getApiBaseUrl, setApiBaseUrl } from "./api/baseUrl";
@@ -6,11 +7,16 @@ import { addReviewPhrase, BackendError, createSession, createTopic, fetchNextExe
 import type { Attempt, AttemptTimings, Exercise, PreparedReviewPhrase, ReviewPhrase, TopicListItem, TrainingSession, WordHint } from "./types/training";
 import { supportsVoiceRecording, VoiceRecorder } from "./voiceRecorder";
 import { StatisticsView } from "./StatisticsView";
+import { AdminUsersView } from "./AdminUsersView";
+import { fetchCurrentUser } from "./api/users";
+import { initializeAuth, isAuthConfigured, onAuthStateChange, signInWithGoogle, signOut } from "./auth";
+import type { CurrentUser } from "./types/auth";
+import { LegalPage } from "./LegalPage";
 import "./styles.css";
 
 type BackendState = "checking" | "online" | "offline";
 type VoiceState = "idle" | "connecting" | "recording" | "transcribing" | "error";
-type AppView = "practice" | "statistics" | "progress";
+type AppView = "practice" | "statistics" | "progress" | "admin";
 
 const topicIcons: Record<string, string> = {
   "job-interview": "briefcase", bank: "bank", vacation: "sun", cafe: "cup",
@@ -43,6 +49,49 @@ function Icon({ name, size = 20 }: { name: string; size?: number }) {
 }
 
 export default function App() {
+  if (window.location.pathname === "/privacy") return <LegalPage kind="privacy" />;
+  if (window.location.pathname === "/terms") return <LegalPage kind="terms" />;
+  return <AuthenticatedApp />;
+}
+
+function AuthenticatedApp() {
+  const [authReady, setAuthReady] = useState(false);
+  const [hasSession, setHasSession] = useState(false);
+  const [account, setAccount] = useState<CurrentUser>();
+  const [authError, setAuthError] = useState<string>();
+
+  useEffect(() => {
+    let active = true;
+    const syncAccount = async (sessionPresent: boolean) => {
+      if (!active) return;
+      setHasSession(sessionPresent);
+      if (!sessionPresent) { setAccount(undefined); setAuthReady(true); return; }
+      try { setAccount(await fetchCurrentUser()); setAuthError(undefined); }
+      catch { setAuthError("Не удалось загрузить профиль. Проверьте настройку Supabase Auth на backend."); }
+      finally { if (active) setAuthReady(true); }
+    };
+    initializeAuth().then((session) => syncAccount(Boolean(session))).catch(() => {
+      if (active) { setAuthError("Не удалось восстановить вход."); setAuthReady(true); }
+    });
+    const unsubscribe = onAuthStateChange((session) => {
+      window.setTimeout(() => { void syncAccount(Boolean(session)); }, 0);
+    });
+    return () => { active = false; unsubscribe(); };
+  }, []);
+
+  async function login() {
+    setAuthError(undefined);
+    try { await signInWithGoogle(); }
+    catch { setAuthError("Не удалось открыть вход через Google."); }
+  }
+
+  if (!authReady) return <main className="auth-page"><div className="auth-card panel"><p>Проверяем вход…</p></div></main>;
+  if (!isAuthConfigured()) return <main className="auth-page"><div className="auth-card panel"><h1>Нужна настройка входа</h1><p>Добавьте VITE_SUPABASE_URL и VITE_SUPABASE_PUBLISHABLE_KEY в окружение frontend.</p></div></main>;
+  if (!hasSession || !account) return <main className="auth-page"><div className="auth-card panel"><span className="brand__mark"><Icon name="message" size={34}/></span><h1>Добро пожаловать в SerboTalk</h1><p>Войдите или зарегистрируйтесь с Google, чтобы сохранять свой прогресс на всех устройствах.</p><button className="google-sign-in" type="button" onClick={() => void login()}>Войти через Google</button>{authError && <p className="error" role="alert">{authError}</p>}<nav className="auth-legal" aria-label="Правовая информация"><a href="/privacy">Конфиденциальность</a><a href="/terms">Условия</a></nav></div></main>;
+  return <TrainerApp account={account} onAccountChange={setAccount} onSignOut={() => void signOut()} />;
+}
+
+function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentUser; onAccountChange: (account: CurrentUser) => void; onSignOut: () => void }) {
   const [backendState, setBackendState] = useState<BackendState>("checking");
   const [showConnectionSettings, setShowConnectionSettings] = useState(false);
   const [apiEndpoint, setApiEndpoint] = useState(getApiBaseUrl());
@@ -186,8 +235,9 @@ export default function App() {
     try {
       setAttempt(await submitAttempt(exercise.id, answer.trim(), voiceTimingRef.current, Object.keys(wordHints)));
       setReviewPhrases(await fetchReviewPhrases());
+      onAccountChange(await fetchCurrentUser());
     }
-    catch { setError("Не удалось проверить ответ. Попробуйте ещё раз."); }
+    catch (requestError) { setError(requestError instanceof BackendError && requestError.status === 429 ? "Дневной лимит 10 фраз исчерпан. Новые фразы будут доступны после 00:00 UTC." : "Не удалось проверить ответ. Попробуйте ещё раз."); }
     finally { setLoading(false); }
   }
 
@@ -254,10 +304,12 @@ export default function App() {
           <button className={view === "practice" ? "is-active" : ""} type="button" onClick={() => setView("practice")}><Icon name="home" />Практика</button>
           <button className={view === "statistics" ? "is-active" : ""} type="button" onClick={() => setView("statistics")}><Icon name="chart" />Статистика</button>
           <button className={view === "progress" ? "is-active" : ""} type="button" onClick={() => setView("progress")}><Icon name="progress" />Прогресс</button>
+          {account.role === "admin" && !Capacitor.isNativePlatform() && <button className={view === "admin" ? "is-active" : ""} type="button" onClick={() => setView("admin")}><Icon name="settings" />Пользователи</button>}
         </nav>
         <div className="profile">
           <div className={`connection connection--${backendState}`} role="status" aria-label={backendState === "online" ? "Backend готов" : backendState === "offline" ? "Backend недоступен" : "Подключение"}><span /></div>
-          <span className="avatar">A2</span><span className="profile__copy"><strong>Ученик</strong><small>Уровень A2</small></span>
+          <span className="avatar">{account.display_name?.slice(0, 1).toLocaleUpperCase() || "A"}</span><span className="profile__copy"><strong>{account.display_name || account.email}</strong><small>{account.daily_usage.limit === null ? `${account.daily_usage.used} фраз · без лимита` : `${account.daily_usage.remaining} из ${account.daily_usage.limit} фраз осталось`}</small></span>
+          <button className="sign-out-button" type="button" onClick={onSignOut}>Выйти</button>
           <button className="connection-settings-button" type="button" aria-label="Настроить подключение" onClick={() => setShowConnectionSettings((current) => !current)}><Icon name="settings" /></button>
         </div>
       </header>
@@ -271,7 +323,7 @@ export default function App() {
         </form>
       )}
 
-      {view === "statistics" ? <StatisticsView /> : view === "progress" ? (
+      {view === "admin" ? <AdminUsersView /> : view === "statistics" ? <StatisticsView /> : view === "progress" ? (
         <main className="placeholder-page">
           <div className="placeholder-page__icon"><Icon name="progress" size={34} /></div>
           <p className="kicker">Раздел в разработке</p><h1>Прогресс</h1>

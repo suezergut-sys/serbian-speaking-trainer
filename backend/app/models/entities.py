@@ -9,6 +9,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
+LEGACY_USER_ID = "00000000-0000-0000-0000-000000000001"
+
 
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
@@ -22,6 +24,7 @@ class TrainingSession(Base):
     __tablename__ = "training_sessions"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, default=LEGACY_USER_ID)
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     level: Mapped[str] = mapped_column(String(10), default="A2")
@@ -83,7 +86,7 @@ class Skill(Base):
     parent_skill_id: Mapped[str | None] = mapped_column(ForeignKey("skills.id", ondelete="SET NULL"))
 
     parent: Mapped[Skill | None] = relationship(remote_side=[id])
-    learner_state: Mapped[LearnerSkill | None] = relationship(back_populates="skill", cascade="all, delete-orphan")
+    learner_states: Mapped[list[LearnerSkill]] = relationship(back_populates="skill", cascade="all, delete-orphan")
     error_events: Mapped[list[ErrorEvent]] = relationship(back_populates="skill")
 
     __table_args__ = (CheckConstraint("difficulty >= 0 AND difficulty <= 1"),)
@@ -92,6 +95,7 @@ class Skill(Base):
 class LearnerSkill(Base):
     __tablename__ = "learner_skills"
 
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True, default=LEGACY_USER_ID)
     skill_id: Mapped[str] = mapped_column(ForeignKey("skills.id", ondelete="CASCADE"), primary_key=True)
     mastery: Mapped[float] = mapped_column(Float, default=0)
     state: Mapped[str] = mapped_column(String(20), default="LEARNING")
@@ -102,7 +106,7 @@ class LearnerSkill(Base):
     next_review_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     streak: Mapped[int] = mapped_column(Integer, default=0)
 
-    skill: Mapped[Skill] = relationship(back_populates="learner_state")
+    skill: Mapped[Skill] = relationship(back_populates="learner_states")
 
     __table_args__ = (CheckConstraint("mastery >= 0 AND mastery <= 1"),)
 
@@ -131,6 +135,7 @@ class TopicPreset(Base):
     __tablename__ = "topic_presets"
 
     id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    owner_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     title_ru: Mapped[str] = mapped_column(String(160))
     description_ru: Mapped[str] = mapped_column(Text)
     intents_json: Mapped[list[str]] = mapped_column(JSON, default=list)
@@ -166,8 +171,9 @@ class ReviewPhrase(Base):
     __tablename__ = "review_phrases"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, default=LEGACY_USER_ID)
     source_ru: Mapped[str] = mapped_column(Text)
-    source_normalized: Mapped[str] = mapped_column(String(280), unique=True, index=True)
+    source_normalized: Mapped[str] = mapped_column(String(280), index=True)
     intended_sr_variants_json: Mapped[list[str]] = mapped_column(JSON, default=list)
     word_hints_json: Mapped[list[dict[str, str]]] = mapped_column(JSON, default=list)
     targeted_skill_keys_json: Mapped[list[str]] = mapped_column(JSON, default=list)
@@ -189,19 +195,44 @@ class ReviewPhrase(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
 
-    __table_args__ = (CheckConstraint("best_score >= 0 AND best_score <= 1"),)
+    __table_args__ = (
+        CheckConstraint("best_score >= 0 AND best_score <= 1"),
+        UniqueConstraint("user_id", "source_normalized", name="uq_review_phrases_user_source"),
+    )
 
 
 class WordLearningItem(Base):
     __tablename__ = "word_learning_items"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, default=LEGACY_USER_ID)
     source_ru: Mapped[str] = mapped_column(String(120))
-    source_normalized: Mapped[str] = mapped_column(String(120), unique=True, index=True)
+    source_normalized: Mapped[str] = mapped_column(String(120), index=True)
     translation_sr: Mapped[str] = mapped_column(String(240))
     hint_count: Mapped[int] = mapped_column(Integer, default=1)
     mastery: Mapped[float] = mapped_column(Float, default=0)
     status: Mapped[str] = mapped_column(String(20), default="learning", index=True)
     last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
-    __table_args__ = (CheckConstraint("mastery >= 0 AND mastery <= 1"),)
+    __table_args__ = (
+        CheckConstraint("mastery >= 0 AND mastery <= 1"),
+        UniqueConstraint("user_id", "source_normalized", name="uq_word_learning_user_source"),
+    )
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    email: Mapped[str] = mapped_column(String(320), unique=True, index=True)
+    display_name: Mapped[str | None] = mapped_column(String(200))
+    avatar_url: Mapped[str | None] = mapped_column(Text)
+    role: Mapped[str] = mapped_column(String(20), default="user", index=True)
+    access_tier: Mapped[str] = mapped_column(String(40), default="free", index=True)
+    registered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    last_active_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, index=True)
+
+    __table_args__ = (
+        CheckConstraint("role IN ('user', 'admin')", name="ck_users_role"),
+        CheckConstraint("access_tier IN ('free', 'premium')", name="ck_users_access_tier"),
+    )

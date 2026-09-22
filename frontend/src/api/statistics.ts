@@ -1,4 +1,5 @@
 import type { MonthlyStatistics, PhraseStatistics } from "../types/statistics";
+import { authenticatedFetch } from "../auth";
 import { apiUrl } from "./baseUrl";
 
 export async function fetchMonthlyStatistics(month: string, signal?: AbortSignal): Promise<MonthlyStatistics> {
@@ -7,7 +8,7 @@ export async function fetchMonthlyStatistics(month: string, signal?: AbortSignal
     month,
     utc_offset_minutes: String(utcOffsetMinutes),
   });
-  const response = await fetch(apiUrl(`/api/statistics/monthly?${query}`), { signal });
+  const response = await authenticatedFetch(apiUrl(`/api/statistics/monthly?${query}`), { signal });
   if (!response.ok) throw new Error(`Backend returned ${response.status}`);
   return response.json() as Promise<MonthlyStatistics>;
 }
@@ -18,7 +19,7 @@ export async function fetchPhraseStatistics(
   signal?: AbortSignal,
 ): Promise<PhraseStatistics> {
   const query = new URLSearchParams({ page: String(page), page_size: pageSize });
-  const response = await fetch(apiUrl(`/api/statistics/phrases?${query}`), { signal });
+  const response = await authenticatedFetch(apiUrl(`/api/statistics/phrases?${query}`), { signal });
   if (!response.ok) throw new Error(`Backend returned ${response.status}`);
   return response.json() as Promise<PhraseStatistics>;
 }

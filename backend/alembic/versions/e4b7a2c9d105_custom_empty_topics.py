@@ -19,15 +19,30 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     with op.batch_alter_table("topic_presets") as batch_op:
         batch_op.add_column(sa.Column("is_custom", sa.Boolean(), nullable=False, server_default=sa.false()))
-    op.execute(
-        """
-        INSERT INTO topic_presets
-            (id, title_ru, description_ru, intents_json, vocabulary_json, enabled, is_custom)
-        SELECT
-            'misc', 'Разное', 'Пустая тема для пользовательских фраз.', '[]', '[]', 1, 0
-        WHERE NOT EXISTS (SELECT 1 FROM topic_presets WHERE id = 'misc')
-        """
+    topic_presets = sa.table(
+        "topic_presets",
+        sa.column("id", sa.String()),
+        sa.column("title_ru", sa.String()),
+        sa.column("description_ru", sa.Text()),
+        sa.column("intents_json", sa.JSON()),
+        sa.column("vocabulary_json", sa.JSON()),
+        sa.column("enabled", sa.Boolean()),
+        sa.column("is_custom", sa.Boolean()),
     )
+    connection = op.get_bind()
+    exists = connection.scalar(sa.select(sa.literal(True)).where(sa.exists().where(topic_presets.c.id == "misc")))
+    if not exists:
+        connection.execute(
+            topic_presets.insert().values(
+                id="misc",
+                title_ru="Разное",
+                description_ru="Пустая тема для пользовательских фраз.",
+                intents_json=[],
+                vocabulary_json=[],
+                enabled=True,
+                is_custom=False,
+            )
+        )
 
 
 def downgrade() -> None:

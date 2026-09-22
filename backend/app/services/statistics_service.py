@@ -14,9 +14,9 @@ from app.schemas import (
 
 
 class StatisticsService:
-    def __init__(self, db: Session) -> None:
-        self.attempts = AttemptRepository(db)
-        self.review_phrases = ReviewPhraseRepository(db)
+    def __init__(self, db: Session, user_id: str) -> None:
+        self.attempts = AttemptRepository(db, user_id)
+        self.review_phrases = ReviewPhraseRepository(db, user_id)
 
     def monthly(self, month: str, utc_offset_minutes: int) -> MonthlyStatisticsResponse:
         year, month_number = (int(part) for part in month.split("-"))

@@ -8,6 +8,8 @@ Capacitor/Android -> тот же REST /api -/
 
 Android-клиент не содержит отдельной предметной БД. Он хранит локально только адрес backend и использует те же API-контракты, что browser-клиент; это сохраняет единый источник истины для фраз, повторений и будущих пользовательских профилей. `OPENAI_API_KEY` и model IDs остаются исключительно в backend-окружении.
 
+В cloud-конфигурации React/Vite и FastAPI развёрнуты отдельными Vercel-проектами. Browser и APK вызывают HTTPS FastAPI; FastAPI использует Supabase PostgreSQL через Supavisor transaction pooler. Клиенты никогда не подключаются к PostgreSQL и OpenAI напрямую. Для PostgreSQL SQLAlchemy использует драйвер psycopg 3, `NullPool`, SSL connection string и отключённые prepared statements, что соответствует короткоживущим serverless-инстансам.
+
 API-слой отвечает за HTTP-контракт и dependency injection. Сервисы владеют orchestration и бизнес-правилами. Репозитории изолируют запросы и транзакции. SQLAlchemy-модели не экспортируются напрямую как API response.
 
 `TopicService` разрешает preset-тему или нормализует пользовательскую. `SessionService` сохраняет неизменяемый snapshot темы. Для preset-тем `ExerciseGenerator` выбирает без недавних повторов одну из 20 записей `TopicPhrase`: русский текст и канонический разговорный перевод уже находятся в SQLite. Для произвольных тем сохраняется structured AI/fallback-поток. Scheduler выбирает навыки только из контролируемого каталога, а итоговое упражнение всегда сохраняется перед выдачей.

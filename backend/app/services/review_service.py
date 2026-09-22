@@ -49,13 +49,14 @@ def normalize_ru(value: str) -> str:
 
 
 class ReviewService:
-    def __init__(self, db: Session, ai: StructuredAIProvider) -> None:
+    def __init__(self, db: Session, ai: StructuredAIProvider, user_id: str = "00000000-0000-0000-0000-000000000001") -> None:
         self.db = db
+        self.user_id = user_id
         self.ai = ai
-        self.phrases = ReviewPhraseRepository(db)
-        self.words = WordLearningRepository(db)
-        self.exercises = ExerciseRepository(db)
-        self.topics = TopicPresetRepository(db)
+        self.phrases = ReviewPhraseRepository(db, user_id)
+        self.words = WordLearningRepository(db, user_id)
+        self.exercises = ExerciseRepository(db, user_id)
+        self.topics = TopicPresetRepository(db, user_id)
 
     def prepare_phrase(self, request: PrepareReviewPhraseRequest) -> PreparedReviewPhraseResponse:
         source = " ".join(request.source_ru.split())
@@ -80,14 +81,14 @@ class ReviewService:
 
     def get_phrase(self, phrase_id: str) -> ReviewPhrase:
         self.phrases.activate_due(datetime.now(timezone.utc))
-        phrase = self.phrases.get(phrase_id)
+        phrase = self.phrases.get_owned(phrase_id)
         if phrase is None or phrase.status != "active":
             raise ReviewPhraseNotFoundError(phrase_id)
         return phrase
 
     def create_phrase(self, request: CreateReviewPhraseRequest) -> ReviewPhraseResponse:
         source = " ".join(request.source_ru.split())
-        topic = self.topics.get(request.topic_id)
+        topic = self.topics.get_visible(request.topic_id)
         if topic is None or not topic.enabled:
             raise ReviewPhraseNotFoundError(request.topic_id)
         normalized = normalize_ru(source)
@@ -109,6 +110,7 @@ class ReviewService:
 
         phrase = self.phrases.add(
             ReviewPhrase(
+                user_id=self.user_id,
                 source_ru=source,
                 source_normalized=normalized,
                 intended_sr_variants_json=variants,
@@ -132,11 +134,12 @@ class ReviewService:
         topic_phrase_id: str | None = None,
         now: datetime | None = None,
     ) -> ReviewPhraseResponse | None:
-        phrase = self.phrases.get(review_phrase_id) if review_phrase_id else self.phrases.find_by_source(normalize_ru(source_ru))
+        phrase = self.phrases.get_owned(review_phrase_id) if review_phrase_id else self.phrases.find_by_source(normalize_ru(source_ru))
         is_correct = score >= CORRECT_SCORE_THRESHOLD and not hinted_words
         if phrase is None:
             phrase = self.phrases.add(
                 ReviewPhrase(
+                    user_id=self.user_id,
                     source_ru=source_ru,
                     source_normalized=normalize_ru(source_ru),
                     intended_sr_variants_json=intended_sr_variants,
@@ -189,7 +192,7 @@ class ReviewService:
         return self._phrase_response(phrase)
 
     def reveal_word(self, exercise_id: str, word: str) -> WordHintResponse:
-        exercise = self.exercises.get(exercise_id)
+        exercise = self.exercises.get_owned(exercise_id)
         if exercise is None:
             raise WordHintNotFoundError(word)
         normalized = normalize_ru(word)
@@ -201,6 +204,7 @@ class ReviewService:
         if learning is None:
             learning = self.words.add(
                 WordLearningItem(
+                    user_id=self.user_id,
                     source_ru=hint.word_ru,
                     source_normalized=normalized,
                     translation_sr=hint.translation_sr,
@@ -233,7 +237,7 @@ class ReviewService:
         return min(MAX_HINT_PENALTY, len(unique) * HINT_PENALTY_PER_WORD)
 
     def _phrase_response(self, item: ReviewPhrase) -> ReviewPhraseResponse:
-        topic = self.topics.get(item.topic_id) if item.topic_id else None
+        topic = self.topics.get_visible(item.topic_id) if item.topic_id else None
         return ReviewPhraseResponse(
             id=item.id,
             source_ru=item.source_ru,

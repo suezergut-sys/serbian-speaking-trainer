@@ -357,3 +357,74 @@ button { cursor: pointer; }
   .practice-calendar { gap: .3rem; grid-template-columns: repeat(7, minmax(34px, 1fr)); }
   .calendar-day { min-height: 40px; }
 }
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: radial-gradient(circle at top, #eef8f2, #f7f9f7 55%);
+}
+
+.auth-card {
+  width: min(460px, 100%);
+  padding: 44px;
+  text-align: center;
+}
+
+.auth-card .brand__mark { margin: 0 auto 18px; }
+.auth-card h1 { margin: 0 0 12px; }
+.auth-card p { color: var(--muted, #65736b); line-height: 1.55; }
+
+.google-sign-in,
+.sign-out-button {
+  border: 1px solid #d5ddd8;
+  border-radius: 10px;
+  background: #fff;
+  color: #26352d;
+  cursor: pointer;
+  font: inherit;
+}
+
+.google-sign-in {
+  width: 100%;
+  margin-top: 16px;
+  padding: 13px 18px;
+  font-weight: 700;
+  box-shadow: 0 6px 18px rgb(31 72 49 / 9%);
+}
+
+.sign-out-button { padding: 7px 10px; font-size: 12px; }
+.admin-page { padding: 32px clamp(18px, 4vw, 64px) 64px; }
+.admin-users { margin-top: 24px; padding: 24px; }
+.admin-users td strong { color: #21352a; }
+.admin-users td small { color: #718078; }
+
+@media (max-width: 760px) {
+  .auth-card { padding: 30px 22px; }
+  .sign-out-button { display: none; }
+}
+.auth-legal {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  font-size: 0.85rem;
+}
+
+.legal-page {
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  background: var(--bg, #f7f7f5);
+}
+
+.legal-card {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+}
+
+.legal-card h1 { margin: 1.25rem 0 0.25rem; }
+.legal-card h2 { margin: 1.75rem 0 0.5rem; font-size: 1.15rem; }
+.legal-card p { line-height: 1.65; }
+.legal-updated { color: var(--text-muted, #667085); }
+.legal-back { display: inline-block; }

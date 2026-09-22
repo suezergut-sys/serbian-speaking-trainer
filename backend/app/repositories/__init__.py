@@ -8,6 +8,7 @@ from .training import (
     TrainingSessionRepository,
     WordLearningRepository,
 )
+from .users import UserRepository
 
 __all__ = [
     "AttemptRepository",
@@ -21,4 +22,5 @@ __all__ = [
     "TrainingSessionRepository",
     "ReviewPhraseRepository",
     "WordLearningRepository",
+    "UserRepository",
 ]

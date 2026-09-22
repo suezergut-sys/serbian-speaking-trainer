@@ -1,8 +1,9 @@
 import type { Attempt, AttemptTimings, Exercise, PreparedReviewPhrase, ReviewPhrase, TopicListItem, TrainingSession, TranscriptionResponse, WordHint } from "../types/training";
+import { authenticatedFetch } from "../auth";
 import { apiUrl } from "./baseUrl";
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(apiUrl(url), init);
+  const response = await authenticatedFetch(apiUrl(url), init);
   if (!response.ok) {
     throw new BackendError(response.status);
   }

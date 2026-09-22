@@ -43,7 +43,7 @@ def test_training_graph_crud_and_cascade(db_session: Session) -> None:
     assert Repository(db_session, TrainingSession).get(training.id) is training
     assert Repository(db_session, Exercise).get(exercise.id) is exercise
     assert Repository(db_session, Attempt).get(attempt.id) is attempt
-    assert Repository(db_session, LearnerSkill).get(skill.id) is learner
+    assert db_session.get(LearnerSkill, (learner.user_id, skill.id)) is learner
     assert Repository(db_session, ErrorEvent).get(error.id) is error
 
     Repository(db_session, TrainingSession).delete(training)
@@ -59,4 +59,3 @@ def test_schema_has_no_audio_storage_columns(db_session: Session) -> None:
     for table_name in inspector.get_table_names():
         column_names = {column["name"].lower() for column in inspector.get_columns(table_name)}
         assert all(fragment not in name for name in column_names for fragment in forbidden_fragments)
-

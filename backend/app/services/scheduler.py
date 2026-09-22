@@ -23,6 +23,7 @@ class Scheduler:
         topic: TopicContext,
         recent_exercises: list[Exercise],
         *,
+        user_id: str,
         limit: int = 2,
     ) -> list[Skill]:
         recently_used = Counter(
@@ -41,7 +42,7 @@ class Scheduler:
             recent_error_weight = 0.0
             due_review_weight = 0.0
             mastered_penalty = 0.0
-            learner = skill.learner_state
+            learner = next((state for state in skill.learner_states if state.user_id == user_id), None)
             if learner is not None:
                 weakness_weight = (1 - learner.mastery) * 1.1
                 if learner.attempts:

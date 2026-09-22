@@ -58,11 +58,16 @@ def upgrade() -> None:
         WHERE topic_phrase_id IS NOT NULL
         """
     )
+    next_review_expression = (
+        "datetime(mastered_at, '+7 days')"
+        if op.get_bind().dialect.name == "sqlite"
+        else "mastered_at + INTERVAL '7 days'"
+    )
     op.execute(
-        """
+        f"""
         UPDATE review_phrases
         SET difficulty = 'medium', mastery_count = 1, interval_days = 7,
-            next_review_at = datetime(mastered_at, '+7 days')
+            next_review_at = {next_review_expression}
         WHERE status = 'mastered' AND mastered_at IS NOT NULL
         """
     )
