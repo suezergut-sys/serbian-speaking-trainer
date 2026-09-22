@@ -310,11 +310,11 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
           <div className={`connection connection--${backendState}`} role="status" aria-label={backendState === "online" ? "Backend готов" : backendState === "offline" ? "Backend недоступен" : "Подключение"}><span /></div>
           <span className="avatar">{account.display_name?.slice(0, 1).toLocaleUpperCase() || "A"}</span><span className="profile__copy"><strong>{account.display_name || account.email}</strong><small>{account.daily_usage.limit === null ? `${account.daily_usage.used} фраз · без лимита` : `${account.daily_usage.remaining} из ${account.daily_usage.limit} фраз осталось`}</small></span>
           <button className="sign-out-button" type="button" onClick={onSignOut}>Выйти</button>
-          <button className="connection-settings-button" type="button" aria-label="Настроить подключение" onClick={() => setShowConnectionSettings((current) => !current)}><Icon name="settings" /></button>
+          {account.role === "admin" && <button className="connection-settings-button" type="button" aria-label="Настроить подключение" onClick={() => setShowConnectionSettings((current) => !current)}><Icon name="settings" /></button>}
         </div>
       </header>
 
-      {showConnectionSettings && (
+      {account.role === "admin" && showConnectionSettings && (
         <form className="connection-settings" onSubmit={saveConnectionSettings}>
           <label htmlFor="api-endpoint">Адрес общего backend</label>
           <input id="api-endpoint" value={apiEndpoint} onChange={(event) => setApiEndpoint(event.target.value)} placeholder="https://trainer.example.com" inputMode="url" />

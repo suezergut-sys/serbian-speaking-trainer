@@ -127,7 +127,12 @@
 - Supabase PostgreSQL заменяет SQLite только в cloud environment. Локальная разработка и автоматические тесты сохраняют SQLite; один набор SQLAlchemy-моделей и Alembic-миграций поддерживает оба диалекта.
 - Vercel backend использует Supavisor transaction pooler, psycopg 3, `NullPool`, SSL и отключённые prepared statements. Миграции и идемпотентный seed выполняются в production build-step под PostgreSQL advisory lock, а не при импорте ASGI-приложения или его холодном старте.
 - Android и browser получают только HTTPS URL backend. `OPENAI_API_KEY`, пароль PostgreSQL и любые будущие service-role credentials существуют только в environment variables backend-проекта.
-- Переменный API URL остаётся доступен в настройках для диагностики. Ключ localStorage версионирован, поэтому APK облачной сборки не наследует старый LAN URL из установленного прототипа.
+- Переменный API URL остаётся доступен в настройках только администратору для диагностики. Обычные пользователи web и Android используют endpoint из сборки и не видят техническую подсказку про эмулятор. Ключ localStorage версионирован, поэтому APK облачной сборки не наследует старый LAN URL из установленного прототипа.
+
+# 2026-09-22 — web-first и отложенные Android-релизы
+
+- Новые функции сначала дорабатываются и проверяются в web. Обычный web-релиз не синхронизирует Capacitor, не меняет Android versionCode/versionName и не собирает APK.
+- Накопленные Android-изменения фиксируются в `docs/android-release-backlog.md`. Их перенос, полная mobile-проверка, повышение версии и сборка APK выполняются одним пакетом только по явной команде владельца.
 
 # 2026-09-22 — Google Auth, пользователи и дневной доступ
 
