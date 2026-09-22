@@ -120,7 +120,7 @@
 - На устройстве нет копии SQLite с учебными данными. Все темы, фразы, попытки, статистика и интервальные повторения идут через существующий FastAPI в общую backend-БД; будущая идентификация пользователей будет добавляться на этой же API-границе.
 - Адрес backend настраивается в интерфейсе и хранится в localStorage устройства. По умолчанию Android Emulator использует `http://10.0.2.2:8000`; production-развёртывание должно использовать HTTPS.
 - Для origin нативного WebView backend разрешает CORS только с `http://localhost`, `https://localhost` и `capacitor://localhost`. Постоянный OpenAI key в APK не попадает.
-- Голосовой сценарий сохраняет прежнюю модель `MediaRecorder` → временный Blob в памяти → backend transcription. Android получает только разрешение `RECORD_AUDIO`; файловое хранение аудио не добавлено.
+- Голосовой сценарий сохраняет прежнюю модель `MediaRecorder` → временный Blob в памяти → backend transcription. Android-манифест объявляет `RECORD_AUDIO` и `MODIFY_AUDIO_SETTINGS`, потому что Capacitor 8 запрашивает их совместно перед выдачей WebView ресурса `AUDIO_CAPTURE`; файловое хранение аудио не добавлено.
 # 2026-09-22 — облачная граница Vercel + Supabase
 
 - Web frontend и FastAPI backend разворачиваются как два Vercel-проекта из одного GitHub-репозитория. Это не зависит от beta-функциональности Vercel Services и даёт backend отдельные secrets и runtime-настройки.
