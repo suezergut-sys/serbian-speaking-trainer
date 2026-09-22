@@ -81,6 +81,11 @@ pnpm android:cloud-apk
 
 GitHub-репозиторий: `suezergut-sys/serbian-speaking-trainer`.
 
+Production URL:
+
+- web: `https://serbian-speaking-trainer.vercel.app`;
+- API: `https://serbian-speaking-trainer-api.vercel.app`.
+
 В Vercel создаются два проекта из этого репозитория:
 
 - `serbian-speaking-trainer-api` с Root Directory `backend`;
