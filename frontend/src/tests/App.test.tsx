@@ -124,6 +124,8 @@ describe("App", () => {
     expect(await screen.findByRole("heading", { name: /Практикуйтесь в реальных ситуациях/ })).toBeInTheDocument();
     expect(await screen.findByRole("status", { name: "Backend готов" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /В банке/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Настроить подключение" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Эмулятор:/)).not.toBeInTheDocument();
   });
 
   it("shows the user list only for an administrator", async () => {
@@ -134,6 +136,15 @@ describe("App", () => {
     expect(await screen.findByRole("heading", { name: "Пользователи" })).toBeInTheDocument();
     expect(await screen.findByText("learner@example.com")).toBeInTheDocument();
     expect(screen.getByText("12 · без лимита")).toBeInTheDocument();
+  });
+
+  it("shows connection settings only to an administrator", async () => {
+    vi.stubGlobal("fetch", mockApi(false, [], "admin"));
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Настроить подключение" }));
+    expect(screen.getByLabelText("Адрес общего backend")).toBeInTheDocument();
+    expect(screen.getByText(/Эмулятор:/)).toBeInTheDocument();
   });
 
   it("starts a session and displays the first exercise", async () => {
