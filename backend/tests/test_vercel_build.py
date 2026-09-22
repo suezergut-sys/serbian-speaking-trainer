@@ -1,6 +1,22 @@
+from pathlib import Path
+
 import pytest
 
+from app.db.cli import alembic_config
 from scripts import vercel_build
+
+
+def test_alembic_config_prefers_deployment_working_directory(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    (tmp_path / "alembic.ini").write_text("[alembic]\n", encoding="utf-8")
+    (tmp_path / "alembic").mkdir()
+    monkeypatch.chdir(tmp_path)
+
+    config = alembic_config()
+
+    assert Path(config.config_file_name) == tmp_path / "alembic.ini"
+    assert Path(config.get_main_option("script_location")) == tmp_path / "alembic"
 
 
 def test_vercel_build_skips_non_production(monkeypatch: pytest.MonkeyPatch) -> None:

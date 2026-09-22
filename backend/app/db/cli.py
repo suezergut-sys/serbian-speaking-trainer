@@ -14,8 +14,14 @@ from app.db.session import engine, session_scope
 CLOUD_RELEASE_LOCK_ID = 7_323_914_787_421_629_147
 
 def alembic_config() -> Config:
-    config = Config(BACKEND_ROOT / "alembic.ini")
-    config.set_main_option("script_location", str(BACKEND_ROOT / "alembic"))
+    working_directory = Path.cwd()
+    migration_root = (
+        working_directory
+        if (working_directory / "alembic.ini").is_file()
+        else BACKEND_ROOT
+    )
+    config = Config(migration_root / "alembic.ini")
+    config.set_main_option("script_location", str(migration_root / "alembic"))
     return config
 
 
