@@ -115,7 +115,19 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const [activeHint, setActiveHint] = useState<string>();
   const voiceRef = useRef<VoiceRecorder | undefined>(undefined);
   const voiceTimingRef = useRef<AttemptTimings | undefined>(undefined);
+  const androidPagerRef = useRef<HTMLDivElement | null>(null);
+  const [androidPanel, setAndroidPanel] = useState(0);
   const voiceSupported = supportsVoiceRecording();
+  const isNative = Capacitor.isNativePlatform();
+
+  function showAndroidPanel(panel: number) {
+    const pager = androidPagerRef.current;
+    setAndroidPanel(panel);
+    if (!pager) return;
+    const left = panel * pager.clientWidth;
+    if (typeof pager.scrollTo === "function") pager.scrollTo({ left, behavior: "smooth" });
+    else pager.scrollLeft = left;
+  }
 
   function saveConnectionSettings(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -291,6 +303,114 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       const hint = await revealWordHint(exercise.id, word);
       setWordHints((current) => ({ ...current, [normalized]: hint }));
     } catch { setError(`Для слова «${word}» перевод пока недоступен.`); }
+  }
+
+  if (isNative) {
+    return (
+      <div className="android-shell">
+        <header className="android-header">
+          <strong>Serbo<span>Talk</span></strong>
+          <nav aria-label="Панели приложения">
+            <button type="button" aria-label="Темы" aria-current={androidPanel === 0 ? "page" : undefined} onClick={() => showAndroidPanel(0)}><Icon name="home" /></button>
+            <button type="button" aria-label="Тренировка" aria-current={androidPanel === 1 ? "page" : undefined} onClick={() => showAndroidPanel(1)}><Icon name="mic" /></button>
+            <button type="button" aria-label="Статистика" aria-current={androidPanel === 2 ? "page" : undefined} onClick={() => showAndroidPanel(2)}><Icon name="chart" /></button>
+          </nav>
+        </header>
+
+        <div
+          className="android-pager"
+          ref={androidPagerRef}
+          onScroll={(event) => {
+            const width = event.currentTarget.clientWidth;
+            if (width) setAndroidPanel(Math.round(event.currentTarget.scrollLeft / width));
+          }}
+        >
+          <section className="android-page android-topics-page" aria-label="Выбор темы">
+            <h1>Темы</h1>
+            <div className="android-topic-list" aria-label="Темы тренировки">
+              <button className={isReviewMode ? "android-topic is-selected" : "android-topic"} type="button" disabled={loading || reviewPhrases.length === 0} onClick={() => { showAndroidPanel(1); void startReviewTraining(); }}>
+                <span className="topic__icon"><Icon name="progress" /></span>
+                <strong>Повторение</strong>
+                <small>{reviewPhrases.length}</small>
+              </button>
+              {topics.map((topic) => (
+                <button className={selectedTopic === topic.id && !customTopic ? "android-topic is-selected" : "android-topic"} key={topic.id} type="button" onClick={() => { selectTopic(topic.id); showAndroidPanel(1); }}>
+                  <span className={`topic__icon topic__icon--${topicIcons[topic.id] ?? "message"}`}><Icon name={topicIcons[topic.id] ?? "message"} /></span>
+                  <strong>{topic.title_ru}</strong>
+                  <small>{topic.phrase_count}</small>
+                </button>
+              ))}
+            </div>
+
+            <details className="android-action-card">
+              <summary><Icon name="plus" /> Своя тема</summary>
+              <form onSubmit={saveCustomTopic}>
+                <input value={customTopic} onChange={(event) => setCustomTopic(event.target.value)} placeholder="Название темы" aria-label="Своя тема" />
+                <button type="submit" disabled={loading || customTopic.trim().length < 2}>Создать</button>
+              </form>
+            </details>
+            <details className="android-action-card">
+              <summary><Icon name="plus" /> Добавить фразу</summary>
+              <form onSubmit={saveReviewPhrase}>
+                <input value={newPhrase} onChange={(event) => { setNewPhrase(event.target.value); setPreparedPhrase(undefined); }} placeholder="Фраза на русском" aria-label="Новая фраза для повторения" />
+                {preparedPhrase && <div className="android-prepared-phrase" aria-label="Канонический перевод">
+                  <strong>{preparedPhrase.canonical_sr}</strong>
+                  <select aria-label="Тема для новой фразы" value={phraseTopicId} onChange={(event) => setPhraseTopicId(event.target.value)}>
+                    <option value="">Выберите тему</option>
+                    {topics.map((topic) => <option value={topic.id} key={topic.id}>{topic.title_ru}</option>)}
+                  </select>
+                </div>}
+                <button type="submit" disabled={loading || newPhrase.trim().length < 3 || Boolean(preparedPhrase && !phraseTopicId)}>{preparedPhrase ? "Сохранить" : "Перевести"}</button>
+              </form>
+            </details>
+            {backendState === "offline" && <p className="android-error" role="alert">Нет подключения к сервису.</p>}
+          </section>
+
+          <section className="android-page android-training-page" aria-label="Тренировка">
+            {!session ? (
+              <div className="android-training-start">
+                <span className="topic__icon"><Icon name={topicIcons[currentTopic?.id ?? ""] ?? "message"} size={26} /></span>
+                <h1>{customTopic.trim() || currentTopic?.title_ru || "Выберите тему"}</h1>
+                <button type="button" disabled={loading || backendState !== "online" || !selectedTopic || selectedTopicData?.phrase_count === 0} onClick={startTraining}>{loading ? "Загрузка…" : "Начать"}</button>
+              </div>
+            ) : (
+              <div className="android-training-content">
+                <div className="android-training-meta"><span>{currentTopic?.title_ru}</span><small>{exerciseNumber}/{session.requested_length}</small></div>
+                <h1 className="interactive-phrase" aria-label={exercise?.source_ru ?? "Готовим фразу…"}>{exercise ? exercise.source_ru.split(/([А-Яа-яЁё]+)/g).filter(Boolean).map((part, index) => /^[А-Яа-яЁё]+$/.test(part) ? <span className="word-wrap" key={`${part}-${index}`}><button className={wordHints[part.toLocaleLowerCase("ru-RU")] ? "word-token is-used" : "word-token"} type="button" onClick={() => showWordHint(part)}>{part}</button>{activeHint === part.toLocaleLowerCase("ru-RU") && <span className="word-tooltip" role="status">{wordHints[part.toLocaleLowerCase("ru-RU")]?.translation_sr ?? "Загружаем…"}</span>}</span> : <span key={`${part}-${index}`}>{part}</span>) : "Готовим фразу…"}</h1>
+
+                {!attempt ? <form className="android-answer" onSubmit={checkAnswer}>
+                  <label className="sr-only" htmlFor="android-serbian-answer">Ваш ответ</label>
+                  <textarea id="android-serbian-answer" value={answer} onChange={(event) => { if (voiceRef.current) stopVoice(); voiceTimingRef.current = undefined; setAnswer(event.target.value); }} placeholder="Ответ на сербском" rows={3} />
+                  {voiceState === "connecting" || voiceState === "recording" || voiceState === "transcribing" ? <button className="mic-button is-active" type="button" aria-label={voiceState === "recording" ? "Завершить запись" : "Остановить запись"} disabled={voiceState === "transcribing"} onClick={voiceState === "recording" ? finishVoice : stopVoice}><Icon name="mic" size={34} /></button> : <button className="mic-button" type="button" aria-label="Ответить голосом" disabled={!voiceSupported} onClick={startVoice}><Icon name="mic" size={34} /></button>}
+                  {voiceState !== "idle" && <p className="android-voice-state" role="status">{voiceState === "connecting" ? "Подключаем микрофон…" : voiceState === "recording" ? "Запись" : voiceState === "transcribing" ? "Распознаём…" : "Повторите запись"}</p>}
+                  <button className="android-primary" type="submit" disabled={loading || !answer.trim()}>{loading ? "Проверяем…" : "Проверить"}</button>
+                </form> : <div className={`android-feedback feedback--${attempt.analysis.verdict}`}>
+                  <div className="feedback__score"><span>{Math.round(attempt.overall_score * 100)}%</span><strong>{attempt.analysis.verdict === "correct" ? "Верно" : attempt.analysis.verdict === "mostly_correct" ? "Почти верно" : "Попробуйте ещё"}</strong></div>
+                  <p>{attempt.analysis.short_feedback_ru}</p>
+                  <div className="correction"><small>Правильный вариант</small><span>{attempt.analysis.corrected_sr}</span></div>
+                  <details><summary>Разбор</summary><p>{attempt.analysis.detailed_feedback_ru}</p></details>
+                  <button className="android-primary" type="button" disabled={loading} onClick={nextExercise}>{loading ? "Загрузка…" : "Следующая"}</button>
+                </div>}
+                {error && <p className="android-error" role="alert">{error}</p>}
+              </div>
+            )}
+          </section>
+
+          <section className="android-page android-statistics-page" aria-label="Статистика">
+            <StatisticsView />
+            <footer className="android-service-bar">
+              <span className="avatar">{account.display_name?.slice(0, 1).toLocaleUpperCase() || "A"}</span>
+              <span><strong>{account.display_name || account.email}</strong><small>{account.daily_usage.limit === null ? `${account.daily_usage.used} фраз` : `${account.daily_usage.remaining} из ${account.daily_usage.limit}`}</small></span>
+              <button type="button" onClick={onSignOut}>Выйти</button>
+            </footer>
+            {account.role === "admin" && <details className="android-action-card android-admin-settings">
+              <summary><Icon name="settings" /> Backend</summary>
+              <form onSubmit={saveConnectionSettings}><input value={apiEndpoint} onChange={(event) => setApiEndpoint(event.target.value)} aria-label="Адрес общего backend" /><button type="submit">Сохранить</button></form>
+            </details>}
+          </section>
+        </div>
+      </div>
+    );
   }
 
   return (

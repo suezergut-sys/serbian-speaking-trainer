@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { Capacitor } from "@capacitor/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../auth", () => ({
@@ -30,7 +31,10 @@ describe("App", () => {
 
   function mockApi(omitLearnerUpdates = false, initialReviewPhrases: Array<Record<string, unknown>> = [], role = "user") {
     return vi.fn().mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
-      const url = input.toString();
+      const rawUrl = input.toString();
+      const url = rawUrl.startsWith("http")
+        ? `${new URL(rawUrl).pathname}${new URL(rawUrl).search}`
+        : rawUrl;
       let body: unknown;
       if (url === "/api/health") body = { status: "ok", service: "serbian-speaking-trainer" };
       else if (url === "/api/auth/me") body = {
@@ -126,6 +130,32 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: /В банке/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Настроить подключение" })).not.toBeInTheDocument();
     expect(screen.queryByText(/Эмулятор:/)).not.toBeInTheDocument();
+  });
+
+  it("renders the native Android experience as three minimal swipe panels", async () => {
+    vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(true);
+    vi.stubGlobal("fetch", mockApi());
+
+    render(<App />);
+
+    expect(await screen.findByRole("region", { name: "Выбор темы" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Тренировка" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Статистика" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Темы" })).toHaveAttribute("aria-current", "page");
+    expect(screen.queryByRole("navigation", { name: "Основная навигация" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Практикуйтесь в реальных ситуациях")).not.toBeInTheDocument();
+    expect(screen.queryByText("Каждый короткий разговор делает речь увереннее.")).not.toBeInTheDocument();
+
+    const pager = screen.getByRole("region", { name: "Выбор темы" }).parentElement as HTMLElement;
+    Object.defineProperty(pager, "clientWidth", { configurable: true, value: 320 });
+    pager.scrollLeft = 640;
+    fireEvent.scroll(pager);
+    expect(screen.getByRole("button", { name: "Статистика" })).toHaveAttribute("aria-current", "page");
+
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    expect(screen.getByRole("button", { name: "Тренировка" })).toHaveAttribute("aria-current", "page");
+    fireEvent.click(screen.getByRole("button", { name: "Начать" }));
+    expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
   });
 
   it("shows the user list only for an administrator", async () => {
