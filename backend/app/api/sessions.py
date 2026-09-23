@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.schemas import CreateSessionRequest, ExerciseResponse, SessionResponse
+from app.schemas import CreateSessionRequest, ExerciseResponse, SessionResponse, StartSessionResponse
 from app.services.ai_adapter import StructuredAIProvider, get_ai_provider
 from app.services.exercise_generator import ExerciseGenerator
 from app.services.review_service import ReviewQueueEmptyError
@@ -23,6 +23,23 @@ def create_session(
 ) -> SessionResponse:
     try:
         return SessionService(db, ai, user.id).create(request)
+    except TopicNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Topic not found") from exc
+    except ReviewQueueEmptyError as exc:
+        raise HTTPException(status_code=409, detail="Review queue is empty") from exc
+
+
+@router.post("/start", response_model=StartSessionResponse, status_code=status.HTTP_201_CREATED)
+def start_session(
+    request: CreateSessionRequest,
+    db: Session = Depends(get_db),
+    ai: StructuredAIProvider = Depends(get_ai_provider),
+    user: User = Depends(get_current_user),
+) -> StartSessionResponse:
+    try:
+        session = SessionService(db, ai, user.id).create(request)
+        exercise = ExerciseGenerator(db, ai, user.id).generate_next(session.id)
+        return StartSessionResponse(session=session, exercise=exercise)
     except TopicNotFoundError as exc:
         raise HTTPException(status_code=404, detail="Topic not found") from exc
     except ReviewQueueEmptyError as exc:

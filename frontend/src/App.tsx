@@ -3,7 +3,7 @@ import { Capacitor } from "@capacitor/core";
 
 import { fetchHealth } from "./api/health";
 import { getApiBaseUrl, setApiBaseUrl } from "./api/baseUrl";
-import { addReviewPhrase, BackendError, createSession, createTopic, fetchNextExercise, fetchReviewPhrases, fetchTopics, prepareReviewPhrase, revealWordHint, submitAttempt, transcribeAudio } from "./api/training";
+import { addReviewPhrase, BackendError, createTopic, fetchNextExercise, fetchReviewPhrases, fetchTopics, prepareReviewPhrase, revealWordHint, startTrainingSession, submitAttempt, transcribeAudio } from "./api/training";
 import type { Attempt, AttemptTimings, Exercise, PreparedReviewPhrase, ReviewPhrase, TopicListItem, TrainingSession, WordHint } from "./types/training";
 import { supportsVoiceRecording, VoiceRecorder } from "./voiceRecorder";
 import { StatisticsView } from "./StatisticsView";
@@ -182,12 +182,12 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     stopVoice(); setAnswer(""); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
     setLoading(true); setError(undefined);
     try {
-      const created = await createSession(
+      const started = await startTrainingSession(
         selectedTopic
               ? { topic_id: selectedTopic }
               : {},
       );
-      setSession(created); setExercise(await fetchNextExercise(created.id)); setExerciseNumber(1);
+      setSession(started.session); setExercise(started.exercise); setExerciseNumber(1);
     } catch (requestError) {
       setSession(undefined); setExercise(undefined);
       setError(requestError instanceof BackendError && requestError.status === 409
@@ -206,8 +206,8 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     }
     setLoading(true);
     try {
-      const created = await createSession({ review_mode: true });
-      setSession(created); setExercise(await fetchNextExercise(created.id)); setExerciseNumber(1);
+      const started = await startTrainingSession({ review_mode: true });
+      setSession(started.session); setExercise(started.exercise); setExerciseNumber(1);
       setAnswer(""); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
     } catch {
       setError("Не удалось запустить повторение фраз.");

@@ -33,6 +33,11 @@ export type Exercise = {
   difficulty: number;
 };
 
+export type StartedTraining = {
+  session: TrainingSession;
+  exercise: Exercise;
+};
+
 export type AnswerIssue = {
   type: "grammar" | "vocabulary" | "naturalness" | "pronunciation" | "fluency" | "meaning";
   skill_key: string;

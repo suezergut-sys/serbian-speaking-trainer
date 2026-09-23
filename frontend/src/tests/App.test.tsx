@@ -80,9 +80,9 @@ describe("App", () => {
           attempts: 2, status: "mastered", difficulty: "easy", next_review_at: "2026-10-04T10:00:00Z",
         }] }],
       };
-      else if (url === "/api/sessions") {
+      else if (url === "/api/sessions" || url === "/api/sessions/start") {
         const request = JSON.parse(init?.body as string);
-        body = {
+        const session = {
         id: "session-1", status: "active", level: "A2", started_at: "2026-09-16T10:00:00Z",
         requested_length: 10,
         topic: {
@@ -90,7 +90,15 @@ describe("App", () => {
           target_level: "A2", likely_intents: ["открыть счёт"], suggested_vocabulary: ["račun"],
           excluded_domains: [], normalized_prompt_context: "Разговор в банке",
         },
-      };}
+      };
+        body = url.endsWith("/start") ? {
+          session,
+          exercise: {
+            id: "exercise-1", session_id: "session-1", source_ru: "Я хочу открыть счёт.",
+            targeted_skills: ["modal_verbs"], expected_level: "A2", difficulty: 1,
+          },
+        } : session;
+      }
       else if (url.endsWith("/next-exercise")) body = {
         id: "exercise-1", session_id: "session-1", source_ru: "Я хочу открыть счёт.",
         targeted_skills: ["modal_verbs"], expected_level: "A2", difficulty: 1,
@@ -159,7 +167,8 @@ describe("App", () => {
     expect(screen.getByText("modal_verbs")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Ответить голосом/ })).toBeDisabled();
     expect(screen.getByText(/Микрофон недоступен/)).toBeInTheDocument();
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/sessions", expect.objectContaining({ method: "POST" })));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/sessions/start", expect.objectContaining({ method: "POST" })));
+    expect(fetchMock.mock.calls.some(([url]) => url.toString().endsWith("/next-exercise"))).toBe(false);
   });
 
   it("creates a persisted empty custom topic", async () => {
@@ -284,7 +293,7 @@ describe("App", () => {
 
     expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
     expect(screen.queryByLabelText("Фразы для повторения")).not.toBeInTheDocument();
-    const sessionCall = fetchMock.mock.calls.find(([url]) => url === "/api/sessions");
+    const sessionCall = fetchMock.mock.calls.find(([url]) => url === "/api/sessions/start");
     expect(JSON.parse(sessionCall?.[1]?.body as string)).toEqual({ review_mode: true, length: 10 });
   });
 
@@ -299,7 +308,7 @@ describe("App", () => {
       const url = input.toString();
       if (url.endsWith("/next-exercise")) {
         nextExerciseCalls += 1;
-        if (nextExerciseCalls === 2) {
+        if (nextExerciseCalls === 1) {
           return Promise.resolve({ ok: false, status: 409, json: async () => ({ detail: "No active review phrases" }) });
         }
       }
@@ -310,7 +319,8 @@ describe("App", () => {
 
     await screen.findByText("1 требуют практики");
     fireEvent.click(await screen.findByRole("button", { name: /Фразы для повторения/ }));
-    await waitFor(() => expect(nextExerciseCalls).toBe(1));
+    expect(await screen.findByLabelText("Ваш ответ")).toBeInTheDocument();
+    expect(nextExerciseCalls).toBe(0);
     fireEvent.change(await screen.findByLabelText("Ваш ответ"), { target: { value: "Stari odgovor" } });
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
     expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
