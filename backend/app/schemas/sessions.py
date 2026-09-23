@@ -2,6 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, model_validator
 
+from app.schemas.exercises import ExerciseResponse
 from app.schemas.topics import TopicContext
 
 
@@ -32,3 +33,8 @@ class SessionResponse(BaseModel):
     started_at: datetime
     requested_length: int
     topic: TopicContext
+
+
+class StartSessionResponse(BaseModel):
+    session: SessionResponse
+    exercise: ExerciseResponse

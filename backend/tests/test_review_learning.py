@@ -131,6 +131,26 @@ def test_review_mode_rejects_an_empty_queue(api_client: TestClient) -> None:
     assert response.json()["detail"] == "Review queue is empty"
 
 
+def test_review_mode_starts_with_first_phrase_in_one_request(api_client: TestClient) -> None:
+    created = api_client.post(
+        "/api/review-phrases",
+        json={
+            "source_ru": "Мне нужно позвонить хозяину.",
+            "canonical_sr": "Moram da pozovem vlasnika.",
+            "topic_id": "misc",
+        },
+    )
+    assert created.status_code == 201
+
+    response = api_client.post("/api/sessions/start", json={"review_mode": True, "length": 10})
+
+    assert response.status_code == 201
+    payload = response.json()
+    assert payload["session"]["topic"]["id"] == "review-phrases"
+    assert payload["exercise"]["source_ru"] == created.json()["source_ru"]
+    assert payload["exercise"]["session_id"] == payload["session"]["id"]
+
+
 def test_ninety_five_percent_counts_as_a_correct_review(
     db_session: Session,
 ) -> None:
