@@ -136,6 +136,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\launch-local-a
 - `POST /api/sessions` — новая сессия со snapshot темы.
 - `GET /api/sessions/{id}` — состояние сессии.
 - `POST /api/sessions/{id}/next-exercise` — следующее упражнение из постоянного каталога preset-темы; для своей темы используется прежний AI/fallback-поток.
+- При выборе упражнения состояния навыков текущего пользователя загружаются пакетно; генератор повторно использует загруженный каталог навыков вместо отдельного запроса на каждый навык.
 - `POST /api/attempts` — анализ текстового ответа, сохранение попытки и ошибок.
 - `POST /api/transcriptions` — расшифровка короткой записи из памяти без передачи API key во frontend.
 - `POST /api/review-phrases/prepare` — подготовка валидированного канонического перевода пользовательской фразы.

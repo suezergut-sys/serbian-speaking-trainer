@@ -1,5 +1,5 @@
 from fastapi.testclient import TestClient
-from sqlalchemy import select
+from sqlalchemy import event, select
 from sqlalchemy.orm import Session
 
 from app.models import Exercise, TopicPreset, TrainingSession
@@ -59,6 +59,25 @@ def test_next_exercise_is_persisted_without_exposing_answer(api_client: TestClie
     assert stored.target_hints_json["canonical_sr"] == "Mogu li da dobijem jelovnik, molim vas?"
     assert stored.generation_meta_json["topic_phrase_id"] == "cafe-01"
     assert db_session.get(TrainingSession, session_payload["id"]) is not None
+
+
+def test_first_preset_exercise_uses_batched_skill_queries(api_client: TestClient, db_session: Session) -> None:
+    session_id = api_client.post("/api/sessions", json={"topic_id": "cafe"}).json()["id"]
+    statements: list[str] = []
+
+    def capture_query(_connection, _cursor, statement, _parameters, _context, _executemany) -> None:
+        statements.append(statement)
+
+    assert db_session.bind is not None
+    event.listen(db_session.bind, "before_cursor_execute", capture_query)
+    try:
+        response = api_client.post(f"/api/sessions/{session_id}/next-exercise")
+    finally:
+        event.remove(db_session.bind, "before_cursor_execute", capture_query)
+
+    assert response.status_code == 201
+    assert len([sql for sql in statements if "FROM learner_skills" in sql]) == 1
+    assert len(statements) <= 8
 
 
 def test_missing_resources_and_validation(api_client: TestClient) -> None:
