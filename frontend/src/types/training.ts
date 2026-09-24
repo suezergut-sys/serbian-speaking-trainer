@@ -31,6 +31,7 @@ export type Exercise = {
   targeted_skills: string[];
   expected_level: "A2";
   difficulty: number;
+  word_hints?: Array<Pick<WordHint, "word_ru" | "translation_sr">>;
 };
 
 export type StartedTraining = {
