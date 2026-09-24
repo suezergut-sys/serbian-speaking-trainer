@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { fetchMonthlyStatistics, fetchPhraseStatistics } from "./api/statistics";
 import type { MonthlyStatistics, PhraseStatistics } from "./types/statistics";
+import { displaySerbian, type SerbianAlphabet } from "./serbianScript";
 
 const weekDays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 type StatisticsTab = "activity" | "phrases";
@@ -20,7 +21,7 @@ function formatReviewDate(value: string | null): string {
   return new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(value));
 }
 
-function PhrasesTab() {
+function PhrasesTab({ alphabet }: { alphabet: SerbianAlphabet }) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<PageSize>("10");
   const [statistics, setStatistics] = useState<PhraseStatistics>();
@@ -66,7 +67,7 @@ function PhrasesTab() {
           <div className="phrase-table-wrap"><table className="phrase-table">
             <thead><tr><th>Фраза на русском</th><th>Фраза на сербском</th><th>Попытки</th><th>Статус</th><th>Следующий повтор</th></tr></thead>
             <tbody>{group.phrases.map((phrase) => <tr key={phrase.id}>
-              <td>{phrase.source_ru}</td><td lang="sr-Latn">{phrase.target_sr}</td><td>{phrase.attempts}</td>
+              <td>{phrase.source_ru}</td><td lang={alphabet === "cyrillic" ? "sr-Cyrl" : "sr-Latn"}>{displaySerbian(phrase.target_sr, alphabet)}</td><td>{phrase.attempts}</td>
               <td><span className={`phrase-status phrase-status--${phrase.status}`}>{phrase.status === "mastered" ? "выучена" : "в изучении"}</span></td>
               <td>{phrase.status === "mastered" ? formatReviewDate(phrase.next_review_at) : "—"}</td>
             </tr>)}</tbody>
@@ -131,11 +132,11 @@ function ActivityTab() {
   </>;
 }
 
-export function StatisticsView() {
+export function StatisticsView({ alphabet = "latin" }: { alphabet?: SerbianAlphabet }) {
   const [tab, setTab] = useState<StatisticsTab>("activity");
   return <main className="statistics-page">
     <header className="statistics-header"><div><p className="kicker">Ваш прогресс</p><h1>Статистика</h1><span>Активность по дням и состояние фраз в интервальном повторении.</span></div></header>
     <nav className="statistics-tabs" aria-label="Разделы статистики"><button className={tab === "activity" ? "is-active" : ""} type="button" onClick={() => setTab("activity")}>Активность</button><button className={tab === "phrases" ? "is-active" : ""} type="button" onClick={() => setTab("phrases")}>Фразы</button></nav>
-    {tab === "activity" ? <ActivityTab /> : <PhrasesTab />}
+    {tab === "activity" ? <ActivityTab /> : <PhrasesTab alphabet={alphabet} />}
   </main>;
 }
