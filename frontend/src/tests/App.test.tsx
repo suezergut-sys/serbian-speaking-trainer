@@ -1,12 +1,19 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { Capacitor } from "@capacitor/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+const authEvents = vi.hoisted(() => ({
+  notify: undefined as undefined | ((session: { access_token: string } | null) => void),
+}));
 
 vi.mock("../auth", () => ({
   authenticatedFetch: (input: RequestInfo | URL, init?: RequestInit) => fetch(input, init),
   initializeAuth: async () => ({ access_token: "test-token" }),
   isAuthConfigured: () => true,
-  onAuthStateChange: () => () => undefined,
+  onAuthStateChange: (callback: (session: { access_token: string } | null) => void) => {
+    authEvents.notify = callback;
+    return () => { authEvents.notify = undefined; };
+  },
   signInWithGoogle: async () => undefined,
   signOut: async () => undefined,
 }));
@@ -140,6 +147,17 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: /В банке/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Настроить подключение" })).not.toBeInTheDocument();
     expect(screen.queryByText(/Эмулятор:/)).not.toBeInTheDocument();
+  });
+
+  it("does not reload the profile for a repeated auth event with the same token", async () => {
+    const fetchMock = mockApi();
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    await screen.findByRole("button", { name: "Начать тренировку" });
+
+    await act(async () => { authEvents.notify?.({ access_token: "test-token" }); });
+
+    expect(fetchMock.mock.calls.filter(([url]) => url.toString() === "/api/auth/me")).toHaveLength(1);
   });
 
   it("allows training while the review list is still loading", async () => {
