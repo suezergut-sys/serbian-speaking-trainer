@@ -75,12 +75,12 @@ export async function authenticatedFetch(input: RequestInfo | URL, init: Request
   const response = await fetch(input, { ...init, headers });
   if (new URLSearchParams(window.location.search).has("perf")) {
     const path = new URL(input.toString(), window.location.origin).pathname;
-    console.info("SerboTalk timing", {
+    console.info(`SerboTalk timing ${JSON.stringify({
       path,
       session_ms: Math.round(sessionMs),
       request_ms: Math.round(performance.now() - startedAt - sessionMs),
       server_timing: response.headers.get("Server-Timing"),
-    });
+    })}`);
   }
   return response;
 }
