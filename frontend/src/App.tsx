@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Capacitor } from "@capacitor/core";
+import type { Session } from "@supabase/supabase-js";
 
 import { getApiBaseUrl, setApiBaseUrl } from "./api/baseUrl";
 import { addReviewPhrase, BackendError, createTopic, fetchNextExercise, fetchReviewPhrases, fetchTopics, prepareReviewPhrase, revealWordHint, startTrainingSession, submitAttempt, transcribeAudio } from "./api/training";
@@ -61,19 +62,28 @@ function AuthenticatedApp() {
 
   useEffect(() => {
     let active = true;
-    const syncAccount = async (sessionPresent: boolean) => {
+    let lastToken: string | null | undefined;
+    const syncAccount = async (session: Session | null) => {
       if (!active) return;
-      setHasSession(sessionPresent);
-      if (!sessionPresent) { setAccount(undefined); setAuthReady(true); return; }
-      try { setAccount(await fetchCurrentUser()); setAuthError(undefined); }
-      catch { setAuthError("Не удалось загрузить профиль. Проверьте настройку Supabase Auth на backend."); }
-      finally { if (active) setAuthReady(true); }
+      const token = session?.access_token ?? null;
+      if (lastToken === token) return;
+      lastToken = token;
+      setHasSession(Boolean(session));
+      if (!session) { setAccount(undefined); setAuthReady(true); return; }
+      try {
+        const user = await fetchCurrentUser();
+        if (active && lastToken === token) { setAccount(user); setAuthError(undefined); }
+      } catch {
+        if (active && lastToken === token) setAuthError("Не удалось загрузить профиль. Проверьте настройку Supabase Auth на backend.");
+      } finally {
+        if (active && lastToken === token) setAuthReady(true);
+      }
     };
-    initializeAuth().then((session) => syncAccount(Boolean(session))).catch(() => {
+    initializeAuth().then(syncAccount).catch(() => {
       if (active) { setAuthError("Не удалось восстановить вход."); setAuthReady(true); }
     });
     const unsubscribe = onAuthStateChange((session) => {
-      window.setTimeout(() => { void syncAccount(Boolean(session)); }, 0);
+      window.setTimeout(() => { void syncAccount(session); }, 0);
     });
     return () => { active = false; unsubscribe(); };
   }, []);
