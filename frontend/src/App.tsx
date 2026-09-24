@@ -12,11 +12,13 @@ import { fetchCurrentUser } from "./api/users";
 import { initializeAuth, isAuthConfigured, onAuthStateChange, signInWithGoogle, signOut } from "./auth";
 import type { CurrentUser } from "./types/auth";
 import { LegalPage } from "./LegalPage";
+import { SettingsView } from "./SettingsView";
+import { displaySerbian, displaySerbianInRussianText, readSerbianAlphabet, saveSerbianAlphabet, toSerbianLatin, type SerbianAlphabet } from "./serbianScript";
 import "./styles.css";
 
 type BackendState = "checking" | "online" | "offline";
 type VoiceState = "idle" | "connecting" | "recording" | "transcribing" | "error";
-type AppView = "practice" | "statistics" | "progress" | "admin";
+type AppView = "practice" | "statistics" | "progress" | "settings" | "admin";
 
 const topicIcons: Record<string, string> = {
   "job-interview": "briefcase", bank: "bank", vacation: "sun", cafe: "cup",
@@ -116,6 +118,8 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const [exercise, setExercise] = useState<Exercise>();
   const [exerciseNumber, setExerciseNumber] = useState(1);
   const [answer, setAnswer] = useState("");
+  const [hasTranscript, setHasTranscript] = useState(false);
+  const [alphabet, setAlphabet] = useState<SerbianAlphabet>(() => readSerbianAlphabet(account.id));
   const [attempt, setAttempt] = useState<Attempt>();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
@@ -128,6 +132,12 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const [androidPanel, setAndroidPanel] = useState(0);
   const voiceSupported = supportsVoiceRecording();
   const isNative = Capacitor.isNativePlatform();
+
+  function changeAlphabet(next: SerbianAlphabet) {
+    setAnswer((current) => displaySerbian(current, next));
+    setAlphabet(next);
+    saveSerbianAlphabet(account.id, next);
+  }
 
   function showAndroidPanel(panel: number) {
     const pager = androidPagerRef.current;
@@ -188,7 +198,8 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       const recording = await recorder.finish();
       voiceRef.current = undefined;
       voiceTimingRef.current = recording.timing;
-      setAnswer((await transcribeAudio(exercise.id, recording.audio)).text);
+      setAnswer(displaySerbian((await transcribeAudio(exercise.id, recording.audio)).text, alphabet));
+      setHasTranscript(true);
       setVoiceState("idle");
     } catch {
       recorder.stop(); voiceRef.current = undefined; voiceTimingRef.current = undefined;
@@ -198,14 +209,14 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
   async function startVoice() {
     if (!exercise || !voiceSupported) return;
-    stopVoice(); setAnswer(""); setError(undefined); setVoiceState("connecting");
+    stopVoice(); setAnswer(""); setHasTranscript(false); setError(undefined); setVoiceState("connecting");
     const recorder = new VoiceRecorder(); voiceRef.current = recorder;
     try { await recorder.start(); if (voiceRef.current === recorder) setVoiceState("recording"); }
     catch { recorder.stop(); if (voiceRef.current === recorder) voiceRef.current = undefined; setVoiceState("error"); setError("Не удалось получить доступ к микрофону. Проверьте разрешение браузера."); }
   }
 
   async function startTraining() {
-    stopVoice(); setAnswer(""); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
+    stopVoice(); setAnswer(""); setHasTranscript(false); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
     setLoading(true); setError(undefined);
     try {
       const started = await startTrainingSession(
@@ -234,7 +245,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     try {
       const started = await startTrainingSession({ review_mode: true });
       setSession(started.session); setExercise(started.exercise); setExerciseNumber(1);
-      setAnswer(""); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
+      setAnswer(""); setHasTranscript(false); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
     } catch {
       setError("Не удалось запустить повторение фраз.");
     } finally { setLoading(false); }
@@ -243,11 +254,11 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   async function nextExercise() {
     if (!session) return;
     stopVoice(); setLoading(true); setError(undefined);
-    try { setExercise(await fetchNextExercise(session.id)); setExerciseNumber((current) => Math.min(current + 1, session.requested_length)); setAnswer(""); setAttempt(undefined); setWordHints({}); setActiveHint(undefined); }
+    try { setExercise(await fetchNextExercise(session.id)); setExerciseNumber((current) => Math.min(current + 1, session.requested_length)); setAnswer(""); setHasTranscript(false); setAttempt(undefined); setWordHints({}); setActiveHint(undefined); }
     catch (requestError) {
       if (isReviewMode && requestError instanceof BackendError && requestError.status === 409) {
         setSession(undefined); setExercise(undefined); setReviewPhrases([]);
-        setAnswer(""); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
+        setAnswer(""); setHasTranscript(false); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
         setError("Все фразы из карусели освоены. Отличная работа!");
       } else setError("Не удалось получить следующую фразу.");
     }
@@ -256,10 +267,10 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
   async function checkAnswer(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!exercise || !answer.trim()) return;
+    if (!exercise || !hasTranscript || !answer.trim()) return;
     setLoading(true); setError(undefined); setActiveHint(undefined); if (voiceRef.current) stopVoice();
     try {
-      setAttempt(await submitAttempt(exercise.id, answer.trim(), voiceTimingRef.current, Object.keys(wordHints)));
+      setAttempt(await submitAttempt(exercise.id, toSerbianLatin(answer.trim()), voiceTimingRef.current, Object.keys(wordHints)));
       setReviewPhrases(await fetchReviewPhrases());
       onAccountChange(await fetchCurrentUser());
     }
@@ -269,7 +280,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
   function resetTraining() {
     stopVoice(); setView("practice"); setSession(undefined); setExercise(undefined); setExerciseNumber(1);
-    setAnswer(""); setAttempt(undefined); setError(undefined); setWordHints({}); setActiveHint(undefined);
+    setAnswer(""); setHasTranscript(false); setAttempt(undefined); setError(undefined); setWordHints({}); setActiveHint(undefined);
   }
 
   function selectTopic(topicId: string) {
@@ -336,6 +347,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
             <button type="button" aria-label="Темы" aria-current={androidPanel === 0 ? "page" : undefined} onClick={() => showAndroidPanel(0)}><Icon name="home" /></button>
             <button type="button" aria-label="Тренировка" aria-current={androidPanel === 1 ? "page" : undefined} onClick={() => showAndroidPanel(1)}><Icon name="mic" /></button>
             <button type="button" aria-label="Статистика" aria-current={androidPanel === 2 ? "page" : undefined} onClick={() => showAndroidPanel(2)}><Icon name="chart" /></button>
+            <button type="button" aria-label="Настройки" aria-current={androidPanel === 3 ? "page" : undefined} onClick={() => showAndroidPanel(3)}><Icon name="settings" /></button>
           </nav>
         </header>
 
@@ -376,7 +388,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
               <form onSubmit={saveReviewPhrase}>
                 <input value={newPhrase} onChange={(event) => { setNewPhrase(event.target.value); setPreparedPhrase(undefined); }} placeholder="Фраза на русском" aria-label="Новая фраза для повторения" />
                 {preparedPhrase && <div className="android-prepared-phrase" aria-label="Канонический перевод">
-                  <strong>{preparedPhrase.canonical_sr}</strong>
+                  <strong lang={alphabet === "cyrillic" ? "sr-Cyrl" : "sr-Latn"}>{displaySerbian(preparedPhrase.canonical_sr, alphabet)}</strong>
                   <select aria-label="Тема для новой фразы" value={phraseTopicId} onChange={(event) => setPhraseTopicId(event.target.value)}>
                     <option value="">Выберите тему</option>
                     {topics.map((topic) => <option value={topic.id} key={topic.id}>{topic.title_ru}</option>)}
@@ -398,19 +410,19 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
             ) : (
               <div className="android-training-content">
                 <div className="android-training-meta"><span>{currentTopic?.title_ru}</span><small>{exerciseNumber}/{session.requested_length}</small></div>
-                <h1 className="interactive-phrase" aria-label={exercise?.source_ru ?? "Готовим фразу…"}>{exercise ? exercise.source_ru.split(/([А-Яа-яЁё]+)/g).filter(Boolean).map((part, index) => /^[А-Яа-яЁё]+$/.test(part) ? <span className="word-wrap" key={`${part}-${index}`}><button className={wordHints[part.toLocaleLowerCase("ru-RU")] ? "word-token is-used" : "word-token"} type="button" onClick={() => showWordHint(part)}>{part}</button>{activeHint === part.toLocaleLowerCase("ru-RU") && <span className="word-tooltip" role="status">{wordHints[part.toLocaleLowerCase("ru-RU")]?.translation_sr ?? "Загружаем…"}</span>}</span> : <span key={`${part}-${index}`}>{part}</span>) : "Готовим фразу…"}</h1>
+                <h1 className="interactive-phrase" aria-label={exercise?.source_ru ?? "Готовим фразу…"}>{exercise ? exercise.source_ru.split(/([А-Яа-яЁё]+)/g).filter(Boolean).map((part, index) => /^[А-Яа-яЁё]+$/.test(part) ? <span className="word-wrap" key={`${part}-${index}`}><button className={wordHints[part.toLocaleLowerCase("ru-RU")] ? "word-token is-used" : "word-token"} type="button" onClick={() => showWordHint(part)}>{part}</button>{activeHint === part.toLocaleLowerCase("ru-RU") && <span className="word-tooltip" role="status">{wordHints[part.toLocaleLowerCase("ru-RU")] ? displaySerbian(wordHints[part.toLocaleLowerCase("ru-RU")].translation_sr, alphabet) : "Загружаем…"}</span>}</span> : <span key={`${part}-${index}`}>{part}</span>) : "Готовим фразу…"}</h1>
 
                 {!attempt ? <form className="android-answer" onSubmit={checkAnswer}>
-                  <label className="sr-only" htmlFor="android-serbian-answer">Ваш ответ</label>
-                  <textarea id="android-serbian-answer" value={answer} onChange={(event) => { if (voiceRef.current) stopVoice(); voiceTimingRef.current = undefined; setAnswer(event.target.value); }} placeholder="Ответ на сербском" rows={3} />
+                  {hasTranscript ? <><label className="sr-only" htmlFor="android-serbian-answer">Ваш ответ</label>
+                    <textarea id="android-serbian-answer" value={answer} onChange={(event) => { voiceTimingRef.current = undefined; setAnswer(event.target.value); }} placeholder="Исправьте распознанный ответ" rows={3} /></> : <p className="voice-prompt">Произнесите ответ в микрофон</p>}
                   {voiceState === "connecting" || voiceState === "recording" || voiceState === "transcribing" ? <button className="mic-button is-active" type="button" aria-label={voiceState === "recording" ? "Завершить запись" : "Остановить запись"} disabled={voiceState === "transcribing"} onClick={voiceState === "recording" ? finishVoice : stopVoice}><Icon name="mic" size={34} /></button> : <button className="mic-button" type="button" aria-label="Ответить голосом" disabled={!voiceSupported} onClick={startVoice}><Icon name="mic" size={34} /></button>}
-                  {voiceState !== "idle" && <p className="android-voice-state" role="status">{voiceState === "connecting" ? "Подключаем микрофон…" : voiceState === "recording" ? "Запись" : voiceState === "transcribing" ? "Распознаём…" : "Повторите запись"}</p>}
-                  <button className="android-primary" type="submit" disabled={loading || !answer.trim()}>{loading ? "Проверяем…" : "Проверить"}</button>
+                  {(!voiceSupported || voiceState !== "idle") && <p className="android-voice-state" role="status">{!voiceSupported ? "Микрофон недоступен. Разрешите доступ в настройках устройства." : voiceState === "connecting" ? "Подключаем микрофон…" : voiceState === "recording" ? "Запись" : voiceState === "transcribing" ? "Распознаём…" : "Повторите запись"}</p>}
+                  {hasTranscript && <button className="android-primary" type="submit" disabled={loading || !answer.trim()}>{loading ? "Проверяем…" : "Проверить"}</button>}
                 </form> : <div className={`android-feedback feedback--${attempt.analysis.verdict}`}>
                   <div className="feedback__score"><span>{Math.round(attempt.overall_score * 100)}%</span><strong>{attempt.analysis.verdict === "correct" ? "Верно" : attempt.analysis.verdict === "mostly_correct" ? "Почти верно" : "Попробуйте ещё"}</strong></div>
-                  <p>{attempt.analysis.short_feedback_ru}</p>
-                  <div className="correction"><small>Правильный вариант</small><span>{attempt.analysis.corrected_sr}</span></div>
-                  <details><summary>Разбор</summary><p>{attempt.analysis.detailed_feedback_ru}</p></details>
+                  <p>{displaySerbianInRussianText(attempt.analysis.short_feedback_ru, alphabet)}</p>
+                  <div className="correction"><small>Правильный вариант</small><span lang={alphabet === "cyrillic" ? "sr-Cyrl" : "sr-Latn"}>{displaySerbian(attempt.analysis.corrected_sr, alphabet)}</span></div>
+                  <details><summary>Разбор</summary><p>{displaySerbianInRussianText(attempt.analysis.detailed_feedback_ru, alphabet)}</p></details>
                   <button className="android-primary" type="button" disabled={loading} onClick={nextExercise}>{loading ? "Загрузка…" : "Следующая"}</button>
                 </div>}
                 {error && <p className="android-error" role="alert">{error}</p>}
@@ -419,7 +431,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
           </section>
 
           <section className="android-page android-statistics-page" aria-label="Статистика">
-            <StatisticsView />
+            <StatisticsView alphabet={alphabet} />
             <footer className="android-service-bar">
               <span className="avatar">{account.display_name?.slice(0, 1).toLocaleUpperCase() || "A"}</span>
               <span><strong>{account.display_name || account.email}</strong><small>{account.daily_usage.limit === null ? `${account.daily_usage.used} фраз` : `${account.daily_usage.remaining} из ${account.daily_usage.limit}`}</small></span>
@@ -429,6 +441,9 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
               <summary><Icon name="settings" /> Backend</summary>
               <form onSubmit={saveConnectionSettings}><input value={apiEndpoint} onChange={(event) => setApiEndpoint(event.target.value)} aria-label="Адрес общего backend" /><button type="submit">Сохранить</button></form>
             </details>}
+          </section>
+          <section className="android-page android-settings-page" aria-label="Настройки приложения">
+            <SettingsView alphabet={alphabet} onAlphabetChange={changeAlphabet} />
           </section>
         </div>
       </div>
@@ -445,6 +460,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
         <nav className="main-nav" aria-label="Основная навигация">
           <button className={view === "practice" ? "is-active" : ""} type="button" onClick={() => setView("practice")}><Icon name="home" />Практика</button>
           <button className={view === "statistics" ? "is-active" : ""} type="button" onClick={() => setView("statistics")}><Icon name="chart" />Статистика</button>
+          <button className={view === "settings" ? "is-active" : ""} type="button" onClick={() => setView("settings")}><Icon name="settings" />Настройки</button>
           <button className={view === "progress" ? "is-active" : ""} type="button" onClick={() => setView("progress")}><Icon name="progress" />Прогресс</button>
           {account.role === "admin" && !Capacitor.isNativePlatform() && <button className={view === "admin" ? "is-active" : ""} type="button" onClick={() => setView("admin")}><Icon name="settings" />Пользователи</button>}
         </nav>
@@ -465,7 +481,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
         </form>
       )}
 
-      {view === "admin" ? <AdminUsersView /> : view === "statistics" ? <StatisticsView /> : view === "progress" ? (
+      {view === "admin" ? <AdminUsersView /> : view === "statistics" ? <StatisticsView alphabet={alphabet} /> : view === "settings" ? <SettingsView alphabet={alphabet} onAlphabetChange={changeAlphabet} /> : view === "progress" ? (
         <main className="placeholder-page">
           <div className="placeholder-page__icon"><Icon name="progress" size={34} /></div>
           <p className="kicker">Раздел в разработке</p><h1>Прогресс</h1>
@@ -498,7 +514,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
               <div><span className="topic__icon"><Icon name="plus" /></span><span><strong>Добавить фразу</strong><small>Введите фразу на русском</small></span></div>
               <input value={newPhrase} onChange={(event) => { setNewPhrase(event.target.value); setPreparedPhrase(undefined); }} placeholder="Например: Я задержусь на десять минут" aria-label="Новая фраза для повторения" />
               {preparedPhrase && <div className="phrase-preparation" aria-label="Канонический перевод">
-                <small>Канонический перевод</small><strong>{preparedPhrase.canonical_sr}</strong>
+                <small>Канонический перевод</small><strong lang={alphabet === "cyrillic" ? "sr-Cyrl" : "sr-Latn"}>{displaySerbian(preparedPhrase.canonical_sr, alphabet)}</strong>
                 <label>Тема<select aria-label="Тема для новой фразы" value={phraseTopicId} onChange={(event) => setPhraseTopicId(event.target.value)}>
                   <option value="">Выберите тему</option>
                   {topics.map((topic) => <option value={topic.id} key={topic.id}>{topic.title_ru}</option>)}
@@ -516,7 +532,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                 <div className="welcome-card__glow"/><span className="welcome-card__icon"><Icon name={topicIcons[currentTopic?.id ?? ""] ?? "message"} size={32} /></span>
                 <p className="kicker">Выбранная ситуация</p><h2>{customTopic.trim() || currentTopic?.title_ru || "Выберите тему"}</h2>
                 <p>{selectedTopicData?.phrase_count === 0 ? "Тема пока пустая. Добавьте в неё фразы — автоматической генерации не будет." : currentTopic?.description_ru || "Темы загрузятся после подключения к backend."}</p>
-                <div className="welcome-card__steps"><span><b>1</b> Получите фразу</span><span><b>2</b> Ответьте голосом или текстом</span><span><b>3</b> Разберите результат</span></div>
+                <div className="welcome-card__steps"><span><b>1</b> Получите фразу</span><span><b>2</b> Ответьте голосом</span><span><b>3</b> Разберите результат</span></div>
                 {error && <p className="error" role="alert">{error}</p>}
                 <button className="primary" type="button" disabled={loading || backendState !== "online" || !selectedTopic || selectedTopicData?.phrase_count === 0} onClick={startTraining}>{selectedTopicData?.phrase_count === 0 ? "Сначала добавьте фразу" : loading ? "Готовим первую фразу…" : "Начать тренировку"}<Icon name="arrow" /></button>
               </div>
@@ -524,21 +540,20 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
               <>
                 <div className="phrase-card panel">
                   <div className="card-title"><span><Icon name="message" /></span><h2>{isReviewMode ? "Карусель повторения" : "Основная фраза"}</h2><small>{isReviewMode ? `Фраза ${exerciseNumber}` : `${exerciseNumber} / ${session.requested_length}`}</small></div>
-                  <div className="phrase-card__content"><span className="phrase-number">{String(exerciseNumber).padStart(2, "0")}</span><div><p className="kicker">Скажите по-сербски · нажмите на незнакомое слово</p><h3 id="exercise-title" className="interactive-phrase" aria-label={exercise?.source_ru ?? "Готовим фразу…"}>{exercise ? exercise.source_ru.split(/([А-Яа-яЁё]+)/g).filter(Boolean).map((part, index) => /^[А-Яа-яЁё]+$/.test(part) ? <span className="word-wrap" key={`${part}-${index}`}><button className={wordHints[part.toLocaleLowerCase("ru-RU")] ? "word-token is-used" : "word-token"} type="button" onClick={() => showWordHint(part)}>{part}</button>{activeHint === part.toLocaleLowerCase("ru-RU") && <span className="word-tooltip" role="status">{wordHints[part.toLocaleLowerCase("ru-RU")]?.translation_sr ?? "Загружаем…"}<small>Подсказка учтена · −8 баллов</small></span>}</span> : <span key={`${part}-${index}`}>{part}</span>) : "Готовим фразу…"}</h3></div></div>
+                  <div className="phrase-card__content"><span className="phrase-number">{String(exerciseNumber).padStart(2, "0")}</span><div><p className="kicker">Скажите по-сербски · нажмите на незнакомое слово</p><h3 id="exercise-title" className="interactive-phrase" aria-label={exercise?.source_ru ?? "Готовим фразу…"}>{exercise ? exercise.source_ru.split(/([А-Яа-яЁё]+)/g).filter(Boolean).map((part, index) => /^[А-Яа-яЁё]+$/.test(part) ? <span className="word-wrap" key={`${part}-${index}`}><button className={wordHints[part.toLocaleLowerCase("ru-RU")] ? "word-token is-used" : "word-token"} type="button" onClick={() => showWordHint(part)}>{part}</button>{activeHint === part.toLocaleLowerCase("ru-RU") && <span className="word-tooltip" role="status">{wordHints[part.toLocaleLowerCase("ru-RU")] ? displaySerbian(wordHints[part.toLocaleLowerCase("ru-RU")].translation_sr, alphabet) : "Загружаем…"}<small>Подсказка учтена · −8 баллов</small></span>}</span> : <span key={`${part}-${index}`}>{part}</span>) : "Готовим фразу…"}</h3></div></div>
                   {exercise && <div className="skills" aria-label="Целевые навыки">{exercise.targeted_skills.map((skill) => <span key={skill}>{skill}</span>)}</div>}
                 </div>
                 <div className="answer-card panel">
                   <div className="card-title"><span><Icon name="pencil" /></span><h2>Ваш ответ</h2>{!attempt && <small className="live-dot">Говорите на сербском</small>}</div>
                   {!attempt ? (
                     <form onSubmit={checkAnswer}>
-                      <label className="sr-only" htmlFor="serbian-answer">Ваш ответ</label>
                       <div className="answer-input">
-                        <textarea id="serbian-answer" value={answer} onChange={(event) => { if (voiceRef.current) stopVoice(); voiceTimingRef.current = undefined; setAnswer(event.target.value); }} placeholder="Введите или произнесите свой ответ…" rows={4} autoFocus />
+                        {hasTranscript ? <><label className="sr-only" htmlFor="serbian-answer">Ваш ответ</label><textarea id="serbian-answer" value={answer} onChange={(event) => { voiceTimingRef.current = undefined; setAnswer(event.target.value); }} placeholder="Исправьте распознанный ответ" rows={4} /></> : <p className="voice-prompt">Произнесите ответ в микрофон. После распознавания текст можно исправить.</p>}
                         {voiceState === "connecting" || voiceState === "recording" || voiceState === "transcribing" ? <button className="mic-button is-active" type="button" aria-label={voiceState === "recording" ? "Завершить запись" : "Остановить запись"} disabled={voiceState === "transcribing"} onClick={voiceState === "recording" ? finishVoice : stopVoice}><Icon name="mic" size={30} /></button> : <button className="mic-button" type="button" aria-label="Ответить голосом" disabled={!voiceSupported} onClick={startVoice}><Icon name="mic" size={30} /></button>}
                       </div>
-                      <div className="voice-status">{!voiceSupported ? "Микрофон недоступен — используйте текст" : voiceState === "recording" ? "Идёт запись. Аудио не сохраняется" : voiceState === "transcribing" ? "Расшифровываем фразу…" : voiceState === "error" ? "Можно повторить или ввести ответ вручную" : "Микрофон или клавиатура — как вам удобнее"}</div>
+                      <div className="voice-status">{!voiceSupported ? "Микрофон недоступен. Разрешите доступ к нему в браузере или устройстве." : voiceState === "recording" ? "Идёт запись. Аудио не сохраняется" : voiceState === "transcribing" ? "Расшифровываем фразу…" : voiceState === "error" ? "Не удалось распознать ответ. Повторите запись." : hasTranscript ? "Проверьте распознанный текст и при необходимости исправьте его." : "Нажмите на микрофон, чтобы ответить."}</div>
                       <div className="encouragement"><span><Icon name="bulb" /> Не бойтесь делать ошибки</span><span><Icon name="check" /> Говорите естественно</span></div>
-                      <button className="answer-submit" type="submit" disabled={loading || !answer.trim()}>{loading ? "Анализируем…" : "Проверить ответ"}<Icon name="arrow" /></button>
+                      {hasTranscript && <button className="answer-submit" type="submit" disabled={loading || !answer.trim()}>{loading ? "Анализируем…" : "Проверить ответ"}<Icon name="arrow" /></button>}
                     </form>
                   ) : (
                     <div className="submitted-answer"><small>Ваш вариант</small><p>{answer}</p><span><Icon name="arrow" /> Подробный разбор показан справа</span></div>
@@ -554,9 +569,9 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
             {attempt ? <div className={`feedback feedback--${attempt.analysis.verdict}`}>
               <div className="feedback__score"><span>{Math.round(attempt.overall_score * 100)}%</span><strong>{attempt.analysis.verdict === "correct" ? "Верно" : attempt.analysis.verdict === "mostly_correct" ? "Почти верно" : "Нужно доработать"}</strong></div>
               {attempt.hint_penalty > 0 && <div className="hint-penalty"><Icon name="bulb" /><span>Подсказки: −{Math.round(attempt.hint_penalty * 100)} баллов</span></div>}
-              <p>{attempt.analysis.short_feedback_ru}</p><div className="correction"><small>Канонический вариант</small><span>{attempt.analysis.corrected_sr}</span></div>
+              <p>{displaySerbianInRussianText(attempt.analysis.short_feedback_ru, alphabet)}</p><div className="correction"><small>Канонический вариант</small><span lang={alphabet === "cyrillic" ? "sr-Cyrl" : "sr-Latn"}>{displaySerbian(attempt.analysis.corrected_sr, alphabet)}</span></div>
               {(attempt.learner_updates?.length ?? 0) > 0 && <div className="mastery-list" aria-label="Прогресс навыков">{attempt.learner_updates?.map((skill) => <div key={skill.skill_key}><span>{skill.title_ru}</span><div><i style={{ width: `${Math.round(skill.mastery * 100)}%` }}/></div><b>{Math.round(skill.mastery * 100)}%</b></div>)}</div>}
-              <details><summary>Подробный разбор</summary><p>{attempt.analysis.detailed_feedback_ru}</p><div className="score-grid"><span>Смысл <b>{Math.round(attempt.analysis.semantic_score * 100)}</b></span><span>Грамматика <b>{Math.round(attempt.analysis.grammar_score * 100)}</b></span><span>Лексика <b>{Math.round(attempt.analysis.lexical_score * 100)}</b></span><span>Естественность <b>{Math.round(attempt.analysis.naturalness_score * 100)}</b></span></div>{attempt.analysis.issues.map((issue, index) => <p className="issue" key={`${issue.skill_key}-${issue.type}-${index}`}><b>{issue.skill_key}</b>: {issue.evidence}{issue.correction ? ` → ${issue.correction}` : ""}</p>)}</details>
+              <details><summary>Подробный разбор</summary><p>{displaySerbianInRussianText(attempt.analysis.detailed_feedback_ru, alphabet)}</p><div className="score-grid"><span>Смысл <b>{Math.round(attempt.analysis.semantic_score * 100)}</b></span><span>Грамматика <b>{Math.round(attempt.analysis.grammar_score * 100)}</b></span><span>Лексика <b>{Math.round(attempt.analysis.lexical_score * 100)}</b></span><span>Естественность <b>{Math.round(attempt.analysis.naturalness_score * 100)}</b></span></div>{attempt.analysis.issues.map((issue, index) => <p className="issue" key={`${issue.skill_key}-${issue.type}-${index}`}><b>{issue.skill_key}</b>: {displaySerbianInRussianText(issue.evidence, alphabet)}{issue.correction ? ` → ${displaySerbianInRussianText(issue.correction, alphabet)}` : ""}</p>)}</details>
               <button className="answer-submit" type="button" disabled={loading} onClick={nextExercise}>{loading ? "Готовим…" : "Следующая фраза"}<Icon name="arrow" /></button>
             </div> : <div className="result-empty"><span><Icon name="chart" size={30} /></span><p>Ответьте на фразу — здесь появятся оценка, исправление и прогресс навыков.</p></div>}
           </aside>

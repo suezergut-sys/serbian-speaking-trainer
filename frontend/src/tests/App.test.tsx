@@ -5,6 +5,21 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const authEvents = vi.hoisted(() => ({
   notify: undefined as undefined | ((session: { access_token: string } | null) => void),
 }));
+const voiceMock = vi.hoisted(() => ({ available: false }));
+
+vi.mock("../voiceRecorder", () => ({
+  supportsVoiceRecording: () => voiceMock.available,
+  VoiceRecorder: class {
+    async start() { return undefined; }
+    async finish() {
+      return {
+        audio: new Blob([], { type: "audio/webm" }),
+        timing: { reaction_ms: null, speech_duration_ms: 1000, longest_pause_ms: null, pause_count: null, timings: { source: "test" } },
+      };
+    }
+    stop() { return undefined; }
+  },
+}));
 
 vi.mock("../auth", () => ({
   authenticatedFetch: (input: RequestInfo | URL, init?: RequestInit) => fetch(input, init),
@@ -24,6 +39,8 @@ describe("App", () => {
   afterEach(() => {
     cleanup();
     window.history.replaceState({}, "", "/");
+    window.localStorage.clear();
+    voiceMock.available = false;
     vi.restoreAllMocks();
   });
 
@@ -50,6 +67,7 @@ describe("App", () => {
         last_active_at: "2026-09-22T10:00:00Z",
         daily_usage: { used: 2, limit: 10, remaining: 8, resets_at: "2026-09-23T00:00:00Z" },
       };
+      else if (url === "/api/transcriptions") body = { text: "Želim da otvorim račun." };
       else if (url === "/api/admin/users") body = [{
         id: "user-1", email: "learner@example.com", display_name: "Ученик", role: "admin",
         access_tier: "free", registered_at: "2026-09-01T10:00:00Z",
@@ -135,6 +153,12 @@ describe("App", () => {
       else return Promise.resolve({ ok: false, status: 404, json: async () => ({}) });
       return Promise.resolve({ ok: true, status: 200, json: async () => body });
     });
+  }
+
+  async function recordAnswer() {
+    fireEvent.click(await screen.findByRole("button", { name: "Ответить голосом" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Завершить запись" }));
+    return screen.findByLabelText("Ваш ответ");
   }
 
   it("loads available topics", async () => {
@@ -260,8 +284,55 @@ describe("App", () => {
     expect(screen.getByText("modal_verbs")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Ответить голосом/ })).toBeDisabled();
     expect(screen.getByText(/Микрофон недоступен/)).toBeInTheDocument();
+    expect(screen.queryByLabelText("Ваш ответ")).not.toBeInTheDocument();
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/sessions/start", expect.objectContaining({ method: "POST" })));
     expect(fetchMock.mock.calls.some(([url]) => url.toString().endsWith("/next-exercise"))).toBe(false);
+  });
+
+  it("uses the selected alphabet for hints, transcription, feedback and statistics", async () => {
+    voiceMock.available = true;
+    const fetchMock = mockApi();
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Настройки" }));
+    fireEvent.click(screen.getByRole("radio", { name: /Кириллица/ }));
+    expect(window.localStorage.getItem("serbotalk.serbian-alphabet.user-1")).toBe("cyrillic");
+    fireEvent.click(screen.getByRole("button", { name: "Практика" }));
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Начать тренировку/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "хочу" }));
+    expect(screen.getByText("желим")).toBeInTheDocument();
+
+    const answer = await recordAnswer();
+    expect(answer).toHaveValue("Желим да отворим рачун.");
+    fireEvent.change(answer, { target: { value: "Желим да отворим рачун!" } });
+    fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
+    await waitFor(() => {
+      const call = fetchMock.mock.calls.find(([url]) => url === "/api/attempts");
+      expect(JSON.parse(call?.[1]?.body as string).transcript_sr).toBe("Želim da otvorim račun!");
+    });
+    expect(await screen.findByText("Желим да отворим рачун.")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Статистика" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Фразы" }));
+    expect(await screen.findByText("Желим да отворим рачун.")).toBeInTheDocument();
+  });
+
+  it("keeps answer entry locked until speech is transcribed on Android", async () => {
+    voiceMock.available = true;
+    vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(true);
+    vi.stubGlobal("fetch", mockApi());
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Настройки" }));
+    fireEvent.click(screen.getByRole("radio", { name: /Кириллица/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Темы" }));
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Начать" }));
+    expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
+    expect(screen.queryByLabelText("Ваш ответ")).not.toBeInTheDocument();
+    expect((await recordAnswer())).toHaveValue("Желим да отворим рачун.");
   });
 
   it("creates a persisted empty custom topic", async () => {
@@ -282,12 +353,14 @@ describe("App", () => {
   });
 
   it("submits a Serbian answer and shows concise and expandable feedback", async () => {
+    voiceMock.available = true;
     vi.stubGlobal("fetch", mockApi());
     render(<App />);
 
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
     fireEvent.click(screen.getByRole("button", { name: /Начать тренировку/ }));
-    const input = await screen.findByLabelText("Ваш ответ");
+    expect(screen.queryByLabelText("Ваш ответ")).not.toBeInTheDocument();
+    const input = await recordAnswer();
     fireEvent.change(input, { target: { value: "Želim da otvorim račun." } });
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
 
@@ -301,12 +374,13 @@ describe("App", () => {
   });
 
   it("keeps rendering a stale attempt response without learner updates", async () => {
+    voiceMock.available = true;
     vi.stubGlobal("fetch", mockApi(true));
     render(<App />);
 
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
     fireEvent.click(screen.getByRole("button", { name: /Начать тренировку/ }));
-    fireEvent.change(await screen.findByLabelText("Ваш ответ"), { target: { value: "Želim da otvorim račun." } });
+    fireEvent.change(await recordAnswer(), { target: { value: "Želim da otvorim račun." } });
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
 
     expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
@@ -336,6 +410,7 @@ describe("App", () => {
   });
 
   it("reveals a word translation and sends used hints with the attempt", async () => {
+    voiceMock.available = true;
     const baseFetch = mockApi();
     let finishHintRequest: (() => void) | undefined;
     const fetchMock = vi.fn().mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
@@ -355,7 +430,7 @@ describe("App", () => {
     expect(screen.getByText("želim")).toBeInTheDocument();
     expect(screen.queryByText("Загружаем…")).not.toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText("Ваш ответ"), { target: { value: "Želim da otvorim račun." } });
+    fireEvent.change(await recordAnswer(), { target: { value: "Želim da otvorim račun." } });
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
     await waitFor(() => {
       const attemptCall = fetchMock.mock.calls.find(([url]) => url === "/api/attempts");
@@ -403,6 +478,7 @@ describe("App", () => {
   });
 
   it("clears the completed carousel answer before starting a regular topic", async () => {
+    voiceMock.available = true;
     const phrase = {
       id: "review-1", source_ru: "Мне нужно позвонить хозяину.", best_score: 0.8,
       attempts: 1, perfect_streak: 0, status: "active", created_at: "2026-09-17T10:00:00Z",
@@ -424,9 +500,9 @@ describe("App", () => {
 
     await screen.findByText("1 требуют практики");
     fireEvent.click(await screen.findByRole("button", { name: /Фразы для повторения/ }));
-    expect(await screen.findByLabelText("Ваш ответ")).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Ответить голосом" })).toBeInTheDocument();
     expect(nextExerciseCalls).toBe(0);
-    fireEvent.change(await screen.findByLabelText("Ваш ответ"), { target: { value: "Stari odgovor" } });
+    fireEvent.change(await recordAnswer(), { target: { value: "Stari odgovor" } });
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
     expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
 
@@ -435,9 +511,8 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /В банке/ }));
     fireEvent.click(screen.getByRole("button", { name: /Начать тренировку/ }));
 
-    const answer = await screen.findByLabelText("Ваш ответ");
-    expect(answer).toHaveValue("");
-    expect(screen.getByRole("button", { name: /Ответить голосом/ })).toBeInTheDocument();
+    expect(screen.queryByLabelText("Ваш ответ")).not.toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /Ответить голосом/ })).toBeInTheDocument();
     expect(screen.queryByText("Stari odgovor")).not.toBeInTheDocument();
   });
 });

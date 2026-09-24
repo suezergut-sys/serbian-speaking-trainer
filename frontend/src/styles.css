@@ -169,6 +169,15 @@ button { cursor: pointer; }
 .answer-input textarea { width: 100%; min-height: 106px; resize: vertical; padding: .9rem 1rem; border: 1px solid rgba(91, 157, 224, .55); border-radius: 11px; outline: none; background: rgba(4, 16, 34, .6); color: #eef5ff; line-height: 1.55; }
 .answer-input textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(64,164,255,.08); }
 .answer-input textarea::placeholder { color: #647fa8; }
+.voice-prompt { display: grid; place-items: center; min-height: 106px; margin: 0; padding: 1rem; border: 1px dashed rgba(91, 157, 224, .4); border-radius: 11px; color: #9bb9df; text-align: center; line-height: 1.5; }
+.settings-page { width: min(760px, 100%); margin: 0 auto; padding: 2rem 1rem; }
+.settings-page > h1 { margin: 0 0 1.3rem; }
+.alphabet-settings { display: grid; gap: .8rem; padding: 1.3rem; border: 1px solid rgba(76, 158, 232, .28); border-radius: 16px; }
+.alphabet-settings legend { padding: 0 .4rem; color: #dceaff; font-weight: 700; }
+.alphabet-settings > p { margin: 0 0 .3rem; color: #9bb9df; font-size: .8rem; }
+.alphabet-settings label { display: flex; flex-wrap: wrap; gap: .65rem; align-items: center; padding: .85rem; border: 1px solid rgba(76, 158, 232, .25); border-radius: 10px; cursor: pointer; }
+.alphabet-settings label:has(input:checked) { border-color: #63b9ff; background: rgba(28, 93, 156, .2); }
+.alphabet-settings label span { margin-left: auto; color: #acccec; }
 .mic-button { display: grid; place-items: center; width: 78px; height: 78px; align-self: center; border: 2px solid #3c94f7; border-radius: 50%; background: radial-gradient(circle, #175ca7, #0b2d5d); box-shadow: 0 0 0 7px rgba(41, 123, 222, .11), 0 0 28px rgba(46, 148, 255, .38); color: #9ad7ff; }
 .mic-button:hover:not(:disabled) { transform: scale(1.03); }
 .mic-button:disabled { cursor: not-allowed; opacity: .38; }
@@ -563,6 +572,7 @@ button { cursor: pointer; }
 .android-training-content .word-tooltip { min-width: 130px; max-width: 75vw; white-space: normal; }
 .android-answer { display: grid; justify-items: center; gap: .8rem; margin-top: auto; }
 .android-answer textarea { min-height: 92px; resize: none; text-align: center; }
+.android-answer .voice-prompt { width: 100%; min-height: 92px; }
 .android-answer .mic-button { width: 76px; height: 76px; }
 .android-voice-state { min-height: 1rem; margin: 0; color: #79a0ce; font-size: .68rem; }
 .android-primary { width: 100%; margin-top: .1rem; }
@@ -604,6 +614,10 @@ button { cursor: pointer; }
 .android-service-bar strong { font-size: .73rem; }
 .android-service-bar small { color: #7897c5; font-size: .64rem; }
 .android-admin-settings { margin-bottom: .5rem; }
+.android-settings-page .settings-page { padding: .2rem 0; }
+.android-settings-page .settings-page > h1 { font-size: 1.55rem; }
+.android-settings-page .alphabet-settings { padding: 1rem; }
+.android-settings-page .alphabet-settings label span { flex-basis: 100%; margin-left: 1.5rem; }
 
 @media (min-width: 600px) {
   .android-page { padding-inline: max(1rem, calc((100% - 560px) / 2)); }
