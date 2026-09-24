@@ -66,9 +66,21 @@ export async function signOut(): Promise<void> {
 }
 
 export async function authenticatedFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
+  const startedAt = performance.now();
   const { data, error } = await getSupabase().auth.getSession();
   if (error || !data.session) throw error ?? new Error("Authentication required");
+  const sessionMs = performance.now() - startedAt;
   const headers = new Headers(init.headers);
   headers.set("Authorization", `Bearer ${data.session.access_token}`);
-  return fetch(input, { ...init, headers });
+  const response = await fetch(input, { ...init, headers });
+  if (new URLSearchParams(window.location.search).has("perf")) {
+    const path = new URL(input.toString(), window.location.origin).pathname;
+    console.info("SerboTalk timing", {
+      path,
+      session_ms: Math.round(sessionMs),
+      request_ms: Math.round(performance.now() - startedAt - sessionMs),
+      server_timing: response.headers.get("Server-Timing"),
+    });
+  }
+  return response;
 }
