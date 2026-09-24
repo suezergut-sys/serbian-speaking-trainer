@@ -65,7 +65,7 @@ def test_next_exercise_is_persisted_without_exposing_answer(api_client: TestClie
     assert db_session.get(TrainingSession, session_payload["id"]) is not None
 
 
-def test_start_session_returns_first_exercise_in_one_request(api_client: TestClient, db_session: Session) -> None:
+def test_start_session_returns_first_exercise_in_one_request(api_client: TestClient, db_session: Session, caplog) -> None:
     response = api_client.post("/api/sessions/start", json={"topic_id": "cafe", "length": 10})
 
     assert response.status_code == 201
@@ -77,6 +77,11 @@ def test_start_session_returns_first_exercise_in_one_request(api_client: TestCli
     assert payload["exercise"]["word_hints"]
     assert "canonical_sr" not in payload["exercise"]
     assert db_session.get(Exercise, payload["exercise"]["id"]) is not None
+    assert "total;dur=" in response.headers["Server-Timing"]
+    assert any(
+        record.name == "app.performance" and "path=/api/sessions/start" in record.message
+        for record in caplog.records
+    )
 
 
 def test_start_session_rolls_back_when_topic_has_no_phrases(api_client: TestClient, db_session: Session) -> None:

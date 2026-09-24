@@ -17,6 +17,7 @@ from app.config import get_settings
 
 settings = get_settings()
 performance_logger = logging.getLogger("app.performance")
+performance_logger.setLevel(logging.INFO)
 
 app = FastAPI(title="Serbian Speaking Trainer API", version="1.4.0")
 app.add_middleware(
@@ -41,8 +42,9 @@ async def record_request_timing(request: Request, call_next):
     response.headers["Server-Timing"] = (
         f"total;dur={total_ms:.1f}, auth;dur={auth_ms:.1f}, user_sync;dur={sync_ms:.1f}"
     )
-    route = request.scope.get("route")
-    path = getattr(route, "path", "")
+    path = request.url.path
+    if path.startswith("/api/exercises/") and path.endswith("/word-hints"):
+        path = "/api/exercises/{exercise_id}/word-hints"
     if path in {"/api/sessions/start", "/api/exercises/{exercise_id}/word-hints", "/api/topics", "/api/statistics/monthly"}:
         performance_logger.info(
             "request_timing path=%s total_ms=%.1f auth_ms=%.1f user_sync_ms=%.1f",
