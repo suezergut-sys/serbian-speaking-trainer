@@ -128,6 +128,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const [activeHint, setActiveHint] = useState<string>();
   const voiceRef = useRef<VoiceRecorder | undefined>(undefined);
   const voiceTimingRef = useRef<AttemptTimings | undefined>(undefined);
+  const nextExerciseRef = useRef<{ sessionId: string; promise: Promise<Exercise> } | undefined>(undefined);
   const androidPagerRef = useRef<HTMLDivElement | null>(null);
   const [androidPanel, setAndroidPanel] = useState(0);
   const voiceSupported = supportsVoiceRecording();
@@ -144,7 +145,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     setAndroidPanel(panel);
     if (!pager) return;
     const left = panel * pager.clientWidth;
-    if (typeof pager.scrollTo === "function") pager.scrollTo({ left, behavior: "smooth" });
+    if (typeof pager.scrollTo === "function") pager.scrollTo({ left, behavior: "auto" });
     else pager.scrollLeft = left;
   }
 
@@ -216,6 +217,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   }
 
   async function startTraining() {
+    nextExerciseRef.current = undefined;
     stopVoice(); setAnswer(""); setHasTranscript(false); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
     setLoading(true); setError(undefined);
     try {
@@ -235,6 +237,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   }
 
   async function startReviewTraining() {
+    nextExerciseRef.current = undefined;
     if (session) resetTraining();
     setSelectedTopic(undefined); setCustomTopic(""); setError(undefined);
     if (!reviewPhrases.length) {
@@ -254,7 +257,9 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   async function nextExercise() {
     if (!session) return;
     stopVoice(); setLoading(true); setError(undefined);
-    try { setExercise(await fetchNextExercise(session.id)); setExerciseNumber((current) => Math.min(current + 1, session.requested_length)); setAnswer(""); setHasTranscript(false); setAttempt(undefined); setWordHints({}); setActiveHint(undefined); }
+    const prepared = nextExerciseRef.current?.sessionId === session.id ? nextExerciseRef.current.promise : undefined;
+    nextExerciseRef.current = undefined;
+    try { setExercise(await (prepared ?? fetchNextExercise(session.id))); setExerciseNumber((current) => Math.min(current + 1, session.requested_length)); setAnswer(""); setHasTranscript(false); setAttempt(undefined); setWordHints({}); setActiveHint(undefined); }
     catch (requestError) {
       if (isReviewMode && requestError instanceof BackendError && requestError.status === 409) {
         setSession(undefined); setExercise(undefined); setReviewPhrases([]);
@@ -267,18 +272,25 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
   async function checkAnswer(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!exercise || !hasTranscript || !answer.trim()) return;
+    if (!exercise || !session || !hasTranscript || !answer.trim()) return;
     setLoading(true); setError(undefined); setActiveHint(undefined); if (voiceRef.current) stopVoice();
     try {
-      setAttempt(await submitAttempt(exercise.id, toSerbianLatin(answer.trim()), voiceTimingRef.current, Object.keys(wordHints)));
-      setReviewPhrases(await fetchReviewPhrases());
-      onAccountChange(await fetchCurrentUser());
+      const completed = await submitAttempt(exercise.id, toSerbianLatin(answer.trim()), voiceTimingRef.current, Object.keys(wordHints));
+      setAttempt(completed);
+      const prepared = fetchNextExercise(session.id);
+      nextExerciseRef.current = { sessionId: session.id, promise: prepared };
+      const refreshSideData = () => {
+        void fetchReviewPhrases().then(setReviewPhrases).catch(() => undefined);
+        void fetchCurrentUser().then(onAccountChange).catch(() => undefined);
+      };
+      void prepared.then(refreshSideData, refreshSideData);
     }
     catch (requestError) { setError(requestError instanceof BackendError && requestError.status === 429 ? "Дневной лимит 10 фраз исчерпан. Новые фразы будут доступны после 00:00 UTC." : "Не удалось проверить ответ. Попробуйте ещё раз."); }
     finally { setLoading(false); }
   }
 
   function resetTraining() {
+    nextExerciseRef.current = undefined;
     stopVoice(); setView("practice"); setSession(undefined); setExercise(undefined); setExerciseNumber(1);
     setAnswer(""); setHasTranscript(false); setAttempt(undefined); setError(undefined); setWordHints({}); setActiveHint(undefined);
   }
@@ -431,7 +443,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
           </section>
 
           <section className="android-page android-statistics-page" aria-label="Статистика">
-            <StatisticsView alphabet={alphabet} />
+            {androidPanel === 2 && <StatisticsView alphabet={alphabet} />}
             <footer className="android-service-bar">
               <span className="avatar">{account.display_name?.slice(0, 1).toLocaleUpperCase() || "A"}</span>
               <span><strong>{account.display_name || account.email}</strong><small>{account.daily_usage.limit === null ? `${account.daily_usage.used} фраз` : `${account.daily_usage.remaining} из ${account.daily_usage.limit}`}</small></span>

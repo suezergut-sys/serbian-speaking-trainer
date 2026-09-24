@@ -1,6 +1,10 @@
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 
 import httpx
+import jwt
+import pytest
+from cryptography.hazmat.primitives.asymmetric import ec
 from fastapi.testclient import TestClient
 from sqlalchemy import event
 from sqlalchemy.orm import Session
@@ -38,6 +42,57 @@ def test_supabase_auth_validates_confirmed_user_payload() -> None:
 
     assert identity.email == "person@example.com"
     assert identity.display_name == "Test Person"
+
+
+def test_supabase_auth_verifies_es256_token_without_remote_request() -> None:
+    key = ec.generate_private_key(ec.SECP256R1())
+    now = datetime.now(timezone.utc)
+    claims = {
+        "iss": "https://project.supabase.co/auth/v1",
+        "sub": "11111111-1111-1111-1111-111111111111",
+        "aud": "authenticated",
+        "exp": int((now + timedelta(minutes=30)).timestamp()),
+        "iat": int(now.timestamp()),
+        "email": "Person@Example.com",
+        "app_metadata": {"provider": "google"},
+        "user_metadata": {"email_verified": True, "full_name": "Test Person"},
+    }
+    token = jwt.encode(claims, key, algorithm="ES256", headers={"kid": "test-key"})
+    settings = Settings(
+        _env_file=None,
+        supabase_url="https://project.supabase.co",
+        supabase_publishable_key="publishable",
+    )
+    jwk_client = SimpleNamespace(get_signing_key_from_jwt=lambda _token: SimpleNamespace(key=key.public_key()))
+
+    def reject_remote(_request: httpx.Request) -> httpx.Response:
+        raise AssertionError("valid ES256 token must not call Supabase Auth")
+
+    with httpx.Client(transport=httpx.MockTransport(reject_remote)) as client:
+        service = SupabaseAuthService(settings, client, jwk_client)
+        identity = service.authenticate(token)
+        assert identity.email == "person@example.com"
+        assert identity.display_name == "Test Person"
+        with pytest.raises(PermissionError):
+            service.authenticate(jwt.encode({**claims, "aud": "other"}, key, algorithm="ES256"))
+
+    remote_calls = 0
+
+    def confirm_remote(_request: httpx.Request) -> httpx.Response:
+        nonlocal remote_calls
+        remote_calls += 1
+        return httpx.Response(200, json={
+            "id": claims["sub"], "email": claims["email"],
+            "email_confirmed_at": "2026-09-22T10:00:00Z",
+        })
+
+    untrusted_metadata = {**claims, "app_metadata": {"provider": "email"}}
+    with httpx.Client(transport=httpx.MockTransport(confirm_remote)) as client:
+        identity = SupabaseAuthService(settings, client, jwk_client).authenticate(
+            jwt.encode(untrusted_metadata, key, algorithm="ES256")
+        )
+    assert identity.id == claims["sub"]
+    assert remote_calls == 1
 
 
 def test_current_user_and_admin_user_list(api_client: TestClient, db_session: Session) -> None:
