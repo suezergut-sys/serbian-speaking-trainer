@@ -479,7 +479,7 @@ button { cursor: pointer; }
   height: calc(100dvh - 58px - env(safe-area-inset-top));
   overflow-x: auto;
   overflow-y: hidden;
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   overscroll-behavior-x: contain;

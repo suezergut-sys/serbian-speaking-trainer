@@ -12,6 +12,16 @@ class SupabaseUserPayload(BaseModel):
     user_metadata: dict[str, object] = Field(default_factory=dict)
 
 
+class SupabaseClaimsPayload(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    sub: str = Field(min_length=36, max_length=36)
+    email: str = Field(min_length=3, max_length=320, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    app_metadata: dict[str, object] = Field(default_factory=dict)
+    user_metadata: dict[str, object] = Field(default_factory=dict)
+    is_anonymous: bool = False
+
+
 class DailyUsageResponse(BaseModel):
     used: int
     limit: int | None

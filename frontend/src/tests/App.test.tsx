@@ -214,6 +214,7 @@ describe("App", () => {
     expect(screen.getByRole("region", { name: "Тренировка" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Статистика" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Темы" })).toHaveAttribute("aria-current", "page");
+    expect(fetchMock.mock.calls.some(([url]) => url.toString().includes("/statistics/monthly"))).toBe(false);
     expect(screen.queryByRole("navigation", { name: "Основная навигация" })).not.toBeInTheDocument();
     expect(screen.queryByText("Практикуйтесь в реальных ситуациях")).not.toBeInTheDocument();
     expect(screen.queryByText("Каждый короткий разговор делает речь увереннее.")).not.toBeInTheDocument();
@@ -223,6 +224,7 @@ describe("App", () => {
     pager.scrollLeft = 640;
     fireEvent.scroll(pager);
     expect(screen.getByRole("button", { name: "Статистика" })).toHaveAttribute("aria-current", "page");
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.toString().includes("/statistics/monthly"))).toBe(true));
 
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
     expect(screen.getByRole("button", { name: "Тренировка" })).toHaveAttribute("aria-current", "page");
@@ -287,6 +289,32 @@ describe("App", () => {
     expect(screen.queryByLabelText("Ваш ответ")).not.toBeInTheDocument();
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/sessions/start", expect.objectContaining({ method: "POST" })));
     expect(fetchMock.mock.calls.some(([url]) => url.toString().endsWith("/next-exercise"))).toBe(false);
+  });
+
+  it("shows feedback and reuses the prefetched phrase while profile refresh is pending", async () => {
+    voiceMock.available = true;
+    const baseFetch = mockApi();
+    let profileCalls = 0;
+    let reviewCalls = 0;
+    const pending = new Promise<Response>(() => undefined);
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (input.toString() === "/api/auth/me" && ++profileCalls > 1) return pending;
+      if (input.toString() === "/api/review-phrases" && ++reviewCalls > 1) return pending;
+      return baseFetch(input, init);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Начать тренировку/ }));
+    await recordAnswer();
+    fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
+
+    const next = await screen.findByRole("button", { name: /Следующая фраза/ });
+    await waitFor(() => expect(next).toBeEnabled());
+    expect(fetchMock.mock.calls.filter(([url]) => url.toString().endsWith("/next-exercise"))).toHaveLength(1);
+    fireEvent.click(next);
+    await waitFor(() => expect(screen.queryByText("Ответ естественный и точный.")).not.toBeInTheDocument());
+    expect(fetchMock.mock.calls.filter(([url]) => url.toString().endsWith("/next-exercise"))).toHaveLength(1);
   });
 
   it("uses the selected alphabet for hints, transcription, feedback and statistics", async () => {

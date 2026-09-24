@@ -26,7 +26,7 @@ from .statistics import (
     PhraseStatisticsItem,
     PhraseStatisticsResponse,
 )
-from .auth import AdminUserResponse, CurrentUserResponse, DailyUsageResponse, SupabaseUserPayload
+from .auth import AdminUserResponse, CurrentUserResponse, DailyUsageResponse, SupabaseClaimsPayload, SupabaseUserPayload
 
 __all__ = [
     "CreateSessionRequest",
@@ -63,4 +63,5 @@ __all__ = [
     "CurrentUserResponse",
     "DailyUsageResponse",
     "SupabaseUserPayload",
+    "SupabaseClaimsPayload",
 ]

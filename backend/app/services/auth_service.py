@@ -2,8 +2,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta, timezone
+from functools import lru_cache
 
 import httpx
+import jwt
+from jwt import PyJWKClient
+from jwt.exceptions import InvalidTokenError, PyJWKClientError
 from pydantic import ValidationError
 from sqlalchemy import delete, update
 from sqlalchemy.orm import Session
@@ -11,7 +15,7 @@ from sqlalchemy.orm import Session
 from app.config import Settings, get_settings
 from app.models import LearnerSkill, ReviewPhrase, TopicPreset, TrainingSession, User, WordLearningItem
 from app.repositories import UserRepository
-from app.schemas import AdminUserResponse, CurrentUserResponse, DailyUsageResponse, SupabaseUserPayload
+from app.schemas import AdminUserResponse, CurrentUserResponse, DailyUsageResponse, SupabaseClaimsPayload, SupabaseUserPayload
 
 LEGACY_USER_ID = "00000000-0000-0000-0000-000000000001"
 
@@ -28,14 +32,62 @@ class AuthenticatedIdentity:
     avatar_url: str | None
 
 
+@lru_cache(maxsize=8)
+def _cached_jwk_client(supabase_url: str, timeout: float) -> PyJWKClient:
+    return PyJWKClient(
+        f"{supabase_url.rstrip('/')}/auth/v1/.well-known/jwks.json",
+        cache_jwk_set=True,
+        lifespan=300,
+        timeout=timeout,
+    )
+
+
 class SupabaseAuthService:
-    def __init__(self, settings: Settings, client: httpx.Client | None = None) -> None:
+    def __init__(self, settings: Settings, client: httpx.Client | None = None, jwk_client: PyJWKClient | None = None) -> None:
         self.settings = settings
         self._client = client
+        self._jwk_client = jwk_client
 
     def authenticate(self, access_token: str) -> AuthenticatedIdentity:
         if not self.settings.supabase_url or not self.settings.supabase_publishable_key:
             raise AuthenticationUnavailableError("Supabase Auth is not configured")
+        if self._client is None or self._jwk_client is not None:
+            try:
+                algorithm = jwt.get_unverified_header(access_token).get("alg")
+            except InvalidTokenError:
+                algorithm = None
+            if algorithm == "ES256":
+                identity = self._authenticate_local(access_token)
+                if identity is not None:
+                    return identity
+        return self._authenticate_remote(access_token)
+
+    def _authenticate_local(self, access_token: str) -> AuthenticatedIdentity | None:
+        assert self.settings.supabase_url is not None
+        base_url = self.settings.supabase_url.rstrip("/")
+        jwk_client = self._jwk_client or _cached_jwk_client(base_url, self.settings.auth_timeout_seconds)
+        try:
+            signing_key = jwk_client.get_signing_key_from_jwt(access_token)
+            claims = jwt.decode(
+                access_token,
+                signing_key.key,
+                algorithms=["ES256"],
+                issuer=f"{base_url}/auth/v1",
+                audience="authenticated",
+                options={"require": ["exp", "iat", "iss", "sub", "aud"]},
+            )
+            payload = SupabaseClaimsPayload.model_validate(claims)
+        except PyJWKClientError:
+            return None
+        except (InvalidTokenError, ValidationError) as exc:
+            raise PermissionError("Invalid access token") from exc
+        if payload.is_anonymous or payload.app_metadata.get("provider") != "google":
+            return None
+        return self._identity(payload.sub, payload.email, payload.user_metadata)
+
+    def _authenticate_remote(self, access_token: str) -> AuthenticatedIdentity:
+        assert self.settings.supabase_url is not None
+        assert self.settings.supabase_publishable_key is not None
         url = f"{self.settings.supabase_url.rstrip('/')}/auth/v1/user"
         headers = {
             "apikey": self.settings.supabase_publishable_key,
@@ -64,18 +116,21 @@ class SupabaseAuthService:
                 raise AuthenticationUnavailableError("Invalid authentication response") from exc
             if payload.email_confirmed_at is None:
                 raise PermissionError("Email is not confirmed")
-            metadata = payload.user_metadata
-            name = metadata.get("full_name") or metadata.get("name")
-            avatar = metadata.get("avatar_url") or metadata.get("picture")
-            return AuthenticatedIdentity(
-                id=payload.id,
-                email=str(payload.email).casefold(),
-                display_name=str(name)[:200] if name else None,
-                avatar_url=str(avatar) if avatar else None,
-            )
+            return self._identity(payload.id, payload.email, payload.user_metadata)
         finally:
             if close_client:
                 client.close()
+
+    @staticmethod
+    def _identity(user_id: str, email: str, metadata: dict[str, object]) -> AuthenticatedIdentity:
+        name = metadata.get("full_name") or metadata.get("name")
+        avatar = metadata.get("avatar_url") or metadata.get("picture")
+        return AuthenticatedIdentity(
+            id=user_id,
+            email=email.casefold(),
+            display_name=str(name)[:200] if name else None,
+            avatar_url=str(avatar) if avatar else None,
+        )
 
 
 class UserService:

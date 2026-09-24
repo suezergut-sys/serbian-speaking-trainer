@@ -122,8 +122,8 @@ def test_first_preset_exercise_uses_batched_skill_queries(api_client: TestClient
         event.remove(db_session.bind, "before_cursor_execute", capture_query)
 
     assert response.status_code == 201
-    assert len([sql for sql in statements if "FROM learner_skills" in sql]) == 1
-    assert len(statements) <= 8
+    assert len([sql for sql in statements if "JOIN learner_skills" in sql]) == 1
+    assert len(statements) <= 7
 
 
 def test_missing_resources_and_validation(api_client: TestClient) -> None:
