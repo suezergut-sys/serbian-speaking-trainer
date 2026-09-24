@@ -1,7 +1,8 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import httpx
 from fastapi.testclient import TestClient
+from sqlalchemy import event
 from sqlalchemy.orm import Session
 
 from app.config import Settings
@@ -69,6 +70,35 @@ def test_admin_email_is_promoted_by_backend_configuration(db_session: Session) -
         avatar_url=None,
     ))
     assert user.role == "admin"
+
+
+def test_user_sync_skips_unchanged_write_until_activity_is_stale(db_session: Session) -> None:
+    identity = AuthenticatedIdentity(
+        id="44444444-4444-4444-4444-444444444444",
+        email="person@example.com",
+        display_name="Person",
+        avatar_url=None,
+    )
+    service = UserService(db_session)
+    user = service.sync(identity)
+    db_session.commit()
+    statements: list[str] = []
+
+    def capture_query(_connection, _cursor, statement, _parameters, _context, _executemany) -> None:
+        statements.append(statement)
+
+    assert db_session.bind is not None
+    event.listen(db_session.bind, "before_cursor_execute", capture_query)
+    try:
+        service.sync(identity)
+        assert not any(statement.startswith("UPDATE users") for statement in statements)
+        user.last_active_at = datetime.now(timezone.utc) - timedelta(minutes=6)
+        db_session.flush()
+        statements.clear()
+        service.sync(identity)
+        assert any(statement.startswith("UPDATE users") for statement in statements)
+    finally:
+        event.remove(db_session.bind, "before_cursor_execute", capture_query)
 
 
 def test_protected_routes_require_bearer_authentication(api_client: TestClient) -> None:
