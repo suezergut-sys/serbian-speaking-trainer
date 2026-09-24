@@ -1,5 +1,5 @@
 from sqlalchemy import func, or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models import LearnerSkill, Skill, TopicPhrase, TopicPreset
 from app.repositories.base import Repository
@@ -13,6 +13,15 @@ class SkillRepository(Repository[Skill]):
 
     def get_by_key(self, key: str) -> Skill | None:
         return self.session.scalar(select(Skill).where(Skill.key == key))
+
+    def list_for_training(self, user_id: str, *, limit: int = 500) -> list[Skill]:
+        statement = (
+            select(Skill)
+            .options(selectinload(Skill.learner_states.and_(LearnerSkill.user_id == user_id)))
+            .limit(limit)
+            .execution_options(populate_existing=True)
+        )
+        return list(self.session.scalars(statement))
 
 
 class LearnerSkillRepository(Repository[LearnerSkill]):

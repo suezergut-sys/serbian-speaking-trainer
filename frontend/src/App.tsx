@@ -3,7 +3,7 @@ import { Capacitor } from "@capacitor/core";
 
 import { fetchHealth } from "./api/health";
 import { getApiBaseUrl, setApiBaseUrl } from "./api/baseUrl";
-import { addReviewPhrase, BackendError, createSession, createTopic, fetchNextExercise, fetchReviewPhrases, fetchTopics, prepareReviewPhrase, revealWordHint, submitAttempt, transcribeAudio } from "./api/training";
+import { addReviewPhrase, BackendError, createTopic, fetchNextExercise, fetchReviewPhrases, fetchTopics, prepareReviewPhrase, revealWordHint, startTrainingSession, submitAttempt, transcribeAudio } from "./api/training";
 import type { Attempt, AttemptTimings, Exercise, PreparedReviewPhrase, ReviewPhrase, TopicListItem, TrainingSession, WordHint } from "./types/training";
 import { supportsVoiceRecording, VoiceRecorder } from "./voiceRecorder";
 import { StatisticsView } from "./StatisticsView";
@@ -194,12 +194,12 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     stopVoice(); setAnswer(""); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
     setLoading(true); setError(undefined);
     try {
-      const created = await createSession(
+      const started = await startTrainingSession(
         selectedTopic
               ? { topic_id: selectedTopic }
               : {},
       );
-      setSession(created); setExercise(await fetchNextExercise(created.id)); setExerciseNumber(1);
+      setSession(started.session); setExercise(started.exercise); setExerciseNumber(1);
     } catch (requestError) {
       setSession(undefined); setExercise(undefined);
       setError(requestError instanceof BackendError && requestError.status === 409
@@ -218,8 +218,8 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     }
     setLoading(true);
     try {
-      const created = await createSession({ review_mode: true });
-      setSession(created); setExercise(await fetchNextExercise(created.id)); setExerciseNumber(1);
+      const started = await startTrainingSession({ review_mode: true });
+      setSession(started.session); setExercise(started.exercise); setExerciseNumber(1);
       setAnswer(""); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
     } catch {
       setError("Не удалось запустить повторение фраз.");
@@ -299,6 +299,14 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     const normalized = word.toLocaleLowerCase("ru-RU");
     setActiveHint(normalized);
     if (wordHints[normalized]) return;
+    const prepared = exercise.word_hints?.find((hint) => hint.word_ru.toLocaleLowerCase("ru-RU") === normalized);
+    if (prepared) {
+      setWordHints((current) => ({ ...current, [normalized]: { ...prepared, is_learning: true } }));
+      void revealWordHint(exercise.id, word).catch(() => {
+        setError(`Перевод слова «${word}» показан, но его не удалось добавить в неизученные.`);
+      });
+      return;
+    }
     try {
       const hint = await revealWordHint(exercise.id, word);
       setWordHints((current) => ({ ...current, [normalized]: hint }));
@@ -502,7 +510,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
               <>
                 <div className="phrase-card panel">
                   <div className="card-title"><span><Icon name="message" /></span><h2>{isReviewMode ? "Карусель повторения" : "Основная фраза"}</h2><small>{isReviewMode ? `Фраза ${exerciseNumber}` : `${exerciseNumber} / ${session.requested_length}`}</small></div>
-                  <div className="phrase-card__content"><span className="phrase-number">{String(exerciseNumber).padStart(2, "0")}</span><div><p className="kicker">Скажите по-сербски · нажмите на незнакомое слово</p><h3 id="exercise-title" className="interactive-phrase" aria-label={exercise?.source_ru ?? "Готовим фразу…"}>{exercise ? exercise.source_ru.split(/([А-Яа-яЁё]+)/g).filter(Boolean).map((part, index) => /^[А-Яа-яЁё]+$/.test(part) ? <span className="word-wrap" key={`${part}-${index}`}><button className={wordHints[part.toLocaleLowerCase("ru-RU")] ? "word-token is-used" : "word-token"} type="button" onClick={() => showWordHint(part)}>{part}</button>{activeHint === part.toLocaleLowerCase("ru-RU") && <span className="word-tooltip" role="status">{wordHints[part.toLocaleLowerCase("ru-RU")]?.translation_sr ?? "Загружаем…"}<small>Слово добавлено в неизученные · −8 баллов</small></span>}</span> : <span key={`${part}-${index}`}>{part}</span>) : "Готовим фразу…"}</h3></div></div>
+                  <div className="phrase-card__content"><span className="phrase-number">{String(exerciseNumber).padStart(2, "0")}</span><div><p className="kicker">Скажите по-сербски · нажмите на незнакомое слово</p><h3 id="exercise-title" className="interactive-phrase" aria-label={exercise?.source_ru ?? "Готовим фразу…"}>{exercise ? exercise.source_ru.split(/([А-Яа-яЁё]+)/g).filter(Boolean).map((part, index) => /^[А-Яа-яЁё]+$/.test(part) ? <span className="word-wrap" key={`${part}-${index}`}><button className={wordHints[part.toLocaleLowerCase("ru-RU")] ? "word-token is-used" : "word-token"} type="button" onClick={() => showWordHint(part)}>{part}</button>{activeHint === part.toLocaleLowerCase("ru-RU") && <span className="word-tooltip" role="status">{wordHints[part.toLocaleLowerCase("ru-RU")]?.translation_sr ?? "Загружаем…"}<small>Подсказка учтена · −8 баллов</small></span>}</span> : <span key={`${part}-${index}`}>{part}</span>) : "Готовим фразу…"}</h3></div></div>
                   {exercise && <div className="skills" aria-label="Целевые навыки">{exercise.targeted_skills.map((skill) => <span key={skill}>{skill}</span>)}</div>}
                 </div>
                 <div className="answer-card panel">

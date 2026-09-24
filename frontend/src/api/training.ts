@@ -1,4 +1,4 @@
-import type { Attempt, AttemptTimings, Exercise, PreparedReviewPhrase, ReviewPhrase, TopicListItem, TrainingSession, TranscriptionResponse, WordHint } from "../types/training";
+import type { Attempt, AttemptTimings, Exercise, PreparedReviewPhrase, ReviewPhrase, StartedTraining, TopicListItem, TranscriptionResponse, WordHint } from "../types/training";
 import { authenticatedFetch } from "../auth";
 import { apiUrl } from "./baseUrl";
 
@@ -28,8 +28,8 @@ export function createTopic(titleRu: string): Promise<TopicListItem> {
   });
 }
 
-export function createSession(input: { topic_id?: string; custom_topic_text?: string; review_phrase_id?: string; review_mode?: boolean }): Promise<TrainingSession> {
-  return requestJson<TrainingSession>("/api/sessions", {
+export function startTrainingSession(input: { topic_id?: string; custom_topic_text?: string; review_phrase_id?: string; review_mode?: boolean }): Promise<StartedTraining> {
+  return requestJson<StartedTraining>("/api/sessions/start", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ...input, length: 10 }),

@@ -1,7 +1,7 @@
 from sqlalchemy import inspect
 from sqlalchemy.orm import Session
 
-from app.models import Attempt, ErrorEvent, Exercise, LearnerSkill, Skill, TopicPreset, TrainingSession
+from app.models import Attempt, ErrorEvent, Exercise, LearnerSkill, Skill, TopicPreset, TrainingSession, User
 from app.repositories import Repository, SkillRepository, TopicPresetRepository
 
 
@@ -18,6 +18,25 @@ def test_catalog_crud(db_session: Session) -> None:
 
     topics.delete(topic)
     assert topics.get("test-topic") is None
+
+
+def test_training_skills_load_only_current_user_state(db_session: Session) -> None:
+    other_id = "00000000-0000-0000-0000-000000000002"
+    skill = Skill(key="grammar.filtered", category="grammar", title_ru="Тест", explanation_ru="Описание", difficulty=0.4)
+    db_session.add_all([skill, User(id=other_id, email="other@example.com", role="user", access_tier="free")])
+    db_session.flush()
+    db_session.add_all([
+        LearnerSkill(skill_id=skill.id, mastery=0.2),
+        LearnerSkill(user_id=other_id, skill_id=skill.id, mastery=0.8),
+    ])
+    db_session.flush()
+
+    repository = SkillRepository(db_session)
+    current = repository.list_for_training("00000000-0000-0000-0000-000000000001")
+    assert [state.mastery for state in current[0].learner_states] == [0.2]
+
+    other = repository.list_for_training(other_id)
+    assert [state.mastery for state in other[0].learner_states] == [0.8]
 
 
 def test_training_graph_crud_and_cascade(db_session: Session) -> None:

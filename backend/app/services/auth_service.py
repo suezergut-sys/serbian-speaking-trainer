@@ -107,12 +107,21 @@ class UserService:
             if role == "admin":
                 self._claim_legacy_data(identity.id)
         else:
-            user.email = identity.email
-            user.display_name = identity.display_name
-            user.avatar_url = identity.avatar_url
-            user.role = role
-            user.last_active_at = now
-        self.db.flush()
+            if user.email != identity.email:
+                user.email = identity.email
+            if user.display_name != identity.display_name:
+                user.display_name = identity.display_name
+            if user.avatar_url != identity.avatar_url:
+                user.avatar_url = identity.avatar_url
+            if user.role != role:
+                user.role = role
+            last_active_at = user.last_active_at
+            if last_active_at.tzinfo is None:
+                last_active_at = last_active_at.replace(tzinfo=timezone.utc)
+            if now - last_active_at >= timedelta(minutes=5):
+                user.last_active_at = now
+        if user in self.db.new or user in self.db.dirty:
+            self.db.flush()
         return user
 
     def _claim_legacy_data(self, user_id: str) -> None:

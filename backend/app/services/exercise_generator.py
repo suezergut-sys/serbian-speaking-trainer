@@ -118,8 +118,10 @@ class ExerciseGenerator:
         if training_session.normalized_topic_json.get("review_carousel"):
             return self._next_review_exercise(training_session.id)
         recent = self.exercises.list_recent(session_id, limit=20)
+        skills = self.skills.list_for_training(self.user_id)
+        skill_catalog = {skill.key: skill for skill in skills}
         targets = self.scheduler.select_target_skills(
-            self.skills.list(limit=200), topic, recent, user_id=self.user_id
+            skills[:200], topic, recent, user_id=self.user_id
         )
         target_keys = [skill.key for skill in targets]
         target_payload = [
@@ -129,7 +131,7 @@ class ExerciseGenerator:
         recent_sources = [exercise.source_ru for exercise in recent]
         catalog_phrase = self._select_catalog_phrase(topic.id, target_keys, recent_sources)
         if catalog_phrase is not None:
-            target_keys = [key for key in catalog_phrase.targeted_skill_keys_json if self.skills.get_by_key(key)]
+            target_keys = [key for key in catalog_phrase.targeted_skill_keys_json if key in skill_catalog]
             result = ExerciseGenerationResult(
                 source_ru=catalog_phrase.source_ru,
                 topic_fit=f"Постоянный каталог A2 для темы «{topic.title_ru}».",
@@ -155,7 +157,6 @@ class ExerciseGenerator:
                 }
                 candidates = [phrase for phrase in topic_phrases if phrase.id not in recent_ids] or topic_phrases
                 return self._review_exercise(training_session.id, self._review_payload(random.choice(candidates)))
-        skill_catalog = {skill.key: skill for skill in self.skills.list(limit=500)}
         entity = self.exercises.add(
             Exercise(
                 session_id=session_id,
@@ -183,6 +184,7 @@ class ExerciseGenerator:
             source_ru=entity.source_ru,
             targeted_skills=target_keys,
             difficulty=result.difficulty,
+            word_hints=result.word_hints,
         )
 
     def _select_catalog_phrase(self, topic_id: str, target_keys: list[str], recent_sources: list[str]):
@@ -258,6 +260,7 @@ class ExerciseGenerator:
             source_ru=entity.source_ru,
             targeted_skills=target_keys,
             difficulty=0.5,
+            word_hints=payload.get("word_hints", []),
         )
 
     def _generate(

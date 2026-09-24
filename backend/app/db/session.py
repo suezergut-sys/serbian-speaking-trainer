@@ -5,7 +5,7 @@ from pathlib import Path
 from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.engine import URL, make_url
 from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.pool import NullPool, StaticPool
+from sqlalchemy.pool import QueuePool, StaticPool
 
 from app.config import BACKEND_ROOT, get_settings
 
@@ -41,7 +41,12 @@ def create_database_engine(database_url: str | None = None) -> Engine:
     if parsed_url.database == ":memory:":
         engine_options["poolclass"] = StaticPool
     elif is_postgres:
-        engine_options["poolclass"] = NullPool
+        engine_options.update({
+            "poolclass": QueuePool,
+            "pool_size": 1,
+            "max_overflow": 2,
+            "pool_pre_ping": True,
+        })
     engine = create_engine(parsed_url, **engine_options)
     if is_sqlite:
         @event.listens_for(engine, "connect")

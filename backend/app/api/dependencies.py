@@ -1,4 +1,6 @@
-from fastapi import Depends, HTTPException, status
+from time import perf_counter
+
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
@@ -11,6 +13,7 @@ bearer_scheme = HTTPBearer(auto_error=False)
 
 
 def get_current_user(
+    request: Request,
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     db: Session = Depends(get_db),
     settings: Settings = Depends(get_settings),
@@ -18,8 +21,13 @@ def get_current_user(
     if credentials is None or credentials.scheme.casefold() != "bearer":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
     try:
+        auth_started = perf_counter()
         identity = SupabaseAuthService(settings).authenticate(credentials.credentials)
-        return UserService(db, settings).sync(identity)
+        request.state.auth_ms = (perf_counter() - auth_started) * 1000
+        sync_started = perf_counter()
+        user = UserService(db, settings).sync(identity)
+        request.state.user_sync_ms = (perf_counter() - sync_started) * 1000
+        return user
     except PermissionError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication") from exc
     except AuthenticationUnavailableError as exc:

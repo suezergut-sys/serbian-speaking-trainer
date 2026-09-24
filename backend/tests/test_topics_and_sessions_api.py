@@ -1,7 +1,9 @@
 from fastapi.testclient import TestClient
-from sqlalchemy import select
+from sqlalchemy import event, func, select
 from sqlalchemy.orm import Session
 
+from app.db.session import get_db
+from app.main import app
 from app.models import Exercise, TopicPreset, TrainingSession
 
 
@@ -53,12 +55,75 @@ def test_next_exercise_is_persisted_without_exposing_answer(api_client: TestClie
     assert payload["source_ru"]
     assert 1 <= len(payload["targeted_skills"]) <= 3
     assert "intended_sr_variants" not in payload
+    assert payload["word_hints"]
+    assert {"word_ru", "translation_sr"} <= payload["word_hints"][0].keys()
     stored = db_session.scalar(select(Exercise).where(Exercise.id == payload["id"]))
     assert stored is not None
     assert stored.target_hints_json["intended_sr_variants"]
     assert stored.target_hints_json["canonical_sr"] == "Mogu li da dobijem jelovnik, molim vas?"
     assert stored.generation_meta_json["topic_phrase_id"] == "cafe-01"
     assert db_session.get(TrainingSession, session_payload["id"]) is not None
+
+
+def test_start_session_returns_first_exercise_in_one_request(api_client: TestClient, db_session: Session, caplog) -> None:
+    response = api_client.post("/api/sessions/start", json={"topic_id": "cafe", "length": 10})
+
+    assert response.status_code == 201
+    payload = response.json()
+    assert payload["session"]["topic"]["id"] == "cafe"
+    assert payload["exercise"]["session_id"] == payload["session"]["id"]
+    assert payload["exercise"]["source_ru"]
+    assert "intended_sr_variants" not in payload["exercise"]
+    assert payload["exercise"]["word_hints"]
+    assert "canonical_sr" not in payload["exercise"]
+    assert db_session.get(Exercise, payload["exercise"]["id"]) is not None
+    assert "total;dur=" in response.headers["Server-Timing"]
+    assert any(
+        record.name == "app.performance" and "path=/api/sessions/start" in record.message
+        for record in caplog.records
+    )
+
+
+def test_start_session_rolls_back_when_topic_has_no_phrases(api_client: TestClient, db_session: Session) -> None:
+    before = db_session.scalar(select(func.count()).select_from(TrainingSession))
+
+    original_db_override = app.dependency_overrides[get_db]
+
+    def transactional_db():
+        try:
+            yield db_session
+            db_session.commit()
+        except Exception:
+            db_session.rollback()
+            raise
+
+    app.dependency_overrides[get_db] = transactional_db
+    try:
+        response = api_client.post("/api/sessions/start", json={"topic_id": "misc", "length": 10})
+    finally:
+        app.dependency_overrides[get_db] = original_db_override
+
+    assert response.status_code == 409
+    assert db_session.scalar(select(func.count()).select_from(TrainingSession)) == before
+
+
+def test_first_preset_exercise_uses_batched_skill_queries(api_client: TestClient, db_session: Session) -> None:
+    session_id = api_client.post("/api/sessions", json={"topic_id": "cafe"}).json()["id"]
+    statements: list[str] = []
+
+    def capture_query(_connection, _cursor, statement, _parameters, _context, _executemany) -> None:
+        statements.append(statement)
+
+    assert db_session.bind is not None
+    event.listen(db_session.bind, "before_cursor_execute", capture_query)
+    try:
+        response = api_client.post(f"/api/sessions/{session_id}/next-exercise")
+    finally:
+        event.remove(db_session.bind, "before_cursor_execute", capture_query)
+
+    assert response.status_code == 201
+    assert len([sql for sql in statements if "FROM learner_skills" in sql]) == 1
+    assert len(statements) <= 8
 
 
 def test_missing_resources_and_validation(api_client: TestClient) -> None:
@@ -87,3 +152,4 @@ def test_preset_word_hint_comes_from_persistent_topic_catalog(api_client: TestCl
         "translation_sr": "svetao",
         "is_learning": True,
     }
+    assert {"word_ru": "светлую", "translation_sr": "svetao"} in exercise["word_hints"]
