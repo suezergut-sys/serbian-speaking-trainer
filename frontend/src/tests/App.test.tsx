@@ -96,12 +96,14 @@ describe("App", () => {
           exercise: {
             id: "exercise-1", session_id: "session-1", source_ru: "Я хочу открыть счёт.",
             targeted_skills: ["modal_verbs"], expected_level: "A2", difficulty: 1,
+            word_hints: [{ word_ru: "хочу", translation_sr: "želim" }],
           },
         } : session;
       }
       else if (url.endsWith("/next-exercise")) body = {
         id: "exercise-1", session_id: "session-1", source_ru: "Я хочу открыть счёт.",
         targeted_skills: ["modal_verbs"], expected_level: "A2", difficulty: 1,
+        word_hints: [{ word_ru: "хочу", translation_sr: "želim" }],
       };
       else if (url === "/api/attempts") body = {
         id: "attempt-1", exercise_id: "exercise-1", transcript_sr: "Želim da otvorim račun.", overall_score: 0.91,
@@ -243,14 +245,24 @@ describe("App", () => {
   });
 
   it("reveals a word translation and sends used hints with the attempt", async () => {
-    const fetchMock = mockApi();
+    const baseFetch = mockApi();
+    let finishHintRequest: (() => void) | undefined;
+    const fetchMock = vi.fn().mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      if (input.toString().endsWith("/word-hints")) {
+        return new Promise((resolve) => {
+          finishHintRequest = () => resolve({ ok: true, status: 200, json: async () => ({ word_ru: "хочу", translation_sr: "želim", is_learning: true }) });
+        });
+      }
+      return baseFetch(input, init);
+    });
     vi.stubGlobal("fetch", fetchMock);
     render(<App />);
 
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
     fireEvent.click(screen.getByRole("button", { name: /Начать тренировку/ }));
     fireEvent.click(await screen.findByRole("button", { name: "хочу" }));
-    expect(await screen.findByText("želim")).toBeInTheDocument();
+    expect(screen.getByText("želim")).toBeInTheDocument();
+    expect(screen.queryByText("Загружаем…")).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Ваш ответ"), { target: { value: "Želim da otvorim račun." } });
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
@@ -258,6 +270,8 @@ describe("App", () => {
       const attemptCall = fetchMock.mock.calls.find(([url]) => url === "/api/attempts");
       expect(JSON.parse(attemptCall?.[1]?.body as string).hinted_words).toEqual(["хочу"]);
     });
+    expect(fetchMock.mock.calls.some(([url]) => url.toString().endsWith("/word-hints"))).toBe(true);
+    finishHintRequest?.();
   });
 
   it("prepares a canonical translation and then saves the phrase into a topic", async () => {

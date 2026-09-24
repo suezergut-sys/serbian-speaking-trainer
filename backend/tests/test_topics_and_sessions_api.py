@@ -55,6 +55,8 @@ def test_next_exercise_is_persisted_without_exposing_answer(api_client: TestClie
     assert payload["source_ru"]
     assert 1 <= len(payload["targeted_skills"]) <= 3
     assert "intended_sr_variants" not in payload
+    assert payload["word_hints"]
+    assert {"word_ru", "translation_sr"} <= payload["word_hints"][0].keys()
     stored = db_session.scalar(select(Exercise).where(Exercise.id == payload["id"]))
     assert stored is not None
     assert stored.target_hints_json["intended_sr_variants"]
@@ -72,6 +74,8 @@ def test_start_session_returns_first_exercise_in_one_request(api_client: TestCli
     assert payload["exercise"]["session_id"] == payload["session"]["id"]
     assert payload["exercise"]["source_ru"]
     assert "intended_sr_variants" not in payload["exercise"]
+    assert payload["exercise"]["word_hints"]
+    assert "canonical_sr" not in payload["exercise"]
     assert db_session.get(Exercise, payload["exercise"]["id"]) is not None
 
 
@@ -143,3 +147,4 @@ def test_preset_word_hint_comes_from_persistent_topic_catalog(api_client: TestCl
         "translation_sr": "svetao",
         "is_learning": True,
     }
+    assert {"word_ru": "светлую", "translation_sr": "svetao"} in exercise["word_hints"]

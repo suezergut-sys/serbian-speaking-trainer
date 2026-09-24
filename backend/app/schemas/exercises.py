@@ -37,3 +37,4 @@ class ExerciseResponse(BaseModel):
     targeted_skills: list[str]
     expected_level: Literal["A2"] = "A2"
     difficulty: float
+    word_hints: list[WordHint] = Field(default_factory=list, max_length=30)

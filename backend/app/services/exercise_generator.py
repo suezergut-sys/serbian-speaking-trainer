@@ -184,6 +184,7 @@ class ExerciseGenerator:
             source_ru=entity.source_ru,
             targeted_skills=target_keys,
             difficulty=result.difficulty,
+            word_hints=result.word_hints,
         )
 
     def _select_catalog_phrase(self, topic_id: str, target_keys: list[str], recent_sources: list[str]):
@@ -259,6 +260,7 @@ class ExerciseGenerator:
             source_ru=entity.source_ru,
             targeted_skills=target_keys,
             difficulty=0.5,
+            word_hints=payload.get("word_hints", []),
         )
 
     def _generate(
