@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Capacitor } from "@capacitor/core";
 
-import { fetchHealth } from "./api/health";
 import { getApiBaseUrl, setApiBaseUrl } from "./api/baseUrl";
 import { addReviewPhrase, BackendError, createTopic, fetchNextExercise, fetchReviewPhrases, fetchTopics, prepareReviewPhrase, revealWordHint, startTrainingSession, submitAttempt, transcribeAudio } from "./api/training";
 import type { Attempt, AttemptTimings, Exercise, PreparedReviewPhrase, ReviewPhrase, TopicListItem, TrainingSession, WordHint } from "./types/training";
@@ -141,12 +140,17 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
   useEffect(() => {
     const controller = new AbortController();
-    Promise.all([fetchHealth(controller.signal), fetchTopics(controller.signal), fetchReviewPhrases(controller.signal)])
-      .then(([, availableTopics, phrases]) => {
+    fetchTopics(controller.signal)
+      .then((availableTopics) => {
         setTopics(availableTopics);
-        setReviewPhrases(phrases);
         setSelectedTopic((current) => current ?? availableTopics[0]?.id);
         setBackendState("online");
+        void fetchReviewPhrases(controller.signal)
+          .then(setReviewPhrases)
+          .catch((requestError: unknown) => {
+            if (requestError instanceof DOMException && requestError.name === "AbortError") return;
+            setError("Не удалось загрузить фразы для повторения.");
+          });
       })
       .catch((requestError: unknown) => {
         if (requestError instanceof DOMException && requestError.name === "AbortError") return;
