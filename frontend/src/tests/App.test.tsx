@@ -144,7 +144,8 @@ describe("App", () => {
 
   it("renders the native Android experience as three minimal swipe panels", async () => {
     vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(true);
-    vi.stubGlobal("fetch", mockApi());
+    const fetchMock = mockApi();
+    vi.stubGlobal("fetch", fetchMock);
 
     render(<App />);
 
@@ -166,6 +167,29 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Тренировка" })).toHaveAttribute("aria-current", "page");
     fireEvent.click(screen.getByRole("button", { name: "Начать" }));
     expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "хочу" }));
+    expect(screen.getByText("želim")).toBeInTheDocument();
+    expect(screen.queryByText("Загружаем…")).not.toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([url]) => url.toString().endsWith("/next-exercise"))).toBe(false);
+  });
+
+  it("starts the native Android review carousel with one backend request", async () => {
+    vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(true);
+    const fetchMock = mockApi(false, [{
+      id: "review-1", source_ru: "Я хочу открыть счёт.", best_score: 0.8,
+      attempts: 1, perfect_streak: 0, status: "active", created_at: "2026-09-17T10:00:00Z",
+    }]);
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+
+    const repeat = await screen.findByRole("button", { name: /Повторение/ });
+    await waitFor(() => expect(repeat).toBeEnabled());
+    fireEvent.click(repeat);
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.toString().endsWith("/sessions/start"))).toBe(true));
+    expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
+    const startCalls = fetchMock.mock.calls.filter(([url]) => url.toString().endsWith("/sessions/start"));
+    expect(startCalls).toHaveLength(1);
+    expect(JSON.parse(startCalls[0][1]?.body as string)).toEqual({ review_mode: true, length: 10 });
   });
 
   it("shows the user list only for an administrator", async () => {
