@@ -317,6 +317,34 @@ describe("App", () => {
     expect(fetchMock.mock.calls.filter(([url]) => url.toString().endsWith("/next-exercise"))).toHaveLength(1);
   });
 
+  it("shows a failed Android prefetch and retries the next phrase on another tap", async () => {
+    vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(true);
+    voiceMock.available = true;
+    const baseFetch = mockApi();
+    let nextCalls = 0;
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (input.toString().endsWith("/next-exercise") && ++nextCalls === 1) {
+        return Promise.resolve({ ok: false, status: 503, json: async () => ({ detail: "Unavailable" }) });
+      }
+      return baseFetch(input, init);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Начать" }));
+    await recordAnswer();
+    fireEvent.click(screen.getByRole("button", { name: "Проверить" }));
+    const next = await screen.findByRole("button", { name: "Следующая" });
+    await waitFor(() => expect(nextCalls).toBe(1));
+    fireEvent.click(next);
+    expect(await screen.findByText("Не удалось получить следующую фразу.")).toBeInTheDocument();
+    expect(nextCalls).toBe(1);
+    fireEvent.click(next);
+    await waitFor(() => expect(nextCalls).toBe(2));
+    await waitFor(() => expect(screen.queryByText("Не удалось получить следующую фразу.")).not.toBeInTheDocument());
+  });
+
   it("uses the selected alphabet for hints, transcription, feedback and statistics", async () => {
     voiceMock.available = true;
     const fetchMock = mockApi();
