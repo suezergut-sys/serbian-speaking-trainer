@@ -130,7 +130,7 @@ describe("App", () => {
     });
   }
 
-  it("loads health and available topics", async () => {
+  it("loads available topics", async () => {
     vi.stubGlobal("fetch", mockApi());
 
     render(<App />);
@@ -140,6 +140,25 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: /В банке/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Настроить подключение" })).not.toBeInTheDocument();
     expect(screen.queryByText(/Эмулятор:/)).not.toBeInTheDocument();
+  });
+
+  it("allows training while the review list is still loading", async () => {
+    const fetchMock = mockApi();
+    let finishReview!: (response: { ok: boolean; status: number; json: () => Promise<unknown> }) => void;
+    const reviewResponse = new Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>((resolve) => {
+      finishReview = resolve;
+    });
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+      input.toString() === "/api/review-phrases" ? reviewResponse : fetchMock(input, init),
+    ));
+
+    render(<App />);
+
+    const start = await screen.findByRole("button", { name: "Начать тренировку" });
+    await waitFor(() => expect(start).toBeEnabled());
+    fireEvent.click(start);
+    expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
+    finishReview({ ok: true, status: 200, json: async () => [] });
   });
 
   it("renders the native Android experience as three minimal swipe panels", async () => {

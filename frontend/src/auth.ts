@@ -45,7 +45,9 @@ export async function initializeAuth(): Promise<Session | null> {
 
 export function onAuthStateChange(callback: (session: Session | null) => void): () => void {
   if (!isAuthConfigured()) return () => undefined;
-  const { data } = getSupabase().auth.onAuthStateChange((_event, session) => callback(session));
+  const { data } = getSupabase().auth.onAuthStateChange((event, session) => {
+    if (event !== "INITIAL_SESSION") callback(session);
+  });
   return () => data.subscription.unsubscribe();
 }
 
