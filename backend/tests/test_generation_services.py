@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.models import TrainingSession
 from app.db.seed import seed_catalog
 from app.repositories import TopicPresetRepository
+from app.repositories.catalog import TopicPhraseRepository
 from app.schemas import ExerciseGenerationResult, TopicContext
 from app.services.exercise_generator import ExerciseGenerator
 from app.services.topic_service import TopicService
@@ -25,7 +26,7 @@ def test_preset_topic_uses_persistent_catalog_without_ai_call(db_session: Sessio
 
     exercise = ExerciseGenerator(db_session, ai).generate_next(training.id)
 
-    assert exercise.source_ru == "Я хочу открыть новый текущий счёт."
+    assert exercise.source_ru in {phrase.source_ru for phrase in TopicPhraseRepository(db_session).list_for_topic("bank")}
     assert ai.exercise_calls == 0
 
 

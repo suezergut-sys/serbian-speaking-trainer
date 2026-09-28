@@ -165,10 +165,12 @@ describe("App", () => {
     vi.stubGlobal("fetch", mockApi());
 
     render(<App />);
+    expect(screen.getByRole("status", { name: "Авторизация и загрузка" }).closest(".auth-page--loading")).toBeInTheDocument();
 
     expect(await screen.findByRole("heading", { name: /Практикуйтесь в реальных ситуациях/ })).toBeInTheDocument();
     expect(await screen.findByRole("status", { name: "Backend готов" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /В банке/ })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /В банке.*20.*неизученных/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Настроить подключение" })).not.toBeInTheDocument();
     expect(screen.queryByText(/Эмулятор:/)).not.toBeInTheDocument();
   });
@@ -209,8 +211,15 @@ describe("App", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(<App />);
+    expect(screen.getByRole("status", { name: "Авторизация и загрузка" })).toHaveTextContent("Авторизация и загрузка...");
+    expect(screen.getByRole("img", { name: "SerboTalk" })).toHaveAttribute("src", expect.stringMatching(/^data:image\/png;base64,/));
 
-    expect(await screen.findByRole("region", { name: "Выбор темы" })).toBeInTheDocument();
+    const topicsPage = await screen.findByRole("region", { name: "Выбор темы" });
+    expect(topicsPage.querySelector("h1")).toBeNull();
+    expect(await screen.findByRole("button", { name: /В банке.*20.*неизученных/ })).toBeInTheDocument();
+    const reviewCard = screen.getByRole("button", { name: /Повторение.*0.*к повторению/ });
+    expect(reviewCard).toHaveClass("android-topic");
+    expect(reviewCard.querySelectorAll('svg path[fill="currentColor"]')).toHaveLength(2);
     expect(screen.getByRole("region", { name: "Тренировка" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Статистика" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Темы" })).toHaveAttribute("aria-current", "page");
@@ -396,6 +405,7 @@ describe("App", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(<App />);
+    await screen.findByRole("button", { name: /В банке/ });
     fireEvent.change(await screen.findByLabelText("Своя тема"), {
       target: { value: "Поговорить с арендодателем" },
     });
@@ -421,10 +431,11 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
 
     expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
-    expect(screen.getByText("Канонический вариант")).toBeInTheDocument();
-    expect(screen.getAllByText("Želim da otvorim račun.")).toHaveLength(2);
+    expect(screen.getByText("Правильный вариант")).toBeInTheDocument();
+    expect(screen.getByText("Ваш вариант")).toBeInTheDocument();
+    expect(screen.getByText("Ваш вариант").parentElement).toHaveTextContent("Želim da otvorim račun.");
     expect(screen.getByLabelText("Прогресс навыков")).toHaveTextContent("Модальные глаголы");
-    fireEvent.click(screen.getByText("Подробный разбор"));
+    fireEvent.click(screen.getByText("Разбор"));
     expect(screen.getByText("Смысл и конструкция переданы правильно.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Следующая фраза/ })).toBeEnabled();
   });

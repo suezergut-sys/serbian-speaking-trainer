@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.main import app
-from app.models import Exercise, TopicPreset, TrainingSession
+from app.models import Exercise, ReviewPhrase, TopicPhrase, TopicPreset, TrainingSession
 
 
 def test_topics_and_preset_session_snapshot(api_client: TestClient, db_session: Session) -> None:
@@ -60,8 +60,9 @@ def test_next_exercise_is_persisted_without_exposing_answer(api_client: TestClie
     stored = db_session.scalar(select(Exercise).where(Exercise.id == payload["id"]))
     assert stored is not None
     assert stored.target_hints_json["intended_sr_variants"]
-    assert stored.target_hints_json["canonical_sr"] == "Mogu li da dobijem jelovnik, molim vas?"
-    assert stored.generation_meta_json["topic_phrase_id"] == "cafe-01"
+    catalog_phrase = db_session.get(TopicPhrase, stored.generation_meta_json["topic_phrase_id"])
+    assert catalog_phrase is not None
+    assert stored.target_hints_json["canonical_sr"] == catalog_phrase.canonical_sr
     assert db_session.get(TrainingSession, session_payload["id"]) is not None
 
 
@@ -137,7 +138,8 @@ def test_missing_resources_and_validation(api_client: TestClient) -> None:
     ).status_code == 422
 
 
-def test_preset_word_hint_comes_from_persistent_topic_catalog(api_client: TestClient) -> None:
+def test_preset_word_hint_comes_from_persistent_topic_catalog(api_client: TestClient, monkeypatch) -> None:
+    monkeypatch.setattr("app.services.exercise_generator.random.choice", lambda choices: choices[0])
     session_payload = api_client.post("/api/sessions", json={"topic_id": "rent"}).json()
     exercise = api_client.post(f"/api/sessions/{session_payload['id']}/next-exercise").json()
 
@@ -152,4 +154,52 @@ def test_preset_word_hint_comes_from_persistent_topic_catalog(api_client: TestCl
         "translation_sr": "svetao",
         "is_learning": True,
     }
-    assert {"word_ru": "светлую", "translation_sr": "svetao"} in exercise["word_hints"]
+
+
+def test_topic_counts_and_selection_exclude_mastered_catalog_phrases(
+    api_client: TestClient, db_session: Session, monkeypatch,
+) -> None:
+    first = db_session.get(TopicPhrase, "cafe-01")
+    assert first is not None
+    db_session.add(ReviewPhrase(
+        source_ru=first.source_ru,
+        source_normalized="можно мне пожалуйста меню",
+        intended_sr_variants_json=[first.canonical_sr],
+        topic_id="cafe",
+        topic_phrase_id=first.id,
+        status="mastered",
+    ))
+    db_session.flush()
+    topics = api_client.get("/api/topics").json()
+    assert next(topic for topic in topics if topic["id"] == "cafe")["phrase_count"] == 19
+
+    monkeypatch.setattr("app.services.exercise_generator.random.choice", lambda choices: choices[-1])
+    session_id = api_client.post("/api/sessions", json={"topic_id": "cafe"}).json()["id"]
+    exercise = api_client.post(f"/api/sessions/{session_id}/next-exercise").json()
+    stored = db_session.get(Exercise, exercise["id"])
+    assert stored is not None
+    assert stored.generation_meta_json["topic_phrase_id"] == "cafe-20"
+
+
+def test_added_phrase_is_counted_and_selectable_in_its_topic(
+    api_client: TestClient, db_session: Session, monkeypatch,
+) -> None:
+    added = ReviewPhrase(
+        source_ru="Мне нужен стол у окна.",
+        source_normalized="мне нужен стол у окна",
+        intended_sr_variants_json=["Treba mi sto pored prozora."],
+        topic_id="cafe",
+        status="active",
+    )
+    db_session.add(added)
+    db_session.flush()
+    topics = api_client.get("/api/topics").json()
+    assert next(topic for topic in topics if topic["id"] == "cafe")["phrase_count"] == 21
+
+    monkeypatch.setattr("app.services.exercise_generator.random.choice", lambda choices: choices[-1])
+    session_id = api_client.post("/api/sessions", json={"topic_id": "cafe"}).json()["id"]
+    exercise = api_client.post(f"/api/sessions/{session_id}/next-exercise").json()
+    assert exercise["source_ru"] == added.source_ru
+    stored = db_session.get(Exercise, exercise["id"])
+    assert stored is not None
+    assert stored.generation_meta_json["review_phrase_id"] == added.id

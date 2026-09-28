@@ -1,4 +1,6 @@
-from sqlalchemy import func, or_, select
+from datetime import datetime, timezone
+
+from sqlalchemy import and_, exists, func, or_, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.models import LearnerSkill, Skill, TopicPhrase, TopicPreset
@@ -54,10 +56,24 @@ class TopicPresetRepository(Repository[TopicPreset]):
     def phrase_counts(self) -> dict[str, int]:
         from app.models import ReviewPhrase
 
-        catalog = select(TopicPhrase.topic_id, func.count(TopicPhrase.id)).where(TopicPhrase.enabled.is_(True)).group_by(TopicPhrase.topic_id)
+        now = datetime.now(timezone.utc)
+        mastered = exists().where(
+            ReviewPhrase.user_id == self.user_id,
+            ReviewPhrase.topic_phrase_id == TopicPhrase.id,
+            ReviewPhrase.status == "mastered",
+            or_(ReviewPhrase.next_review_at.is_(None), ReviewPhrase.next_review_at > now),
+        )
+        catalog = select(TopicPhrase.topic_id, func.count(TopicPhrase.id)).where(
+            TopicPhrase.enabled.is_(True), ~mastered,
+        ).group_by(TopicPhrase.topic_id)
         custom = select(ReviewPhrase.topic_id, func.count(ReviewPhrase.id)).where(
             ReviewPhrase.user_id == self.user_id,
             ReviewPhrase.topic_id.is_not(None),
+            ReviewPhrase.topic_phrase_id.is_(None),
+            or_(
+                ReviewPhrase.status == "active",
+                and_(ReviewPhrase.status == "mastered", ReviewPhrase.next_review_at <= now),
+            ),
         ).group_by(ReviewPhrase.topic_id)
         counts: dict[str, int] = {}
         for topic_id, count in self.session.execute(catalog):
@@ -71,10 +87,23 @@ class TopicPhraseRepository(Repository[TopicPhrase]):
     def __init__(self, session: Session) -> None:
         super().__init__(session, TopicPhrase)
 
-    def list_for_topic(self, topic_id: str) -> list[TopicPhrase]:
+    def list_for_topic(self, topic_id: str, user_id: str | None = None) -> list[TopicPhrase]:
         statement = (
             select(TopicPhrase)
             .where(TopicPhrase.topic_id == topic_id, TopicPhrase.enabled.is_(True))
             .order_by(TopicPhrase.position)
         )
+        if user_id is not None:
+            from app.models import ReviewPhrase
+
+            mastered = exists().where(
+                ReviewPhrase.user_id == user_id,
+                ReviewPhrase.topic_phrase_id == TopicPhrase.id,
+                ReviewPhrase.status == "mastered",
+                or_(
+                    ReviewPhrase.next_review_at.is_(None),
+                    ReviewPhrase.next_review_at > datetime.now(timezone.utc),
+                ),
+            )
+            statement = statement.where(~mastered)
         return list(self.session.scalars(statement))
