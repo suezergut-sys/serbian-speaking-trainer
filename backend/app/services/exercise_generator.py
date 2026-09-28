@@ -7,7 +7,7 @@ from difflib import SequenceMatcher
 
 from sqlalchemy.orm import Session
 
-from app.models import Exercise
+from app.models import Exercise, ReviewPhrase
 from app.repositories import (
     ExerciseRepository,
     ReviewPhraseRepository,
@@ -117,6 +117,7 @@ class ExerciseGenerator:
             return self._review_exercise(training_session.id, review_payload)
         if training_session.normalized_topic_json.get("review_carousel"):
             return self._next_review_exercise(training_session.id)
+        self.review_phrases.activate_due(datetime.now(timezone.utc))
         recent = self.exercises.list_recent(session_id, limit=20)
         skills = self.skills.list_for_training(self.user_id)
         skill_catalog = {skill.key: skill for skill in skills}
@@ -129,7 +130,10 @@ class ExerciseGenerator:
             for skill in targets
         ]
         recent_sources = [exercise.source_ru for exercise in recent]
-        catalog_phrase = self._select_catalog_phrase(topic.id, target_keys, recent_sources)
+        selected_phrase = self._select_topic_phrase(topic.id, recent_sources)
+        if isinstance(selected_phrase, ReviewPhrase):
+            return self._review_exercise(training_session.id, self._review_payload(selected_phrase))
+        catalog_phrase = selected_phrase
         if catalog_phrase is not None:
             target_keys = [key for key in catalog_phrase.targeted_skill_keys_json if key in skill_catalog]
             result = ExerciseGenerationResult(
@@ -146,17 +150,7 @@ class ExerciseGenerator:
                 result = self._generate(topic, target_payload, target_keys, recent_sources)
                 catalog_phrase = None
             else:
-                self.review_phrases.activate_due(datetime.now(timezone.utc))
-                topic_phrases = self.review_phrases.list_active_for_topic(topic.id)
-                if not topic_phrases:
-                    raise ReviewQueueEmptyError
-                recent_ids = {
-                    str(item.generation_meta_json.get("review_phrase_id"))
-                    for item in recent
-                    if item.generation_meta_json.get("review_phrase_id")
-                }
-                candidates = [phrase for phrase in topic_phrases if phrase.id not in recent_ids] or topic_phrases
-                return self._review_exercise(training_session.id, self._review_payload(random.choice(candidates)))
+                raise ReviewQueueEmptyError
         entity = self.exercises.add(
             Exercise(
                 session_id=session_id,
@@ -187,21 +181,18 @@ class ExerciseGenerator:
             word_hints=result.word_hints,
         )
 
-    def _select_catalog_phrase(self, topic_id: str, target_keys: list[str], recent_sources: list[str]):
-        phrases = self.topic_phrases.list_for_topic(topic_id)
+    def _select_topic_phrase(self, topic_id: str, recent_sources: list[str]):
+        phrases = [
+            *self.topic_phrases.list_for_topic(topic_id, self.user_id),
+            *(phrase for phrase in self.review_phrases.list_active_for_topic(topic_id)
+              if phrase.topic_phrase_id is None),
+        ]
         if not phrases:
             return None
         recent_normalized = {self._normalize(source) for source in recent_sources}
         fresh = [phrase for phrase in phrases if self._normalize(phrase.source_ru) not in recent_normalized]
         candidates = fresh or phrases
-        target_set = set(target_keys)
-        candidates.sort(
-            key=lambda phrase: (
-                -len(target_set.intersection(phrase.targeted_skill_keys_json)),
-                phrase.position,
-            )
-        )
-        return candidates[0]
+        return random.choice(candidates)
 
     def _next_review_exercise(self, session_id: str) -> ExerciseResponse:
         self.review_phrases.activate_due(datetime.now(timezone.utc))

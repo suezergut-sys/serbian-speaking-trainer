@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import ReviewPhrase, WordLearningItem
+from app.models import ReviewPhrase, TopicPhrase, WordLearningItem
 from app.main import app
 from app.schemas import PhrasePreparation, PrepareReviewPhraseRequest, WordHint
 from app.services.ai_adapter import get_ai_provider
@@ -60,7 +60,8 @@ def _exercise(api_client: TestClient) -> dict:
     return api_client.post(f"/api/sessions/{session['id']}/next-exercise").json()
 
 
-def test_word_hint_is_saved_and_reduces_score(api_client: TestClient, db_session: Session) -> None:
+def test_word_hint_is_saved_and_reduces_score(api_client: TestClient, db_session: Session, monkeypatch) -> None:
+    monkeypatch.setattr("app.services.exercise_generator.random.choice", lambda choices: choices[0])
     exercise = _exercise(api_client)
 
     hint = api_client.post(
@@ -131,6 +132,20 @@ def test_review_mode_rejects_an_empty_queue(api_client: TestClient) -> None:
     assert response.json()["detail"] == "Review queue is empty"
 
 
+def test_review_queue_includes_all_active_phrases_beyond_one_hundred(db_session: Session) -> None:
+    db_session.add_all([
+        ReviewPhrase(
+            source_ru=f"Фраза номер {number}.",
+            source_normalized=f"фраза номер {number}",
+            intended_sr_variants_json=[f"Rečenica broj {number}."],
+        )
+        for number in range(101)
+    ])
+    db_session.flush()
+
+    assert len(ReviewService(db_session, FakeAIProvider()).list_phrases()) == 101
+
+
 def test_review_mode_starts_with_first_phrase_in_one_request(api_client: TestClient) -> None:
     created = api_client.post(
         "/api/review-phrases",
@@ -169,7 +184,7 @@ def test_ninety_five_percent_counts_as_a_correct_review(
         word_hints=[], targeted_skill_keys=[], score=0.7, hinted_words=[],
         review_phrase_id=phrase.id,
     )
-    for _ in range(2):
+    for _ in range(3):
         service.record_attempt(
             source_ru=phrase.source_ru,
             intended_sr_variants=phrase.intended_sr_variants_json,
@@ -183,13 +198,13 @@ def test_ninety_five_percent_counts_as_a_correct_review(
 
     db_session.refresh(phrase)
     assert phrase.status == "mastered"
-    assert phrase.perfect_streak == 2
+    assert phrase.perfect_streak == 3
     assert phrase.difficulty == "medium"
-    assert phrase.interval_days == 7
+    assert phrase.interval_days == 2
     assert phrase.next_review_at is not None
 
 
-def test_review_phrase_leaves_active_list_after_two_perfect_attempts(
+def test_review_phrase_leaves_active_list_after_three_perfect_attempts(
     api_client: TestClient,
     db_session: Session,
 ) -> None:
@@ -202,7 +217,7 @@ def test_review_phrase_leaves_active_list_after_two_perfect_attempts(
     db_session.add(phrase)
     db_session.commit()
 
-    for _ in range(2):
+    for attempt_index in range(3):
         session = api_client.post("/api/sessions", json={"review_phrase_id": phrase.id}).json()
         review_exercise = api_client.post(f"/api/sessions/{session['id']}/next-exercise").json()
         response = api_client.post(
@@ -213,11 +228,59 @@ def test_review_phrase_leaves_active_list_after_two_perfect_attempts(
             },
         )
         assert response.json()["overall_score"] == 1.0
+        if attempt_index < 2:
+            assert any(item["id"] == phrase.id for item in api_client.get("/api/review-phrases").json())
 
     assert api_client.get("/api/review-phrases").json() == []
     db_session.refresh(phrase)
     assert phrase.status == "mastered"
-    assert phrase.perfect_streak == 2
+    assert phrase.perfect_streak == 3
+
+
+def test_catalog_phrase_moves_to_review_then_returns_to_both_topics_when_due(
+    api_client: TestClient, db_session: Session, monkeypatch,
+) -> None:
+    monkeypatch.setattr("app.services.exercise_generator.random.choice", lambda choices: choices[0])
+    catalog = db_session.get(TopicPhrase, "cafe-01")
+    assert catalog is not None
+
+    def topic_count() -> int:
+        return next(item["phrase_count"] for item in api_client.get("/api/topics").json() if item["id"] == "cafe")
+
+    assert topic_count() == 20
+    exercise = _exercise(api_client)
+    assert exercise["source_ru"] == catalog.source_ru
+    response = api_client.post("/api/attempts", json={
+        "exercise_id": exercise["id"], "transcript_sr": catalog.canonical_sr,
+    })
+    assert response.status_code == 201
+    review_item = api_client.get("/api/review-phrases").json()[0]
+    assert review_item["source_ru"] == catalog.source_ru
+    assert topic_count() == 20
+
+    for _ in range(2):
+        session = api_client.post("/api/sessions", json={"review_phrase_id": review_item["id"]}).json()
+        exercise = api_client.post(f"/api/sessions/{session['id']}/next-exercise").json()
+        response = api_client.post("/api/attempts", json={
+            "exercise_id": exercise["id"], "transcript_sr": catalog.canonical_sr,
+        })
+        assert response.status_code == 201
+
+    phrase = db_session.get(ReviewPhrase, review_item["id"])
+    assert phrase is not None
+    assert phrase.status == "mastered"
+    assert phrase.perfect_streak == 3
+    assert phrase.interval_days == 3
+    assert api_client.get("/api/review-phrases").json() == []
+    assert topic_count() == 19
+
+    phrase.next_review_at = datetime.now(timezone.utc) - timedelta(seconds=1)
+    db_session.flush()
+    assert topic_count() == 20
+    assert api_client.get("/api/review-phrases").json()[0]["id"] == phrase.id
+    session = api_client.post("/api/sessions", json={"topic_id": "cafe"}).json()
+    due_exercise = api_client.post(f"/api/sessions/{session['id']}/next-exercise").json()
+    assert due_exercise["source_ru"] == catalog.source_ru
 
 
 def test_first_try_success_is_easy_and_due_phrase_returns_with_longer_interval(
@@ -233,7 +296,7 @@ def test_first_try_success_is_easy_and_due_phrase_returns_with_longer_interval(
     service = ReviewService(db_session, FakeAIProvider())
     started_at = datetime(2026, 9, 20, 10, tzinfo=timezone.utc)
 
-    for minute in (0, 1):
+    for minute in (0, 1, 2):
         service.record_attempt(
             source_ru=phrase.source_ru,
             intended_sr_variants=phrase.intended_sr_variants_json,
@@ -242,7 +305,7 @@ def test_first_try_success_is_easy_and_due_phrase_returns_with_longer_interval(
         )
     assert phrase.status == "mastered"
     assert phrase.difficulty == "easy"
-    assert phrase.interval_days == 14
+    assert phrase.interval_days == 3
 
     phrase.next_review_at = started_at - timedelta(seconds=1)
     db_session.flush()
@@ -250,7 +313,7 @@ def test_first_try_success_is_easy_and_due_phrase_returns_with_longer_interval(
     assert phrase.status == "active"
     assert phrase.perfect_streak == 0
 
-    for minute in (2, 3):
+    for minute in (3, 4, 5):
         service.record_attempt(
             source_ru=phrase.source_ru,
             intended_sr_variants=phrase.intended_sr_variants_json,
@@ -258,7 +321,7 @@ def test_first_try_success_is_easy_and_due_phrase_returns_with_longer_interval(
             review_phrase_id=phrase.id, now=started_at + timedelta(minutes=minute),
         )
     assert phrase.status == "mastered"
-    assert phrase.interval_days == 35
+    assert phrase.interval_days == 8
     assert phrase.mastery_count == 2
 
 
@@ -272,7 +335,7 @@ def test_two_errors_make_phrase_hard(db_session: Session) -> None:
     db_session.commit()
     service = ReviewService(db_session, FakeAIProvider())
 
-    for score in (0.4, 0.8, 0.95, 1.0):
+    for score in (0.4, 0.8, 0.95, 1.0, 0.95):
         service.record_attempt(
             source_ru=phrase.source_ru,
             intended_sr_variants=phrase.intended_sr_variants_json,
@@ -283,4 +346,4 @@ def test_two_errors_make_phrase_hard(db_session: Session) -> None:
     assert phrase.status == "mastered"
     assert phrase.difficulty == "hard"
     assert phrase.incorrect_attempts == 2
-    assert phrase.interval_days == 3
+    assert phrase.interval_days == 1

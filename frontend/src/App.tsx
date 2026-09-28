@@ -14,6 +14,8 @@ import type { CurrentUser } from "./types/auth";
 import { LegalPage } from "./LegalPage";
 import { SettingsView } from "./SettingsView";
 import { displaySerbian, displaySerbianInRussianText, readSerbianAlphabet, saveSerbianAlphabet, toSerbianLatin, type SerbianAlphabet } from "./serbianScript";
+import { AnswerResult } from "./AnswerResult";
+import appLogo from "./assets/app-logo.png?inline";
 import "./styles.css";
 
 type BackendState = "checking" | "online" | "offline";
@@ -31,6 +33,7 @@ function Icon({ name, size = 20 }: { name: string; size?: number }) {
     home: <><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10M9 20v-6h6v6"/></>,
     chart: <><path d="M4 19V9M10 19V5M16 19v-7M22 19V2"/></>,
     progress: <><path d="M4 18h16M6 15l4-4 3 2 5-7"/><path d="M16 6h2v2"/></>,
+    repeat: <><path fill="currentColor" stroke="none" d="M2.4 8.1C5.6 1.1 15.7.6 21 5.1V2.5L24 8l-5.1 3.4.4-3.2C15.6 4.8 9.2 4.2 5.3 10.2Z"/><path fill="currentColor" stroke="none" d="M21.6 15.9C18.4 22.9 8.3 23.4 3 18.9v2.6L0 16l5.1-3.4-.4 3.2c3.7 3.4 10.1 4 14-2Z"/></>,
     briefcase: <><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V4h8v3M3 12h18M10 12v2h4v-2"/></>,
     bank: <><path d="m3 9 9-5 9 5M5 10h14M6 10v8M10 10v8M14 10v8M18 10v8M3 20h18"/></>,
     sun: <><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></>,
@@ -96,7 +99,10 @@ function AuthenticatedApp() {
     catch { setAuthError("Не удалось открыть вход через Google."); }
   }
 
-  if (!authReady) return <main className="auth-page"><div className="auth-card panel"><p>Проверяем вход…</p></div></main>;
+  if (!authReady) return <main className="auth-page auth-page--loading"><div className="auth-loading" role="status" aria-label="Авторизация и загрузка">
+    <span className="auth-loading__ring"><img src={appLogo} alt="SerboTalk" /></span>
+    <p>Авторизация и загрузка...</p>
+  </div></main>;
   if (!isAuthConfigured()) return <main className="auth-page"><div className="auth-card panel"><h1>Нужна настройка входа</h1><p>Добавьте VITE_SUPABASE_URL и VITE_SUPABASE_PUBLISHABLE_KEY в окружение frontend.</p></div></main>;
   if (!hasSession || !account) return <main className="auth-page"><div className="auth-card panel"><span className="brand__mark"><Icon name="message" size={34}/></span><h1>Добро пожаловать в SerboTalk</h1><p>Войдите или зарегистрируйтесь с Google, чтобы сохранять свой прогресс на всех устройствах.</p><button className="google-sign-in" type="button" onClick={() => void login()}>Войти через Google</button>{authError && <p className="error" role="alert">{authError}</p>}<nav className="auth-legal" aria-label="Правовая информация"><a href="/privacy">Конфиденциальность</a><a href="/terms">Условия</a></nav></div></main>;
   return <TrainerApp account={account} onAccountChange={setAccount} onSignOut={() => void signOut()} />;
@@ -181,6 +187,19 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   }, []);
 
   useEffect(() => () => voiceRef.current?.stop(), []);
+  useEffect(() => {
+    const refreshWhenVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      void Promise.all([fetchTopics(), fetchReviewPhrases()])
+        .then(([availableTopics, availablePhrases]) => {
+          setTopics(availableTopics);
+          setReviewPhrases(availablePhrases);
+        })
+        .catch(() => undefined);
+    };
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => document.removeEventListener("visibilitychange", refreshWhenVisible);
+  }, []);
   const selectedTopicData = topics.find((topic) => topic.id === selectedTopic);
   const currentTopic = session?.topic ?? selectedTopicData;
   const isReviewMode = session?.topic.id === "review-phrases";
@@ -281,6 +300,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       nextExerciseRef.current = { sessionId: session.id, promise: prepared };
       const refreshSideData = () => {
         void fetchReviewPhrases().then(setReviewPhrases).catch(() => undefined);
+        void fetchTopics().then(setTopics).catch(() => undefined);
         void fetchCurrentUser().then(onAccountChange).catch(() => undefined);
       };
       void prepared.then(refreshSideData, refreshSideData);
@@ -372,18 +392,17 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
           }}
         >
           <section className="android-page android-topics-page" aria-label="Выбор темы">
-            <h1>Темы</h1>
             <div className="android-topic-list" aria-label="Темы тренировки">
               <button className={isReviewMode ? "android-topic is-selected" : "android-topic"} type="button" disabled={loading || reviewPhrases.length === 0} onClick={() => { showAndroidPanel(1); void startReviewTraining(); }}>
-                <span className="topic__icon"><Icon name="progress" /></span>
+                <span className="topic__icon"><Icon name="repeat" /></span>
                 <strong>Повторение</strong>
-                <small>{reviewPhrases.length}</small>
+                <small>{reviewPhrases.length}<span>к повторению</span></small>
               </button>
               {topics.map((topic) => (
                 <button className={selectedTopic === topic.id && !customTopic ? "android-topic is-selected" : "android-topic"} key={topic.id} type="button" onClick={() => { selectTopic(topic.id); showAndroidPanel(1); }}>
                   <span className={`topic__icon topic__icon--${topicIcons[topic.id] ?? "message"}`}><Icon name={topicIcons[topic.id] ?? "message"} /></span>
                   <strong>{topic.title_ru}</strong>
-                  <small>{topic.phrase_count}</small>
+                  <small>{topic.phrase_count}<span> неизученных</span></small>
                 </button>
               ))}
             </div>
@@ -422,7 +441,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
             ) : (
               <div className="android-training-content">
                 <div className="android-training-meta"><span>{currentTopic?.title_ru}</span><small>{exerciseNumber}/{session.requested_length}</small></div>
-                <h1 className="interactive-phrase" aria-label={exercise?.source_ru ?? "Готовим фразу…"}>{exercise ? exercise.source_ru.split(/([А-Яа-яЁё]+)/g).filter(Boolean).map((part, index) => /^[А-Яа-яЁё]+$/.test(part) ? <span className="word-wrap" key={`${part}-${index}`}><button className={wordHints[part.toLocaleLowerCase("ru-RU")] ? "word-token is-used" : "word-token"} type="button" onClick={() => showWordHint(part)}>{part}</button>{activeHint === part.toLocaleLowerCase("ru-RU") && <span className="word-tooltip" role="status">{wordHints[part.toLocaleLowerCase("ru-RU")] ? displaySerbian(wordHints[part.toLocaleLowerCase("ru-RU")].translation_sr, alphabet) : "Загружаем…"}</span>}</span> : <span key={`${part}-${index}`}>{part}</span>) : "Готовим фразу…"}</h1>
+                {!attempt && <h1 className="interactive-phrase" aria-label={exercise?.source_ru ?? "Готовим фразу…"}>{exercise ? exercise.source_ru.split(/([А-Яа-яЁё]+)/g).filter(Boolean).map((part, index) => /^[А-Яа-яЁё]+$/.test(part) ? <span className="word-wrap" key={`${part}-${index}`}><button className={wordHints[part.toLocaleLowerCase("ru-RU")] ? "word-token is-used" : "word-token"} type="button" onClick={() => showWordHint(part)}>{part}</button>{activeHint === part.toLocaleLowerCase("ru-RU") && <span className="word-tooltip" role="status">{wordHints[part.toLocaleLowerCase("ru-RU")] ? displaySerbian(wordHints[part.toLocaleLowerCase("ru-RU")].translation_sr, alphabet) : "Загружаем…"}</span>}</span> : <span key={`${part}-${index}`}>{part}</span>) : "Готовим фразу…"}</h1>}
 
                 {!attempt ? <form className="android-answer" onSubmit={checkAnswer}>
                   {hasTranscript ? <><label className="sr-only" htmlFor="android-serbian-answer">Ваш ответ</label>
@@ -431,9 +450,9 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                   {(!voiceSupported || voiceState !== "idle") && <p className="android-voice-state" role="status">{!voiceSupported ? "Микрофон недоступен. Разрешите доступ в настройках устройства." : voiceState === "connecting" ? "Подключаем микрофон…" : voiceState === "recording" ? "Запись" : voiceState === "transcribing" ? "Распознаём…" : "Повторите запись"}</p>}
                   {hasTranscript && <button className="android-primary" type="submit" disabled={loading || !answer.trim()}>{loading ? "Проверяем…" : "Проверить"}</button>}
                 </form> : <div className={`android-feedback feedback--${attempt.analysis.verdict}`}>
+                  <AnswerResult source={exercise?.source_ru ?? ""} answer={attempt.transcript_sr} attempt={attempt} alphabet={alphabet} />
                   <div className="feedback__score"><span>{Math.round(attempt.overall_score * 100)}%</span><strong>{attempt.analysis.verdict === "correct" ? "Верно" : attempt.analysis.verdict === "mostly_correct" ? "Почти верно" : "Попробуйте ещё"}</strong></div>
                   <p>{displaySerbianInRussianText(attempt.analysis.short_feedback_ru, alphabet)}</p>
-                  <div className="correction"><small>Правильный вариант</small><span lang={alphabet === "cyrillic" ? "sr-Cyrl" : "sr-Latn"}>{displaySerbian(attempt.analysis.corrected_sr, alphabet)}</span></div>
                   <details><summary>Разбор</summary><p>{displaySerbianInRussianText(attempt.analysis.detailed_feedback_ru, alphabet)}</p></details>
                   <button className="android-primary" type="button" disabled={loading} onClick={nextExercise}>{loading ? "Загрузка…" : "Следующая"}</button>
                 </div>}
@@ -505,7 +524,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
           <aside className="topics-panel panel">
             <div className="panel-heading"><h2>Темы для практики</h2><p>Выберите ситуацию и начните разговор на сербском языке</p></div>
             <button className={isReviewMode ? "review-topic is-selected" : "review-topic"} type="button" disabled={loading} onClick={() => void startReviewTraining()}>
-              <span className="topic__icon"><Icon name="progress" /></span>
+              <span className="topic__icon"><Icon name="repeat" /></span>
               <span className="topic__copy"><strong>Фразы для повторения</strong><small>{reviewPhrases.length ? `${reviewPhrases.length} требуют практики` : "Список пока пуст"}</small></span>
               <span className="review-topic__count">{reviewPhrases.length}</span>
             </button>
@@ -513,7 +532,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
               {topics.map((topic) => (
                 <button className={selectedTopic === topic.id && !customTopic ? "topic is-selected" : "topic"} key={topic.id} type="button" onClick={() => selectTopic(topic.id)}>
                   <span className={`topic__icon topic__icon--${topicIcons[topic.id] ?? "message"}`}><Icon name={topicIcons[topic.id] ?? "message"} /></span>
-                  <span className="topic__copy"><strong>{topic.title_ru}</strong><small>{topic.description_ru}</small></span><span className="topic__arrow">›</span>
+                  <span className="topic__copy"><strong>{topic.title_ru}</strong><small>{topic.description_ru}</small></span><span className="topic__unlearned"><strong>{topic.phrase_count}</strong><small>неизученных</small></span>
                 </button>
               ))}
             </div>
@@ -568,7 +587,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                       {hasTranscript && <button className="answer-submit" type="submit" disabled={loading || !answer.trim()}>{loading ? "Анализируем…" : "Проверить ответ"}<Icon name="arrow" /></button>}
                     </form>
                   ) : (
-                    <div className="submitted-answer"><small>Ваш вариант</small><p>{answer}</p><span><Icon name="arrow" /> Подробный разбор показан справа</span></div>
+                    <div className="submitted-answer"><span><Icon name="arrow" /> Результат проверки показан справа</span></div>
                   )}
                 </div>
                 {error && <p className="error" role="alert">{error}</p>}
@@ -579,11 +598,12 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
           <aside className={attempt ? "info-panel result-panel panel" : "info-panel result-panel result-panel--empty panel"}>
             <div className="panel-heading panel-heading--icon"><Icon name={attempt ? "check" : "progress"} /><div><h2>Анализ ответа</h2><p>{attempt ? "Результат текущей попытки" : "Появится после проверки"}</p></div></div>
             {attempt ? <div className={`feedback feedback--${attempt.analysis.verdict}`}>
+              <AnswerResult source={exercise?.source_ru ?? ""} answer={attempt.transcript_sr} attempt={attempt} alphabet={alphabet} />
               <div className="feedback__score"><span>{Math.round(attempt.overall_score * 100)}%</span><strong>{attempt.analysis.verdict === "correct" ? "Верно" : attempt.analysis.verdict === "mostly_correct" ? "Почти верно" : "Нужно доработать"}</strong></div>
               {attempt.hint_penalty > 0 && <div className="hint-penalty"><Icon name="bulb" /><span>Подсказки: −{Math.round(attempt.hint_penalty * 100)} баллов</span></div>}
-              <p>{displaySerbianInRussianText(attempt.analysis.short_feedback_ru, alphabet)}</p><div className="correction"><small>Канонический вариант</small><span lang={alphabet === "cyrillic" ? "sr-Cyrl" : "sr-Latn"}>{displaySerbian(attempt.analysis.corrected_sr, alphabet)}</span></div>
+              <p>{displaySerbianInRussianText(attempt.analysis.short_feedback_ru, alphabet)}</p>
               {(attempt.learner_updates?.length ?? 0) > 0 && <div className="mastery-list" aria-label="Прогресс навыков">{attempt.learner_updates?.map((skill) => <div key={skill.skill_key}><span>{skill.title_ru}</span><div><i style={{ width: `${Math.round(skill.mastery * 100)}%` }}/></div><b>{Math.round(skill.mastery * 100)}%</b></div>)}</div>}
-              <details><summary>Подробный разбор</summary><p>{displaySerbianInRussianText(attempt.analysis.detailed_feedback_ru, alphabet)}</p><div className="score-grid"><span>Смысл <b>{Math.round(attempt.analysis.semantic_score * 100)}</b></span><span>Грамматика <b>{Math.round(attempt.analysis.grammar_score * 100)}</b></span><span>Лексика <b>{Math.round(attempt.analysis.lexical_score * 100)}</b></span><span>Естественность <b>{Math.round(attempt.analysis.naturalness_score * 100)}</b></span></div>{attempt.analysis.issues.map((issue, index) => <p className="issue" key={`${issue.skill_key}-${issue.type}-${index}`}><b>{issue.skill_key}</b>: {displaySerbianInRussianText(issue.evidence, alphabet)}{issue.correction ? ` → ${displaySerbianInRussianText(issue.correction, alphabet)}` : ""}</p>)}</details>
+              <details><summary>Разбор</summary><p>{displaySerbianInRussianText(attempt.analysis.detailed_feedback_ru, alphabet)}</p><div className="score-grid"><span>Смысл <b>{Math.round(attempt.analysis.semantic_score * 100)}</b></span><span>Грамматика <b>{Math.round(attempt.analysis.grammar_score * 100)}</b></span><span>Лексика <b>{Math.round(attempt.analysis.lexical_score * 100)}</b></span><span>Естественность <b>{Math.round(attempt.analysis.naturalness_score * 100)}</b></span></div>{attempt.analysis.issues.map((issue, index) => <p className="issue" key={`${issue.skill_key}-${issue.type}-${index}`}><b>{issue.skill_key}</b>: {displaySerbianInRussianText(issue.evidence, alphabet)}{issue.correction ? ` → ${displaySerbianInRussianText(issue.correction, alphabet)}` : ""}</p>)}</details>
               <button className="answer-submit" type="button" disabled={loading} onClick={nextExercise}>{loading ? "Готовим…" : "Следующая фраза"}<Icon name="arrow" /></button>
             </div> : <div className="result-empty"><span><Icon name="chart" size={30} /></span><p>Ответьте на фразу — здесь появятся оценка, исправление и прогресс навыков.</p></div>}
           </aside>

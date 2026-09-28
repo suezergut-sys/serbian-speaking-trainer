@@ -2,7 +2,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.models import Attempt, ErrorEvent, LearnerSkill
+from app.models import Attempt, ErrorEvent, Exercise, LearnerSkill
 
 
 def _exercise(api_client: TestClient) -> dict:
@@ -12,12 +12,15 @@ def _exercise(api_client: TestClient) -> dict:
 
 def test_submit_correct_text_attempt(api_client: TestClient, db_session: Session) -> None:
     exercise = _exercise(api_client)
+    stored_exercise = db_session.get(Exercise, exercise["id"])
+    assert stored_exercise is not None
+    canonical = stored_exercise.target_hints_json["canonical_sr"]
 
     response = api_client.post(
         "/api/attempts",
         json={
             "exercise_id": exercise["id"],
-            "transcript_sr": "Mogu li da dobijem jelovnik, molim vas?",
+            "transcript_sr": canonical,
             "reaction_ms": None,
             "timings": {},
         },
@@ -26,7 +29,7 @@ def test_submit_correct_text_attempt(api_client: TestClient, db_session: Session
     assert response.status_code == 201
     payload = response.json()
     assert payload["analysis"]["verdict"] == "correct"
-    assert payload["analysis"]["corrected_sr"] == "Mogu li da dobijem jelovnik, molim vas?"
+    assert payload["analysis"]["corrected_sr"] == canonical
     assert payload["analysis"]["pronunciation_score"] is None
     assert payload["overall_score"] == 1
     assert payload["analysis"]["issues"] == []
@@ -34,7 +37,7 @@ def test_submit_correct_text_attempt(api_client: TestClient, db_session: Session
     assert all(update["mastery"] > 0 for update in payload["learner_updates"])
     stored = db_session.get(Attempt, payload["id"])
     assert stored is not None
-    assert stored.transcript_sr.startswith("Mogu li")
+    assert stored.transcript_sr == canonical
     assert stored.analysis_json["verdict"] == "correct"
 
 
@@ -53,10 +56,10 @@ def test_submit_incorrect_attempt_creates_error_event(api_client: TestClient, db
     assert db_session.scalar(select(func.count()).select_from(ErrorEvent)) == 1
     assert db_session.scalar(select(func.count()).select_from(LearnerSkill)) == len(payload["learner_updates"])
 
-    failed_keys = {update["skill_key"] for update in payload["learner_updates"]}
     next_exercise = api_client.post(f"/api/sessions/{exercise['session_id']}/next-exercise")
     assert next_exercise.status_code == 201
-    assert failed_keys.intersection(next_exercise.json()["targeted_skills"])
+    assert next_exercise.json()["source_ru"] != exercise["source_ru"]
+    assert next_exercise.json()["targeted_skills"]
 
 
 def test_attempt_validation_and_missing_exercise(api_client: TestClient) -> None:
