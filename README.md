@@ -100,6 +100,8 @@ Production URL:
 - `serbian-speaking-trainer-api` с Root Directory `backend`;
 - `serbian-speaking-trainer` с Root Directory `frontend` и `VITE_API_BASE_URL`, равным production URL API.
 
+После merge в `main` обновите оба production-проекта командами `vercel deploy --prod --cwd backend` и `vercel deploy --prod --cwd frontend` из корня checkout, дождитесь Ready и проверьте оба production URL. На 28 сентября 2026 года один merge не запускал Vercel deployment автоматически.
+
 Backend environment variables:
 
 - `APP_ENV=production`;
