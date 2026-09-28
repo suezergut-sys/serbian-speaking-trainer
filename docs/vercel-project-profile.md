@@ -5,12 +5,13 @@
 ## Backend
 
 - Production branch: `main`
+- Deployment trigger: ручной `vercel deploy --prod --cwd backend` из checkout `main`; merge сам по себе не запускал deployment 28 сентября 2026 года.
 - Vercel project name: `serbian-speaking-trainer-api`
 - Production URL: `https://serbian-speaking-trainer-api.vercel.app`
 - Root Directory: `backend`
 - Build command: `python scripts/vercel_build.py`
 - Quality command: `.\scripts\check.ps1` из корня репозитория
-- Health checks: `GET /health`; защищённый API без access token отвечает `401`
+- Health checks: `GET /api/health`; защищённый API без access token отвечает `401`
 - Required migrations: `backend/alembic`; production build также идемпотентно заполняет каталог фраз
 - Scheduled jobs: нет
 - Required environment variable names: `APP_ENV`, `DATABASE_URL`, `OPENAI_API_KEY`, `OPENAI_TEXT_MODEL`, `OPENAI_TRANSCRIBE_MODEL`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `CORS_ALLOWED_ORIGINS`, `CORS_ALLOWED_ORIGIN_REGEX`
@@ -19,6 +20,7 @@
 ## Frontend
 
 - Production branch: `main`
+- Deployment trigger: ручной `vercel deploy --prod --cwd frontend` из checkout `main`.
 - Vercel project name: `serbian-speaking-trainer`
 - Production URL: `https://serbian-speaking-trainer.vercel.app`
 - Root Directory: `frontend`
