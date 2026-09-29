@@ -20,7 +20,14 @@ import "./styles.css";
 
 type BackendState = "checking" | "online" | "offline";
 type VoiceState = "idle" | "connecting" | "recording" | "transcribing" | "error";
-type AppView = "practice" | "statistics" | "progress" | "settings" | "admin";
+type AppView = "practice" | "statistics" | "settings" | "admin";
+
+function PhraseLoading() {
+  return <div className="phrase-loading auth-loading" role="status" aria-label="Подготовка фразы">
+    <span className="auth-loading__ring"><img src={appLogo} alt="SerboTalk" /></span>
+    <p>Подготовка фразы</p>
+  </div>;
+}
 
 const topicIcons: Record<string, string> = {
   "job-interview": "briefcase", bank: "bank", vacation: "sun", cafe: "cup",
@@ -128,6 +135,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const [alphabet, setAlphabet] = useState<SerbianAlphabet>(() => readSerbianAlphabet(account.id));
   const [attempt, setAttempt] = useState<Attempt>();
   const [loading, setLoading] = useState(false);
+  const [preparingPhrase, setPreparingPhrase] = useState(false);
   const [error, setError] = useState<string>();
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
   const [wordHints, setWordHints] = useState<Record<string, WordHint>>({});
@@ -235,16 +243,12 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     catch { recorder.stop(); if (voiceRef.current === recorder) voiceRef.current = undefined; setVoiceState("error"); setError("Не удалось получить доступ к микрофону. Проверьте разрешение браузера."); }
   }
 
-  async function startTraining() {
+  async function startTraining(topicId: string) {
     nextExerciseRef.current = undefined;
     stopVoice(); setAnswer(""); setHasTranscript(false); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
-    setLoading(true); setError(undefined);
+    setPreparingPhrase(true); setLoading(true); setError(undefined);
     try {
-      const started = await startTrainingSession(
-        selectedTopic
-              ? { topic_id: selectedTopic }
-              : {},
-      );
+      const started = await startTrainingSession({ topic_id: topicId });
       setSession(started.session); setExercise(started.exercise); setExerciseNumber(1);
     } catch (requestError) {
       setSession(undefined); setExercise(undefined);
@@ -252,7 +256,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
         ? "В этой теме сейчас нет фраз для тренировки. Добавьте новую или дождитесь повторения."
         : "Не удалось начать тренировку. Проверьте, что backend запущен.");
     }
-    finally { setLoading(false); }
+    finally { setLoading(false); setPreparingPhrase(false); }
   }
 
   async function startReviewTraining() {
@@ -263,14 +267,14 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       setError("Пока нет фраз для повторения. Добавьте фразу ниже или выполните обычную тренировку.");
       return;
     }
-    setLoading(true);
+    setPreparingPhrase(true); setLoading(true);
     try {
       const started = await startTrainingSession({ review_mode: true });
       setSession(started.session); setExercise(started.exercise); setExerciseNumber(1);
       setAnswer(""); setHasTranscript(false); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
     } catch {
       setError("Не удалось запустить повторение фраз.");
-    } finally { setLoading(false); }
+    } finally { setLoading(false); setPreparingPhrase(false); }
   }
 
   async function nextExercise() {
@@ -318,6 +322,8 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   function selectTopic(topicId: string) {
     if (session) resetTraining();
     setSelectedTopic(topicId); setCustomTopic("");
+    setSession(undefined); setExercise(undefined);
+    if (topics.find((topic) => topic.id === topicId)?.phrase_count) void startTraining(topicId);
   }
 
   async function saveCustomTopic(event: React.FormEvent<HTMLFormElement>) {
@@ -399,7 +405,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                 <small>{reviewPhrases.length}<span>к повторению</span></small>
               </button>
               {topics.map((topic) => (
-                <button className={selectedTopic === topic.id && !customTopic ? "android-topic is-selected" : "android-topic"} key={topic.id} type="button" onClick={() => { selectTopic(topic.id); showAndroidPanel(1); }}>
+                <button className={selectedTopic === topic.id && !customTopic ? "android-topic is-selected" : "android-topic"} key={topic.id} type="button" disabled={loading} onClick={() => { selectTopic(topic.id); showAndroidPanel(1); }}>
                   <span className={`topic__icon topic__icon--${topicIcons[topic.id] ?? "message"}`}><Icon name={topicIcons[topic.id] ?? "message"} /></span>
                   <strong>{topic.title_ru}</strong>
                   <small>{topic.phrase_count}<span> неизученных</span></small>
@@ -432,11 +438,11 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
           </section>
 
           <section className="android-page android-training-page" aria-label="Тренировка">
-            {!session ? (
+            {preparingPhrase && !session ? <PhraseLoading /> : !session ? (
               <div className="android-training-start">
                 <span className="topic__icon"><Icon name={topicIcons[currentTopic?.id ?? ""] ?? "message"} size={26} /></span>
                 <h1>{customTopic.trim() || currentTopic?.title_ru || "Выберите тему"}</h1>
-                <button type="button" disabled={loading || backendState !== "online" || !selectedTopic || selectedTopicData?.phrase_count === 0} onClick={startTraining}>{loading ? "Загрузка…" : "Начать"}</button>
+                {error && <p className="android-error" role="alert">{error}</p>}
               </div>
             ) : (
               <div className="android-training-content">
@@ -492,7 +498,6 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
           <button className={view === "practice" ? "is-active" : ""} type="button" onClick={() => setView("practice")}><Icon name="home" />Практика</button>
           <button className={view === "statistics" ? "is-active" : ""} type="button" onClick={() => setView("statistics")}><Icon name="chart" />Статистика</button>
           <button className={view === "settings" ? "is-active" : ""} type="button" onClick={() => setView("settings")}><Icon name="settings" />Настройки</button>
-          <button className={view === "progress" ? "is-active" : ""} type="button" onClick={() => setView("progress")}><Icon name="progress" />Прогресс</button>
           {account.role === "admin" && !Capacitor.isNativePlatform() && <button className={view === "admin" ? "is-active" : ""} type="button" onClick={() => setView("admin")}><Icon name="settings" />Пользователи</button>}
         </nav>
         <div className="profile">
@@ -512,14 +517,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
         </form>
       )}
 
-      {view === "admin" ? <AdminUsersView /> : view === "statistics" ? <StatisticsView alphabet={alphabet} /> : view === "settings" ? <SettingsView alphabet={alphabet} onAlphabetChange={changeAlphabet} /> : view === "progress" ? (
-        <main className="placeholder-page">
-          <div className="placeholder-page__icon"><Icon name="progress" size={34} /></div>
-          <p className="kicker">Раздел в разработке</p><h1>Прогресс</h1>
-          <p>Здесь появятся данные ваших тренировок. Сейчас можно продолжать практику — ответы уже учитываются системой обучения.</p>
-          <button type="button" onClick={() => setView("practice")}>Вернуться к практике <Icon name="arrow" /></button>
-        </main>
-      ) : (
+      {view === "admin" ? <AdminUsersView /> : view === "statistics" ? <StatisticsView alphabet={alphabet} /> : view === "settings" ? <SettingsView alphabet={alphabet} onAlphabetChange={changeAlphabet} /> : (
         <main className="workspace">
           <aside className="topics-panel panel">
             <div className="panel-heading"><h2>Темы для практики</h2><p>Выберите ситуацию и начните разговор на сербском языке</p></div>
@@ -530,7 +528,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
             </button>
             <div className="topics" aria-label="Темы тренировки">
               {topics.map((topic) => (
-                <button className={selectedTopic === topic.id && !customTopic ? "topic is-selected" : "topic"} key={topic.id} type="button" onClick={() => selectTopic(topic.id)}>
+                <button className={selectedTopic === topic.id && !customTopic ? "topic is-selected" : "topic"} key={topic.id} type="button" disabled={loading} onClick={() => selectTopic(topic.id)}>
                   <span className={`topic__icon topic__icon--${topicIcons[topic.id] ?? "message"}`}><Icon name={topicIcons[topic.id] ?? "message"} /></span>
                   <span className="topic__copy"><strong>{topic.title_ru}</strong><small>{topic.description_ru}</small></span><span className="topic__unlearned"><strong>{topic.phrase_count}</strong><small>неизученных</small></span>
                 </button>
@@ -558,14 +556,13 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
           <section className="practice-stage" aria-labelledby="page-title">
             <div className="stage-heading"><p>Сербский язык · A2</p><h1 id="page-title">Практикуйтесь в реальных ситуациях</h1><span>Формулируйте ответ на сербском и получайте понятную обратную связь.</span></div>
-            {!session ? (
+            {preparingPhrase && !session ? <PhraseLoading /> : !session ? (
               <div className="welcome-card panel">
                 <div className="welcome-card__glow"/><span className="welcome-card__icon"><Icon name={topicIcons[currentTopic?.id ?? ""] ?? "message"} size={32} /></span>
                 <p className="kicker">Выбранная ситуация</p><h2>{customTopic.trim() || currentTopic?.title_ru || "Выберите тему"}</h2>
                 <p>{selectedTopicData?.phrase_count === 0 ? "Тема пока пустая. Добавьте в неё фразы — автоматической генерации не будет." : currentTopic?.description_ru || "Темы загрузятся после подключения к backend."}</p>
                 <div className="welcome-card__steps"><span><b>1</b> Получите фразу</span><span><b>2</b> Ответьте голосом</span><span><b>3</b> Разберите результат</span></div>
                 {error && <p className="error" role="alert">{error}</p>}
-                <button className="primary" type="button" disabled={loading || backendState !== "online" || !selectedTopic || selectedTopicData?.phrase_count === 0} onClick={startTraining}>{selectedTopicData?.phrase_count === 0 ? "Сначала добавьте фразу" : loading ? "Готовим первую фразу…" : "Начать тренировку"}<Icon name="arrow" /></button>
               </div>
             ) : (
               <>

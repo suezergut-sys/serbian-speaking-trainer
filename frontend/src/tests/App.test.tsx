@@ -91,17 +91,23 @@ describe("App", () => {
         id: "bank", title_ru: "В банке", description_ru: "Счёт и платежи",
         likely_intents: ["открыть счёт"], suggested_vocabulary: ["račun"], is_custom: false, phrase_count: 20,
       }];
-      else if (url.startsWith("/api/statistics/monthly?")) body = {
-        month: "2026-09", active_days: 2, total_phrases: 12, total_translations: 12,
-        correct_translations: 8, mastered_phrases: 1,
-        days: Array.from({ length: 30 }, (_, index) => ({
-          date: `2026-09-${String(index + 1).padStart(2, "0")}`,
-          phrase_count: index === 0 ? 10 : index === 2 ? 2 : 0,
-          translation_count: index === 0 ? 10 : index === 2 ? 2 : 0,
-          correct_translation_count: index === 0 ? 7 : index === 2 ? 1 : 0,
-          mastered_phrase_count: index === 0 ? 1 : 0,
-        })),
-      };
+      else if (url.startsWith("/api/statistics/monthly?")) {
+        const month = new URLSearchParams(url.split("?")[1]).get("month")!;
+        const today = new Date();
+        const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - ((today.getDay() + 6) % 7));
+        const mondayKey = `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, "0")}-${String(monday.getDate()).padStart(2, "0")}`;
+        const [year, monthNumber] = month.split("-").map(Number);
+        body = {
+          month, active_days: 1, total_phrases: 10, total_translations: 10,
+          correct_translations: 7, mastered_phrases: 1,
+          days: Array.from({ length: new Date(year, monthNumber, 0).getDate() }, (_, index) => {
+            const date = `${month}-${String(index + 1).padStart(2, "0")}`;
+            const active = date === mondayKey;
+            return { date, phrase_count: active ? 10 : 0, translation_count: active ? 10 : 0,
+              correct_translation_count: active ? 7 : 0, mastered_phrase_count: active ? 1 : 0 };
+          }),
+        };
+      }
       else if (url.startsWith("/api/statistics/phrases?")) body = {
         total: 1, page: 1, page_size: "10", total_pages: 1,
         groups: [{ topic_id: "bank", topic_title: "В банке", phrases: [{
@@ -179,7 +185,7 @@ describe("App", () => {
     const fetchMock = mockApi();
     vi.stubGlobal("fetch", fetchMock);
     render(<App />);
-    await screen.findByRole("button", { name: "Начать тренировку" });
+    await screen.findByRole("button", { name: /В банке/ });
 
     await act(async () => { authEvents.notify?.({ access_token: "test-token" }); });
 
@@ -198,11 +204,27 @@ describe("App", () => {
 
     render(<App />);
 
-    const start = await screen.findByRole("button", { name: "Начать тренировку" });
-    await waitFor(() => expect(start).toBeEnabled());
-    fireEvent.click(start);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
     expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
     finishReview({ ok: true, status: 200, json: async () => [] });
+  });
+
+  it("shows phrase preparation while a selected topic starts", async () => {
+    const baseFetch = mockApi();
+    let finishStart!: (response: { ok: boolean; status: number; json: () => Promise<unknown> }) => void;
+    const pendingStart = new Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>((resolve) => { finishStart = resolve; });
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+      input.toString() === "/api/sessions/start" ? pendingStart : baseFetch(input, init),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    expect(screen.getByRole("status", { name: "Подготовка фразы" })).toHaveTextContent("Подготовка фразы");
+    expect(screen.queryByRole("button", { name: "Начать тренировку" })).not.toBeInTheDocument();
+    const response = await baseFetch("/api/sessions/start", { method: "POST", body: JSON.stringify({ topic_id: "bank" }) });
+    finishStart(response);
+    expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
   });
 
   it("renders the native Android experience as three minimal swipe panels", async () => {
@@ -237,7 +259,6 @@ describe("App", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
     expect(screen.getByRole("button", { name: "Тренировка" })).toHaveAttribute("aria-current", "page");
-    fireEvent.click(screen.getByRole("button", { name: "Начать" }));
     expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "хочу" }));
     expect(screen.getByText("želim")).toBeInTheDocument();
@@ -289,7 +310,6 @@ describe("App", () => {
 
     render(<App />);
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
-    fireEvent.click(screen.getByRole("button", { name: /Начать тренировку/ }));
 
     expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
     expect(screen.getByText("modal_verbs")).toBeInTheDocument();
@@ -314,7 +334,6 @@ describe("App", () => {
     vi.stubGlobal("fetch", fetchMock);
     render(<App />);
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
-    fireEvent.click(screen.getByRole("button", { name: /Начать тренировку/ }));
     await recordAnswer();
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
 
@@ -341,7 +360,6 @@ describe("App", () => {
     render(<App />);
 
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Начать" }));
     await recordAnswer();
     fireEvent.click(screen.getByRole("button", { name: "Проверить" }));
     const next = await screen.findByRole("button", { name: "Следующая" });
@@ -365,7 +383,6 @@ describe("App", () => {
     expect(window.localStorage.getItem("serbotalk.serbian-alphabet.user-1")).toBe("cyrillic");
     fireEvent.click(screen.getByRole("button", { name: "Практика" }));
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
-    fireEvent.click(screen.getByRole("button", { name: /Начать тренировку/ }));
     fireEvent.click(await screen.findByRole("button", { name: "хочу" }));
     expect(screen.getByText("желим")).toBeInTheDocument();
 
@@ -394,7 +411,6 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("radio", { name: /Кириллица/ }));
     fireEvent.click(screen.getByRole("button", { name: "Темы" }));
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Начать" }));
     expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
     expect(screen.queryByLabelText("Ваш ответ")).not.toBeInTheDocument();
     expect((await recordAnswer())).toHaveValue("Желим да отворим рачун.");
@@ -424,7 +440,6 @@ describe("App", () => {
     render(<App />);
 
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
-    fireEvent.click(screen.getByRole("button", { name: /Начать тренировку/ }));
     expect(screen.queryByLabelText("Ваш ответ")).not.toBeInTheDocument();
     const input = await recordAnswer();
     fireEvent.change(input, { target: { value: "Želim da otvorim račun." } });
@@ -446,7 +461,6 @@ describe("App", () => {
     render(<App />);
 
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
-    fireEvent.click(screen.getByRole("button", { name: /Начать тренировку/ }));
     fireEvent.change(await recordAnswer(), { target: { value: "Želim da otvorim račun." } });
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
 
@@ -454,16 +468,18 @@ describe("App", () => {
     expect(screen.queryByLabelText("Прогресс навыков")).not.toBeInTheDocument();
   });
 
-  it("shows the monthly activity calendar and keeps progress as a placeholder", async () => {
+  it("shows only the current week and separates attempts from mastered phrases", async () => {
     vi.stubGlobal("fetch", mockApi());
     render(<App />);
 
     fireEvent.click(await screen.findByRole("button", { name: /Статистика/ }));
     expect(screen.getByRole("heading", { name: "Статистика" })).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Календарь занятий" })).toBeInTheDocument();
-    expect(screen.getByLabelText("1: 10 переводов")).toHaveClass("is-active", "is-intensive");
-    expect(screen.getByLabelText("2: 0 переводов")).not.toHaveClass("is-active");
-    expect(screen.getByRole("img", { name: /График переводов/ })).toBeInTheDocument();
+    expect(screen.getByLabelText("Итоги недели")).toHaveTextContent("10фраз за неделю");
+    expect(screen.getByRole("heading", { name: "Фразы по дням" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /График фраз по дням/ }).querySelectorAll(".daily-chart__column")).toHaveLength(7);
+    expect(screen.getByRole("img", { name: /График фраз по дням/ }).querySelector('[title*="всего 10"]')).toHaveAttribute("title", expect.stringContaining("правильно 7, неправильно 3, выучено 1"));
+    expect(screen.queryByRole("button", { name: /Прогресс/ })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Фразы" }));
     expect(await screen.findByRole("heading", { name: "В банке" })).toBeInTheDocument();
@@ -471,9 +487,6 @@ describe("App", () => {
     expect(screen.getByText("выучена")).toBeInTheDocument();
     expect(screen.getByLabelText("На странице")).toHaveValue("10");
 
-    fireEvent.click(screen.getByRole("button", { name: /Прогресс/ }));
-    expect(screen.getByRole("heading", { name: "Прогресс" })).toBeInTheDocument();
-    expect(screen.getByText("Раздел в разработке")).toBeInTheDocument();
   });
 
   it("reveals a word translation and sends used hints with the attempt", async () => {
@@ -492,7 +505,6 @@ describe("App", () => {
     render(<App />);
 
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
-    fireEvent.click(screen.getByRole("button", { name: /Начать тренировку/ }));
     fireEvent.click(await screen.findByRole("button", { name: "хочу" }));
     expect(screen.getByText("želim")).toBeInTheDocument();
     expect(screen.queryByText("Загружаем…")).not.toBeInTheDocument();
@@ -576,7 +588,6 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /Следующая фраза/ }));
     expect(await screen.findByText("Все фразы из карусели освоены. Отличная работа!")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /В банке/ }));
-    fireEvent.click(screen.getByRole("button", { name: /Начать тренировку/ }));
 
     expect(screen.queryByLabelText("Ваш ответ")).not.toBeInTheDocument();
     expect(await screen.findByRole("button", { name: /Ответить голосом/ })).toBeInTheDocument();

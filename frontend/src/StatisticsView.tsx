@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { fetchMonthlyStatistics, fetchPhraseStatistics } from "./api/statistics";
 import type { MonthlyStatistics, PhraseStatistics } from "./types/statistics";
@@ -12,8 +12,14 @@ function monthKey(value: Date): string {
   return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}`;
 }
 
-function moveMonth(value: Date, direction: number): Date {
-  return new Date(value.getFullYear(), value.getMonth() + direction, 1);
+function dateKey(value: Date): string {
+  return `${monthKey(value)}-${String(value.getDate()).padStart(2, "0")}`;
+}
+
+function currentWeek(): Date[] {
+  const today = new Date();
+  const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - ((today.getDay() + 6) % 7));
+  return Array.from({ length: 7 }, (_, index) => new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + index));
 }
 
 function formatReviewDate(value: string | null): string {
@@ -84,18 +90,16 @@ function PhrasesTab({ alphabet }: { alphabet: SerbianAlphabet }) {
 }
 
 function ActivityTab() {
-  const [selectedMonth, setSelectedMonth] = useState(() => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), 1);
-  });
-  const [statistics, setStatistics] = useState<MonthlyStatistics>();
+  const [week] = useState(currentWeek);
+  const [statistics, setStatistics] = useState<MonthlyStatistics[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const selectedMonthKey = monthKey(selectedMonth);
+  const months = [...new Set(week.map(monthKey))];
+  const monthKeys = months.join(",");
 
   useEffect(() => {
     const controller = new AbortController();
-    fetchMonthlyStatistics(selectedMonthKey, controller.signal)
+    Promise.all(monthKeys.split(",").map((month) => fetchMonthlyStatistics(month, controller.signal)))
       .then(setStatistics)
       .catch((requestError: unknown) => {
         if (requestError instanceof DOMException && requestError.name === "AbortError") return;
@@ -103,31 +107,27 @@ function ActivityTab() {
       })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [selectedMonthKey]);
-
-  const monthTitle = useMemo(
-    () => new Intl.DateTimeFormat("ru-RU", { month: "long", year: "numeric" }).format(selectedMonth),
-    [selectedMonth],
-  );
-  const leadingDays = (new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1).getDay() + 6) % 7;
-  const maxCount = Math.max(1, ...(statistics?.days.map((day) => day.translation_count) ?? [0]));
-  function changeMonth(direction: number) {
-    setLoading(true); setError(false); setStatistics(undefined); setSelectedMonth((month) => moveMonth(month, direction));
-  }
+  }, [monthKeys]);
 
   if (loading) return <div className="statistics-state panel">Загружаем статистику…</div>;
-  if (error || !statistics) return <div className="statistics-state panel" role="alert">Не удалось загрузить статистику.</div>;
+  if (error || !statistics.length) return <div className="statistics-state panel" role="alert">Не удалось загрузить статистику.</div>;
+  const byDate = new Map(statistics.flatMap((month) => month.days).map((day) => [day.date, day]));
+  const days = week.map((date) => byDate.get(dateKey(date)) ?? { date: dateKey(date), phrase_count: 0, translation_count: 0, correct_translation_count: 0, mastered_phrase_count: 0 });
+  const total = days.reduce((sum, day) => sum + day.phrase_count, 0);
+  const activeDays = days.filter((day) => day.phrase_count > 0).length;
+  const maxCount = Math.max(1, ...days.map((day) => day.translation_count), ...days.map((day) => day.mastered_phrase_count));
+  const weekTitle = `${new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short" }).format(week[0])} — ${new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short" }).format(week[6])}`;
   return <>
-    <div className="activity-toolbar"><div className="month-switcher" aria-label="Выбор месяца"><button type="button" aria-label="Предыдущий месяц" onClick={() => changeMonth(-1)}>‹</button><strong>{monthTitle}</strong><button type="button" aria-label="Следующий месяц" onClick={() => changeMonth(1)}>›</button></div></div>
-    <section className="statistics-summary" aria-label="Итоги месяца"><div className="panel"><span>{statistics.active_days}</span><small>активных дней</small></div><div className="panel"><span>{statistics.total_phrases}</span><small>фраз за месяц</small></div></section>
+    <div className="activity-toolbar"><strong>Текущая неделя · {weekTitle}</strong></div>
+    <section className="statistics-summary" aria-label="Итоги недели"><div className="panel"><span>{activeDays}</span><small>активных дней</small></div><div className="panel"><span>{total}</span><small>фраз за неделю</small></div></section>
     <section className="statistics-card panel" aria-labelledby="calendar-title">
       <div className="statistics-card__heading"><div><p className="kicker">Регулярность</p><h2 id="calendar-title">Календарь занятий</h2></div><span className="calendar-legend"><span><i /> от 1 перевода</span><span><i className="is-intensive" /> от 10 попыток</span></span></div>
-      <div className="practice-calendar">{weekDays.map((day) => <span className="calendar-weekday" key={day}>{day}</span>)}{Array.from({ length: leadingDays }, (_, index) => <span className="calendar-blank" key={`blank-${index}`} />)}{statistics.days.map((day) => { const dayNumber = Number(day.date.slice(-2)); const className = ["calendar-day", day.translation_count > 0 && "is-active", day.translation_count >= 10 && "is-intensive"].filter(Boolean).join(" "); return <div className={className} key={day.date} aria-label={`${dayNumber}: ${day.translation_count} переводов`}><span>{dayNumber}</span>{day.translation_count > 0 && <small>{day.translation_count}</small>}</div>; })}</div>
+      <div className="practice-calendar">{weekDays.map((day) => <span className="calendar-weekday" key={day}>{day}</span>)}{days.map((day) => { const dayNumber = Number(day.date.slice(-2)); const className = ["calendar-day", day.translation_count > 0 && "is-active", day.translation_count >= 10 && "is-intensive"].filter(Boolean).join(" "); return <div className={className} key={day.date} aria-label={`${dayNumber}: ${day.translation_count} фраз`}><span>{dayNumber}</span>{day.translation_count > 0 && <small>{day.translation_count}</small>}</div>; })}</div>
     </section>
     <section className="statistics-card panel" aria-labelledby="daily-chart-title">
-      <div className="statistics-card__heading"><div><p className="kicker">Объём практики</p><h2 id="daily-chart-title">Переводы по дням</h2></div><span>Всего: {statistics.total_translations}</span></div>
-      <div className="chart-legend" aria-label="Легенда графика"><span><i className="mastered" />выучено</span><span><i className="correct" />правильно ≥95%</span><span><i className="other" />остальные попытки</span></div>
-      <div className="daily-chart" role="img" aria-label={`График переводов по дням за ${monthTitle}`}>{statistics.days.map((day) => { const dayNumber = Number(day.date.slice(-2)); const height = day.translation_count ? Math.max(8, (day.translation_count / maxCount) * 100) : 2; const mastered = Math.min(day.mastered_phrase_count, day.correct_translation_count); const correctOnly = Math.max(0, day.correct_translation_count - mastered); const other = Math.max(0, day.translation_count - day.correct_translation_count); const denominator = Math.max(1, day.translation_count); return <div className="daily-chart__column" key={day.date} title={`${dayNumber}: всего ${day.translation_count}, правильно ${day.correct_translation_count}, выучено ${day.mastered_phrase_count}`}><span className={day.translation_count ? "daily-chart__bar is-active" : "daily-chart__bar"} style={{ height: `${height}%` }}>{day.translation_count > 0 && <><b>{day.translation_count}</b><i className="daily-chart__segment daily-chart__segment--other" style={{ flexGrow: other / denominator }} /><i className="daily-chart__segment daily-chart__segment--correct" style={{ flexGrow: correctOnly / denominator }} /><i className="daily-chart__segment daily-chart__segment--mastered" style={{ flexGrow: mastered / denominator }} /></>}</span><small>{dayNumber}</small></div>; })}</div>
+      <div className="statistics-card__heading"><div><p className="kicker">Объём практики</p><h2 id="daily-chart-title">Фразы по дням</h2></div><span>Всего: {total}</span></div>
+      <div className="chart-legend" aria-label="Легенда графика"><span><i className="correct" />правильно ≥95%</span><span><i className="other" />неправильно</span><span><i className="mastered" />выучено</span></div>
+      <div className="daily-chart" role="img" aria-label={`График фраз по дням за ${weekTitle}`}>{days.map((day, index) => { const correct = Math.min(day.correct_translation_count, day.translation_count); const incorrect = Math.max(0, day.translation_count - correct); return <div className="daily-chart__column" key={day.date} title={`${day.date}: всего ${day.translation_count}, правильно ${correct}, неправильно ${incorrect}, выучено ${day.mastered_phrase_count}`}><div className="daily-chart__up"><span className="daily-chart__bar" style={{ height: `${day.translation_count / maxCount * 100}%` }}>{day.translation_count > 0 && <><i className="daily-chart__segment daily-chart__segment--correct" style={{ flexGrow: correct }} /><i className="daily-chart__segment daily-chart__segment--other" style={{ flexGrow: incorrect }} /></>}</span></div><div className="daily-chart__down"><span className="daily-chart__mastered" style={{ height: `${day.mastered_phrase_count / maxCount * 100}%` }} /></div><small>{weekDays[index]} {Number(day.date.slice(-2))}</small></div>; })}</div>
     </section>
   </>;
 }
