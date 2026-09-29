@@ -260,7 +260,7 @@ button { cursor: pointer; }
 .statistics-tabs { display: flex; gap: .45rem; padding: .3rem; width: fit-content; border: 1px solid rgba(65, 153, 235, .25); border-radius: 12px; background: rgba(7, 25, 48, .7); }
 .statistics-tabs button { padding: .6rem 1.1rem; border: 0; border-radius: 9px; background: transparent; color: #7897c5; font-weight: 700; }
 .statistics-tabs button.is-active { background: rgba(48, 143, 224, .2); color: #b9e2ff; box-shadow: inset 0 0 0 1px rgba(79, 175, 255, .22); }
-.activity-toolbar { display: flex; justify-content: flex-end; }
+.activity-toolbar { display: flex; justify-content: flex-end; color: #b9e2ff; font-size: .8rem; }
 .month-switcher { display: grid; grid-template-columns: 38px minmax(170px, auto) 38px; align-items: center; overflow: hidden; border: 1px solid rgba(65, 153, 235, .35); border-radius: 12px; background: rgba(7, 25, 48, .8); }
 .month-switcher button { height: 42px; border: 0; background: rgba(54, 139, 222, .08); color: #77c0ff; font-size: 1.45rem; }
 .month-switcher button:hover { background: rgba(54, 139, 222, .2); }
@@ -287,19 +287,19 @@ button { cursor: pointer; }
 .chart-legend { display: flex; flex-wrap: wrap; gap: .6rem 1rem; margin: -.35rem 0 .8rem; color: #7897c5; font-size: .6rem; }
 .chart-legend span { display: flex; gap: .35rem; align-items: center; }
 .chart-legend i { width: 9px; height: 9px; border-radius: 2px; }
-.chart-legend i.mastered { background: #f2bd5a; }
-.chart-legend i.correct { background: #40d99f; }
-.chart-legend i.other { background: #376b9f; }
-.daily-chart { display: grid; grid-template-columns: repeat(31, minmax(18px, 1fr)); gap: .28rem; height: 220px; overflow-x: auto; padding: 1.2rem .2rem 0; border-top: 1px solid rgba(63, 136, 209, .14); }
-.daily-chart__column { display: grid; grid-template-rows: 1fr 20px; align-items: end; min-width: 18px; height: 100%; }
-.daily-chart__bar { position: relative; display: flex; flex-direction: column-reverse; min-height: 2px; overflow: visible; border-radius: 4px 4px 2px 2px; background: rgba(79, 126, 177, .18); }
-.daily-chart__bar.is-active { background: transparent; box-shadow: 0 0 10px rgba(49, 210, 153, .12); }
+.chart-legend i.mastered { background: #40d99f; }
+.chart-legend i.correct { background: #376bdf; }
+.chart-legend i.other { background: #f2bd5a; }
+.daily-chart { display: grid; grid-template-columns: repeat(7, minmax(34px, 1fr)); gap: .65rem; height: 250px; padding: .8rem .2rem 0; border-top: 1px solid rgba(63, 136, 209, .14); }
+.daily-chart__column { display: grid; grid-template-rows: 1fr 1fr 22px; min-width: 0; height: 100%; }
+.daily-chart__up { display: flex; align-items: flex-end; justify-content: center; border-bottom: 1px solid rgba(130, 166, 207, .55); }
+.daily-chart__down { display: flex; align-items: flex-start; justify-content: center; }
+.daily-chart__bar { display: flex; flex-direction: column; width: min(100%, 38px); min-height: 0; border-radius: 4px 4px 0 0; overflow: hidden; }
 .daily-chart__segment { display: block; min-height: 0; }
-.daily-chart__segment--other { background: #376b9f; }
-.daily-chart__segment--correct { background: #40d99f; }
-.daily-chart__segment--mastered { border-radius: 4px 4px 0 0; background: #f2bd5a; }
-.daily-chart__column b { position: absolute; top: -17px; left: 50%; color: #7ce5bc; font-size: .52rem; transform: translateX(-50%); }
-.daily-chart__column small { align-self: center; color: #5f7b9f; font-size: .5rem; text-align: center; }
+.daily-chart__segment--correct { background: #376bdf; }
+.daily-chart__segment--other { background: #f2bd5a; }
+.daily-chart__mastered { display: block; width: min(100%, 38px); background: #40d99f; border-radius: 0 0 4px 4px; }
+.daily-chart__column small { align-self: center; color: #7f9fc7; font-size: .65rem; text-align: center; }
 .phrase-statistics { padding: 1.15rem 1.25rem 1.3rem; }
 .page-size-control { display: flex; gap: .55rem; align-items: center; color: #7897c5; font-size: .7rem; }
 .page-size-control select { padding: .45rem .65rem; border: 1px solid rgba(65,153,235,.32); border-radius: 8px; background: #071b34; color: #cbe7ff; }
@@ -400,6 +400,8 @@ button { cursor: pointer; }
 .auth-loading__ring { position: relative; display: grid; place-items: center; width: 132px; height: 132px; border: 2px solid rgba(56, 154, 244, .22); border-radius: 50%; background: rgba(62, 150, 235, .08); }
 .auth-loading__ring::before { position: absolute; inset: -4px; border-radius: 50%; background: conic-gradient(from 0deg, transparent 0deg 270deg, #72caff 325deg, #fff 345deg, transparent 360deg); content: ""; animation: auth-orbit 1.5s linear infinite; mask: radial-gradient(farthest-side, transparent calc(100% - 8px), #000 calc(100% - 7px)); }
 .auth-loading__ring img { width: 76px; height: 76px; border-radius: 22px; object-fit: cover; }
+.phrase-loading { align-content: center; min-height: 300px; height: 100%; }
+.phrase-loading p { color: #dcecff; }
 @keyframes auth-orbit { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .auth-loading__ring::before { animation: none; } }
 .auth-card h1 { margin: 0 0 12px; }
@@ -612,8 +614,8 @@ button { cursor: pointer; }
 .android-statistics-page .statistics-header .kicker,
 .android-statistics-page .statistics-header span,
 .android-statistics-page .statistics-card__heading .kicker,
-.android-statistics-page .calendar-legend,
-.android-statistics-page .chart-legend { display: none; }
+.android-statistics-page .calendar-legend { display: none; }
+.android-statistics-page .chart-legend { display: flex; }
 .android-statistics-page .statistics-header h1 { margin: .6rem 0 1rem; font-size: 1.55rem; }
 .android-statistics-page .statistics-tabs { width: 100%; }
 .android-statistics-page .statistics-tabs button { flex: 1; }
@@ -621,7 +623,7 @@ button { cursor: pointer; }
 .android-statistics-page .statistics-card, .android-statistics-page .phrase-statistics { padding: .8rem; }
 .android-statistics-page .practice-calendar { gap: .24rem; grid-template-columns: repeat(7, minmax(32px, 1fr)); }
 .android-statistics-page .calendar-day { min-height: 38px; }
-.android-statistics-page .daily-chart { grid-template-columns: repeat(31, minmax(6px, 1fr)); gap: 2px; height: 180px; overflow: hidden; }
+.android-statistics-page .daily-chart { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; height: 180px; overflow: hidden; }
 .android-statistics-page .daily-chart__column { min-width: 0; }
 .android-statistics-page .daily-chart__column small { font-size: .4rem; }
 .android-statistics-page .phrase-table-wrap { overflow: visible; border: 0; }
