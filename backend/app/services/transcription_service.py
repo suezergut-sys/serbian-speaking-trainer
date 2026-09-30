@@ -5,6 +5,7 @@ from app.config import Settings
 from app.repositories import ExerciseRepository
 from app.schemas import TranscriptionResponse
 from app.services.transcription_adapter import TranscriptionProvider, TranscriptionServiceError
+from app.services.serbian_text import has_unexpected_letter_script, serbian_latin
 
 ALLOWED_AUDIO_TYPES = {
     "audio/webm": ".webm",
@@ -61,22 +62,10 @@ class TranscriptionService:
             filename=f"speech{extension}",
             content_type=content_type,
         )
-        return TranscriptionResponse(text=serbian_cyrillic_to_latin(result.text))
-
-
-_SERBIAN_CYRILLIC_TO_LATIN = str.maketrans({
-    "А": "A", "Б": "B", "В": "V", "Г": "G", "Д": "D", "Ђ": "Đ", "Е": "E",
-    "Ж": "Ž", "З": "Z", "И": "I", "Ј": "J", "К": "K", "Л": "L", "Љ": "Lj",
-    "М": "M", "Н": "N", "Њ": "Nj", "О": "O", "П": "P", "Р": "R", "С": "S",
-    "Т": "T", "Ћ": "Ć", "У": "U", "Ф": "F", "Х": "H", "Ц": "C", "Ч": "Č",
-    "Џ": "Dž", "Ш": "Š",
-    "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "ђ": "đ", "е": "e",
-    "ж": "ž", "з": "z", "и": "i", "ј": "j", "к": "k", "л": "l", "љ": "lj",
-    "м": "m", "н": "n", "њ": "nj", "о": "o", "п": "p", "р": "r", "с": "s",
-    "т": "t", "ћ": "ć", "у": "u", "ф": "f", "х": "h", "ц": "c", "ч": "č",
-    "џ": "dž", "ш": "š",
-})
+        if has_unexpected_letter_script(result.text):
+            raise TranscriptionServiceError("Unexpected transcription script")
+        return TranscriptionResponse(text=serbian_latin(result.text))
 
 
 def serbian_cyrillic_to_latin(text: str) -> str:
-    return text.translate(_SERBIAN_CYRILLIC_TO_LATIN)
+    return serbian_latin(text)

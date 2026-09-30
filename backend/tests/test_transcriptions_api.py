@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+import unicodedata
 
 from app.config import Settings, get_settings
 from app.main import app
@@ -37,6 +38,40 @@ def test_transcribes_supported_audio_without_persisting_it(api_client: TestClien
         "content_type": "audio/webm",
     }]
     assert "server-secret" not in response.text
+
+
+def test_transcription_normalizes_mixed_script_and_combining_marks(api_client: TestClient) -> None:
+    exercise_id = _create_exercise(api_client)
+    provider = FakeTranscriptionProvider(text=unicodedata.normalize("NFD", "Платићу bankovnom karticom."))
+    app.dependency_overrides[get_transcription_provider] = lambda: provider
+    app.dependency_overrides[get_settings] = lambda: Settings(
+        openai_api_key="server-secret", openai_transcribe_model="model-from-env",
+    )
+
+    response = api_client.post(
+        "/api/transcriptions", data={"exercise_id": exercise_id},
+        files={"audio": ("speech.webm", b"webm-audio-bytes", "audio/webm")},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"text": "Platiću bankovnom karticom."}
+
+
+def test_transcription_rejects_non_serbian_letter_scripts(api_client: TestClient) -> None:
+    exercise_id = _create_exercise(api_client)
+    provider = FakeTranscriptionProvider(text="Platιћу bankovnom karticom.")
+    app.dependency_overrides[get_transcription_provider] = lambda: provider
+    app.dependency_overrides[get_settings] = lambda: Settings(
+        openai_api_key="server-secret", openai_transcribe_model="model-from-env",
+    )
+
+    response = api_client.post(
+        "/api/transcriptions", data={"exercise_id": exercise_id},
+        files={"audio": ("speech.webm", b"webm-audio-bytes", "audio/webm")},
+    )
+
+    assert response.status_code == 503
+    assert response.json() == {"detail": "Voice transcription is temporarily unavailable"}
 
 
 def test_rejects_unsupported_audio_before_provider_call(api_client: TestClient) -> None:

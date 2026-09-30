@@ -44,4 +44,17 @@ describe("AnswerResult", () => {
     render(<AnswerResult source="Русская фраза" answer={answer} attempt={{ ...attempt, analysis: { ...attempt.analysis, issues } }} />);
     expect(document.querySelector("mark")).not.toBeInTheDocument();
   });
+
+  it("does not mark equivalent Unicode or alphabet variants, but retains a real extra letter", () => {
+    const answer = "Platic\u0301u karticom. Alllergičan sam.";
+    const issues = [
+      { ...attempt.analysis.issues[0], evidence: "Platiću", correction: "Платићу" },
+      { ...attempt.analysis.issues[0], evidence: "Alllergičan", correction: "Allergičan" },
+    ];
+    render(<AnswerResult source="Русская фраза" answer={answer} attempt={{ ...attempt, analysis: { ...attempt.analysis, issues } }} alphabet="cyrillic" />);
+    const marks = document.querySelectorAll("mark");
+    expect(marks).toHaveLength(1);
+    expect(marks[0]).toHaveTextContent("Алллергичан");
+    expect(screen.getByText("Ваш вариант").parentElement).toHaveTextContent("Платићу картицом. Алллергичан сам.");
+  });
 });

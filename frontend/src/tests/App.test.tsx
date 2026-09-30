@@ -433,6 +433,33 @@ describe("App", () => {
     expect(await screen.findByText("Желим да отворим рачун.")).toBeInTheDocument();
   });
 
+  it("uses the latest alphabet when an in-flight transcription finishes", async () => {
+    voiceMock.available = true;
+    const baseFetch = mockApi();
+    let finishTranscription!: (value: { ok: boolean; status: number; json: () => Promise<unknown> }) => void;
+    const transcription = new Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>((resolve) => { finishTranscription = resolve; });
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+      input.toString() === "/api/transcriptions" ? transcription : baseFetch(input, init));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Ответить голосом" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Завершить запись" }));
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.toString() === "/api/transcriptions")).toBe(true));
+    fireEvent.click(screen.getByRole("button", { name: "Настройки" }));
+    fireEvent.click(screen.getByRole("radio", { name: /Кириллица/ }));
+    await act(async () => { finishTranscription({ ok: true, status: 200, json: async () => ({ text: "Platic\u0301u bankovnom karticom." }) }); });
+    fireEvent.click(screen.getByRole("button", { name: "Практика" }));
+    const answer = await screen.findByLabelText("Ваш ответ");
+    expect(answer).toHaveValue("Платићу банковном картицом.");
+    fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
+    await waitFor(() => {
+      const call = fetchMock.mock.calls.find(([url]) => url === "/api/attempts");
+      expect(JSON.parse(call?.[1]?.body as string).transcript_sr).toBe("Platiću bankovnom karticom.");
+    });
+  });
+
   it("keeps answer entry locked until speech is transcribed on Android", async () => {
     voiceMock.available = true;
     vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(true);

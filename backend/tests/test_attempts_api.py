@@ -125,6 +125,8 @@ def test_analysis_unavailable_preserves_progress_and_allows_same_request_retry(
     api_client: TestClient, db_session: Session,
 ) -> None:
     exercise = _exercise(api_client)
+    stored = db_session.get(Exercise, exercise["id"])
+    assert stored is not None
     db_session.commit()
     class FailingAI(FakeAIProvider):
         def analyze_answer(self, **_kwargs):
@@ -155,12 +157,49 @@ def test_analysis_unavailable_preserves_progress_and_allows_same_request_retry(
             lexical_score=0.8, naturalness_score=0.8, fluency_score=1,
             corrected_sr="Mogu li da dobijem jelovnik?",
             short_feedback_ru="Почти верно.", detailed_feedback_ru="Уточните перевод.",
+            issues=[AnswerIssue(
+                type="meaning", skill_key=stored.generation_meta_json["targeted_skill_keys"][0],
+                severity=0.2, confidence=0.8, evidence="Ne znam.",
+                correction="Mogu li da dobijem jelovnik?",
+            )],
         ),
     )
     retried = api_client.post("/api/attempts", json=payload)
     assert retried.status_code == 201
     assert retried.json()["daily_usage"]["used"] == 1
     assert db_session.scalar(select(func.count()).select_from(Attempt)) == 1
+
+
+def test_invalid_structured_issue_does_not_persist_false_grade(
+    api_client: TestClient, db_session: Session,
+) -> None:
+    exercise = _exercise(api_client)
+    stored = db_session.get(Exercise, exercise["id"])
+    assert stored is not None
+    skill_key = stored.generation_meta_json["targeted_skill_keys"][0]
+    db_session.commit()
+    ai = FakeAIProvider(available=True, analysis_result=AnswerAnalysis(
+        verdict="mostly_correct", semantic_score=0.88, grammar_score=0.88,
+        lexical_score=0.88, naturalness_score=0.88, fluency_score=1,
+        corrected_sr="Ne znam.",
+        short_feedback_ru="Нужно заменить букву.",
+        detailed_feedback_ru="Ложное замечание.",
+        issues=[AnswerIssue(type="grammar", skill_key=skill_key, severity=0.2,
+                            confidence=0.9, evidence="Ne znam.", correction="Ne znam.")],
+    ))
+    app.dependency_overrides[get_ai_provider] = lambda: ai
+
+    response = api_client.post("/api/attempts", json={
+        "client_request_id": str(uuid4()),
+        "exercise_id": exercise["id"],
+        "transcript_sr": "Ne znam.",
+    })
+
+    assert response.status_code == 503
+    assert ai.analysis_calls == 2
+    for model in (Attempt, AttemptRequest, LearnerSkill, ReviewPhrase, ErrorEvent):
+        assert db_session.scalar(select(func.count()).select_from(model)) == 0
+    assert api_client.get("/api/auth/me").json()["daily_usage"]["used"] == 0
 
 
 def test_same_client_request_id_is_scoped_to_user(api_client: TestClient, db_session: Session) -> None:

@@ -12,14 +12,14 @@ const cyrillicToLatin = Object.fromEntries(
 ) as Record<string, string>;
 
 export function toSerbianCyrillic(text: string): string {
-  return text.replace(/dž|lj|nj|[a-zčćđšž]/giu, (part) => {
+  return text.normalize("NFC").replace(/dž|lj|nj|[a-zčćđšž]/giu, (part) => {
     const translated = latinToCyrillic[part.toLocaleLowerCase("sr")];
     return part[0] === part[0].toLocaleUpperCase("sr") ? translated.toLocaleUpperCase("sr") : translated;
   });
 }
 
 export function toSerbianLatin(text: string): string {
-  return text.replace(/[а-бвгдђежзијклљмнњопрстћуфхцчџш]/giu, (part) => {
+  return text.normalize("NFC").replace(/[а-бвгдђежзијклљмнњопрстћуфхцчџш]/giu, (part) => {
     const translated = cyrillicToLatin[part.toLocaleLowerCase("sr")];
     return part === part.toLocaleUpperCase("sr")
       ? translated[0].toLocaleUpperCase("sr") + translated.slice(1)
@@ -33,7 +33,7 @@ export function displaySerbian(text: string, alphabet: SerbianAlphabet): string 
 }
 
 export function displaySerbianInRussianText(text: string, alphabet: SerbianAlphabet): string {
-  return alphabet === "cyrillic" ? toSerbianCyrillic(text) : text;
+  return alphabet === "cyrillic" ? toSerbianCyrillic(text) : text.normalize("NFC");
 }
 
 function storageKey(userId: string): string {
