@@ -6,6 +6,8 @@
 
 Используйте Python из окружения backend с установленными dev-зависимостями, Node/pnpm и Android SDK/JDK 21 для native-проверок. Команды выполняются из корня актуального checkout:
 
+Текущая проверенная реализация находится в `C:\Users\MSumin\.codex\worktrees\audit-p0\Serbian Speaking Trainer`, production-код опубликован через PR #31. Основной пользовательский checkout содержит несвязанные незакоммиченные изменения и автоматически не перезаписывался. Перед запуском команд переходите в указанный worktree; Python допускается брать из `.venv` основного checkout через параметр `-Python`.
+
 ```powershell
 .\scripts\launch-testlab.ps1 -Python .\.venv\Scripts\python.exe
 .\scripts\build-testlab-web.ps1
