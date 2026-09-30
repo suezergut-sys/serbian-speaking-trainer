@@ -17,7 +17,7 @@ P1 начат по прямому поручению владельца; руч�
 
 - Backend и инфраструктура testlab: 120 проверок прошли, включая отказ в чужой/повреждённой сессии, изоляцию БД, Pydantic-валидацию mock-анализа и проверку APK assets.
 - Frontend: 54 component tests, typecheck, lint и production build прошли повторно после UI-правки.
-- Web: полный цикл с настоящим локальным backend прошёл; mock-сценарии для латиницы, кириллицы и смешанной раскладки — 39/39, включая 9 прогревов и 30 измеряемых прогонов.
+- Web: полный цикл с настоящим локальным backend прошёл; mock-сценарии для латиницы, кириллицы и смешанной раскладки — 39/39, включая 9 прогревов и 30 измеряемых прогонов. После исправления viewport дополнительно прошли 3/3 сценария и local backend flow.
 - Android: полный цикл в API 36 AVD/WebView 133 прошёл повторно после последней UI-правки; отдельно проверено корректное завершение runner с exit 0.
 - Независимое ревью GPT-6.1 Sol medium: блокирующих замечаний не осталось, включая последнюю UI-правку и Android touch driver.
 
@@ -51,14 +51,18 @@ Web: Chrome 154, production build режима `e2e`, статические moc
 
 - Обычный APK: 4 602 765 байт; SHA-256 `E508A57CFCB3BCB1FF4DBFA0508CFC2EE0984EE628A0271EDDAC7998C47A8089`.
 - Package `com.serbiantalk.trainer`, code 25/name 1.15, target SDK 36. Подпись проверена, SHA-256 сертификата `1329c4638a57777b90429bf0eff9df67c2865bf95ebb8b97f45ef4fad77eadd0`, совпадает с предыдущими выпусками.
-- APK установлен поверх обычного приложения через `adb install -r`, данные не очищались. Сохранение входа/настроек требует отдельного smoke/ручного подтверждения.
+- APK установлен поверх обычного приложения через `adb install -r`, данные не очищались. Production smoke открыл экран Google-входа: действующей production-сессии в AVD нет, сохранение входа/настроек и авторизованный сценарий остаются ручными проверками.
 - Копия для владельца: `artifacts/SerboTalk-andorid16-1.15.apk` в основной папке проекта, не коммитится. В обычном APK нет testlab HTML, локального ключа и mixed-content разрешения; ZIP guard прошёл.
 
 ## Публикация и ручная приёмка
 
 - Production web: https://serbian-speaking-trainer.vercel.app
 - Production API: https://serbian-speaking-trainer-api.vercel.app
-- Публикация текущих изменений и окончательная проверка deployment выполняются после финального gate.
+- Реализация: [PR #31](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/31), merged; runtime SHA `85e4a0bfdae9e9b5ca329c645a0852444ba75e3d`. GitHub checks не настроены; локальные проверки и независимое ревью выполнены.
+- Backend deployment `dpl_8BtejcU47H6G2LzNVaAq8iTY9A8S`: [Ready](https://serbian-speaking-trainer-hkq4zzir1-suezerguts-projects.vercel.app).
+- Web deployment `dpl_13Vsr3NqY7Jc3BnWRVoJBnUtyH3Y`: [Ready](https://serbian-speaking-trainer-4zvk7syc9-suezerguts-projects.vercel.app).
+- Vercel API подтвердил оба production alias и `meta.gitCommitSha`, равный runtime SHA. Проверка 30.09.2026 около 18:00 МСК: API health 200 с новыми метриками, OpenAPI 200, topics без сессии 401. Production браузер показывает обычный Google-вход; privacy/terms 200, testlab.html 404. Новый entry `index-D9zrUEfn.js` возвращает 200, содержит timings/scrollIntoView и не содержит testlab markers; тот же entry включён в обычный APK.
+- Авторизованный production голосовой сценарий не проверен: доступной сессии в AVD нет, личный Chrome-плагин заблокирован. Проверка локального полного цикла не заменяет эту приёмку.
 - Личный Chrome через плагин недоступен из-за ошибки request-header policy/тайм-аута; отдельный тестовый Chrome работает. Продуктивную Google-сессию не копировали в runner.
 - Эмулятор запускается headless для автоматизации. Уменьшение видимого окна предусмотрено скриптом, визуальная проверка размера окна владельцем ещё не подтверждена.
 - Настоящий Google-вход, запись голоса, качество STT/AI, permissions/background/resume и скорость физического телефона остаются отдельными проверками.
