@@ -86,7 +86,7 @@ class SessionService:
                 },
             )
         )
-        return self._response(entity)
+        return self._response(entity, completed_count=0)
 
     def get(self, session_id: str) -> SessionResponse:
         entity = self.repository.get_owned(session_id)
@@ -100,13 +100,16 @@ class SessionService:
         topic_payload = payload.get("topic", payload)
         return TopicContext.model_validate(topic_payload)
 
-    def _response(self, entity: TrainingSession) -> SessionResponse:
+    def _response(self, entity: TrainingSession, *, completed_count: int | None = None) -> SessionResponse:
         return SessionResponse(
             id=entity.id,
             status=entity.status,
             level=entity.level,
             started_at=entity.started_at,
             requested_length=int(entity.normalized_topic_json.get("session_length", 20)),
-            completed_count=self.attempts.count_checked_exercises(entity.id),
+            completed_count=(
+                self.attempts.count_checked_exercises(entity.id)
+                if completed_count is None else completed_count
+            ),
             topic=self.topic_snapshot(entity),
         )

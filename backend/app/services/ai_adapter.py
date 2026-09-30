@@ -9,6 +9,7 @@ from openai import OpenAI
 
 from app.config import Settings, get_settings
 from app.schemas import AnswerAnalysis, ExerciseGenerationResult, PhrasePreparation, TopicContext
+from app.request_metrics import measure_ai_call
 
 PROMPTS_DIR = Path(__file__).resolve().parents[1] / "prompts"
 
@@ -140,13 +141,14 @@ class OpenAIStructuredProvider:
         schema: type[TopicContext] | type[ExerciseGenerationResult] | type[AnswerAnalysis] | type[PhrasePreparation],
     ):
         try:
-            response = self.client.responses.parse(
-                model=self.settings.openai_text_model,
-                instructions=load_prompt(prompt_name),
-                input=json.dumps(payload, ensure_ascii=False),
-                text_format=schema,
-                store=False,
-            )
+            with measure_ai_call():
+                response = self.client.responses.parse(
+                    model=self.settings.openai_text_model,
+                    instructions=load_prompt(prompt_name),
+                    input=json.dumps(payload, ensure_ascii=False),
+                    text_format=schema,
+                    store=False,
+                )
             parsed = response.output_parsed
             if parsed is None:
                 raise AIServiceError("OpenAI returned no structured output")

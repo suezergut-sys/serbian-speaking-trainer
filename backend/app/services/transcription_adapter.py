@@ -7,6 +7,7 @@ from openai import OpenAI
 
 from app.config import Settings, get_settings
 from app.schemas import TranscriptionResponse
+from app.request_metrics import measure_ai_call
 
 
 class TranscriptionServiceError(RuntimeError):
@@ -43,16 +44,17 @@ class OpenAITranscriptionProvider:
 
     def transcribe(self, *, audio: bytes, filename: str, content_type: str) -> TranscriptionResponse:
         try:
-            response = self.client.audio.transcriptions.create(
-                file=(filename, audio, content_type),
-                model=self.settings.openai_transcribe_model,
-                language="sr",
-                prompt=(
-                    "Doslovan prepis govora na srpskom jeziku, latinicom. "
-                    "Ne prevodi, ne ispravljaj i ne preformuliši izgovorene reči."
-                ),
-                response_format="json",
-            )
+            with measure_ai_call():
+                response = self.client.audio.transcriptions.create(
+                    file=(filename, audio, content_type),
+                    model=self.settings.openai_transcribe_model,
+                    language="sr",
+                    prompt=(
+                        "Doslovan prepis govora na srpskom jeziku, latinicom. "
+                        "Ne prevodi, ne ispravljaj i ne preformuliši izgovorene reči."
+                    ),
+                    response_format="json",
+                )
             return TranscriptionResponse(text=response.text.strip())
         except TranscriptionServiceError:
             raise

@@ -1,6 +1,7 @@
 from collections.abc import Generator, Iterator
 from contextlib import contextmanager
 from pathlib import Path
+from time import perf_counter
 
 from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.engine import URL, make_url
@@ -8,6 +9,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import QueuePool, StaticPool
 
 from app.config import BACKEND_ROOT, get_settings
+from app.request_metrics import current_request_metrics
 
 
 def normalized_database_url(raw: str) -> URL:
@@ -48,6 +50,31 @@ def create_database_engine(database_url: str | None = None) -> Engine:
             "pool_pre_ping": True,
         })
     engine = create_engine(parsed_url, **engine_options)
+    @event.listens_for(engine, "before_cursor_execute")
+    def begin_query_timing(_connection, _cursor, _statement, _parameters, context, _executemany) -> None:  # type: ignore[no-untyped-def]
+        metrics = current_request_metrics()
+        if metrics is not None:
+            metrics.db_queries += 1
+            context._request_metrics = metrics
+            context._request_started = perf_counter()
+
+    @event.listens_for(engine, "after_cursor_execute")
+    def finish_query_timing(_connection, _cursor, _statement, _parameters, context, _executemany) -> None:  # type: ignore[no-untyped-def]
+        metrics = getattr(context, "_request_metrics", None)
+        started = getattr(context, "_request_started", None)
+        if metrics is not None and started is not None:
+            metrics.db_ms += (perf_counter() - started) * 1000
+            context._request_started = None
+
+    @event.listens_for(engine, "handle_error")
+    def finish_failed_query_timing(exception_context) -> None:  # type: ignore[no-untyped-def]
+        context = exception_context.execution_context
+        metrics = getattr(context, "_request_metrics", None)
+        started = getattr(context, "_request_started", None)
+        if metrics is not None and started is not None:
+            metrics.db_ms += (perf_counter() - started) * 1000
+            context._request_started = None
+
     if is_sqlite:
         @event.listens_for(engine, "connect")
         def enable_foreign_keys(dbapi_connection, _connection_record) -> None:  # type: ignore[no-untyped-def]
