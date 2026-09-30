@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.schemas import AttemptResponse, CreateAttemptRequest
 from app.services.ai_adapter import StructuredAIProvider, get_ai_provider
-from app.services.attempt_service import AttemptRequestConflictError, AttemptService, ExerciseNotFoundError
+from app.services.attempt_service import AttemptInProgressError, AttemptRequestConflictError, AttemptService, ExerciseNotFoundError
 from app.services.attempt_service import DailyLimitExceededError
 from app.services.answer_analyzer import AnalysisUnavailableError
 from app.services.session_service import SessionCompletedError, SessionUnavailableError
@@ -27,6 +27,11 @@ def create_attempt(
         raise HTTPException(status_code=404, detail="Exercise not found") from exc
     except DailyLimitExceededError as exc:
         raise HTTPException(status_code=429, detail="Daily phrase limit reached") from exc
+    except AttemptInProgressError as exc:
+        raise HTTPException(status_code=409, headers={"Retry-After": "1"}, detail={
+            "code": "attempt_in_progress", "message": "Answer analysis is in progress. Please retry.",
+            "retryable": True,
+        }) from exc
     except AttemptRequestConflictError as exc:
         raise HTTPException(status_code=409, detail={"code": "attempt_request_conflict", "message": "Request ID was already used for another answer"}) from exc
     except SessionCompletedError as exc:

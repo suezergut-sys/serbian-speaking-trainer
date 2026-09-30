@@ -146,8 +146,9 @@ def test_analysis_unavailable_preserves_progress_and_allows_same_request_retry(
         "message": "Answer analysis is temporarily unavailable. Please retry.",
         "retryable": True,
     }
-    for model in (Attempt, AttemptRequest, LearnerSkill, ReviewPhrase):
+    for model in (Attempt, LearnerSkill, ReviewPhrase):
         assert db_session.scalar(select(func.count()).select_from(model)) == 0
+    assert db_session.scalar(select(func.count()).select_from(AttemptRequest)) == 1
     assert api_client.get("/api/auth/me").json()["daily_usage"]["used"] == 0
 
     app.dependency_overrides[get_ai_provider] = lambda: FakeAIProvider(
@@ -197,8 +198,9 @@ def test_invalid_structured_issue_does_not_persist_false_grade(
 
     assert response.status_code == 503
     assert ai.analysis_calls == 2
-    for model in (Attempt, AttemptRequest, LearnerSkill, ReviewPhrase, ErrorEvent):
+    for model in (Attempt, LearnerSkill, ReviewPhrase, ErrorEvent):
         assert db_session.scalar(select(func.count()).select_from(model)) == 0
+    assert db_session.scalar(select(func.count()).select_from(AttemptRequest)) == 1
     assert api_client.get("/api/auth/me").json()["daily_usage"]["used"] == 0
 
 

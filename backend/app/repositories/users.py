@@ -19,7 +19,7 @@ class UserRepository(Repository[User]):
             # SQLite ignores FOR UPDATE. Acquire its writer lock before reading
             # quota/session boundaries, including requests from legacy clients.
             self.session.execute(update(User).where(User.id == user_id).values(id=User.id))
-        return self.session.scalar(select(User).where(User.id == user_id).with_for_update())
+        return self.session.scalar(select(User).where(User.id == user_id).with_for_update().execution_options(populate_existing=True))
 
     def list_real_users(self) -> list[User]:
         statement = (

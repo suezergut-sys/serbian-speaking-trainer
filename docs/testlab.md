@@ -23,6 +23,23 @@ Preview остаётся запущенным. В другом терминал�
 
 `setup_testlab.py` генерирует случайный пароль и ключ подписи в игнорируемом `.env.testlab`; значения не печатаются. Runner передаёт данные процессу тестов через окружение. Не копируйте этот файл в APK, Git, диагностические отчёты или CI-логи. Для ротации создайте новые случайные значения и перезапустите локальный auth.
 
+При запуске API testlab применяет Alembic к собственной SQLite. Поддерживаются пустая база и точно распознанная прежняя/текущая схема; история сохраняется. Неизвестная схема или revision отклоняется без сброса данных.
+
+## Конкурентные проверки PostgreSQL
+
+Для P1.2 используется отдельный portable PostgreSQL 17.11 из официального Windows-архива EDB. Скрипт извлекает только серверные bin/lib/share, не устанавливает Windows service и хранит кластер и случайный пароль в игнорируемом `artifacts/testlab/postgres`. Сервер слушает только `127.0.0.1:55432`; runner проверяет идентичность собственного кластера и разрешает только БД `serbotalk_concurrency_test`. Унаследованные параметры подключения `PG*` удаляются. Production PostgreSQL и его секреты этим runner не используются.
+
+```powershell
+python scripts/testing/postgres_testlab.py setup
+python scripts/testing/postgres_testlab.py start
+python scripts/testing/postgres_testlab.py run-tests --python .venv/Scripts/python.exe --pytest-file test_attempt_reservations.py --pytest-file test_attempt_idempotency_migration.py
+python scripts/testing/postgres_testlab.py stop
+```
+
+`setup` выполняется один раз, требует сети и отказывается перезаписывать существующий кластер. Скачивание проверяется HTTPS и границами архива; показанный SHA-256 является наблюдаемым хешем, а не подтверждением vendor checksum. При прерванной установке сохранённые файлы нужно сначала проверить; автоматически удалять каталог или повторно устанавливать поверх него нельзя. Каждый DB-тест создаёт уникальную схему и удаляет только её. Эти проверки подтверждают поведение прямого локального PostgreSQL, но не нагрузку через Supabase production pooler.
+
+Парный замер ожидания независимой SQLite-записи запускается `scripts/testing/benchmark_attempt_lock.py --label before --backend <снимок backend внутри checkout>` и затем `--label after --compare-to <before report в artifacts/testlab>`. По умолчанию: 3 прогрева, 20 измерений, fake AI с паузой 1000 мс; отчёт проверяет совпадение параметров и фикстуры. Результат этого среза: [контрольная точка P1.2/P1.4](p1-concurrency-checkpoint.md).
+
 ## Android
 
 После отдельного согласования версии и команды на сборку:

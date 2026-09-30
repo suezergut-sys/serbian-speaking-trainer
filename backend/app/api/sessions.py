@@ -6,7 +6,7 @@ from app.schemas import CreateSessionRequest, ExerciseResponse, NextExerciseRequ
 from app.services.ai_adapter import StructuredAIProvider, get_ai_provider
 from app.services.exercise_generator import ExerciseGenerator, TopicEmptyError
 from app.services.review_service import ReviewQueueEmptyError
-from app.services.session_service import SessionCompletedError, SessionNotFoundError, SessionService, SessionUnavailableError
+from app.services.session_service import SessionCompletedError, SessionNotFoundError, SessionPendingError, SessionService, SessionUnavailableError
 from app.services.topic_service import TopicNotFoundError
 from app.api.dependencies import get_current_user
 from app.models import User
@@ -79,6 +79,11 @@ def next_exercise(
         raise HTTPException(status_code=409, detail={"code": "review_queue_empty", "message": "Review queue is empty"}) from exc
     except TopicEmptyError as exc:
         raise HTTPException(status_code=409, detail={"code": "topic_empty", "message": "Topic has no active phrases"}) from exc
+    except SessionPendingError as exc:
+        raise HTTPException(status_code=409, headers={"Retry-After": "1"}, detail={
+            "code": "attempt_in_progress", "message": "Answer analysis is in progress. Please retry.",
+            "retryable": True,
+        }) from exc
     except SessionCompletedError as exc:
         raise HTTPException(status_code=409, detail={"code": "session_completed", "message": "Session is complete"}) from exc
     except SessionUnavailableError as exc:
