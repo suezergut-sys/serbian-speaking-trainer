@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from app.models import TrainingSession
-from app.repositories import ReviewPhraseRepository, TopicPresetRepository, TrainingSessionRepository
+from app.repositories import AttemptRepository, ReviewPhraseRepository, TopicPresetRepository, TrainingSessionRepository
 from app.schemas import CreateSessionRequest, CreateTopicRequest, SessionResponse, TopicContext
 from app.services.ai_adapter import StructuredAIProvider
 from app.services.review_service import ReviewQueueEmptyError
@@ -14,10 +14,19 @@ class SessionNotFoundError(LookupError):
     pass
 
 
+class SessionCompletedError(RuntimeError):
+    pass
+
+
+class SessionUnavailableError(RuntimeError):
+    pass
+
+
 class SessionService:
     def __init__(self, db: Session, ai: StructuredAIProvider, user_id: str) -> None:
         self.user_id = user_id
         self.repository = TrainingSessionRepository(db, user_id)
+        self.attempts = AttemptRepository(db, user_id)
         self.topic_service = TopicService(TopicPresetRepository(db, user_id), ai)
         self.review_phrases = ReviewPhraseRepository(db, user_id)
 
@@ -91,13 +100,13 @@ class SessionService:
         topic_payload = payload.get("topic", payload)
         return TopicContext.model_validate(topic_payload)
 
-    @classmethod
-    def _response(cls, entity: TrainingSession) -> SessionResponse:
+    def _response(self, entity: TrainingSession) -> SessionResponse:
         return SessionResponse(
             id=entity.id,
             status=entity.status,
             level=entity.level,
             started_at=entity.started_at,
             requested_length=int(entity.normalized_topic_json.get("session_length", 20)),
-            topic=cls.topic_snapshot(entity),
+            completed_count=self.attempts.count_checked_exercises(entity.id),
+            topic=self.topic_snapshot(entity),
         )

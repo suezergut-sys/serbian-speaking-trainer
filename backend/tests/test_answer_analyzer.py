@@ -1,11 +1,14 @@
+import pytest
+
 from app.config import Settings
 from app.schemas import AnswerAnalysis, AnswerIssue, CreateAttemptRequest, DemonstratedSkill
-from app.services.answer_analyzer import AnswerAnalyzer
+from app.services.ai_adapter import AIServiceError
+from app.services.answer_analyzer import AnalysisUnavailableError, AnswerAnalyzer
 from tests.fakes import FakeAIProvider
 
 
 def test_exact_canonical_match_is_perfect_without_ai_analysis() -> None:
-    ai = FakeAIProvider(available=True)
+    ai = FakeAIProvider(available=False)
     analyzer = AnswerAnalyzer(ai)
 
     result = analyzer.analyze(
@@ -29,6 +32,26 @@ def test_exact_canonical_match_is_perfect_without_ai_analysis() -> None:
     assert result.fluency_score == 1
     assert result.issues == []
     assert all(skill.result == "strong" and skill.confidence == 1 for skill in result.demonstrated_skills)
+
+
+def test_noncanonical_answer_waits_for_valid_ai_analysis() -> None:
+    request = CreateAttemptRequest(exercise_id="exercise", transcript_sr="Ne znam.")
+    arguments = {
+        "source_ru": "Я хотел бы заказать кофе.",
+        "transcript_sr": request.transcript_sr,
+        "intended_sr_variants": ["Voleo bih da naručim kafu."],
+        "target_skills": [],
+        "timing": request,
+    }
+    with pytest.raises(AnalysisUnavailableError):
+        AnswerAnalyzer(FakeAIProvider(available=False)).analyze(**arguments)
+
+    class FailingAI(FakeAIProvider):
+        def analyze_answer(self, **_kwargs):
+            raise AIServiceError("test provider failure")
+
+    with pytest.raises(AnalysisUnavailableError):
+        AnswerAnalyzer(FailingAI(available=True)).analyze(**arguments)
 
 
 def test_analyzer_filters_unknown_skill_keys_and_applies_local_fluency() -> None:

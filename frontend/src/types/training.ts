@@ -1,3 +1,5 @@
+import type { DailyUsage } from "./auth";
+
 export type TopicListItem = {
   id: string;
   title_ru: string;
@@ -21,6 +23,7 @@ export type TrainingSession = {
   level: "A2";
   started_at: string;
   requested_length: number;
+  completed_count?: number;
   topic: TopicContext;
 };
 
@@ -75,6 +78,7 @@ export type Attempt = {
   overall_score: number;
   base_score: number;
   hint_penalty: number;
+  daily_usage?: DailyUsage;
   analysis: AnswerAnalysis;
   learner_updates?: Array<{
     skill_key: string;

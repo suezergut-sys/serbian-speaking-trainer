@@ -173,7 +173,8 @@ describe("App", () => {
     render(<App />);
     expect(screen.getByRole("status", { name: "Авторизация и загрузка" }).closest(".auth-page--loading")).toBeInTheDocument();
 
-    expect(await screen.findByRole("heading", { name: /Практикуйтесь в реальных ситуациях/ })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Темы для практики" })).toBeInTheDocument();
+    expect(screen.queryByText("Анализ ответа")).not.toBeInTheDocument();
     expect(await screen.findByRole("status", { name: "Backend готов" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /В банке/ })).toBeInTheDocument();
     expect(await screen.findByRole("button", { name: /В банке.*20.*неизученных/ })).toBeInTheDocument();
@@ -209,6 +210,14 @@ describe("App", () => {
     finishReview({ ok: true, status: 200, json: async () => [] });
   });
 
+  it("reports an initial topics timeout as an offline backend", async () => {
+    const baseFetch = mockApi();
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+      input.toString() === "/api/topics" ? Promise.reject(new DOMException("timeout", "AbortError")) : baseFetch(input, init)));
+    render(<App />);
+    expect(await screen.findByRole("status", { name: "Backend недоступен" })).toBeInTheDocument();
+  });
+
   it("shows phrase preparation while a selected topic starts", async () => {
     const baseFetch = mockApi();
     let finishStart!: (response: { ok: boolean; status: number; json: () => Promise<unknown> }) => void;
@@ -225,6 +234,29 @@ describe("App", () => {
     const response = await baseFetch("/api/sessions/start", { method: "POST", body: JSON.stringify({ topic_id: "bank" }) });
     finishStart(response);
     expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
+  });
+
+  it("leaves preparation when a pending start is replaced by an empty topic", async () => {
+    const baseFetch = mockApi();
+    const emptyTopic = {
+      id: "empty", title_ru: "Пустая тема", description_ru: "Нет фраз", likely_intents: [],
+      suggested_vocabulary: [], is_custom: true, phrase_count: 0,
+    };
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (input.toString() === "/api/sessions/start") return new Promise<never>(() => undefined);
+      if (input.toString() === "/api/topics") {
+        const response = await baseFetch(input, init);
+        return { ok: true, status: 200, json: async () => [...await response.json(), emptyTopic] };
+      }
+      return baseFetch(input, init);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    expect(await screen.findByRole("status", { name: "Подготовка фразы" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Пустая тема/ }));
+    expect(screen.queryByRole("status", { name: "Подготовка фразы" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Пустая тема" })).toBeInTheDocument();
   });
 
   it("renders the native Android experience as three minimal swipe panels", async () => {
@@ -312,7 +344,7 @@ describe("App", () => {
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
 
     expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
-    expect(screen.getByText("modal_verbs")).toBeInTheDocument();
+    expect(screen.queryByText("modal_verbs")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Ответить голосом/ })).toBeDisabled();
     expect(screen.getByText(/Микрофон недоступен/)).toBeInTheDocument();
     expect(screen.queryByLabelText("Ваш ответ")).not.toBeInTheDocument();
@@ -394,7 +426,7 @@ describe("App", () => {
       const call = fetchMock.mock.calls.find(([url]) => url === "/api/attempts");
       expect(JSON.parse(call?.[1]?.body as string).transcript_sr).toBe("Želim da otvorim račun!");
     });
-    expect(await screen.findByText("Желим да отворим рачун.")).toBeInTheDocument();
+    expect((await screen.findAllByText("Желим да отворим рачун.")).length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole("button", { name: "Статистика" }));
     fireEvent.click(await screen.findByRole("button", { name: "Фразы" }));
@@ -446,7 +478,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
 
     expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
-    expect(screen.getByText("Правильный вариант")).toBeInTheDocument();
+    expect(screen.getByText("Вариант перевода")).toBeInTheDocument();
     expect(screen.getByText("Ваш вариант")).toBeInTheDocument();
     expect(screen.getByText("Ваш вариант").parentElement).toHaveTextContent("Želim da otvorim račun.");
     expect(screen.getByLabelText("Прогресс навыков")).toHaveTextContent("Модальные глаголы");
@@ -593,4 +625,232 @@ describe("App", () => {
     expect(await screen.findByRole("button", { name: /Ответить голосом/ })).toBeInTheDocument();
     expect(screen.queryByText("Stari odgovor")).not.toBeInTheDocument();
   });
+
+  it("keeps the spoken draft when navigating away and back", async () => {
+    voiceMock.available = true;
+    vi.stubGlobal("fetch", mockApi());
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    const answer = await recordAnswer();
+    fireEvent.change(answer, { target: { value: "Moj odgovor" } });
+    fireEvent.click(screen.getByRole("button", { name: "Статистика" }));
+    fireEvent.click(screen.getByRole("button", { name: "Практика" }));
+    expect(screen.getByLabelText("Ваш ответ")).toHaveValue("Moj odgovor");
+    expect(screen.getByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
+  });
+
+  it("shows an AI outage without a grade and reuses the same request ID on retry", async () => {
+    voiceMock.available = true;
+    const baseFetch = mockApi();
+    let attempts = 0;
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (input.toString() === "/api/attempts" && ++attempts === 1) {
+        return Promise.resolve({ ok: false, status: 503, json: async () => ({ detail: { code: "analysis_unavailable", retryable: true, message: "AI unavailable" } }) });
+      }
+      return baseFetch(input, init);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    const answer = await recordAnswer();
+    fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Сервис проверки временно недоступен");
+    expect(screen.queryByText("Ответ естественный и точный.")).not.toBeInTheDocument();
+    expect(answer).toHaveValue("Želim da otvorim račun.");
+    fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
+    expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
+    const bodies = fetchMock.mock.calls.filter(([url]) => url.toString() === "/api/attempts")
+      .map(([, init]) => JSON.parse(init?.body as string));
+    expect(bodies).toHaveLength(2);
+    expect(bodies[0].client_request_id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(bodies[1].client_request_id).toBe(bodies[0].client_request_id);
+    expect(bodies[1].transcript_sr).toBe(bodies[0].transcript_sr);
+  });
+
+  it("keeps the result when the background profile refresh fails", async () => {
+    voiceMock.available = true;
+    const baseFetch = mockApi();
+    let profileCalls = 0;
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (input.toString() === "/api/auth/me" && ++profileCalls > 1) return Promise.reject(new Error("offline"));
+      return baseFetch(input, init);
+    }));
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    await recordAnswer();
+    fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
+    expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
+    await waitFor(() => expect(profileCalls).toBe(2));
+    expect(screen.getByRole("button", { name: /Следующая фраза/ })).toBeEnabled();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("reuses the next phrase request ID after a failed prefetch", async () => {
+    voiceMock.available = true;
+    const baseFetch = mockApi();
+    let nextCalls = 0;
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (input.toString().endsWith("/next-exercise") && ++nextCalls === 1) {
+        return Promise.resolve({ ok: false, status: 503, json: async () => ({ detail: "unavailable" }) });
+      }
+      return baseFetch(input, init);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    await recordAnswer();
+    fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
+    expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Следующая фраза/ }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Не удалось получить следующую фразу");
+    fireEvent.click(screen.getByRole("button", { name: /Следующая фраза/ }));
+    expect(await screen.findByRole("button", { name: "Ответить голосом" })).toBeInTheDocument();
+    const ids = fetchMock.mock.calls.filter(([url]) => url.toString().endsWith("/next-exercise"))
+      .map(([, init]) => JSON.parse(init?.body as string).client_request_id);
+    expect(ids).toHaveLength(2);
+    expect(ids[0]).toMatch(/^[0-9a-f-]{36}$/);
+    expect(ids[1]).toBe(ids[0]);
+  });
+
+  it("finishes an exhausted topic instead of endlessly retrying for another phrase", async () => {
+    voiceMock.available = true;
+    const baseFetch = mockApi();
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+      input.toString().endsWith("/next-exercise")
+        ? Promise.resolve({ ok: false, status: 409, json: async () => ({ detail: { code: "topic_empty" } }) })
+        : baseFetch(input, init)));
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    await recordAnswer();
+    fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
+    expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Следующая фраза/ }));
+    expect(await screen.findByRole("heading", { name: "Все фразы темы пройдены" })).toBeInTheDocument();
+    expect(screen.getByText("1 фраз проверено. В этой теме пока нет следующих фраз.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Выбрать новую тему" })).toBeEnabled();
+  });
+
+  it.each(["result", "error"])("ignores a late hint %s after advancing", async (outcome) => {
+    voiceMock.available = true;
+    const baseFetch = mockApi();
+    let settleHint!: (response: { ok: boolean; status: number; json: () => Promise<unknown> }) => void;
+    const pendingHint = new Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>((resolve) => { settleHint = resolve; });
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+      input.toString().endsWith("/word-hints") ? pendingHint : baseFetch(input, init)));
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "открыть" }));
+    expect(screen.getByText("Загружаем…")).toBeInTheDocument();
+    await recordAnswer();
+    fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
+    expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Следующая фраза/ }));
+    const nextWord = await screen.findByRole("button", { name: "открыть" });
+    await act(async () => { settleHint(outcome === "result"
+      ? { ok: true, status: 200, json: async () => ({ word_ru: "открыть", translation_sr: "otvoriti", is_learning: true }) }
+      : { ok: false, status: 503, json: async () => ({ detail: "unavailable" }) }); });
+    expect(nextWord).not.toHaveClass("is-used");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("does not restore a signed-out account when its late attempt finishes", async () => {
+    voiceMock.available = true;
+    const baseFetch = mockApi();
+    let profileCalls = 0;
+    let settleAttempt!: (response: { ok: boolean; status: number; json: () => Promise<unknown> }) => void;
+    const pendingAttempt = new Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>((resolve) => { settleAttempt = resolve; });
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (input.toString() === "/api/attempts") return pendingAttempt;
+      const response = await baseFetch(input, init);
+      if (input.toString() === "/api/auth/me" && ++profileCalls > 1) {
+        return { ok: true, status: 200, json: async () => ({ ...await response.json(), id: "user-2", display_name: "Другой ученик" }) };
+      }
+      return response;
+    }));
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    await recordAnswer();
+    fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
+    await act(async () => { authEvents.notify?.(null); });
+    expect(await screen.findByRole("button", { name: "Войти через Google" })).toBeInTheDocument();
+    await act(async () => { authEvents.notify?.({ access_token: "other-token" }); });
+    expect(await screen.findByText("Другой ученик")).toBeInTheDocument();
+    const oldResponse = await baseFetch("/api/attempts", { method: "POST" });
+    await act(async () => { settleAttempt({ ok: true, status: 200, json: async () => ({ ...await oldResponse.json(), daily_usage: { used: 3, limit: 10, remaining: 7, resets_at: "2026-09-23T00:00:00Z" } }) }); });
+    expect(screen.getByText("Другой ученик")).toBeInTheDocument();
+    expect(screen.queryByText("Ученик")).not.toBeInTheDocument();
+  });
+
+  it.each(["result", "error"])("ignores a late attempt %s after starting another session", async (outcome) => {
+    voiceMock.available = true;
+    const baseFetch = mockApi();
+    let settleAttempt!: (response: { ok: boolean; status: number; json: () => Promise<unknown> }) => void;
+    const pendingAttempt = new Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>((resolve) => { settleAttempt = resolve; });
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+      input.toString() === "/api/attempts" ? pendingAttempt : baseFetch(input, init));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    await recordAnswer();
+    fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.toString() === "/api/attempts")).toBe(true));
+    fireEvent.click(screen.getByRole("button", { name: /В банке/ }));
+    expect(await screen.findByRole("button", { name: "Ответить голосом" })).toBeInTheDocument();
+    const response = outcome === "result"
+      ? await baseFetch("/api/attempts", { method: "POST" })
+      : { ok: false, status: 503, json: async () => ({ detail: { code: "analysis_unavailable", retryable: true } }) };
+    await act(async () => { settleAttempt(response); });
+    expect(screen.queryByText("Ответ естественный и точный.")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Ваш ответ")).not.toBeInTheDocument();
+  });
+
+  it("ignores a transcription that finishes after the topic changes", async () => {
+    voiceMock.available = true;
+    const baseFetch = mockApi();
+    let finishTranscription!: (value: { ok: boolean; status: number; json: () => Promise<unknown> }) => void;
+    const transcription = new Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>((resolve) => { finishTranscription = resolve; });
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+      input.toString() === "/api/transcriptions" ? transcription : baseFetch(input, init));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Ответить голосом" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Завершить запись" }));
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.toString() === "/api/transcriptions")).toBe(true));
+    fireEvent.click(screen.getByRole("button", { name: /В банке/ }));
+    finishTranscription({ ok: true, status: 200, json: async () => ({ text: "Stari odgovor" }) });
+    await screen.findByRole("heading", { name: "Я хочу открыть счёт." });
+    expect(screen.queryByLabelText("Ваш ответ")).not.toBeInTheDocument();
+    expect(screen.queryByText("Stari odgovor")).not.toBeInTheDocument();
+  });
+
+  it("finishes normal practice after ten checked phrases without requesting an eleventh", async () => {
+    voiceMock.available = true;
+    const baseFetch = mockApi();
+    let nextCalls = 0;
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (input.toString().endsWith("/next-exercise")) {
+        nextCalls += 1;
+        return Promise.resolve({ ok: true, status: 201, json: async () => ({
+          id: `exercise-${nextCalls + 1}`, session_id: "session-1", source_ru: `Фраза ${nextCalls + 1}.`,
+          targeted_skills: [], expected_level: "A2", difficulty: 1, word_hints: [],
+        }) });
+      }
+      return baseFetch(input, init);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    for (let number = 1; number <= 10; number += 1) {
+      await recordAnswer();
+      fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
+      expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: number === 10 ? "Завершить тренировку" : /Следующая фраза/ }));
+      if (number < 10) await screen.findByRole("heading", { name: `Фраза ${number + 1}.` });
+    }
+    expect(screen.getByRole("heading", { name: "Тренировка завершена" })).toBeInTheDocument();
+    expect(screen.getByText("10 из 10 фраз проверено.")).toBeInTheDocument();
+    expect(nextCalls).toBe(9);
+  }, 20_000);
 });
