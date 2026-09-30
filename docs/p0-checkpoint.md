@@ -22,7 +22,7 @@
 - Сохранение попыток и выдача следующего упражнения принимают необязательный `client_request_id`; повторы с тем же ID идемпотентны, запросы без него поддерживают обратную совместимость.
 - При отказе или некорректном ответе AI попытка не получает фиктивную оценку, прогресс и лимит не меняются. Обычная сессия обычно завершается после 10 различных упражнений в рамках этой сессии. Независимо от этого free-аккаунт ограничен 10 сохранёнными попытками в UTC сутки; счётчик дневного лимита считает попытки по всем режимам, включая повторение. Admin/premium не ограничены.
 - В web интерфейсе упражнение, ответ, результат и следующее действие образуют общую карточку практики; второстепенные формы сворачиваются.
-- Независимое ревью завершено без открытых замечаний. Web/backend production deploy и проверка production-сценария ожидают выполнения. 2026-09-30 согласована Android 1.13 (`versionCode 23`); контрольный debug APK собран и проверен через aapt/apksigner. Запуск на устройстве и ручная приёмка ожидаются.
+- Независимое ревью завершено без открытых замечаний. Web/backend опубликованы в production (Ready); публичные smoke checks пройдены. Авторизованный учебный сценарий и визуальная проверка ожидают ручной приёмки. 2026-09-30 согласована Android 1.13 (`versionCode 23`); контрольный debug APK собран и проверен через aapt/apksigner. Запуск на устройстве и ручная приёмка ожидаются.
 
 Перед проверками frontend команда `pnpm install --frozen-lockfile` завершилась успешно. В автоматических тестах используются поддельные AI-провайдеры; вызовов OpenAI API не было.
 
@@ -43,9 +43,9 @@
 
 | Поле | Значение |
 | --- | --- |
-| URL развёртывания | Ожидает |
-| SHA развёрнутого коммита | Ожидает |
-| Проверяющий и дата | Ожидает |
+| URL развёртывания | Web: https://serbian-speaking-trainer.vercel.app; API: https://serbian-speaking-trainer-api.vercel.app |
+| SHA развёрнутого коммита | `01f262783309faf2cc674ba59268173434cfa67e` (PR #24) |
+| Проверяющий и дата | Автоматические проверки: Codex, 2026-09-30; ручная приёмка владельца ожидается |
 | Итог приёмки | Ожидает |
 | Замечания для исправления | Ожидает |
 
@@ -58,3 +58,14 @@
 - Размер: 4 418 980 байт; SHA-256: `A3E374F069023236D0E784BBD1040A92D28E2125A70FF3827FB32B07DA483590`.
 - Проверено: package `com.serbiantalk.trainer`, versionCode 23, versionName 1.13, target SDK 36, подпись APK v2.
 - Подключённых устройств adb нет; установка/голосовая проверка не выполнялись. Browser automation недоступна: `Unable to load browser request-header policy`. Component tests не заменяют визуальную приёмку.
+
+## Production-публикация 2026-09-30
+
+- Backend: [deployment](https://serbian-speaking-trainer-6w81u71kd-suezerguts-projects.vercel.app), `dpl_EZu6nTBEAimv8ETxwnGacyP5Q23R`, Ready.
+- Web: [deployment](https://serbian-speaking-trainer-em6vagci3-suezerguts-projects.vercel.app), `dpl_FwF8AvvYzyy9mYrf8GuHZdVjqoxQ`, Ready.
+- Production aliases и `meta.gitCommitSha` обоих deployments проверены через Vercel API: `01f262783309faf2cc674ba59268173434cfa67e`.
+- Backend build применил PostgreSQL-миграцию `c7d91a2e5b60`; seed: 0 новых skills/topics/topic phrases.
+- API: health 200, topics без токена 401, OpenAPI 200 и новые client_request_id/daily_usage/completed_count присутствуют.
+- Web: /, /privacy, /terms и новый entry bundle `index-coe4kukJ.js` возвращают 200. Bundle содержит новые коды ошибок и client_request_id.
+- APK содержит тот же entry bundle. Копия для передачи на телефон: `artifacts/SerboTalk-andorid16-1.13.apk` в основной пользовательской папке проекта (не коммитится).
+- Эти проверки не подтверждают пользовательский сценарий после входа; ручные пункты выше остаются ожидающими. P1 начинается после приёмки P0.
