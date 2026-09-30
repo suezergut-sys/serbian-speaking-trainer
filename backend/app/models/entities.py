@@ -83,6 +83,10 @@ class AttemptRequest(Base):
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     client_request_id: Mapped[str] = mapped_column(String(36), primary_key=True)
     payload_hash: Mapped[str] = mapped_column(String(64))
+    exercise_id: Mapped[str | None] = mapped_column(ForeignKey("exercises.id", ondelete="CASCADE"))
+    reserved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    lease_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    fencing_token: Mapped[int] = mapped_column(Integer, default=1)
     attempt_id: Mapped[str | None] = mapped_column(ForeignKey("attempts.id", ondelete="CASCADE"))
     response_json: Mapped[dict[str, Any] | None] = mapped_column(JSON)
 

@@ -116,8 +116,8 @@ def test_concurrent_attempts_cannot_cross_session_length_boundary(
         try:
             assert first_accepted.wait(timeout=4), "first attempt did not reach the held transaction"
             assert second_entered.wait(timeout=4), "second worker did not start its attempt"
-            assert not second_finished.wait(timeout=0.25), (
-                "second attempt completed before the first transaction committed"
+            assert second_finished.wait(timeout=1), (
+                "second attempt waited for a transaction already committed by the service"
             )
         finally:
             release_first.set()
@@ -229,8 +229,8 @@ def test_next_exercise_waits_for_final_attempt_commit(
             assert "attempt" not in outcomes, outcomes.get("attempt")
             next_worker.start()
             assert next_entered.wait(timeout=4), "next request did not start"
-            assert not next_finished.wait(timeout=0.25), (
-                "next request finished before the final attempt committed"
+            assert next_finished.wait(timeout=1), (
+                "next request waited for a transaction already committed by the service"
             )
         finally:
             release_attempt.set()

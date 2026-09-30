@@ -87,6 +87,34 @@ def test_word_hint_is_saved_and_reduces_score(api_client: TestClient, db_session
     assert api_client.get("/api/review-phrases").json()[0]["source_ru"] == exercise["source_ru"]
 
 
+def test_attempt_recovers_lost_hint_save_and_late_post_is_idempotent(
+    api_client: TestClient, db_session: Session, monkeypatch,
+) -> None:
+    monkeypatch.setattr("app.services.exercise_generator.random.choice", lambda choices: choices[0])
+    exercise = _exercise(api_client)
+    # The UI has opened the word, but its background save never reached the API.
+    attempt = api_client.post("/api/attempts", json={
+        "exercise_id": exercise["id"],
+        "transcript_sr": "Mogu li da dobijem jelovnik, molim vas?",
+        "hinted_words": ["меню"],
+    })
+    assert attempt.status_code == 201
+    word = db_session.scalar(select(WordLearningItem).where(WordLearningItem.source_normalized == "меню"))
+    assert word is not None and word.hint_count == 1
+
+    for _ in range(2):
+        late = api_client.post(f"/api/exercises/{exercise['id']}/word-hints", json={"word": "меню"})
+        assert late.status_code == 200
+    db_session.refresh(word)
+    assert word.hint_count == 1
+
+    another = _exercise(api_client)
+    assert another["id"] != exercise["id"]
+    assert api_client.post(f"/api/exercises/{another['id']}/word-hints", json={"word": "меню"}).status_code == 200
+    db_session.refresh(word)
+    assert word.hint_count == 2
+
+
 def test_custom_review_phrase_creates_exact_exercise(api_client: TestClient) -> None:
     created = api_client.post(
         "/api/review-phrases",

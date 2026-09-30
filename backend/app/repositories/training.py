@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import func, select, update
+from sqlalchemy import func, select, union, update
 from sqlalchemy.orm import Session
 
 from app.models import Attempt, AttemptRequest, ErrorEvent, Exercise, ReviewPhrase, TrainingSession, WordLearningItem
@@ -27,7 +27,7 @@ class TrainingSessionRepository(Repository[TrainingSession]):
             ).values(id=TrainingSession.id))
         return self.session.scalar(select(TrainingSession).where(
             TrainingSession.id == session_id, TrainingSession.user_id == self.user_id,
-        ).with_for_update())
+        ).with_for_update().execution_options(populate_existing=True))
 
 
 class ExerciseRepository(Repository[Exercise]):
@@ -40,6 +40,7 @@ class ExerciseRepository(Repository[Exercise]):
             select(Exercise)
             .join(TrainingSession, TrainingSession.id == Exercise.session_id)
             .where(Exercise.id == exercise_id, TrainingSession.user_id == self.user_id)
+            .execution_options(populate_existing=True)
         )
 
     def list_recent(self, session_id: str, *, limit: int = 8) -> list[Exercise]:
@@ -92,7 +93,33 @@ class AttemptRequestRepository(Repository[AttemptRequest]):
         self.user_id = user_id
 
     def get_by_client_id(self, client_request_id: str) -> AttemptRequest | None:
-        return self.session.get(AttemptRequest, (self.user_id, client_request_id))
+        return self.session.get(AttemptRequest, (self.user_id, client_request_id), populate_existing=True)
+
+    def count_active_between(self, start: datetime, end: datetime, now: datetime) -> int:
+        return int(self.session.scalar(
+            select(func.count()).select_from(AttemptRequest).where(
+                AttemptRequest.user_id == self.user_id,
+                AttemptRequest.response_json.is_(None),
+                AttemptRequest.lease_expires_at > now,
+                AttemptRequest.reserved_at >= start,
+                AttemptRequest.reserved_at < end,
+            )
+        ) or 0)
+
+    def count_checked_or_reserved_exercises(self, session_id: str, now: datetime) -> int:
+        checked = select(Attempt.exercise_id.label("exercise_id")).join(
+            Exercise, Exercise.id == Attempt.exercise_id,
+        ).where(Exercise.session_id == session_id)
+        reserved = select(AttemptRequest.exercise_id.label("exercise_id")).join(
+            Exercise, Exercise.id == AttemptRequest.exercise_id,
+        ).where(
+            AttemptRequest.user_id == self.user_id,
+            Exercise.session_id == session_id,
+            AttemptRequest.response_json.is_(None),
+            AttemptRequest.lease_expires_at > now,
+        )
+        all_ids = union(checked, reserved).subquery()
+        return int(self.session.scalar(select(func.count()).select_from(all_ids)) or 0)
 
 
 class ErrorEventRepository(Repository[ErrorEvent]):

@@ -18,6 +18,10 @@ class SessionCompletedError(RuntimeError):
     pass
 
 
+class SessionPendingError(RuntimeError):
+    pass
+
+
 class SessionUnavailableError(RuntimeError):
     pass
 

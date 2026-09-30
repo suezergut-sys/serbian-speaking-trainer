@@ -5,8 +5,8 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
-from app.models import ReviewPhrase, WordLearningItem
-from app.repositories import ExerciseRepository, ReviewPhraseRepository, TopicPresetRepository, WordLearningRepository
+from app.models import Exercise, ReviewPhrase, WordLearningItem
+from app.repositories import ExerciseRepository, ReviewPhraseRepository, TopicPresetRepository, UserRepository, WordLearningRepository
 from app.schemas import (
     CreateReviewPhraseRequest,
     LearningWordResponse,
@@ -192,14 +192,30 @@ class ReviewService:
         return self._phrase_response(phrase)
 
     def reveal_word(self, exercise_id: str, word: str) -> WordHintResponse:
+        if UserRepository(self.db).lock(self.user_id) is None:
+            raise WordHintNotFoundError(word)
         exercise = self.exercises.get_owned(exercise_id)
         if exercise is None:
             raise WordHintNotFoundError(word)
+        return self._record_word_hint(exercise, word)
+
+    def record_revealed_words(self, exercise: Exercise, words: list[str]) -> None:
+        """Persist client-visible hints if their background POST was lost or late.
+
+        The caller holds the user lock and includes this in attempt finalization.
+        """
+        for word in words:
+            self._record_word_hint(exercise, word)
+
+    def _record_word_hint(self, exercise: Exercise, word: str) -> WordHintResponse:
         normalized = normalize_ru(word)
         hints = [WordHint.model_validate(item) for item in exercise.target_hints_json.get("word_hints", [])]
         hint = next((item for item in hints if normalize_ru(item.word_ru) == normalized), None)
         if hint is None:
             raise WordHintNotFoundError(word)
+        already_revealed = list(exercise.generation_meta_json.get("revealed_hint_words", []))
+        if normalized in already_revealed:
+            return WordHintResponse(word_ru=hint.word_ru, translation_sr=hint.translation_sr)
         learning = self.words.find_by_source(normalized)
         if learning is None:
             learning = self.words.add(
@@ -216,6 +232,11 @@ class ReviewService:
             learning.status = "learning"
             learning.last_seen_at = datetime.now(timezone.utc)
             self.db.flush()
+        exercise.generation_meta_json = {
+            **exercise.generation_meta_json,
+            "revealed_hint_words": [*already_revealed, normalized],
+        }
+        self.db.flush()
         return WordHintResponse(word_ru=hint.word_ru, translation_sr=hint.translation_sr)
 
     def list_words(self) -> list[LearningWordResponse]:

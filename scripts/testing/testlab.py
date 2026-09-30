@@ -21,10 +21,14 @@ from typing import Any
 
 import jwt
 import uvicorn
+from alembic import command
+from alembic.script import ScriptDirectory
 from fastapi import FastAPI, Header, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ValidationError
+from sqlalchemy import inspect, text
+from sqlalchemy.engine import Engine
 
 ROOT = Path(__file__).resolve().parents[2]
 BACKEND = ROOT / "backend"
@@ -36,6 +40,8 @@ USER_ID = "8e56ca7c-c33d-42df-a194-7b8438dcf190"
 EMAIL = "testlab@example.invalid"
 ISSUER = f"http://127.0.0.1:{AUTH_PORT}/auth/v1"
 TOKEN_SECONDS = 900
+PRE_RESERVATION_REVISION = "c7d91a2e5b60"
+RESERVATION_COLUMNS = {"exercise_id", "reserved_at", "lease_expires_at", "fencing_token"}
 
 
 class Credentials(BaseModel):
@@ -261,10 +267,103 @@ def create_deterministic_analysis_provider():
     return DeterministicTestlabAIProvider()
 
 
+def _metadata_shape(metadata) -> dict[str, frozenset[str]]:
+    return {table.name: frozenset(column.name for column in table.columns) for table in metadata.sorted_tables}
+
+
+def _existing_schema(engine: Engine) -> tuple[dict[str, frozenset[str]], str | None]:
+    inspector = inspect(engine)
+    tables = set(inspector.get_table_names())
+    revision = None
+    if "alembic_version" in tables:
+        with engine.connect() as connection:
+            versions = list(connection.execute(text("SELECT version_num FROM alembic_version")).scalars())
+        if len(versions) != 1:
+            raise RuntimeError("Refusing testlab database with an invalid Alembic version table")
+        revision = versions[0]
+        tables.remove("alembic_version")
+    shape = {
+        table: frozenset(column["name"] for column in inspector.get_columns(table))
+        for table in tables
+    }
+    return shape, revision
+
+
+def _alembic(engine: Engine, action: str, revision: str) -> None:
+    from app.config import get_settings
+    from app.db.cli import alembic_config
+
+    config = alembic_config()
+    original_url = os.environ.get("DATABASE_URL")
+    os.environ["DATABASE_URL"] = engine.url.render_as_string(hide_password=False)
+    get_settings.cache_clear()
+    try:
+        with engine.connect() as connection:
+            config.attributes["connection"] = connection
+            if action == "stamp":
+                command.stamp(config, revision)
+                connection.commit()
+            elif action == "upgrade":
+                command.upgrade(config, revision)
+                connection.commit()
+            else:
+                raise ValueError("Unsupported testlab migration action")
+    finally:
+        if original_url is None:
+            os.environ.pop("DATABASE_URL", None)
+        else:
+            os.environ["DATABASE_URL"] = original_url
+        get_settings.cache_clear()
+
+
+def bootstrap_testlab_database(engine: Engine) -> None:
+    """Migrate only a fresh or explicitly recognized local testlab schema."""
+    if engine.dialect.name != "sqlite":
+        raise RuntimeError("Testlab migration bootstrap accepts only its local SQLite database")
+    if str(BACKEND) not in sys.path:
+        sys.path.insert(0, str(BACKEND))
+    from app.db.base import Base
+    from app.db.cli import alembic_config
+    from app.models import entities as _entities  # noqa: F401
+
+    del _entities
+    current = _metadata_shape(Base.metadata)
+    predecessor = {name: set(columns) for name, columns in current.items()}
+    attempt_request_columns = predecessor.get("attempt_requests")
+    if attempt_request_columns is None or not RESERVATION_COLUMNS <= attempt_request_columns:
+        raise RuntimeError("Cannot identify the expected attempt request schema")
+    attempt_request_columns.difference_update(RESERVATION_COLUMNS)
+    predecessor = {name: frozenset(columns) for name, columns in predecessor.items()}
+    shape, stamped_revision = _existing_schema(engine)
+    if not shape:
+        if stamped_revision is not None:
+            raise RuntimeError("Refusing testlab database with Alembic metadata but no application tables")
+        _alembic(engine, "upgrade", "head")
+        return
+
+    script = ScriptDirectory.from_config(alembic_config())
+    head = script.get_current_head()
+    if shape == current:
+        if stamped_revision is None:
+            _alembic(engine, "stamp", head)
+        elif stamped_revision != head:
+            raise RuntimeError("Refusing current-shaped testlab database with an unexpected Alembic revision")
+        return
+
+    if shape == predecessor:
+        if stamped_revision is None:
+            _alembic(engine, "stamp", PRE_RESERVATION_REVISION)
+        elif stamped_revision != PRE_RESERVATION_REVISION:
+            raise RuntimeError("Refusing predecessor-shaped testlab database with an unexpected Alembic revision")
+        _alembic(engine, "upgrade", "head")
+        return
+
+    raise RuntimeError("Refusing unknown testlab SQLite schema; no tables or user data were changed")
+
+
 def create_api_app() -> FastAPI:
     configure_api_environment()
     from app.api.dependencies import get_db
-    from app.db.base import Base
     from app.db.seed import seed_catalog
     from app.db.session import SessionLocal, engine
     from app.main import app
@@ -272,7 +371,7 @@ def create_api_app() -> FastAPI:
     from app.services.transcription_adapter import get_transcription_provider
     from app.schemas import TranscriptionResponse
 
-    Base.metadata.create_all(engine)
+    bootstrap_testlab_database(engine)
     with SessionLocal() as session:
         seed_catalog(session)
         session.commit()

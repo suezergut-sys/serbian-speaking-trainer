@@ -161,6 +161,9 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
   const [wordHints, setWordHints] = useState<Record<string, WordHint>>({});
   const [activeHint, setActiveHint] = useState<string>();
+  const wordHintsRef = useRef<Record<string, WordHint>>({});
+  const savedHintsRef = useRef(new Set<string>());
+  const hintRequestsRef = useRef(new Map<string, AbortController>());
   const voiceRef = useRef<VoiceRecorder | undefined>(undefined);
   const voiceTimingRef = useRef<AttemptTimings | undefined>(undefined);
   const nextExerciseRef = useRef<{ sessionId: string; requestId: string; promise: Promise<Exercise>; controller: AbortController } | undefined>(undefined);
@@ -173,7 +176,6 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const hintEpochRef = useRef(0);
   const flowControllerRef = useRef<AbortController | undefined>(undefined);
   const voiceControllerRef = useRef<AbortController | undefined>(undefined);
-  const hintControllerRef = useRef<AbortController | undefined>(undefined);
   const [showTopicChooser, setShowTopicChooser] = useState(false);
   const catalogEpochRef = useRef(0);
   const accountRefreshEpochRef = useRef(0);
@@ -210,8 +212,8 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     hintEpochRef.current += 1;
     flowControllerRef.current?.abort();
     flowControllerRef.current = undefined;
-    hintControllerRef.current?.abort();
-    hintControllerRef.current = undefined;
+    savedHintsRef.current.clear();
+    wordHintsRef.current = {};
     nextExerciseRef.current?.controller.abort();
     nextExerciseRef.current = undefined;
     nextRequestIdRef.current = undefined;
@@ -279,7 +281,8 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     hintEpochRef.current += 1;
     flowControllerRef.current?.abort();
     voiceControllerRef.current?.abort();
-    hintControllerRef.current?.abort();
+    for (const request of hintRequestsRef.current.values()) request.abort();
+    hintRequestsRef.current.clear();
     nextExerciseRef.current?.controller.abort();
     voiceRef.current?.stop();
   }, []);
@@ -404,7 +407,6 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     startUiTiming("next_phrase");
     advancingRef.current = true;
     hintEpochRef.current += 1;
-    hintControllerRef.current?.abort();
     stopVoice(); setAdvancing(true); setError(undefined);
     const epoch = flowEpochRef.current;
     const request = nextExerciseRef.current?.sessionId === session.id ? nextExerciseRef.current : undefined;
@@ -417,6 +419,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       if (flowEpochRef.current !== epoch) return;
       nextExerciseRef.current = undefined; nextRequestIdRef.current = undefined;
       setExercise(next); setExerciseNumber((current) => isReviewMode ? current + 1 : Math.min(current + 1, session.requested_length));
+      wordHintsRef.current = {}; savedHintsRef.current.clear();
       setAnswer(""); setHasTranscript(false); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
     }
     catch (requestError) {
@@ -441,7 +444,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     startUiTiming("check");
     const transcript = toSerbianLatin(answer.trim());
     const timing = voiceTimingRef.current;
-    const hintedWords = Object.keys(wordHints).sort();
+    const hintedWords = Object.keys(wordHintsRef.current).sort();
     const payload = JSON.stringify({ exerciseId: exercise.id, transcript, timing, hintedWords });
     const id = pendingAttemptRef.current?.payload === payload ? pendingAttemptRef.current.id : requestId();
     pendingAttemptRef.current = { payload, id };
@@ -478,6 +481,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       if (flowEpochRef.current !== epoch) return;
       if (requestError instanceof BackendError && requestError.status === 429) setError(`Дневной лимит фраз исчерпан. Новые фразы будут доступны ${resetTimeLabel(account.daily_usage.resets_at)}.`);
       else if (requestError instanceof BackendError && requestError.code === "analysis_unavailable") setError("Сервис проверки временно недоступен. Ответ сохранён на экране — попробуйте проверить ещё раз.");
+      else if (requestError instanceof BackendError && requestError.code === "attempt_in_progress") setError("Проверка ещё выполняется. Ответ сохранён — попробуйте ещё раз через несколько секунд.");
       else if (requestError instanceof BackendError && requestError.code === "attempt_request_conflict") { pendingAttemptRef.current = undefined; setError("Ответ изменился во время проверки. Повторите отправку."); }
       else setError("Не удалось проверить ответ. Попробуйте ещё раз.");
     }
@@ -529,33 +533,43 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   }
 
   async function showWordHint(word: string) {
-    if (!exercise) return;
+    if (!exercise || checkingRef.current) return;
     const normalized = word.toLocaleLowerCase("ru-RU");
     setActiveHint(normalized);
-    if (wordHints[normalized]) return;
+    const requestKey = `${hintEpochRef.current}:${normalized}`;
+    if (hintRequestsRef.current.has(requestKey) || savedHintsRef.current.has(normalized)) return;
     const prepared = exercise.word_hints?.find((hint) => hint.word_ru.toLocaleLowerCase("ru-RU") === normalized);
     const epoch = flowEpochRef.current;
     const hintEpoch = hintEpochRef.current;
-    if (prepared) {
-      setWordHints((current) => ({ ...current, [normalized]: { ...prepared, is_learning: true } }));
-      const controller = new AbortController();
-      hintControllerRef.current = controller;
-      void revealWordHint(exercise.id, word, controller.signal).catch(() => {
-        if (flowEpochRef.current === epoch && hintEpochRef.current === hintEpoch) setError(`Перевод слова «${word}» показан, но его не удалось добавить в неизученные.`);
-      });
-      return;
+    if (prepared && !wordHintsRef.current[normalized]) {
+      const opened = { ...prepared, is_learning: true };
+      wordHintsRef.current = { ...wordHintsRef.current, [normalized]: opened };
+      setWordHints(wordHintsRef.current);
     }
+    if (wordHintsRef.current[normalized]) setError(undefined);
     const controller = new AbortController();
-    hintControllerRef.current = controller;
+    hintRequestsRef.current.set(requestKey, controller);
     try {
       const hint = await revealWordHint(exercise.id, word, controller.signal);
-      if (flowEpochRef.current === epoch && hintEpochRef.current === hintEpoch) setWordHints((current) => ({ ...current, [normalized]: hint }));
-    } catch { if (flowEpochRef.current === epoch && hintEpochRef.current === hintEpoch) setError(`Для слова «${word}» перевод пока недоступен.`); }
+      if (flowEpochRef.current === epoch && hintEpochRef.current === hintEpoch) {
+        savedHintsRef.current.add(normalized);
+        wordHintsRef.current = { ...wordHintsRef.current, [normalized]: hint };
+        setWordHints(wordHintsRef.current);
+      }
+    } catch {
+      if (flowEpochRef.current === epoch && hintEpochRef.current === hintEpoch) setError(
+        wordHintsRef.current[normalized]
+          ? `Перевод слова «${word}» показан, но сохранение не удалось. Нажмите на слово ещё раз, чтобы повторить.`
+          : `Для слова «${word}» перевод пока недоступен. Нажмите на слово ещё раз, чтобы повторить.`,
+      );
+    } finally {
+      if (hintRequestsRef.current.get(requestKey) === controller) hintRequestsRef.current.delete(requestKey);
+    }
   }
 
   function renderPhrase() {
     // eslint-disable-next-line react-hooks/refs -- showWordHint reads refs only when the click handler runs.
-    return <h2 id="exercise-title" className="interactive-phrase" aria-label={exercise?.source_ru ?? "Готовим фразу…"}>{exercise ? exercise.source_ru.split(/([А-Яа-яЁё]+)/g).filter(Boolean).map((part, index) => /^[А-Яа-яЁё]+$/.test(part) ? <span className="word-wrap" key={`${part}-${index}`}><button className={wordHints[part.toLocaleLowerCase("ru-RU")] ? "word-token is-used" : "word-token"} type="button" onClick={() => void showWordHint(part)}>{part}</button>{activeHint === part.toLocaleLowerCase("ru-RU") && <span className="word-tooltip" role="status">{wordHints[part.toLocaleLowerCase("ru-RU")] ? displaySerbian(wordHints[part.toLocaleLowerCase("ru-RU")].translation_sr, alphabet) : "Загружаем…"}</span>}</span> : <span key={`${part}-${index}`}>{part}</span>) : "Готовим фразу…"}</h2>;
+    return <h2 id="exercise-title" className="interactive-phrase" aria-label={exercise?.source_ru ?? "Готовим фразу…"}>{exercise ? exercise.source_ru.split(/([А-Яа-яЁё]+)/g).filter(Boolean).map((part, index) => /^[А-Яа-яЁё]+$/.test(part) ? <span className="word-wrap" key={`${part}-${index}`}><button className={wordHints[part.toLocaleLowerCase("ru-RU")] ? "word-token is-used" : "word-token"} type="button" disabled={checking} onClick={() => void showWordHint(part)}>{part}</button>{activeHint === part.toLocaleLowerCase("ru-RU") && <span className="word-tooltip" role="status">{wordHints[part.toLocaleLowerCase("ru-RU")] ? displaySerbian(wordHints[part.toLocaleLowerCase("ru-RU")].translation_sr, alphabet) : "Загружаем…"}</span>}</span> : <span key={`${part}-${index}`}>{part}</span>) : "Готовим фразу…"}</h2>;
   }
 
   function renderFeedback(native: boolean) {
@@ -649,8 +663,8 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
                 {!attempt ? <form className="android-answer" onSubmit={checkAnswer}>
                   {hasTranscript ? <><label className="sr-only" htmlFor="android-serbian-answer">Ваш ответ</label>
-                    <textarea id="android-serbian-answer" value={answer} onChange={(event) => { voiceTimingRef.current = undefined; setAnswer(event.target.value); }} placeholder="Исправьте распознанный ответ" rows={3} /></> : <p className="voice-prompt">Произнесите ответ в микрофон</p>}
-                  {voiceState === "connecting" || voiceState === "recording" || voiceState === "transcribing" ? <button className="mic-button is-active" type="button" aria-label={voiceState === "recording" ? "Завершить запись" : "Остановить запись"} disabled={voiceState === "transcribing"} onClick={voiceState === "recording" ? finishVoice : stopVoice}><Icon name="mic" size={34} /></button> : <button className="mic-button" type="button" aria-label="Ответить голосом" disabled={!voiceSupported} onClick={startVoice}><Icon name="mic" size={34} /></button>}
+                    <textarea id="android-serbian-answer" value={answer} readOnly={checking} onChange={(event) => { voiceTimingRef.current = undefined; setAnswer(event.target.value); }} placeholder="Исправьте распознанный ответ" rows={3} /></> : <p className="voice-prompt">Произнесите ответ в микрофон</p>}
+                  {voiceState === "connecting" || voiceState === "recording" || voiceState === "transcribing" ? <button className="mic-button is-active" type="button" aria-label={voiceState === "recording" ? "Завершить запись" : "Остановить запись"} disabled={checking || voiceState === "transcribing"} onClick={voiceState === "recording" ? finishVoice : stopVoice}><Icon name="mic" size={34} /></button> : <button className="mic-button" type="button" aria-label="Ответить голосом" disabled={checking || !voiceSupported} onClick={startVoice}><Icon name="mic" size={34} /></button>}
                   {(!voiceSupported || voiceState !== "idle") && <p className="android-voice-state" role="status">{!voiceSupported ? "Микрофон недоступен. Разрешите доступ в настройках устройства." : voiceState === "connecting" ? "Подключаем микрофон…" : voiceState === "recording" ? "Запись" : voiceState === "transcribing" ? "Распознаём…" : "Повторите запись"}</p>}
                   {hasTranscript && <button className="android-primary" type="submit" disabled={checking || !answer.trim()}>{checking ? "Проверяем…" : "Проверить"}</button>}
                 </form> : renderFeedback(true)}
@@ -765,8 +779,8 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                   {!attempt ? (
                     <form onSubmit={checkAnswer}>
                       <div className="answer-input">
-                        {hasTranscript ? <><label className="sr-only" htmlFor="serbian-answer">Ваш ответ</label><textarea id="serbian-answer" value={answer} onChange={(event) => { voiceTimingRef.current = undefined; setAnswer(event.target.value); }} placeholder="Исправьте распознанный ответ" rows={4} /></> : <p className="voice-prompt">Произнесите ответ в микрофон. После распознавания текст можно исправить.</p>}
-                        {voiceState === "connecting" || voiceState === "recording" || voiceState === "transcribing" ? <button className="mic-button is-active" type="button" aria-label={voiceState === "recording" ? "Завершить запись" : "Остановить запись"} disabled={voiceState === "transcribing"} onClick={voiceState === "recording" ? finishVoice : stopVoice}><Icon name="mic" size={30} /></button> : <button className="mic-button" type="button" aria-label="Ответить голосом" disabled={!voiceSupported} onClick={startVoice}><Icon name="mic" size={30} /></button>}
+                        {hasTranscript ? <><label className="sr-only" htmlFor="serbian-answer">Ваш ответ</label><textarea id="serbian-answer" value={answer} readOnly={checking} onChange={(event) => { voiceTimingRef.current = undefined; setAnswer(event.target.value); }} placeholder="Исправьте распознанный ответ" rows={4} /></> : <p className="voice-prompt">Произнесите ответ в микрофон. После распознавания текст можно исправить.</p>}
+                        {voiceState === "connecting" || voiceState === "recording" || voiceState === "transcribing" ? <button className="mic-button is-active" type="button" aria-label={voiceState === "recording" ? "Завершить запись" : "Остановить запись"} disabled={checking || voiceState === "transcribing"} onClick={voiceState === "recording" ? finishVoice : stopVoice}><Icon name="mic" size={30} /></button> : <button className="mic-button" type="button" aria-label="Ответить голосом" disabled={checking || !voiceSupported} onClick={startVoice}><Icon name="mic" size={30} /></button>}
                       </div>
                       <div className="voice-status">{!voiceSupported ? "Микрофон недоступен. Разрешите доступ к нему в браузере или устройстве." : voiceState === "recording" ? "Идёт запись. Аудио не сохраняется" : voiceState === "transcribing" ? "Расшифровываем фразу…" : voiceState === "error" ? "Не удалось распознать ответ. Повторите запись." : hasTranscript ? "Проверьте распознанный текст и при необходимости исправьте его." : "Нажмите на микрофон, чтобы ответить."}</div>
                       {hasTranscript && <button className="answer-submit" type="submit" disabled={checking || !answer.trim()}>{checking ? "Проверяем…" : "Проверить ответ"}<Icon name="arrow" /></button>}

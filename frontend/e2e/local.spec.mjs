@@ -1,4 +1,4 @@
-import { test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { captureMetrics } from "./metrics.mjs";
 import { installSyntheticMicrophone, loginTestlab, runPracticeFlow } from "./flow.mjs";
 
@@ -24,4 +24,38 @@ test("real local backend with testlab auth and mocked AI", async ({ page }) => {
     throw new Error(`Practice flow failed; response statuses: ${statuses.join(", ")}`, { cause: error });
   }
   await saveMetrics("local-web");
+});
+
+test("pending hint save does not block real backend scoring or duplicate the penalty", async ({ page }) => {
+  await installSyntheticMicrophone(page);
+  await loginTestlab(page);
+  let release;
+  const pending = new Promise((resolve) => { release = resolve; });
+  let hintRequests = 0;
+  await page.route("**/api/exercises/*/word-hints", async (route) => {
+    hintRequests += 1;
+    await pending;
+    await route.fulfill({ status: 503, contentType: "application/json", body: '{"detail":"Synthetic delayed save failure"}' });
+  });
+  try {
+    await runPracticeFlow(page, {
+      topic: /Собеседование/,
+      transcript: "Radim kao računovođa u maloj firmi.",
+      expectedScore: "92%",
+      afterEdit: async () => {
+        const word = page.locator(".practice-stage .interactive-phrase button").first();
+        await word.click();
+        await word.click();
+        await expect(page.locator(".word-tooltip")).toBeVisible();
+        await expect(page.locator(".word-tooltip")).not.toContainText("Загружаем");
+        await expect.poll(() => hintRequests).toBe(1);
+      },
+    });
+    // The attempt and next phrase completed while the hint POST was still paused.
+    release();
+    await expect(page.getByRole("alert")).toHaveCount(0);
+    expect(hintRequests).toBe(1);
+  } finally {
+    release();
+  }
 });

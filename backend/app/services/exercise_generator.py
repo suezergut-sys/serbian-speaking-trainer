@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.models import Exercise, ReviewPhrase
 from app.repositories import (
     AttemptRepository,
+    AttemptRequestRepository,
     ExerciseRepository,
     ReviewPhraseRepository,
     SkillRepository,
@@ -22,7 +23,7 @@ from app.schemas import ExerciseGenerationResult, ExerciseResponse
 from app.services.ai_adapter import AIServiceError, StructuredAIProvider
 from app.services.review_service import ReviewQueueEmptyError
 from app.services.scheduler import Scheduler
-from app.services.session_service import SessionCompletedError, SessionNotFoundError, SessionService, SessionUnavailableError
+from app.services.session_service import SessionCompletedError, SessionNotFoundError, SessionPendingError, SessionService, SessionUnavailableError
 
 
 class TopicEmptyError(RuntimeError):
@@ -110,6 +111,7 @@ class ExerciseGenerator:
         self.user_id = user_id
         self.sessions = TrainingSessionRepository(db, user_id)
         self.attempts = AttemptRepository(db, user_id)
+        self.attempt_requests = AttemptRequestRepository(db, user_id)
         self.exercises = ExerciseRepository(db, user_id)
         self.review_phrases = ReviewPhraseRepository(db, user_id)
         self.topic_phrases = TopicPhraseRepository(db)
@@ -132,8 +134,10 @@ class ExerciseGenerator:
             raise SessionUnavailableError(session_id)
         if not training_session.normalized_topic_json.get("review_carousel"):
             requested_length = int(training_session.normalized_topic_json.get("session_length", 20))
-            if self.attempts.count_checked_exercises(session_id) >= requested_length:
-                raise SessionCompletedError(session_id)
+            if self.attempt_requests.count_checked_or_reserved_exercises(session_id, datetime.now(timezone.utc)) >= requested_length:
+                if self.attempts.count_checked_exercises(session_id) >= requested_length:
+                    raise SessionCompletedError(session_id)
+                raise SessionPendingError(session_id)
         topic = SessionService.topic_snapshot(training_session)
         review_payload = training_session.normalized_topic_json.get("review_phrase")
         if review_payload:
