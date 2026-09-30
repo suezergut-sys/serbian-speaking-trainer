@@ -14,6 +14,7 @@ from app.api.topics import router as topics_router
 from app.api.transcriptions import router as transcriptions_router
 from app.api.review import router as review_router
 from app.config import get_settings
+from app.request_metrics import start_request_metrics, stop_request_metrics
 
 settings = get_settings()
 performance_logger = logging.getLogger("app.performance")
@@ -35,20 +36,28 @@ app.add_middleware(AudioUploadBodyLimitMiddleware)
 @app.middleware("http")
 async def record_request_timing(request: Request, call_next):
     started = perf_counter()
-    response = await call_next(request)
+    metrics, token = start_request_metrics()
+    try:
+        response = await call_next(request)
+    finally:
+        stop_request_metrics(token)
     total_ms = (perf_counter() - started) * 1000
     auth_ms = getattr(request.state, "auth_ms", 0.0)
     sync_ms = getattr(request.state, "user_sync_ms", 0.0)
     response.headers["Server-Timing"] = (
-        f"total;dur={total_ms:.1f}, auth;dur={auth_ms:.1f}, user_sync;dur={sync_ms:.1f}"
+        f"total;dur={total_ms:.1f}, auth;dur={auth_ms:.1f}, user_sync;dur={sync_ms:.1f}, "
+        f"db;dur={metrics.db_ms:.1f}, db_queries;desc=\"{metrics.db_queries}\", "
+        f"ai;dur={metrics.ai_ms:.1f}, ai_calls;desc=\"{metrics.ai_calls}\""
     )
     path = request.url.path
     if path.startswith("/api/exercises/") and path.endswith("/word-hints"):
         path = "/api/exercises/{exercise_id}/word-hints"
     if path in {"/api/sessions/start", "/api/exercises/{exercise_id}/word-hints", "/api/topics", "/api/statistics/monthly"}:
         performance_logger.info(
-            "request_timing path=%s total_ms=%.1f auth_ms=%.1f user_sync_ms=%.1f",
+            "request_timing path=%s total_ms=%.1f auth_ms=%.1f user_sync_ms=%.1f "
+            "db_ms=%.1f db_queries=%d ai_ms=%.1f ai_calls=%d",
             path, total_ms, auth_ms, sync_ms,
+            metrics.db_ms, metrics.db_queries, metrics.ai_ms, metrics.ai_calls,
         )
     return response
 

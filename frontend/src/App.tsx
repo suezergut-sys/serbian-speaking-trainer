@@ -15,6 +15,7 @@ import { LegalPage } from "./LegalPage";
 import { SettingsView } from "./SettingsView";
 import { displaySerbian, displaySerbianInRussianText, readSerbianAlphabet, saveSerbianAlphabet, toSerbianLatin, type SerbianAlphabet } from "./serbianScript";
 import { AnswerResult } from "./AnswerResult";
+import { finishUiTimingWhenVisible, startUiTiming } from "./performance";
 import appLogo from "./assets/app-logo.png?inline";
 import "./styles.css";
 
@@ -177,9 +178,32 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const catalogEpochRef = useRef(0);
   const accountRefreshEpochRef = useRef(0);
   const androidPagerRef = useRef<HTMLDivElement | null>(null);
+  const presentedExerciseRef = useRef<string | undefined>(undefined);
   const [androidPanel, setAndroidPanel] = useState(0);
   const voiceSupported = supportsVoiceRecording();
   const isNative = Capacitor.isNativePlatform();
+
+  useEffect(() => { startUiTiming("topics"); }, []);
+  useEffect(() => {
+    if (topics.length) finishUiTimingWhenVisible("topics", isNative ? ".android-topic-list .android-topic" : ".topics .topic");
+  }, [topics, isNative]);
+  useEffect(() => {
+    if (exercise && !attempt) {
+      const selector = isNative ? ".android-page .interactive-phrase" : ".practice-stage .interactive-phrase";
+      if (presentedExerciseRef.current !== exercise.id && (isNative ? androidPanel === 1 : view === "practice")) {
+        document.querySelector<HTMLElement>(selector)?.scrollIntoView?.({ block: "nearest", behavior: "instant" });
+        presentedExerciseRef.current = exercise.id;
+      }
+      finishUiTimingWhenVisible("first_phrase", selector);
+      finishUiTimingWhenVisible("next_phrase", selector);
+    }
+  }, [exercise, attempt, isNative, androidPanel, view]);
+  useEffect(() => {
+    if (hasTranscript) finishUiTimingWhenVisible("transcription", isNative ? "#android-serbian-answer" : "#serbian-answer");
+  }, [hasTranscript, isNative]);
+  useEffect(() => {
+    if (attempt) finishUiTimingWhenVisible("check", ".feedback");
+  }, [attempt]);
 
   function invalidateFlow() {
     flowEpochRef.current += 1;
@@ -302,6 +326,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       const recording = await recorder.finish();
       if (voiceEpochRef.current !== epoch) return;
       voiceRef.current = undefined;
+      startUiTiming("transcription");
       const transcript = await transcribeAudio(exerciseId, recording.audio, controller.signal);
       if (voiceEpochRef.current !== epoch) return;
       voiceTimingRef.current = recording.timing;
@@ -327,6 +352,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   }
 
   async function startTraining(topicId: string) {
+    startUiTiming("first_phrase");
     invalidateFlow();
     stopVoice(); setAnswer(""); setHasTranscript(false); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
     setSession(undefined); setExercise(undefined); setCompletedCount(0); setSessionComplete(false); setTopicExhausted(false);
@@ -349,6 +375,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   }
 
   async function startReviewTraining() {
+    startUiTiming("first_phrase");
     invalidateFlow(); stopVoice();
     setSession(undefined); setExercise(undefined); setCompletedCount(0); setSessionComplete(false); setTopicExhausted(false);
     setSelectedTopic(undefined); setCustomTopic(""); setError(undefined);
@@ -374,6 +401,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   async function nextExercise() {
     if (!session || advancingRef.current) return;
     if (!isReviewMode && completedCount >= session.requested_length) { setSessionComplete(true); return; }
+    startUiTiming("next_phrase");
     advancingRef.current = true;
     hintEpochRef.current += 1;
     hintControllerRef.current?.abort();
@@ -410,6 +438,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   async function checkAnswer(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!exercise || !session || !hasTranscript || !answer.trim() || checkingRef.current) return;
+    startUiTiming("check");
     const transcript = toSerbianLatin(answer.trim());
     const timing = voiceTimingRef.current;
     const hintedWords = Object.keys(wordHints).sort();

@@ -8,6 +8,36 @@ from app.main import app
 from app.models import Attempt, Exercise, ReviewPhrase, TopicPhrase, TopicPreset, TrainingSession
 
 
+def test_new_session_skips_attempt_count_but_existing_session_reads_it(
+    api_client: TestClient, db_session: Session,
+) -> None:
+    statements: list[str] = []
+
+    def capture_query(_connection, _cursor, statement, _parameters, _context, _executemany) -> None:
+        statements.append(statement.lower())
+
+    assert db_session.bind is not None
+    event.listen(db_session.bind, "before_cursor_execute", capture_query)
+    try:
+        created = api_client.post("/api/sessions", json={"topic_id": "cafe", "length": 3})
+        creation_queries = list(statements)
+        statements.clear()
+        fetched = api_client.get(f"/api/sessions/{created.json()['id']}")
+        fetch_queries = list(statements)
+    finally:
+        event.remove(db_session.bind, "before_cursor_execute", capture_query)
+
+    assert created.status_code == 201
+    assert fetched.status_code == 200
+    assert created.json()["completed_count"] == fetched.json()["completed_count"] == 0
+    assert len(creation_queries) == 3
+    def is_attempt_count(sql: str) -> bool:
+        return "count(" in sql and "distinct" in sql and "attempts.exercise_id" in sql
+
+    assert not any(is_attempt_count(sql) for sql in creation_queries)
+    assert len([sql for sql in fetch_queries if is_attempt_count(sql)]) == 1
+
+
 def test_topics_and_preset_session_snapshot(api_client: TestClient, db_session: Session) -> None:
     topics = api_client.get("/api/topics")
     assert topics.status_code == 200

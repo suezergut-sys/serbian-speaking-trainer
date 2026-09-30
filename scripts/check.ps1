@@ -1,11 +1,16 @@
+param([string]$PythonExecutable)
 $ErrorActionPreference = "Stop"
 
 $RepositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $VenvPython = Join-Path $RepositoryRoot ".venv\Scripts\python.exe"
-$Python = if (Test-Path $VenvPython) { $VenvPython } else { "python" }
+$Python = if ($PythonExecutable) { $PythonExecutable } elseif (Test-Path $VenvPython) { $VenvPython } else { "python" }
 
-& $Python -m pytest (Join-Path $RepositoryRoot "backend\tests")
-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+Push-Location (Join-Path $RepositoryRoot "backend")
+try {
+    # Import app from this checkout even when reusing a virtualenv from another worktree.
+    & $Python -m pytest tests (Join-Path $RepositoryRoot "scripts\testing")
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+} finally { Pop-Location }
 
 Push-Location (Join-Path $RepositoryRoot "frontend")
 try {

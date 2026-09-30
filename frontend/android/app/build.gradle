@@ -1,3 +1,5 @@
+import groovy.json.JsonSlurper
+
 apply plugin: 'com.android.application'
 
 android {
@@ -7,13 +9,23 @@ android {
         applicationId "com.serbiantalk.trainer"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 24
-        versionName "1.14"
+        versionCode 25
+        versionName "1.15"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    flavorDimensions "environment"
+    productFlavors {
+        prod {
+            dimension "environment"
+        }
+        lab {
+            dimension "environment"
+            applicationIdSuffix ".testlab"
         }
     }
     buildTypes {
@@ -22,11 +34,36 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    sourceSets {
+        main.assets.srcDirs = []
+        prod.assets.srcDirs = ['src/main/assets']
+        lab.assets.srcDirs = ['src/lab/assets']
+    }
+}
+
+tasks.configureEach { task ->
+    if (task.name.startsWith('mergeProd') && task.name.endsWith('Assets')) {
+        task.doFirst {
+            def config = new JsonSlurper().parse(file('src/main/assets/capacitor.config.json'))
+            if (config.android?.allowMixedContent == true || config.allowMixedContent == true || config.server?.androidScheme != 'https') {
+                throw new GradleException('Production WebView configuration contains testlab transport settings.')
+            }
+            def publicAssets = file('src/main/assets/public')
+            if (new File(publicAssets, 'testlab.html').exists()) {
+                throw new GradleException('Production assets contain testlab. Run the production web build and cap sync.')
+            }
+            fileTree(publicAssets).matching { include '**/*.js' }.each { asset ->
+                if (asset.text.contains('sb_publishable_testlab_local_only')) {
+                    throw new GradleException('Production assets contain local testlab configuration.')
+                }
+            }
+        }
+    }
 }
 
 android.applicationVariants.all { variant ->
     variant.outputs.all {
-        outputFileName = "SerboTalk-andorid16-1.14.apk"
+        outputFileName = "SerboTalk-andorid16-1.15.apk"
     }
 }
 
