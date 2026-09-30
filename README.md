@@ -214,3 +214,5 @@ pnpm build
 - Scheduler и Learner Model реализованы отдельными сервисами и не находятся в routers.
 
 План этапов находится в [`docs/implementation-plan.md`](docs/implementation-plan.md), принятые решения — в [`docs/decisions.md`](docs/decisions.md).
+
+Актуальный план улучшений по аудиту с выполненными и оставшимися задачами P0/P1/P2 — [`docs/audit-roadmap.md`](docs/audit-roadmap.md). После каждой завершённой задачи план обновляется; реализация и ручная приёмка отмечаются отдельно.
