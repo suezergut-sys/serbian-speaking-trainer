@@ -54,6 +54,7 @@ describe("App", () => {
   });
 
   function mockApi(omitLearnerUpdates = false, initialReviewPhrases: Array<Record<string, unknown>> = [], role = "user") {
+    let reviewCount = initialReviewPhrases.length;
     return vi.fn().mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
       const rawUrl = input.toString();
       const url = rawUrl.startsWith("http")
@@ -77,12 +78,15 @@ describe("App", () => {
         source_ru: "Мне нужно позвонить хозяину.", canonical_sr: "Moram da pozovem vlasnika.",
         intended_sr_variants: ["Moram da pozovem vlasnika."], word_hints: [],
       };
-      else if (url === "/api/review-phrases" && init?.method === "POST") body = {
-        id: "review-1", source_ru: "Мне нужно позвонить хозяину.", best_score: 0,
-        canonical_sr: "Moram da pozovem vlasnika.", topic_id: "bank", topic_title: "В банке",
-        attempts: 0, perfect_streak: 0, status: "active", created_at: "2026-09-17T10:00:00Z",
-      };
-      else if (url === "/api/review-phrases") body = initialReviewPhrases;
+      else if (url === "/api/review-phrases" && init?.method === "POST") {
+        reviewCount = Math.max(reviewCount, 1);
+        body = {
+          id: "review-1", source_ru: "Мне нужно позвонить хозяину.", best_score: 0,
+          canonical_sr: "Moram da pozovem vlasnika.", topic_id: "bank", topic_title: "В банке",
+          attempts: 0, perfect_streak: 0, status: "active", created_at: "2026-09-17T10:00:00Z",
+        };
+      }
+      else if (url === "/api/review-phrases/summary") body = { phrase_count: reviewCount };
       else if (url === "/api/topics" && init?.method === "POST") body = {
         id: "custom-rent", title_ru: "Поговорить с арендодателем", description_ru: "Пользовательская тема без фраз.",
         likely_intents: [], suggested_vocabulary: [], is_custom: true, phrase_count: 0,
@@ -193,21 +197,48 @@ describe("App", () => {
     expect(fetchMock.mock.calls.filter(([url]) => url.toString() === "/api/auth/me")).toHaveLength(1);
   });
 
-  it("allows training while the review list is still loading", async () => {
+  it("allows training while the review summary is still loading", async () => {
     const fetchMock = mockApi();
     let finishReview!: (response: { ok: boolean; status: number; json: () => Promise<unknown> }) => void;
     const reviewResponse = new Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>((resolve) => {
       finishReview = resolve;
     });
     vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
-      input.toString() === "/api/review-phrases" ? reviewResponse : fetchMock(input, init),
+      input.toString() === "/api/review-phrases/summary" ? reviewResponse : fetchMock(input, init),
     ));
 
     render(<App />);
 
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
     expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
-    finishReview({ ok: true, status: 200, json: async () => [] });
+    finishReview({ ok: true, status: 200, json: async () => ({ phrase_count: 0 }) });
+  });
+
+  it("uses the summary count without fetching review history", async () => {
+    const baseFetch = mockApi();
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+      input.toString() === "/api/review-phrases/summary"
+        ? Promise.resolve({ ok: true, status: 200, json: async () => ({ phrase_count: 3 }) })
+        : baseFetch(input, init),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+
+    expect(await screen.findByText("3 требуют практики")).toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([url, init]) => url.toString() === "/api/review-phrases" && init?.method !== "POST")).toBe(false);
+    expect(fetchMock).toHaveBeenCalledWith("/api/review-phrases/summary", expect.objectContaining({ signal: expect.any(AbortSignal) }));
+  });
+
+  it("keeps the review start guarded when the summary count is zero", async () => {
+    const fetchMock = mockApi();
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/review-phrases/summary", expect.anything()));
+
+    fireEvent.click(screen.getByRole("button", { name: /Фразы для повторения/ }));
+
+    expect(await screen.findByText("Пока нет фраз для повторения. Добавьте фразу ниже или выполните обычную тренировку.")).toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([url]) => url.toString() === "/api/sessions/start")).toBe(false);
   });
 
   it("reports an initial topics timeout as an offline backend", async () => {
@@ -360,7 +391,7 @@ describe("App", () => {
     const pending = new Promise<Response>(() => undefined);
     const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
       if (input.toString() === "/api/auth/me" && ++profileCalls > 1) return pending;
-      if (input.toString() === "/api/review-phrases" && ++reviewCalls > 1) return pending;
+      if (input.toString() === "/api/review-phrases/summary" && ++reviewCalls > 1) return pending;
       return baseFetch(input, init);
     });
     vi.stubGlobal("fetch", fetchMock);
@@ -686,6 +717,46 @@ describe("App", () => {
     expect(fetchMock).toHaveBeenCalledWith("/api/review-phrases", expect.objectContaining({ method: "POST" }));
   });
 
+  it("keeps the count accurate when saving an existing review phrase", async () => {
+    const fetchMock = mockApi(false, [{ id: "review-1" }]);
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    await screen.findByText("1 требуют практики");
+
+    fireEvent.change(screen.getByLabelText("Новая фраза для повторения"), { target: { value: "Мне нужно позвонить хозяину." } });
+    fireEvent.click(screen.getByRole("button", { name: "Создать перевод" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Сохранить в тему" }));
+
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url.toString() === "/api/review-phrases/summary")).toHaveLength(2));
+    expect(screen.getByText("1 требуют практики")).toBeInTheDocument();
+    expect(screen.queryByText("2 требуют практики")).not.toBeInTheDocument();
+  });
+
+  it("refreshes the review count after an answer and when the page becomes visible", async () => {
+    voiceMock.available = true;
+    const baseFetch = mockApi(false, [{ id: "review-1" }]);
+    let summaryCount = 1;
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+      input.toString() === "/api/review-phrases/summary"
+        ? Promise.resolve({ ok: true, status: 200, json: async () => ({ phrase_count: summaryCount }) })
+        : baseFetch(input, init),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    await screen.findByText("1 требуют практики");
+    fireEvent.click(screen.getByRole("button", { name: /В банке/ }));
+    await recordAnswer();
+    summaryCount = 0;
+    fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
+    expect(await screen.findByText("Список пока пуст")).toBeInTheDocument();
+
+    summaryCount = 2;
+    vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible");
+    fireEvent(document, new Event("visibilitychange"));
+    expect(await screen.findByText("2 требуют практики")).toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([url, init]) => url.toString() === "/api/review-phrases" && init?.method !== "POST")).toBe(false);
+  });
+
   it("starts the review carousel immediately without expanding a phrase list", async () => {
     const phrase = {
       id: "review-1", source_ru: "Мне нужно позвонить хозяину.", best_score: 0.8,
@@ -712,8 +783,12 @@ describe("App", () => {
     };
     const baseFetch = mockApi(false, [phrase]);
     let nextExerciseCalls = 0;
+    let summaryCalls = 0;
+    let resolveLateSummary!: (response: { ok: boolean; status: number; json: () => Promise<unknown> }) => void;
+    const lateSummary = new Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>((resolve) => { resolveLateSummary = resolve; });
     const fetchMock = vi.fn().mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
       const url = input.toString();
+      if (url === "/api/review-phrases/summary" && ++summaryCalls > 1) return lateSummary;
       if (url.endsWith("/next-exercise")) {
         nextExerciseCalls += 1;
         if (nextExerciseCalls === 1) {
@@ -735,6 +810,8 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Следующая фраза/ }));
     expect(await screen.findByText("Все фразы из карусели освоены. Отличная работа!")).toBeInTheDocument();
+    await act(async () => { resolveLateSummary({ ok: true, status: 200, json: async () => ({ phrase_count: 1 }) }); });
+    expect(screen.getByText("Список пока пуст")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /В банке/ }));
 
     expect(screen.queryByLabelText("Ваш ответ")).not.toBeInTheDocument();

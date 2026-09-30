@@ -43,6 +43,10 @@ class ReviewPhraseResponse(BaseModel):
     created_at: datetime
 
 
+class ReviewPhraseSummaryResponse(BaseModel):
+    phrase_count: int = Field(ge=0)
+
+
 class WordHintResponse(WordHint):
     is_learning: bool = True
 

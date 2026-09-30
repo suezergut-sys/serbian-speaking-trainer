@@ -9,6 +9,7 @@ from app.schemas import (
     PreparedReviewPhraseResponse,
     PrepareReviewPhraseRequest,
     ReviewPhraseResponse,
+    ReviewPhraseSummaryResponse,
     WordHintResponse,
 )
 from app.services.ai_adapter import StructuredAIProvider, get_ai_provider
@@ -37,6 +38,15 @@ def list_review_phrases(
     user: User = Depends(get_current_user),
 ) -> list[ReviewPhraseResponse]:
     return ReviewService(db, ai, user.id).list_phrases()
+
+
+@router.get("/review-phrases/summary", response_model=ReviewPhraseSummaryResponse)
+def review_phrase_summary(
+    db: Session = Depends(get_db),
+    ai: StructuredAIProvider = Depends(get_ai_provider),
+    user: User = Depends(get_current_user),
+) -> ReviewPhraseSummaryResponse:
+    return ReviewService(db, ai, user.id).summary()
 
 
 @router.post("/review-phrases", response_model=ReviewPhraseResponse, status_code=status.HTTP_201_CREATED)

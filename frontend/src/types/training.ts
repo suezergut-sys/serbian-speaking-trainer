@@ -103,6 +103,10 @@ export type ReviewPhrase = {
   created_at: string;
 };
 
+export type ReviewSummary = {
+  phrase_count: number;
+};
+
 export type PreparedReviewPhrase = {
   source_ru: string;
   canonical_sr: string;

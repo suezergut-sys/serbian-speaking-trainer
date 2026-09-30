@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import func, select, union, update
+from sqlalchemy import and_, func, or_, select, union, update
 from sqlalchemy.orm import Session
 
 from app.models import Attempt, AttemptRequest, ErrorEvent, Exercise, ReviewPhrase, TrainingSession, WordLearningItem
@@ -152,6 +152,28 @@ class ReviewPhraseRepository(Repository[ReviewPhrase]):
         if limit is not None:
             statement = statement.limit(limit)
         return list(self.session.scalars(statement))
+
+    def list_active_with_topic_titles(self) -> list[tuple[ReviewPhrase, str | None]]:
+        from app.models import TopicPreset
+
+        statement = (
+            select(ReviewPhrase, TopicPreset.title_ru)
+            .outerjoin(TopicPreset, and_(
+                TopicPreset.id == ReviewPhrase.topic_id,
+                or_(TopicPreset.owner_user_id.is_(None), TopicPreset.owner_user_id == self.user_id),
+            ))
+            .where(ReviewPhrase.user_id == self.user_id, ReviewPhrase.status == "active")
+            .order_by(ReviewPhrase.updated_at.desc(), ReviewPhrase.id.desc())
+        )
+        return [(phrase, title) for phrase, title in self.session.execute(statement)]
+
+    def count_active(self) -> int:
+        return int(self.session.scalar(
+            select(func.count()).select_from(ReviewPhrase).where(
+                ReviewPhrase.user_id == self.user_id,
+                ReviewPhrase.status == "active",
+            )
+        ) or 0)
 
     def list_active_for_topic(self, topic_id: str, *, limit: int | None = None) -> list[ReviewPhrase]:
         statement = (
