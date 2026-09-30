@@ -14,6 +14,7 @@ from app.schemas import (
     PreparedReviewPhraseResponse,
     PrepareReviewPhraseRequest,
     ReviewPhraseResponse,
+    ReviewPhraseSummaryResponse,
     WordHint,
     WordHintResponse,
 )
@@ -77,7 +78,14 @@ class ReviewService:
 
     def list_phrases(self) -> list[ReviewPhraseResponse]:
         self.phrases.activate_due(datetime.now(timezone.utc))
-        return [self._phrase_response(item) for item in self.phrases.list_active()]
+        return [
+            self._phrase_response(item, topic_title=topic_title)
+            for item, topic_title in self.phrases.list_active_with_topic_titles()
+        ]
+
+    def summary(self) -> ReviewPhraseSummaryResponse:
+        self.phrases.activate_due(datetime.now(timezone.utc))
+        return ReviewPhraseSummaryResponse(phrase_count=self.phrases.count_active())
 
     def get_phrase(self, phrase_id: str) -> ReviewPhrase:
         self.phrases.activate_due(datetime.now(timezone.utc))
@@ -106,7 +114,7 @@ class ReviewService:
             existing.word_hints_json = [hint.model_dump() for hint in request.word_hints]
             existing.updated_at = datetime.now(timezone.utc)
             self.db.flush()
-            return self._phrase_response(existing)
+            return self._phrase_response(existing, topic_title=topic.title_ru)
 
         phrase = self.phrases.add(
             ReviewPhrase(
@@ -118,7 +126,7 @@ class ReviewService:
                 topic_id=topic.id,
             )
         )
-        return self._phrase_response(phrase)
+        return self._phrase_response(phrase, topic_title=topic.title_ru)
 
     def record_attempt(
         self,
@@ -189,7 +197,8 @@ class ReviewService:
             phrase.next_review_at = None
         phrase.updated_at = now
         self.db.flush()
-        return self._phrase_response(phrase)
+        topic = self.topics.get_visible(phrase.topic_id) if phrase.topic_id else None
+        return self._phrase_response(phrase, topic_title=topic.title_ru if topic else None)
 
     def reveal_word(self, exercise_id: str, word: str) -> WordHintResponse:
         if UserRepository(self.db).lock(self.user_id) is None:
@@ -257,14 +266,14 @@ class ReviewService:
         unique = {normalize_ru(word) for word in words if normalize_ru(word)}
         return min(MAX_HINT_PENALTY, len(unique) * HINT_PENALTY_PER_WORD)
 
-    def _phrase_response(self, item: ReviewPhrase) -> ReviewPhraseResponse:
-        topic = self.topics.get_visible(item.topic_id) if item.topic_id else None
+    @staticmethod
+    def _phrase_response(item: ReviewPhrase, *, topic_title: str | None) -> ReviewPhraseResponse:
         return ReviewPhraseResponse(
             id=item.id,
             source_ru=item.source_ru,
             canonical_sr=next(iter(item.intended_sr_variants_json), ""),
             topic_id=item.topic_id,
-            topic_title=topic.title_ru if topic else None,
+            topic_title=topic_title,
             best_score=item.best_score,
             attempts=item.attempts,
             perfect_streak=item.perfect_streak,

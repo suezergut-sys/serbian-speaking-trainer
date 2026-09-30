@@ -32,7 +32,7 @@ async function mockApp(page, submitted) {
     let body;
     if (path === "/api/auth/me" && method === "GET") body = account;
     else if (path === "/api/topics" && method === "GET") body = [topic];
-    else if (path === "/api/review-phrases" && method === "GET") body = [];
+    else if (path === "/api/review-phrases/summary" && method === "GET") body = { phrase_count: 0 };
     else if (path === "/api/sessions/start" && method === "POST") body = { session, exercise: exercise("exercise-1", "Я хочу открыть счёт.") };
     else if (path === "/api/transcriptions" && method === "POST") body = { text: "Želim da otvorim račun." };
     else if (path === "/api/attempts" && method === "POST") {

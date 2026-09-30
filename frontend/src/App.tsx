@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Capacitor } from "@capacitor/core";
 import type { Session } from "@supabase/supabase-js";
 
 import { getApiBaseUrl, setApiBaseUrl } from "./api/baseUrl";
-import { addReviewPhrase, BackendError, createTopic, fetchNextExercise, fetchReviewPhrases, fetchTopics, prepareReviewPhrase, revealWordHint, startTrainingSession, submitAttempt, transcribeAudio } from "./api/training";
-import type { Attempt, AttemptTimings, Exercise, PreparedReviewPhrase, ReviewPhrase, TopicListItem, TrainingSession, WordHint } from "./types/training";
+import { addReviewPhrase, BackendError, createTopic, fetchNextExercise, fetchReviewSummary, fetchTopics, prepareReviewPhrase, revealWordHint, startTrainingSession, submitAttempt, transcribeAudio } from "./api/training";
+import type { Attempt, AttemptTimings, Exercise, PreparedReviewPhrase, TopicListItem, TrainingSession, WordHint } from "./types/training";
 import { supportsVoiceRecording, VoiceRecorder } from "./voiceRecorder";
 import { StatisticsView } from "./StatisticsView";
 import { AdminUsersView } from "./AdminUsersView";
@@ -127,7 +127,7 @@ function AuthenticatedApp() {
   </div></main>;
   if (!isAuthConfigured()) return <main className="auth-page"><div className="auth-card panel"><h1>Нужна настройка входа</h1><p>Добавьте VITE_SUPABASE_URL и VITE_SUPABASE_PUBLISHABLE_KEY в окружение frontend.</p></div></main>;
   if (!hasSession || !account) return <main className="auth-page"><div className="auth-card panel"><span className="brand__mark"><Icon name="message" size={34}/></span><h1>Добро пожаловать в SerboTalk</h1><p>Войдите или зарегистрируйтесь с Google, чтобы сохранять свой прогресс на всех устройствах.</p><button className="google-sign-in" type="button" onClick={() => void login()}>Войти через Google</button>{authError && <p className="error" role="alert">{authError}</p>}<nav className="auth-legal" aria-label="Правовая информация"><a href="/privacy">Конфиденциальность</a><a href="/terms">Условия</a></nav></div></main>;
-  return <TrainerApp account={account} onAccountChange={setAccount} onSignOut={() => void signOut()} />;
+  return <TrainerApp key={account.id} account={account} onAccountChange={setAccount} onSignOut={() => void signOut()} />;
 }
 
 function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentUser; onAccountChange: (account: CurrentUser) => void; onSignOut: () => void }) {
@@ -138,7 +138,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const [topics, setTopics] = useState<TopicListItem[]>([]);
   const [selectedTopic, setSelectedTopic] = useState<string>();
   const [customTopic, setCustomTopic] = useState("");
-  const [reviewPhrases, setReviewPhrases] = useState<ReviewPhrase[]>([]);
+  const [reviewPhraseCount, setReviewPhraseCount] = useState(0);
   const [newPhrase, setNewPhrase] = useState("");
   const [preparedPhrase, setPreparedPhrase] = useState<PreparedReviewPhrase>();
   const [phraseTopicId, setPhraseTopicId] = useState("");
@@ -178,6 +178,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const voiceControllerRef = useRef<AbortController | undefined>(undefined);
   const [showTopicChooser, setShowTopicChooser] = useState(false);
   const catalogEpochRef = useRef(0);
+  const reviewSummaryEpochRef = useRef(0);
   const accountRefreshEpochRef = useRef(0);
   const androidPagerRef = useRef<HTMLDivElement | null>(null);
   const presentedExerciseRef = useRef<string | undefined>(undefined);
@@ -249,6 +250,13 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     }
   }
 
+  const refreshReviewSummary = useCallback((signal?: AbortSignal) => {
+    const epoch = ++reviewSummaryEpochRef.current;
+    return fetchReviewSummary(signal).then((summary) => {
+      if (reviewSummaryEpochRef.current === epoch) setReviewPhraseCount(summary.phrase_count);
+    });
+  }, []);
+
   useEffect(() => {
     const controller = new AbortController();
     const epoch = ++catalogEpochRef.current;
@@ -258,8 +266,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
         setTopics(availableTopics);
         setSelectedTopic((current) => current ?? availableTopics[0]?.id);
         setBackendState("online");
-        void fetchReviewPhrases(controller.signal)
-          .then((phrases) => { if (catalogEpochRef.current === epoch) setReviewPhrases(phrases); })
+        void refreshReviewSummary(controller.signal)
           .catch((requestError: unknown) => {
             if (catalogEpochRef.current !== epoch) return;
             if (requestError instanceof DOMException && requestError.name === "AbortError") return;
@@ -271,11 +278,12 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
         setBackendState("offline");
       });
     return () => { catalogEpochRef.current += 1; controller.abort(); };
-  }, []);
+  }, [refreshReviewSummary]);
 
   useEffect(() => () => {
     flowEpochRef.current += 1;
     catalogEpochRef.current += 1;
+    reviewSummaryEpochRef.current += 1;
     accountRefreshEpochRef.current += 1;
     voiceEpochRef.current += 1;
     hintEpochRef.current += 1;
@@ -293,17 +301,17 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       controller?.abort();
       controller = new AbortController();
       const epoch = ++catalogEpochRef.current;
-      void Promise.all([fetchTopics(controller.signal), fetchReviewPhrases(controller.signal)])
-        .then(([availableTopics, availablePhrases]) => {
+      void fetchTopics(controller.signal)
+        .then((availableTopics) => {
           if (catalogEpochRef.current !== epoch) return;
           setTopics(availableTopics);
-          setReviewPhrases(availablePhrases);
         })
         .catch(() => undefined);
+      void refreshReviewSummary(controller.signal).catch(() => undefined);
     };
     document.addEventListener("visibilitychange", refreshWhenVisible);
     return () => { controller?.abort(); document.removeEventListener("visibilitychange", refreshWhenVisible); };
-  }, []);
+  }, [refreshReviewSummary]);
   const selectedTopicData = topics.find((topic) => topic.id === selectedTopic);
   const currentTopic = session?.topic ?? selectedTopicData;
   const isReviewMode = session?.topic.id === "review-phrases";
@@ -382,7 +390,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     invalidateFlow(); stopVoice();
     setSession(undefined); setExercise(undefined); setCompletedCount(0); setSessionComplete(false); setTopicExhausted(false);
     setSelectedTopic(undefined); setCustomTopic(""); setError(undefined);
-    if (!reviewPhrases.length) {
+    if (!reviewPhraseCount) {
       setError("Пока нет фраз для повторения. Добавьте фразу ниже или выполните обычную тренировку.");
       return;
     }
@@ -397,6 +405,10 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       setAnswer(""); setHasTranscript(false); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
     } catch (requestError) {
       if (flowEpochRef.current !== epoch) return;
+      if (requestError instanceof BackendError && requestError.code === "review_queue_empty") {
+        reviewSummaryEpochRef.current += 1;
+        setReviewPhraseCount(0);
+      }
       setError(requestError instanceof BackendError && requestError.code === "review_queue_empty" ? "Все фразы из карусели освоены. Отличная работа!" : "Не удалось запустить повторение фраз.");
     } finally { if (flowEpochRef.current === epoch) { flowControllerRef.current = undefined; setPreparingPhrase(false); } }
   }
@@ -430,7 +442,8 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       } else if (!isReviewMode && requestError instanceof BackendError && requestError.code === "topic_empty") {
         setTopicExhausted(true); setSessionComplete(true);
       } else if (isReviewMode && requestError instanceof BackendError && (requestError.code === "review_queue_empty" || requestError.status === 409)) {
-        setSession(undefined); setExercise(undefined); setReviewPhrases([]);
+        reviewSummaryEpochRef.current += 1;
+        setSession(undefined); setExercise(undefined); setReviewPhraseCount(0);
         setAnswer(""); setHasTranscript(false); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
         setError("Все фразы из карусели освоены. Отличная работа!");
       } else setError("Не удалось получить следующую фразу.");
@@ -471,7 +484,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
         void prepared.catch(() => undefined);
       }
       const refreshSideData = () => {
-        void fetchReviewPhrases().then((phrases) => { if (flowEpochRef.current === epoch) setReviewPhrases(phrases); }).catch(() => undefined);
+        void refreshReviewSummary().catch(() => undefined);
         void fetchTopics().then((availableTopics) => { if (flowEpochRef.current === epoch) setTopics(availableTopics); }).catch(() => undefined);
         if (!completed.daily_usage) void fetchCurrentUser().then((updated) => { if (flowEpochRef.current === epoch && accountRefreshEpochRef.current === accountEpoch) onAccountChange(updated); }).catch(() => undefined);
       };
@@ -523,9 +536,9 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
         setPreparedPhrase(prepared);
         setPhraseTopicId(selectedTopic ?? topics.find((topic) => topic.id === "misc")?.id ?? topics[0]?.id ?? "");
       } else if (phraseTopicId) {
-        const created = await addReviewPhrase(preparedPhrase, phraseTopicId);
-        setReviewPhrases((current) => [created, ...current.filter((item) => item.id !== created.id)]);
-        setTopics(await fetchTopics());
+        await addReviewPhrase(preparedPhrase, phraseTopicId);
+        void refreshReviewSummary().catch(() => undefined);
+        void fetchTopics().then(setTopics).catch(() => undefined);
         setNewPhrase(""); setPreparedPhrase(undefined); setPhraseTopicId("");
       }
     } catch { setError(preparedPhrase ? "Не удалось сохранить фразу." : "Не удалось создать канонический перевод. Проверьте настройки OpenAI."); }
@@ -608,10 +621,10 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
         >
           <section className="android-page android-topics-page" aria-label="Выбор темы">
             <div className="android-topic-list" aria-label="Темы тренировки">
-              <button className={isReviewMode ? "android-topic is-selected" : "android-topic"} type="button" disabled={reviewPhrases.length === 0} onClick={() => { setShowTopicChooser(false); showAndroidPanel(1); void startReviewTraining(); }}>
+              <button className={isReviewMode ? "android-topic is-selected" : "android-topic"} type="button" disabled={reviewPhraseCount === 0} onClick={() => { setShowTopicChooser(false); showAndroidPanel(1); void startReviewTraining(); }}>
                 <span className="topic__icon"><Icon name="repeat" /></span>
                 <strong>Повторение</strong>
-                <small>{reviewPhrases.length}<span>к повторению</span></small>
+                <small>{reviewPhraseCount}<span>к повторению</span></small>
               </button>
               {topics.map((topic) => (
                 <button className={selectedTopic === topic.id && !customTopic ? "android-topic is-selected" : "android-topic"} key={topic.id} type="button" onClick={() => { setShowTopicChooser(false); selectTopic(topic.id); showAndroidPanel(1); }}>
@@ -729,8 +742,8 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
             <div className="panel-heading"><h2>Темы для практики</h2><p>Выберите ситуацию и начните разговор на сербском языке</p></div>
             <button className={isReviewMode ? "review-topic is-selected" : "review-topic"} type="button" onClick={() => void startReviewTraining()}>
               <span className="topic__icon"><Icon name="repeat" /></span>
-              <span className="topic__copy"><strong>Фразы для повторения</strong><small>{reviewPhrases.length ? `${reviewPhrases.length} требуют практики` : "Список пока пуст"}</small></span>
-              <span className="review-topic__count">{reviewPhrases.length}</span>
+              <span className="topic__copy"><strong>Фразы для повторения</strong><small>{reviewPhraseCount ? `${reviewPhraseCount} требуют практики` : "Список пока пуст"}</small></span>
+              <span className="review-topic__count">{reviewPhraseCount}</span>
             </button>
             <div className="topics" aria-label="Темы тренировки">
               {topics.map((topic) => (

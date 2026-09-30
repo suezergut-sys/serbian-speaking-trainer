@@ -1,4 +1,4 @@
-import type { Attempt, AttemptTimings, Exercise, PreparedReviewPhrase, ReviewPhrase, StartedTraining, TopicListItem, TranscriptionResponse, WordHint } from "../types/training";
+import type { Attempt, AttemptTimings, Exercise, PreparedReviewPhrase, ReviewPhrase, ReviewSummary, StartedTraining, TopicListItem, TranscriptionResponse, WordHint } from "../types/training";
 import { authenticatedFetch } from "../auth";
 import { apiUrl } from "./baseUrl";
 
@@ -109,6 +109,10 @@ export function submitAttempt(
 
 export function fetchReviewPhrases(signal?: AbortSignal): Promise<ReviewPhrase[]> {
   return requestJson<ReviewPhrase[]>("/api/review-phrases", { signal });
+}
+
+export function fetchReviewSummary(signal?: AbortSignal): Promise<ReviewSummary> {
+  return requestJson<ReviewSummary>("/api/review-phrases/summary", { signal });
 }
 
 export function prepareReviewPhrase(sourceRu: string): Promise<PreparedReviewPhrase> {

@@ -17,6 +17,7 @@ from .review import (
     PreparedReviewPhraseResponse,
     PrepareReviewPhraseRequest,
     ReviewPhraseResponse,
+    ReviewPhraseSummaryResponse,
     WordHintResponse,
 )
 from .statistics import (
@@ -53,6 +54,7 @@ __all__ = [
     "PrepareReviewPhraseRequest",
     "PreparedReviewPhraseResponse",
     "ReviewPhraseResponse",
+    "ReviewPhraseSummaryResponse",
     "WordHintResponse",
     "LearningWordResponse",
     "DailyPhraseCount",
