@@ -37,9 +37,18 @@ Runner: `scripts/testing/benchmark_review_catalog.py`. Baseline — неизме
 
 ## Открыто
 
-- [ ] Зафиксировать публикацию и проверку production URL.
+- [x] 30.09.2026, 22:47 МСК: [PR #35](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/35) объединён; runtime SHA `edb0b74dc1ab4daf8711c9cd4d77c535f14ad875`. Web/backend READY, production aliases проверены по deployment metadata. Публичная проверка Chrome 154: Google-вход, `/privacy`, `/terms` — 200, `/testlab.html` — 404, page errors — 0; bundle содержит новый summary API и не содержит testlab markers. `/api/health` — 200, оба endpoint повторения без сессии — 401. Это не проверка авторизованной практики.
 - [ ] Проверить авторизованный production-сценарий, реальную сеть и полный голосовой цикл.
 - [ ] Перенести клиентское изменение в следующий отдельно согласованный Android-релиз; версия и APK в этом web-срезе не меняются.
 - [ ] Завершить остальные задачи P1 и ручную приёмку владельца.
 
 Основной план: [audit-roadmap.md](audit-roadmap.md). Методика: [testlab.md](testlab.md).
+
+## Публикация и ручная проверка
+
+- Web: [production](https://serbian-speaking-trainer.vercel.app), deployment `dpl_GtiGwsLiBUjPSwDZTQpi69SmQ14n`, [deployment URL](https://serbian-speaking-trainer-5928zw90m-suezerguts-projects.vercel.app).
+- Backend: [production health](https://serbian-speaking-trainer-api.vercel.app/api/health), deployment `dpl_dUS3LpucDLW84GTWpy57wkaSSfx9`, [deployment URL](https://serbian-speaking-trainer-2fpq3ytla-suezerguts-projects.vercel.app). Backend build применил текущий Alembic head; новых миграций нет, seed добавил 0 строк.
+- GitHub checks для PR отсутствуют; локальные gates и независимое ревью завершены до merge.
+- Повторная попытка Chrome-плагина завершилась `Unable to load browser request-header policy`. Личная сессия не копировалась; авторизованный production/STT сценарий остаётся открытым.
+- Для ручной приёмки: проверить число повторений на экране тем, добавление новой и существующей фразы, уменьшение после освоения, пустую очередь и возврат страницы. Проверить обе сербские раскладки и обычный голосовой цикл. Следующий Android APK должен включить весь backlog; установленный 1.15 использует прежний клиент.
+- Локальные auth/API, web preview и headless AVD оставлены доступными; отдельный PostgreSQL кластер после проверок остановлен штатным runner.
