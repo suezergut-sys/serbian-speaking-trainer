@@ -1,5 +1,6 @@
 from .entities import (
     Attempt,
+    AttemptRequest,
     ErrorEvent,
     Exercise,
     LearnerSkill,
@@ -14,6 +15,7 @@ from .entities import (
 
 __all__ = [
     "Attempt",
+    "AttemptRequest",
     "ErrorEvent",
     "Exercise",
     "LearnerSkill",

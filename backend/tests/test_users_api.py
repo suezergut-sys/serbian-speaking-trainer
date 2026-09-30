@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.config import Settings
 from app.api.dependencies import get_current_user
-from app.models import Attempt, TrainingSession, User
+from app.models import Attempt, Exercise, TrainingSession, User
 from app.main import app
 from app.services.auth_service import (
     LEGACY_USER_ID,
@@ -171,6 +171,9 @@ def test_free_user_is_limited_to_ten_attempts_per_utc_day(
 ) -> None:
     session = api_client.post("/api/sessions", json={"topic_id": "cafe"}).json()
     exercise = api_client.post(f"/api/sessions/{session['id']}/next-exercise").json()
+    stored_exercise = db_session.get(Exercise, exercise["id"])
+    assert stored_exercise is not None
+    canonical = stored_exercise.target_hints_json["canonical_sr"]
     now = datetime.now(timezone.utc)
     db_session.add_all([
         Attempt(exercise_id=exercise["id"], transcript_sr=f"attempt {index}", created_at=now)
@@ -180,7 +183,7 @@ def test_free_user_is_limited_to_ten_attempts_per_utc_day(
 
     response = api_client.post(
         "/api/attempts",
-        json={"exercise_id": exercise["id"], "transcript_sr": "Mogu li da dobijem jelovnik, molim vas?"},
+        json={"exercise_id": exercise["id"], "transcript_sr": canonical},
     )
     assert response.status_code == 429
     assert response.json()["detail"] == "Daily phrase limit reached"
@@ -191,7 +194,7 @@ def test_free_user_is_limited_to_ten_attempts_per_utc_day(
     db_session.flush()
     assert api_client.post(
         "/api/attempts",
-        json={"exercise_id": exercise["id"], "transcript_sr": "Mogu li da dobijem jelovnik, molim vas?"},
+        json={"exercise_id": exercise["id"], "transcript_sr": canonical},
     ).status_code == 201
 
 

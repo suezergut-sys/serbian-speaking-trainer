@@ -4,11 +4,14 @@ import random
 import re
 from datetime import datetime, timezone
 from difflib import SequenceMatcher
+from uuid import UUID
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models import Exercise, ReviewPhrase
 from app.repositories import (
+    AttemptRepository,
     ExerciseRepository,
     ReviewPhraseRepository,
     SkillRepository,
@@ -19,7 +22,12 @@ from app.schemas import ExerciseGenerationResult, ExerciseResponse
 from app.services.ai_adapter import AIServiceError, StructuredAIProvider
 from app.services.review_service import ReviewQueueEmptyError
 from app.services.scheduler import Scheduler
-from app.services.session_service import SessionNotFoundError, SessionService
+from app.services.session_service import SessionCompletedError, SessionNotFoundError, SessionService, SessionUnavailableError
+
+
+class TopicEmptyError(RuntimeError):
+    pass
+
 
 LOCAL_EXERCISES: dict[str, tuple[tuple[str, tuple[str, ...]], ...]] = {
     "bank": (
@@ -98,8 +106,10 @@ LOCAL_WORD_TRANSLATIONS = {
 
 class ExerciseGenerator:
     def __init__(self, db: Session, ai: StructuredAIProvider, user_id: str = "00000000-0000-0000-0000-000000000001", scheduler: Scheduler | None = None) -> None:
+        self.db = db
         self.user_id = user_id
         self.sessions = TrainingSessionRepository(db, user_id)
+        self.attempts = AttemptRepository(db, user_id)
         self.exercises = ExerciseRepository(db, user_id)
         self.review_phrases = ReviewPhraseRepository(db, user_id)
         self.topic_phrases = TopicPhraseRepository(db)
@@ -107,16 +117,29 @@ class ExerciseGenerator:
         self.ai = ai
         self.scheduler = scheduler or Scheduler()
 
-    def generate_next(self, session_id: str) -> ExerciseResponse:
-        training_session = self.sessions.get_owned(session_id)
+    def generate_next(self, session_id: str, client_request_id: UUID | None = None) -> ExerciseResponse:
+        training_session = self.sessions.get_owned_for_update(session_id)
         if training_session is None:
             raise SessionNotFoundError(session_id)
+        request_id = str(client_request_id) if client_request_id else None
+        if request_id:
+            existing = self.exercises.get_by_client_id(session_id, request_id)
+            if existing is not None:
+                return self._response(existing)
+        if training_session.status == "completed":
+            raise SessionCompletedError(session_id)
+        if training_session.status != "active":
+            raise SessionUnavailableError(session_id)
+        if not training_session.normalized_topic_json.get("review_carousel"):
+            requested_length = int(training_session.normalized_topic_json.get("session_length", 20))
+            if self.attempts.count_checked_exercises(session_id) >= requested_length:
+                raise SessionCompletedError(session_id)
         topic = SessionService.topic_snapshot(training_session)
         review_payload = training_session.normalized_topic_json.get("review_phrase")
         if review_payload:
-            return self._review_exercise(training_session.id, review_payload)
+            return self._review_exercise(training_session.id, review_payload, request_id)
         if training_session.normalized_topic_json.get("review_carousel"):
-            return self._next_review_exercise(training_session.id)
+            return self._next_review_exercise(training_session.id, request_id)
         self.review_phrases.activate_due(datetime.now(timezone.utc))
         recent = self.exercises.list_recent(session_id, limit=20)
         skills = self.skills.list_for_training(self.user_id)
@@ -132,7 +155,7 @@ class ExerciseGenerator:
         recent_sources = [exercise.source_ru for exercise in recent]
         selected_phrase = self._select_topic_phrase(topic.id, recent_sources)
         if isinstance(selected_phrase, ReviewPhrase):
-            return self._review_exercise(training_session.id, self._review_payload(selected_phrase))
+            return self._review_exercise(training_session.id, self._review_payload(selected_phrase), request_id)
         catalog_phrase = selected_phrase
         if catalog_phrase is not None:
             target_keys = [key for key in catalog_phrase.targeted_skill_keys_json if key in skill_catalog]
@@ -150,10 +173,11 @@ class ExerciseGenerator:
                 result = self._generate(topic, target_payload, target_keys, recent_sources)
                 catalog_phrase = None
             else:
-                raise ReviewQueueEmptyError
-        entity = self.exercises.add(
+                raise TopicEmptyError
+        entity = self._save_exercise(
             Exercise(
                 session_id=session_id,
+                client_request_id=request_id,
                 source_ru=result.source_ru,
                 targeted_skill_ids=[skill_catalog[key].id for key in target_keys if key in skill_catalog],
                 target_hints_json={
@@ -172,14 +196,7 @@ class ExerciseGenerator:
                 },
             )
         )
-        return ExerciseResponse(
-            id=entity.id,
-            session_id=entity.session_id,
-            source_ru=entity.source_ru,
-            targeted_skills=target_keys,
-            difficulty=result.difficulty,
-            word_hints=result.word_hints,
-        )
+        return self._response(entity)
 
     def _select_topic_phrase(self, topic_id: str, recent_sources: list[str]):
         phrases = [
@@ -194,7 +211,7 @@ class ExerciseGenerator:
         candidates = fresh or phrases
         return random.choice(candidates)
 
-    def _next_review_exercise(self, session_id: str) -> ExerciseResponse:
+    def _next_review_exercise(self, session_id: str, request_id: str | None = None) -> ExerciseResponse:
         self.review_phrases.activate_due(datetime.now(timezone.utc))
         phrases = self.review_phrases.list_active()
         if not phrases:
@@ -206,7 +223,7 @@ class ExerciseGenerator:
         }
         candidates = [phrase for phrase in phrases if phrase.id not in recent_ids] or phrases
         phrase = random.choice(candidates)
-        return self._review_exercise(session_id, self._review_payload(phrase))
+        return self._review_exercise(session_id, self._review_payload(phrase), request_id)
 
     @staticmethod
     def _review_payload(phrase) -> dict:
@@ -220,12 +237,13 @@ class ExerciseGenerator:
             "topic_phrase_id": phrase.topic_phrase_id,
         }
 
-    def _review_exercise(self, session_id: str, payload: dict) -> ExerciseResponse:
+    def _review_exercise(self, session_id: str, payload: dict, request_id: str | None = None) -> ExerciseResponse:
         target_keys = list(payload.get("targeted_skill_keys", []))
         catalog = {skill.key: skill for skill in self.skills.list(limit=500)}
-        entity = self.exercises.add(
+        entity = self._save_exercise(
             Exercise(
                 session_id=session_id,
+                client_request_id=request_id,
                 source_ru=str(payload["source_ru"]),
                 targeted_skill_ids=[catalog[key].id for key in target_keys if key in catalog],
                 target_hints_json={
@@ -245,13 +263,29 @@ class ExerciseGenerator:
                 },
             )
         )
+        return self._response(entity)
+
+    def _save_exercise(self, entity: Exercise) -> Exercise:
+        try:
+            return self.exercises.add(entity)
+        except IntegrityError:
+            request_id = entity.client_request_id
+            self.db.rollback()
+            if request_id:
+                existing = self.exercises.get_by_client_id(entity.session_id, request_id)
+                if existing is not None:
+                    return existing
+            raise
+
+    @staticmethod
+    def _response(entity: Exercise) -> ExerciseResponse:
         return ExerciseResponse(
             id=entity.id,
             session_id=entity.session_id,
             source_ru=entity.source_ru,
-            targeted_skills=target_keys,
-            difficulty=0.5,
-            word_hints=payload.get("word_hints", []),
+            targeted_skills=list(entity.generation_meta_json.get("targeted_skill_keys", [])),
+            difficulty=float(entity.generation_meta_json.get("difficulty", 0.5)),
+            word_hints=list(entity.target_hints_json.get("word_hints", [])),
         )
 
     def _generate(

@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, Float, ForeignKey, Integer, JSON, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, CheckConstraint, DateTime, Float, ForeignKey, Index, Integer, JSON, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -42,6 +42,7 @@ class Exercise(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     session_id: Mapped[str] = mapped_column(ForeignKey("training_sessions.id", ondelete="CASCADE"), index=True)
+    client_request_id: Mapped[str | None] = mapped_column(String(36))
     source_ru: Mapped[str] = mapped_column(Text)
     target_hints_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     targeted_skill_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
@@ -50,6 +51,8 @@ class Exercise(Base):
 
     session: Mapped[TrainingSession] = relationship(back_populates="exercises")
     attempts: Mapped[list[Attempt]] = relationship(back_populates="exercise", cascade="all, delete-orphan")
+
+    __table_args__ = (Index("uq_exercises_session_request", "session_id", "client_request_id", unique=True),)
 
 
 class Attempt(Base):
@@ -72,6 +75,16 @@ class Attempt(Base):
     error_events: Mapped[list[ErrorEvent]] = relationship(back_populates="attempt", cascade="all, delete-orphan")
 
     __table_args__ = (CheckConstraint("overall_score IS NULL OR (overall_score >= 0 AND overall_score <= 1)"),)
+
+
+class AttemptRequest(Base):
+    __tablename__ = "attempt_requests"
+
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    client_request_id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    payload_hash: Mapped[str] = mapped_column(String(64))
+    attempt_id: Mapped[str | None] = mapped_column(ForeignKey("attempts.id", ondelete="CASCADE"))
+    response_json: Mapped[dict[str, Any] | None] = mapped_column(JSON)
 
 
 class Skill(Base):

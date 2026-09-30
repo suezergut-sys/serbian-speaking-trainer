@@ -1,10 +1,11 @@
 from fastapi.testclient import TestClient
+from uuid import uuid4
 from sqlalchemy import event, func, select
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.main import app
-from app.models import Exercise, ReviewPhrase, TopicPhrase, TopicPreset, TrainingSession
+from app.models import Attempt, Exercise, ReviewPhrase, TopicPhrase, TopicPreset, TrainingSession
 
 
 def test_topics_and_preset_session_snapshot(api_client: TestClient, db_session: Session) -> None:
@@ -43,6 +44,7 @@ def test_custom_topic_is_persisted_empty_without_generated_phrases(api_client: T
     assert created.json()["topic"]["source"] == "custom"
     exercise = api_client.post(f"/api/sessions/{created.json()['id']}/next-exercise")
     assert exercise.status_code == 409
+    assert exercise.json()["detail"]["code"] == "topic_empty"
 
 
 def test_next_exercise_is_persisted_without_exposing_answer(api_client: TestClient, db_session: Session) -> None:
@@ -124,7 +126,12 @@ def test_first_preset_exercise_uses_batched_skill_queries(api_client: TestClient
 
     assert response.status_code == 201
     assert len([sql for sql in statements if "JOIN learner_skills" in sql]) == 1
-    assert len(statements) <= 7
+    lock_updates = [
+        sql for sql in statements
+        if sql.lstrip().startswith("UPDATE training_sessions SET id=training_sessions.id")
+    ]
+    assert len(lock_updates) == 1
+    assert len(statements) - len(lock_updates) <= 8
 
 
 def test_missing_resources_and_validation(api_client: TestClient) -> None:
@@ -179,6 +186,83 @@ def test_topic_counts_and_selection_exclude_mastered_catalog_phrases(
     stored = db_session.get(Exercise, exercise["id"])
     assert stored is not None
     assert stored.generation_meta_json["topic_phrase_id"] == "cafe-20"
+
+
+def test_next_exercise_request_id_replays_and_legacy_no_body_can_advance(
+    api_client: TestClient, db_session: Session,
+) -> None:
+    session_id = api_client.post("/api/sessions", json={"topic_id": "cafe", "length": 3}).json()["id"]
+    request_id = str(uuid4())
+    url = f"/api/sessions/{session_id}/next-exercise"
+
+    first = api_client.post(url, json={"client_request_id": request_id})
+    replay = api_client.post(url, json={"client_request_id": request_id})
+    second = api_client.post(url, json={"client_request_id": str(uuid4())})
+    legacy = api_client.post(url)
+
+    assert first.status_code == replay.status_code == second.status_code == legacy.status_code == 201
+    assert first.json() == replay.json()
+    assert len({first.json()["id"], second.json()["id"], legacy.json()["id"]}) == 3
+    assert len(db_session.scalars(select(Exercise).where(Exercise.session_id == session_id)).all()) == 3
+
+
+def test_normal_session_completes_after_checked_length_and_rejects_surplus(
+    api_client: TestClient, db_session: Session,
+) -> None:
+    session_id = api_client.post("/api/sessions", json={"topic_id": "cafe", "length": 2}).json()["id"]
+    url = f"/api/sessions/{session_id}/next-exercise"
+    first = api_client.post(url).json()
+    second = api_client.post(url).json()
+    surplus = api_client.post(url).json()
+
+    for exercise, expected_count in ((first, 1), (second, 2)):
+        stored = db_session.get(Exercise, exercise["id"])
+        assert stored is not None
+        response = api_client.post("/api/attempts", json={
+            "client_request_id": str(uuid4()),
+            "exercise_id": exercise["id"],
+            "transcript_sr": stored.target_hints_json["canonical_sr"],
+        })
+        assert response.status_code == 201
+        assert response.json()["daily_usage"]["used"] == expected_count
+
+    fetched = api_client.get(f"/api/sessions/{session_id}")
+    assert fetched.json()["status"] == "completed"
+    assert fetched.json()["completed_count"] == 2
+    entity = db_session.get(TrainingSession, session_id)
+    assert entity is not None and entity.ended_at is not None
+    assert api_client.post(url).json()["detail"]["code"] == "session_completed"
+    surplus_attempt = api_client.post("/api/attempts", json={
+        "exercise_id": surplus["id"], "transcript_sr": "Ne mogu.",
+    })
+    assert surplus_attempt.status_code == 409
+    assert surplus_attempt.json()["detail"]["code"] == "session_completed"
+    assert len(db_session.scalars(select(Attempt)).all()) == 2
+
+
+def test_review_carousel_remains_open_after_requested_length(
+    api_client: TestClient, db_session: Session,
+) -> None:
+    normal = api_client.post("/api/sessions", json={"topic_id": "cafe"}).json()
+    first = api_client.post(f"/api/sessions/{normal['id']}/next-exercise").json()
+    stored = db_session.get(Exercise, first["id"])
+    assert stored is not None
+    assert api_client.post("/api/attempts", json={
+        "exercise_id": first["id"], "transcript_sr": stored.target_hints_json["canonical_sr"],
+    }).status_code == 201
+
+    review = api_client.post("/api/sessions", json={"review_mode": True, "length": 1}).json()
+    review_url = f"/api/sessions/{review['id']}/next-exercise"
+    review_exercise = api_client.post(review_url).json()
+    stored_review = db_session.get(Exercise, review_exercise["id"])
+    assert stored_review is not None
+    assert api_client.post("/api/attempts", json={
+        "exercise_id": review_exercise["id"],
+        "transcript_sr": stored_review.target_hints_json["canonical_sr"],
+    }).status_code == 201
+    assert api_client.get(f"/api/sessions/{review['id']}").json()["status"] == "active"
+    assert api_client.get(f"/api/sessions/{review['id']}").json()["completed_count"] == 1
+    assert api_client.post(review_url).status_code == 201
 
 
 def test_added_phrase_is_counted_and_selectable_in_its_topic(

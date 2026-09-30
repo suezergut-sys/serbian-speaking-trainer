@@ -4,8 +4,10 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.schemas import AttemptResponse, CreateAttemptRequest
 from app.services.ai_adapter import StructuredAIProvider, get_ai_provider
-from app.services.attempt_service import AttemptService, ExerciseNotFoundError
+from app.services.attempt_service import AttemptRequestConflictError, AttemptService, ExerciseNotFoundError
 from app.services.attempt_service import DailyLimitExceededError
+from app.services.answer_analyzer import AnalysisUnavailableError
+from app.services.session_service import SessionCompletedError, SessionUnavailableError
 from app.api.dependencies import get_current_user
 from app.models import User
 
@@ -25,3 +27,16 @@ def create_attempt(
         raise HTTPException(status_code=404, detail="Exercise not found") from exc
     except DailyLimitExceededError as exc:
         raise HTTPException(status_code=429, detail="Daily phrase limit reached") from exc
+    except AttemptRequestConflictError as exc:
+        raise HTTPException(status_code=409, detail={"code": "attempt_request_conflict", "message": "Request ID was already used for another answer"}) from exc
+    except SessionCompletedError as exc:
+        raise HTTPException(status_code=409, detail={"code": "session_completed", "message": "Session is complete"}) from exc
+    except SessionUnavailableError as exc:
+        raise HTTPException(status_code=409, detail={"code": "session_unavailable", "message": "Session is unavailable"}) from exc
+    except AnalysisUnavailableError as exc:
+        db.rollback()
+        raise HTTPException(status_code=503, detail={
+            "code": "analysis_unavailable",
+            "message": "Answer analysis is temporarily unavailable. Please retry.",
+            "retryable": True,
+        }) from exc

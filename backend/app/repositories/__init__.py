@@ -2,6 +2,7 @@ from .base import Repository
 from .catalog import LearnerSkillRepository, SkillRepository, TopicPhraseRepository, TopicPresetRepository
 from .training import (
     AttemptRepository,
+    AttemptRequestRepository,
     ErrorEventRepository,
     ExerciseRepository,
     ReviewPhraseRepository,
@@ -12,6 +13,7 @@ from .users import UserRepository
 
 __all__ = [
     "AttemptRepository",
+    "AttemptRequestRepository",
     "ErrorEventRepository",
     "ExerciseRepository",
     "LearnerSkillRepository",

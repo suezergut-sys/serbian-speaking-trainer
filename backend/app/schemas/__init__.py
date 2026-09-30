@@ -8,7 +8,7 @@ from .attempts import (
 )
 from .exercises import ExerciseGenerationResult, ExerciseResponse, PhrasePreparation, WordHint
 from .health import HealthResponse
-from .sessions import CreateSessionRequest, SessionResponse, StartSessionResponse
+from .sessions import CreateSessionRequest, NextExerciseRequest, SessionResponse, StartSessionResponse
 from .topics import CreateTopicRequest, NormalizeTopicRequest, TopicContext, TopicListItem
 from .transcriptions import TranscriptionResponse
 from .review import (
@@ -30,6 +30,7 @@ from .auth import AdminUserResponse, CurrentUserResponse, DailyUsageResponse, Su
 
 __all__ = [
     "CreateSessionRequest",
+    "NextExerciseRequest",
     "CreateAttemptRequest",
     "AnswerAnalysis",
     "AnswerIssue",

@@ -3,9 +3,15 @@ from __future__ import annotations
 import re
 from difflib import SequenceMatcher
 
+from pydantic import ValidationError
+
 from app.config import Settings, get_settings
 from app.schemas import AnswerAnalysis, AnswerIssue, CreateAttemptRequest, DemonstratedSkill
 from app.services.ai_adapter import AIServiceError, StructuredAIProvider
+
+
+class AnalysisUnavailableError(RuntimeError):
+    pass
 
 
 class AnswerAnalyzer:
@@ -36,23 +42,21 @@ class AnswerAnalyzer:
         if exact_variant is not None:
             return self._exact_match(exact_variant, intended_sr_variants, target_keys, timing)
 
-        timing_payload = self._timing_payload(timing)
-        if self.ai.is_available:
-            try:
-                analysis = AnswerAnalysis.model_validate(
-                    self.ai.analyze_answer(
-                        source_ru=source_ru,
-                        transcript_sr=transcript_sr,
-                        canonical_sr=canonical_sr,
-                        intended_sr_variants=intended_sr_variants,
-                        target_skills=target_skills,
-                        timings=timing_payload,
-                    )
+        if not self.ai.is_available:
+            raise AnalysisUnavailableError
+        try:
+            analysis = AnswerAnalysis.model_validate(
+                self.ai.analyze_answer(
+                    source_ru=source_ru,
+                    transcript_sr=transcript_sr,
+                    canonical_sr=canonical_sr,
+                    intended_sr_variants=intended_sr_variants,
+                    target_skills=target_skills,
+                    timings=self._timing_payload(timing),
                 )
-            except AIServiceError:
-                analysis = self._local_fallback(transcript_sr, intended_sr_variants, target_keys)
-        else:
-            analysis = self._local_fallback(transcript_sr, intended_sr_variants, target_keys)
+            )
+        except (AIServiceError, ValidationError) as exc:
+            raise AnalysisUnavailableError from exc
 
         fluency = self._local_fluency(timing, analysis.fluency_score)
         issues = [

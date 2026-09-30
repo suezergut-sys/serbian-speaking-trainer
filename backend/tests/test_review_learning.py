@@ -129,7 +129,7 @@ def test_review_mode_cycles_through_active_phrases(api_client: TestClient) -> No
 def test_review_mode_rejects_an_empty_queue(api_client: TestClient) -> None:
     response = api_client.post("/api/sessions", json={"review_mode": True})
     assert response.status_code == 409
-    assert response.json()["detail"] == "Review queue is empty"
+    assert response.json()["detail"]["code"] == "review_queue_empty"
 
 
 def test_review_queue_includes_all_active_phrases_beyond_one_hundred(db_session: Session) -> None:

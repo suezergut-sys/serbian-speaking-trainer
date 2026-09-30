@@ -1,9 +1,9 @@
 from datetime import datetime
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
-from app.models import Attempt, ErrorEvent, Exercise, ReviewPhrase, TrainingSession, WordLearningItem
+from app.models import Attempt, AttemptRequest, ErrorEvent, Exercise, ReviewPhrase, TrainingSession, WordLearningItem
 from app.repositories.base import Repository
 
 DEFAULT_USER_ID = "00000000-0000-0000-0000-000000000001"
@@ -18,6 +18,16 @@ class TrainingSessionRepository(Repository[TrainingSession]):
         return self.session.scalar(select(TrainingSession).where(
             TrainingSession.id == session_id, TrainingSession.user_id == self.user_id,
         ))
+
+    def get_owned_for_update(self, session_id: str) -> TrainingSession | None:
+        if self.session.get_bind().dialect.name == "sqlite":
+            # Serialize next-exercise against completion; SQLite ignores FOR UPDATE.
+            self.session.execute(update(TrainingSession).where(
+                TrainingSession.id == session_id, TrainingSession.user_id == self.user_id,
+            ).values(id=TrainingSession.id))
+        return self.session.scalar(select(TrainingSession).where(
+            TrainingSession.id == session_id, TrainingSession.user_id == self.user_id,
+        ).with_for_update())
 
 
 class ExerciseRepository(Repository[Exercise]):
@@ -41,6 +51,12 @@ class ExerciseRepository(Repository[Exercise]):
         )
         return list(self.session.scalars(statement))
 
+    def get_by_client_id(self, session_id: str, client_request_id: str) -> Exercise | None:
+        return self.session.scalar(
+            select(Exercise)
+            .where(Exercise.session_id == session_id, Exercise.client_request_id == client_request_id)
+        )
+
 
 class AttemptRepository(Repository[Attempt]):
     def __init__(self, session: Session, user_id: str = DEFAULT_USER_ID) -> None:
@@ -60,6 +76,23 @@ class AttemptRepository(Repository[Attempt]):
             .order_by(Attempt.created_at)
         )
         return list(self.session.scalars(statement))
+
+    def count_checked_exercises(self, session_id: str) -> int:
+        statement = (
+            select(func.count(func.distinct(Attempt.exercise_id)))
+            .join(Exercise, Exercise.id == Attempt.exercise_id)
+            .where(Exercise.session_id == session_id)
+        )
+        return int(self.session.scalar(statement) or 0)
+
+
+class AttemptRequestRepository(Repository[AttemptRequest]):
+    def __init__(self, session: Session, user_id: str = DEFAULT_USER_ID) -> None:
+        super().__init__(session, AttemptRequest)
+        self.user_id = user_id
+
+    def get_by_client_id(self, client_request_id: str) -> AttemptRequest | None:
+        return self.session.get(AttemptRequest, (self.user_id, client_request_id))
 
 
 class ErrorEventRepository(Repository[ErrorEvent]):

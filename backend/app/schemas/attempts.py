@@ -1,7 +1,10 @@
 from datetime import datetime
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue
+
+from app.schemas.auth import DailyUsageResponse
 
 
 class AnswerIssue(BaseModel):
@@ -45,6 +48,7 @@ class CreateAttemptRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     exercise_id: str = Field(min_length=1, max_length=36)
+    client_request_id: UUID | None = None
     transcript_sr: str = Field(min_length=1, max_length=1200)
     reaction_ms: int | None = Field(default=None, ge=0, le=600_000)
     speech_duration_ms: int | None = Field(default=None, ge=0, le=600_000)
@@ -63,6 +67,7 @@ class AttemptResponse(BaseModel):
     learner_updates: list["LearnerSkillUpdate"] = Field(default_factory=list)
     base_score: float = Field(ge=0, le=1)
     hint_penalty: float = Field(ge=0, le=1)
+    daily_usage: DailyUsageResponse | None = None
 
 
 class LearnerSkillUpdate(BaseModel):

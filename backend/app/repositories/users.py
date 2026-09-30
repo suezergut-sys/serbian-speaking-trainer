@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from app.models import Attempt, Exercise, TrainingSession, User
@@ -15,6 +15,10 @@ class UserRepository(Repository[User]):
         return self.session.scalar(select(User).where(func.lower(User.email) == email.casefold()))
 
     def lock(self, user_id: str) -> User | None:
+        if self.session.get_bind().dialect.name == "sqlite":
+            # SQLite ignores FOR UPDATE. Acquire its writer lock before reading
+            # quota/session boundaries, including requests from legacy clients.
+            self.session.execute(update(User).where(User.id == user_id).values(id=User.id))
         return self.session.scalar(select(User).where(User.id == user_id).with_for_update())
 
     def list_real_users(self) -> list[User]:

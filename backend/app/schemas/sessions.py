@@ -1,6 +1,7 @@
 from datetime import datetime
+from uuid import UUID
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.schemas.exercises import ExerciseResponse
 from app.schemas.topics import TopicContext
@@ -32,7 +33,14 @@ class SessionResponse(BaseModel):
     level: str
     started_at: datetime
     requested_length: int
+    completed_count: int = 0
     topic: TopicContext
+
+
+class NextExerciseRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    client_request_id: UUID | None = None
 
 
 class StartSessionResponse(BaseModel):
