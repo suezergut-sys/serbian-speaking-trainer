@@ -7,7 +7,7 @@ from pydantic import ValidationError
 from app.config import Settings, get_settings
 from app.schemas import AnswerAnalysis, AnswerIssue, CreateAttemptRequest, DemonstratedSkill
 from app.services.ai_adapter import AIServiceError, StructuredAIProvider
-from app.services.serbian_text import normalized_serbian_words
+from app.services.serbian_text import normalized_serbian_words, serbian_latin_for_evaluation
 
 
 class AnalysisUnavailableError(RuntimeError):
@@ -47,6 +47,7 @@ class AnswerAnalyzer:
 
         if not self.ai.is_available:
             raise AnalysisUnavailableError
+        evaluation_transcript = serbian_latin_for_evaluation(transcript_sr)
         # A structured response can still contradict the words that were actually transcribed.
         # Retry once before any score or learner-model update can be persisted.
         for _ in range(2):
@@ -54,7 +55,7 @@ class AnswerAnalyzer:
                 analysis = AnswerAnalysis.model_validate(
                     self.ai.analyze_answer(
                         source_ru=source_ru,
-                        transcript_sr=transcript_sr,
+                        transcript_sr=evaluation_transcript,
                         canonical_sr=canonical_sr,
                         intended_sr_variants=acceptable_variants,
                         target_skills=target_skills,
@@ -63,7 +64,7 @@ class AnswerAnalyzer:
                 )
             except (AIServiceError, ValidationError) as exc:
                 raise AnalysisUnavailableError from exc
-            if self._response_is_grounded(analysis, transcript_sr, target_keys):
+            if self._response_is_grounded(analysis, evaluation_transcript, target_keys):
                 break
         else:
             raise AnalysisUnavailableError

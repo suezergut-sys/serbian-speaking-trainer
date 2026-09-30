@@ -5,6 +5,7 @@ from app.config import Settings
 from app.schemas import AnswerAnalysis, AnswerIssue, CreateAttemptRequest, DemonstratedSkill
 from app.services.ai_adapter import AIServiceError
 from app.services.answer_analyzer import AnalysisUnavailableError, AnswerAnalyzer
+from app.services.serbian_text import serbian_latin, serbian_latin_for_evaluation
 from tests.fakes import FakeAIProvider
 
 
@@ -140,6 +141,78 @@ def test_canonical_exact_answer_is_accepted_when_variants_are_missing() -> None:
     assert ai.analysis_calls == 0
     assert result.verdict == "correct"
     assert result.accepted_alternatives == [canonical]
+
+
+@pytest.mark.parametrize("transcript,canonical", [
+    ("Plаtiću bankоvnom karticоm.", "Platiću bankovnom karticom."),
+    ("Platiću bankovnom kartiсom.", "Platiću bankovnom karticom."),
+    ("Poрijem vodu.", "Popijem vodu."),
+    ("Рopijem vodu.", "Popijem vodu."),
+    ("Попијем воду.", "Popijem vodu."),
+])
+def test_keyboard_homoglyphs_in_latin_words_match_canonical(
+    transcript: str, canonical: str,
+) -> None:
+    ai = FakeAIProvider(available=True)
+    result = AnswerAnalyzer(ai).analyze(
+        source_ru="Я заплачу или выпью воду.", transcript_sr=transcript,
+        canonical_sr=canonical, intended_sr_variants=[canonical], target_skills=[],
+        timing=CreateAttemptRequest(exercise_id="exercise", transcript_sr=transcript),
+    )
+
+    assert result.verdict == "correct"
+    assert result.grammar_score == 1
+    assert result.issues == []
+    assert ai.analysis_calls == 0
+
+
+def test_keyboard_normalizer_preserves_cyrillic_phonetics_and_real_typos() -> None:
+    assert serbian_latin_for_evaluation("Попијем воду.") == "Popijem vodu."
+    assert serbian_latin_for_evaluation("Сr") == "Sr"
+    assert serbian_latin_for_evaluation("Poвijem") == "Povijem"
+    assert serbian_latin("Poрijem") == "Porijem"  # STT conversion stays phonetic.
+    assert AnswerAnalyzer._normalize("Platicu") != AnswerAnalyzer._normalize("Platiću")
+    assert AnswerAnalyzer._normalize("Poяijem") != AnswerAnalyzer._normalize("Popijem")
+
+
+@pytest.mark.parametrize("source,expected", [
+    ("ab1с", "ab1s"),
+    ("ab_с", "ab_s"),
+    ("ááс", "áác"),
+    ("ab҃с", "ab҃c"),
+])
+def test_keyboard_context_uses_letter_runs_only(source: str, expected: str) -> None:
+    assert serbian_latin_for_evaluation(source) == expected
+
+
+def test_nonexact_manual_answer_is_cleaned_before_ai_analysis() -> None:
+    transcript = "Poрijem malo vode."
+    canonical = "Popijem vodu."
+    analysis = AnswerAnalysis(
+        verdict="mostly_correct", semantic_score=0.9, grammar_score=0.9,
+        lexical_score=0.8, naturalness_score=0.9, fluency_score=1,
+        corrected_sr=canonical, short_feedback_ru="Уберите лишнее слово.",
+        detailed_feedback_ru="Фраза содержит лишнее слово.",
+        issues=[AnswerIssue(type="vocabulary", skill_key="vocabulary.water", severity=0.2,
+                            confidence=0.9, evidence="malo vode", correction="vodu")],
+    )
+
+    class CapturingAI(FakeAIProvider):
+        def analyze_answer(self, **kwargs) -> AnswerAnalysis:
+            self.payload = kwargs
+            return super().analyze_answer(**kwargs)
+
+    ai = CapturingAI(available=True, analysis_result=analysis)
+    result = AnswerAnalyzer(ai).analyze(
+        source_ru="Я выпью воды.", transcript_sr=transcript,
+        canonical_sr=canonical, intended_sr_variants=[canonical],
+        target_skills=[{"key": "vocabulary.water", "category": "vocabulary", "title_ru": "Вода"}],
+        timing=CreateAttemptRequest(exercise_id="exercise", transcript_sr=transcript),
+    )
+
+    assert ai.analysis_calls == 1
+    assert ai.payload["transcript_sr"] == "Popijem malo vode."
+    assert result.verdict == "mostly_correct"
 
 
 @pytest.mark.parametrize("transcript", [
