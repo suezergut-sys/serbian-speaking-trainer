@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from difflib import SequenceMatcher
 
 from pydantic import ValidationError
@@ -8,6 +7,7 @@ from pydantic import ValidationError
 from app.config import Settings, get_settings
 from app.schemas import AnswerAnalysis, AnswerIssue, CreateAttemptRequest, DemonstratedSkill
 from app.services.ai_adapter import AIServiceError, StructuredAIProvider
+from app.services.serbian_text import normalized_serbian_words
 
 
 class AnalysisUnavailableError(RuntimeError):
@@ -30,45 +30,46 @@ class AnswerAnalyzer:
         canonical_sr: str | None = None,
     ) -> AnswerAnalysis:
         target_keys = list(dict.fromkeys(skill["key"] for skill in target_skills))
+        acceptable_variants = list(dict.fromkeys([
+            *([canonical_sr] if canonical_sr else []), *intended_sr_variants,
+        ]))
         normalized_transcript = self._normalize(transcript_sr)
         exact_variant = next(
             (
                 variant
-                for variant in intended_sr_variants
+                for variant in acceptable_variants
                 if normalized_transcript == self._normalize(variant)
             ),
             None,
         )
         if exact_variant is not None:
-            return self._exact_match(exact_variant, intended_sr_variants, target_keys, timing)
+            return self._exact_match(exact_variant, acceptable_variants, target_keys, timing)
 
         if not self.ai.is_available:
             raise AnalysisUnavailableError
-        try:
-            analysis = AnswerAnalysis.model_validate(
-                self.ai.analyze_answer(
-                    source_ru=source_ru,
-                    transcript_sr=transcript_sr,
-                    canonical_sr=canonical_sr,
-                    intended_sr_variants=intended_sr_variants,
-                    target_skills=target_skills,
-                    timings=self._timing_payload(timing),
+        # A structured response can still contradict the words that were actually transcribed.
+        # Retry once before any score or learner-model update can be persisted.
+        for _ in range(2):
+            try:
+                analysis = AnswerAnalysis.model_validate(
+                    self.ai.analyze_answer(
+                        source_ru=source_ru,
+                        transcript_sr=transcript_sr,
+                        canonical_sr=canonical_sr,
+                        intended_sr_variants=acceptable_variants,
+                        target_skills=target_skills,
+                        timings=self._timing_payload(timing),
+                    )
                 )
-            )
-        except (AIServiceError, ValidationError) as exc:
-            raise AnalysisUnavailableError from exc
+            except (AIServiceError, ValidationError) as exc:
+                raise AnalysisUnavailableError from exc
+            if self._response_is_grounded(analysis, transcript_sr, target_keys):
+                break
+        else:
+            raise AnalysisUnavailableError
 
         fluency = self._local_fluency(timing, analysis.fluency_score)
-        issues = [
-            issue
-            for issue in analysis.issues
-            if issue.skill_key in target_keys
-            and issue.severity > 0
-            and (
-                issue.correction is None
-                or self._normalize(issue.evidence) != self._normalize(issue.correction)
-            )
-        ]
+        issues = analysis.issues
         demonstrated = [skill for skill in analysis.demonstrated_skills if skill.skill_key in target_keys]
         demonstrated_keys = {skill.skill_key for skill in demonstrated}
         default_result = {"correct": "strong", "mostly_correct": "weak", "needs_work": "failed"}[analysis.verdict]
@@ -85,7 +86,74 @@ class AnswerAnalyzer:
                 "demonstrated_skills": demonstrated,
             }
         )
-        return self._align_with_canonical(analysis, canonical_sr)
+        analysis = self._align_with_canonical(analysis, canonical_sr)
+        return self._ground_token_feedback(analysis, canonical_sr)
+
+    @classmethod
+    def _response_is_grounded(
+        cls, analysis: AnswerAnalysis, transcript_sr: str, target_keys: list[str],
+    ) -> bool:
+        transcript_words = f" {cls._normalize(transcript_sr)} "
+        for issue in analysis.issues:
+            evidence = cls._normalize(issue.evidence)
+            if (
+                issue.skill_key not in target_keys
+                or issue.severity <= 0
+                or not evidence
+                or f" {evidence} " not in transcript_words
+                or (issue.correction is not None and evidence == cls._normalize(issue.correction))
+            ):
+                return False
+        if analysis.verdict == "correct" and analysis.issues:
+            return False
+        if (
+            analysis.verdict != "correct"
+            and not analysis.issues
+            and (
+                target_keys
+                or cls._normalize(analysis.corrected_sr) == cls._normalize(transcript_sr)
+            )
+        ):
+            return False
+        return True
+
+    @classmethod
+    def _ground_token_feedback(
+        cls, analysis: AnswerAnalysis, canonical_sr: str | None,
+    ) -> AnswerAnalysis:
+        if not canonical_sr or not analysis.issues:
+            return analysis
+        local_word_correction = any(
+            issue.correction is not None
+            and " " not in (evidence := cls._normalize(issue.evidence))
+            and " " not in (correction := cls._normalize(issue.correction))
+            and f" {correction} " in f" {cls._normalize(canonical_sr)} "
+            and SequenceMatcher(None, evidence, correction).ratio() >= 0.8
+            for issue in analysis.issues
+        )
+        if not local_word_correction:
+            return analysis
+        # For a local word correction, the structured pair is the only supported
+        # explanation. Free-form feedback may claim a different letter was spoken.
+        details: list[str] = []
+        for position, issue in enumerate(analysis.issues):
+            part = (
+                f"В распознанном ответе «{issue.evidence}»; "
+                f"исправленный вариант — «{issue.correction}»."
+                if issue.correction else f"Проверьте фрагмент «{issue.evidence}»."
+            )
+            remaining = len(analysis.issues) - position
+            if len(" ".join([*details, part])) > 1900:
+                details.append(f"Есть ещё {remaining} замечаний в списке ошибок.")
+                break
+            details.append(part)
+        return analysis.model_copy(update={
+            "short_feedback_ru": (
+                "В ответе есть неточность в одном слове." if len(analysis.issues) == 1
+                else "В ответе есть несколько неточностей."
+            ),
+            "detailed_feedback_ru": " ".join(details),
+        })
 
     @classmethod
     def _align_with_canonical(
@@ -274,4 +342,4 @@ class AnswerAnalyzer:
 
     @staticmethod
     def _normalize(value: str) -> str:
-        return re.sub(r"[^a-zčćžšđ0-9]+", " ", value.casefold()).strip()
+        return normalized_serbian_words(value)

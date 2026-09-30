@@ -1,5 +1,5 @@
 import type { Attempt } from "./types/training";
-import { displaySerbian, type SerbianAlphabet } from "./serbianScript";
+import { displaySerbian, toSerbianLatin, type SerbianAlphabet } from "./serbianScript";
 
 type MarkedRange = { start: number; end: number; explanation: string };
 
@@ -10,8 +10,9 @@ function evidenceRanges(answer: string, attempt: Attempt): MarkedRange[] {
   const isWord = (character: string | undefined) => Boolean(character && /[\p{L}\p{N}]/u.test(character));
   for (const issue of attempt.analysis.issues) {
     if (issue.severity <= 0) continue;
-    const evidence = issue.evidence.trim();
+    const evidence = toSerbianLatin(issue.evidence.trim());
     if (!evidence) continue;
+    if (issue.correction && evidence.toLocaleLowerCase("sr-Latn") === toSerbianLatin(issue.correction.trim()).toLocaleLowerCase("sr-Latn")) continue;
     const start = lowerAnswer.indexOf(evidence.toLocaleLowerCase("sr-Latn"));
     const end = start + evidence.length;
     if (start < 0 || lowerAnswer.indexOf(evidence.toLocaleLowerCase("sr-Latn"), end) >= 0) continue;
@@ -23,15 +24,16 @@ function evidenceRanges(answer: string, attempt: Attempt): MarkedRange[] {
 }
 
 function HighlightedAnswer({ answer, attempt, alphabet }: { answer: string; attempt: Attempt; alphabet: SerbianAlphabet }) {
-  const ranges = evidenceRanges(answer, attempt);
+  const latinAnswer = toSerbianLatin(answer);
+  const ranges = evidenceRanges(latinAnswer, attempt);
   const content: React.ReactNode[] = [];
   let cursor = 0;
   for (const [index, range] of ranges.entries()) {
-    if (cursor < range.start) content.push(<span key={`text-${index}`}>{displaySerbian(answer.slice(cursor, range.start), alphabet)}</span>);
-    content.push(<mark className="answer-mark answer-mark--issue" title={displaySerbian(range.explanation, alphabet)} key={`issue-${index}`}>{displaySerbian(answer.slice(range.start, range.end), alphabet)}</mark>);
+    if (cursor < range.start) content.push(<span key={`text-${index}`}>{displaySerbian(latinAnswer.slice(cursor, range.start), alphabet)}</span>);
+    content.push(<mark className="answer-mark answer-mark--issue" title={displaySerbian(range.explanation, alphabet)} key={`issue-${index}`}>{displaySerbian(latinAnswer.slice(range.start, range.end), alphabet)}</mark>);
     cursor = range.end;
   }
-  content.push(<span key="tail">{displaySerbian(answer.slice(cursor), alphabet)}</span>);
+  content.push(<span key="tail">{displaySerbian(latinAnswer.slice(cursor), alphabet)}</span>);
   return <span className="result-phrase__text" lang={alphabet === "cyrillic" ? "sr-Cyrl" : "sr-Latn"}>{content}</span>;
 }
 

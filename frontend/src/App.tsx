@@ -147,6 +147,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const [answer, setAnswer] = useState("");
   const [hasTranscript, setHasTranscript] = useState(false);
   const [alphabet, setAlphabet] = useState<SerbianAlphabet>(() => readSerbianAlphabet(account.id));
+  const alphabetRef = useRef(alphabet);
   const [attempt, setAttempt] = useState<Attempt>();
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(false);
@@ -197,6 +198,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   }
 
   function changeAlphabet(next: SerbianAlphabet) {
+    alphabetRef.current = next;
     setAnswer((current) => displaySerbian(current, next));
     setAlphabet(next);
     saveSerbianAlphabet(account.id, next);
@@ -303,7 +305,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       const transcript = await transcribeAudio(exerciseId, recording.audio, controller.signal);
       if (voiceEpochRef.current !== epoch) return;
       voiceTimingRef.current = recording.timing;
-      setAnswer(displaySerbian(transcript.text, alphabet));
+      setAnswer(displaySerbian(transcript.text, alphabetRef.current));
       setHasTranscript(true);
       setVoiceState("idle");
     } catch {

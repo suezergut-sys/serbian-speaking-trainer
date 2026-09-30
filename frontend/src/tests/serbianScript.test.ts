@@ -15,4 +15,13 @@ describe("Serbian alphabet conversion", () => {
     expect(displaySerbianInRussianText("Лучше сказать: Želim da otvorim račun.", "cyrillic"))
       .toBe("Лучше сказать: Желим да отворим рачун.");
   });
+
+  it("normalizes decomposed accents before display and submission conversion", () => {
+    const decomposed = "Platic\u0301u bankovnom karticom. Z\u030celim rac\u030cun.";
+    expect(toSerbianCyrillic(decomposed)).toBe("Платићу банковном картицом. Желим рачун.");
+    expect(toSerbianLatin("Платићу банковном картицом.")).toBe("Platiću bankovnom karticom.");
+    expect(displaySerbian(decomposed, "latin")).toBe("Platiću bankovnom karticom. Želim račun.");
+    expect(displaySerbianInRussianText(`Можно сказать: ${decomposed}`, "latin"))
+      .toBe("Можно сказать: Platiću bankovnom karticom. Želim račun.");
+  });
 });
