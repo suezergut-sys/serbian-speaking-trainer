@@ -220,10 +220,6 @@ button { cursor: pointer; }
 .correction { margin: .8rem 0; padding: .8rem; border: 1px solid rgba(58, 208, 155, .2); border-radius: 9px; background: rgba(35, 170, 127, .08); }
 .correction small, .correction span { display: block; }
 .correction small { margin-bottom: .3rem; color: #64c9a4; font-size: .6rem; text-transform: uppercase; }
-.mastery-list { display: grid; gap: .5rem; margin: .9rem 0; }
-.mastery-list > div { display: grid; grid-template-columns: minmax(110px,1fr) 1.4fr auto; gap: .6rem; align-items: center; font-size: .65rem; }
-.mastery-list > div > div { height: 4px; overflow: hidden; border-radius: 3px; background: rgba(255,255,255,.08); }
-.mastery-list i { display: block; height: 100%; background: #49b3ff; }
 .feedback details { color: #8da8cb; font-size: .72rem; }
 .feedback summary { cursor: pointer; color: #5eb7ff; font-size: 1.15rem; font-weight: 700; }
 .score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; margin: .8rem 0; }

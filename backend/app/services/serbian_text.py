@@ -17,10 +17,52 @@ _CYRILLIC_TO_LATIN = str.maketrans({
     "џ": "dž", "ш": "š",
 })
 
+# A Russian keyboard can insert visually Latin letters inside an otherwise Latin
+# word. These ambiguous letters need visual interpretation only in that context.
+_VISUAL_CYRILLIC_TO_LATIN = str.maketrans({
+    "А": "A", "В": "B", "Е": "E", "К": "K", "М": "M", "Н": "H",
+    "О": "O", "Р": "P", "С": "C", "Т": "T", "У": "Y", "Х": "X",
+    "а": "a", "е": "e", "о": "o", "р": "p", "с": "c", "у": "y", "х": "x",
+})
+
 
 def serbian_latin(text: str) -> str:
     """Use one Unicode form and Serbian Latin script for internal comparison."""
     return unicodedata.normalize("NFC", text).translate(_CYRILLIC_TO_LATIN)
+
+
+def serbian_latin_for_evaluation(text: str) -> str:
+    """Correct visual keyboard homoglyphs in Latin-dominant words only."""
+    composed = unicodedata.normalize("NFC", text)
+
+    def convert_token(token: str) -> str:
+        latin = sum(
+            unicodedata.category(char).startswith("L")
+            and unicodedata.name(char, "").startswith("LATIN ")
+            for char in token
+        )
+        cyrillic = sum(
+            unicodedata.category(char).startswith("L")
+            and unicodedata.name(char, "").startswith("CYRILLIC ")
+            for char in token
+        )
+        if latin > cyrillic:
+            token = token.translate(_VISUAL_CYRILLIC_TO_LATIN)
+        return token.translate(_CYRILLIC_TO_LATIN)
+
+    result: list[str] = []
+    token: list[str] = []
+    for char in composed:
+        if unicodedata.category(char).startswith(("L", "M")):
+            token.append(char)
+        else:
+            if token:
+                result.append(convert_token("".join(token)))
+                token.clear()
+            result.append(char)
+    if token:
+        result.append(convert_token("".join(token)))
+    return "".join(result)
 
 
 def has_unexpected_letter_script(text: str) -> bool:
@@ -37,4 +79,4 @@ def has_unexpected_letter_script(text: str) -> bool:
 def normalized_serbian_words(text: str) -> str:
     # Keep unfamiliar letters visible: dropping them could make a bad transcript
     # appear identical to the canonical answer.
-    return re.sub(r"[\W_]+", " ", serbian_latin(text).casefold()).strip()
+    return re.sub(r"[\W_]+", " ", serbian_latin_for_evaluation(text).casefold()).strip()

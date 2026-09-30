@@ -508,10 +508,30 @@ describe("App", () => {
     expect(screen.getByText("Вариант перевода")).toBeInTheDocument();
     expect(screen.getByText("Ваш вариант")).toBeInTheDocument();
     expect(screen.getByText("Ваш вариант").parentElement).toHaveTextContent("Želim da otvorim račun.");
-    expect(screen.getByLabelText("Прогресс навыков")).toHaveTextContent("Модальные глаголы");
+    expect(screen.queryByLabelText("Прогресс навыков")).not.toBeInTheDocument();
+    expect(screen.getByText("91%")).toBeInTheDocument();
     fireEvent.click(screen.getByText("Разбор"));
     expect(screen.getByText("Смысл и конструкция переданы правильно.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Следующая фраза/ })).toBeEnabled();
+  });
+
+  it("submits a manually edited answer with mixed keyboard layout as Serbian Latin", async () => {
+    voiceMock.available = true;
+    const fetchMock = mockApi();
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    const input = await recordAnswer();
+    fireEvent.change(input, { target: { value: "Želim da otvorim račuн. Platiću kartiсom." } });
+    expect(input).toHaveValue("Želim da otvorim račuн. Platiću kartiсom.");
+    fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
+
+    await waitFor(() => {
+      const call = fetchMock.mock.calls.find(([url]) => url === "/api/attempts");
+      expect(JSON.parse(call?.[1]?.body as string).transcript_sr)
+        .toBe("Želim da otvorim račun. Platiću karticom.");
+    });
   });
 
   it("keeps rendering a stale attempt response without learner updates", async () => {

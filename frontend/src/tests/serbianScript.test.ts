@@ -24,4 +24,18 @@ describe("Serbian alphabet conversion", () => {
     expect(displaySerbianInRussianText(`Можно сказать: ${decomposed}`, "latin"))
       .toBe("Можно сказать: Platiću bankovnom karticom. Želim račun.");
   });
+
+  it("uses visual keyboard equivalents only in Latin-majority words", () => {
+    expect(toSerbianLatin("kartiсom pуt хotel AВЕКМНОРСТХУbcdefghijklm"))
+      .toBe("karticom pyt xotel ABEKMHOPCTXYbcdefghijklm");
+    expect(toSerbianLatin("срх сpх ááс áс ab1с ab_с abс\u0483"))
+      .toBe("srh sph áác ás ab1s ab_s abc\u0483");
+    expect(displaySerbian("kartiсom", "cyrillic")).toBe("картицом");
+  });
+
+  it("preserves genuine Serbian spelling differences and unknown Latin letters", () => {
+    expect(toSerbianLatin("Alllergičan kartićom")).toBe("Alllergičan kartićom");
+    expect(toSerbianLatin("kartiћom")).toBe("kartićom");
+    expect(displaySerbian("QX račun", "cyrillic")).toBe("QX рачун");
+  });
 });
