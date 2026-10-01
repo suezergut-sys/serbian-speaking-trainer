@@ -14,7 +14,7 @@
 - [x] Mock browser regression 13/13: результаты/домик 2, lifecycle 2, практика и алфавиты 3, сеть 6.
 - [x] Backend statistics API 5/5; полный pytest exit 0, PostgreSQL-случаи пропущены без DSN. Новые проверки защищают timezone/month boundary, узкий SQL SELECT и чужую stale-topic ссылку; прежний payload остаётся прежним.
 - [x] Local web 3/3 с обновлённым backend: обычный цикл, replay потерянного ответа без дубликата, задержанный hint-save без блокировки оценки.
-- [ ] Записать release SHA, web/backend Ready deployments и production smoke.
+- [x] Реализация опубликована через [PR #43](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/43), SHA `bd7e9fb1f7e13644e16182d6cdab3f713c56948c`; web/backend READY и production aliases подтверждены.
 - [ ] Проверить изменения на следующем явно заказанном Android APK и физическом телефоне.
 
 Review кода выполнено оркестратором: проверены ограниченный word alignment, отсутствие сравнения с canonical, cleanup при home, все callers проекций, SQL tenant filter/OUTER JOIN и прежнее преобразование timezone. Отдельный reviewer недоступен из-за лимита agent threads; component/API/E2E gates выполнены. Миграций нет.
@@ -38,3 +38,10 @@ SQL-текст не является объёмом данных, получен
 ## Релиз и остаток
 
 Android версия/code остаются 1.16/26; Capacitor sync и APK не выполнялись. Клиентские изменения отмечаются в backlog для отдельного будущего выпуска. Статусы остальных задач — [audit-roadmap.md](audit-roadmap.md): production pooler concurrency, прочие payload/plans, настоящие Android permissions/Back/network и ручная приёмка остаются открытыми.
+
+## Production — 01.10.2026
+
+- Web: `dpl_CZdQEBkJBoQTu2Gh3ga7fvXFinMM`, [deployment](https://serbian-speaking-trainer-k1tsuex9x-suezerguts-projects.vercel.app), [production](https://serbian-speaking-trainer.vercel.app); READY, alias на runtime SHA выше. Cloud bundle `index-B-N1XTYz.js`, CSS `index-Udkl9itE.css`: word alignment присутствует, quick chooser отсутствует.
+- Backend: `dpl_DNg43TSpdeP6WYM3soDrqn4uyUTv`, [deployment](https://serbian-speaking-trainer-6oln9igq2-suezerguts-projects.vercel.app), production alias `https://serbian-speaking-trainer-api.vercel.app`; READY на том же SHA. Build завершился, новых миграций нет, seed добавил 0 строк.
+- Public Chrome 154: `/`, privacy, terms — 200; Google login виден; testlab.html — 404, lab configuration отсутствует; page errors — 0. API health — 200, topics и monthly stats без авторизации — 401.
+- Первый smoke ожидал локальное имя JS bundle; cloud build имеет другое имя, проверка скорректирована по реальным cloud build logs и повторена успешно. Runtime SHA/новый CSS/word algorithm/отсутствие chooser подтверждены. Авторизованная production практика/статистика не проверялись; локальные mock/live тесты не подменяют этот факт.

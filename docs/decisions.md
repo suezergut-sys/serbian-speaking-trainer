@@ -317,3 +317,5 @@
 
 - Подсветка выравнивает только evidence/correction по словам, исключая неизменённые слова; prompt требует минимального evidence. Жёлтый цвет не обозначает порядок слов отдельно. Домик native UI открывает панель тем, chooser удалён; session/draft и остановка voice сохранены.
 - Месячная статистика использует scalar projection timestamps/score, прежний HTTP JSON/timezone остаются; owner-scoped OUTER JOIN скрывает чужое название темы при stale reference. Схема БД не менялась. Проверки и paired SQLite benchmark: [p1-word-highlights-statistics-checkpoint.md](p1-word-highlights-statistics-checkpoint.md). Android 1.16/code 26 и APK не менялись.
+
+- PR #43 опубликован: runtime SHA `bd7e9fb1f7e13644e16182d6cdab3f713c56948c`, web/backend READY, aliases и публичный production Chrome/API smoke подтверждены. Авторизованная production статистика/практика, Android-перенос и ручная приёмка остаются открытыми. [Доказательства](p1-word-highlights-statistics-checkpoint.md).
