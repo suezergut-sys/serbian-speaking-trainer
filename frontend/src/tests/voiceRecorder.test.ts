@@ -31,6 +31,7 @@ class FakeMediaRecorder extends EventTarget {
 }
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   if (originalMediaDevices) Object.defineProperty(navigator, "mediaDevices", originalMediaDevices);
@@ -83,5 +84,66 @@ describe("VoiceRecorder", () => {
     await started;
 
     expect(stopTrack).toHaveBeenCalledOnce();
+  });
+
+  it("releases a microphone stream that resolves after selection times out", async () => {
+    vi.useFakeTimers();
+    let resolveStream!: (stream: MediaStream) => void;
+    const stopTrack = vi.fn();
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: { getUserMedia: vi.fn(() => new Promise<MediaStream>((resolve) => { resolveStream = resolve; })) },
+    });
+    vi.stubGlobal("MediaRecorder", FakeMediaRecorder);
+    const recorder = new VoiceRecorder();
+
+    const started = recorder.start();
+    const failure = expect(started).rejects.toThrow("Microphone selection timed out");
+    await vi.advanceTimersByTimeAsync(30_000);
+    await failure;
+    resolveStream({ getTracks: () => [{ stop: stopTrack }] } as unknown as MediaStream);
+    await Promise.resolve();
+
+    expect(stopTrack).toHaveBeenCalledOnce();
+  });
+
+  it("releases tracks when MediaRecorder never emits stop", async () => {
+    vi.useFakeTimers();
+    const stopTrack = vi.fn();
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: { getUserMedia: vi.fn(async () => ({ getTracks: () => [{ stop: stopTrack }] } as unknown as MediaStream)) },
+    });
+    class NoStopEventRecorder extends FakeMediaRecorder {
+      stop() { this.state = "inactive"; }
+    }
+    vi.stubGlobal("MediaRecorder", NoStopEventRecorder);
+    const recorder = new VoiceRecorder();
+    await recorder.start();
+
+    const finished = recorder.finish();
+    const failure = expect(finished).rejects.toThrow("Microphone stop timed out");
+    await vi.advanceTimersByTimeAsync(30_000);
+    await failure;
+
+    expect(stopTrack).toHaveBeenCalled();
+    await expect(recorder.finish()).rejects.toThrow("Voice recording is not active");
+  });
+
+  it("releases tracks when MediaRecorder.stop throws", async () => {
+    const stopTrack = vi.fn();
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: { getUserMedia: vi.fn(async () => ({ getTracks: () => [{ stop: stopTrack }] } as unknown as MediaStream)) },
+    });
+    class ThrowingStopRecorder extends FakeMediaRecorder {
+      stop(): void { throw new Error("Recorder stopped unexpectedly"); }
+    }
+    vi.stubGlobal("MediaRecorder", ThrowingStopRecorder);
+    const recorder = new VoiceRecorder();
+    await recorder.start();
+
+    await expect(recorder.finish()).rejects.toThrow("Recorder stopped unexpectedly");
+    expect(stopTrack).toHaveBeenCalled();
   });
 });

@@ -64,9 +64,13 @@ adb -s emulator-5554 install -r artifacts/testlab/SerboTalk-andorid16-1.15.apk
 
 ## Проверки сетевых сбоев
 
-Mock browser suite: из `frontend` запустите `node node_modules/@playwright/test/cli.js test network.spec.mjs`. Для настоящего локального backend используйте `scripts/run-testlab.ps1 -Platform web -Suite network`; `-Suite all` включает также обычную практику. Сначала пересоберите текущий testlab web через `scripts/build-testlab-web.ps1`.
+Mock browser suite: из `frontend` запустите `node node_modules/@playwright/test/cli.js test e2e/network.spec.mjs`. Для настоящего локального backend используйте `scripts/run-testlab.ps1 -Platform web -Suite network`; `-Suite all` включает также обычную практику. Сначала пересоберите текущий testlab web через `scripts/build-testlab-web.ps1`.
 
 Сбой после сохранения попытки моделируется отказом ответа, а не повторной AI-оценкой. Проверяются прежний request ID, единственная сохранённая попытка и неизменное использование квоты при replay. Credentials читаются runner из игнорируемого env и остаются в памяти. Этот suite проверяет восстановление запросов; он не измеряет качество STT, физическое отключение Android-сети или background/resume. Доказательства: [p1-network-checkpoint.md](p1-network-checkpoint.md).
+
+## Проверки lifecycle
+
+Из `frontend`: `node node_modules/@playwright/test/cli.js test e2e/lifecycle.spec.mjs`. Изолированный mock browser suite моделирует hidden/visible, считает освобождённые tracks и проверяет draft/поздний STT. Только синтетические memory Blob, без реального микрофона. Native appStateChange и свайп проверяются component mocks; реальные Android-события проверяются после отдельного переноса в APK. [Результаты и ограничения](p1-lifecycle-checkpoint.md).
 
 ## Что сохраняется
 

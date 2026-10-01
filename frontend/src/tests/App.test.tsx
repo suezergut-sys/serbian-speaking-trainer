@@ -5,19 +5,36 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const authEvents = vi.hoisted(() => ({
   notify: undefined as undefined | ((session: { access_token: string } | null) => void),
 }));
-const voiceMock = vi.hoisted(() => ({ available: false, failStart: false }));
+const voiceMock = vi.hoisted(() => ({ available: false, failStart: false, stops: 0, startGate: undefined as Promise<void> | undefined }));
+const nativeAppEvents = vi.hoisted(() => ({
+  listener: undefined as ((state: { isActive: boolean }) => void) | undefined,
+  lastListener: undefined as ((state: { isActive: boolean }) => void) | undefined,
+  registrationGate: undefined as Promise<void> | undefined,
+  removals: 0,
+}));
+
+vi.mock("@capacitor/app", () => ({
+  App: {
+    addListener: async (_event: string, listener: (state: { isActive: boolean }) => void) => {
+      if (nativeAppEvents.registrationGate) await nativeAppEvents.registrationGate;
+      nativeAppEvents.listener = listener;
+      nativeAppEvents.lastListener = listener;
+      return { remove: async () => { nativeAppEvents.removals += 1; nativeAppEvents.listener = undefined; } };
+    },
+  },
+}));
 
 vi.mock("../voiceRecorder", () => ({
   supportsVoiceRecording: () => voiceMock.available,
   VoiceRecorder: class {
-    async start() { if (voiceMock.failStart) throw new Error("Microphone denied"); }
+    async start() { if (voiceMock.startGate) await voiceMock.startGate; if (voiceMock.failStart) throw new Error("Microphone denied"); }
     async finish() {
       return {
         audio: new Blob([], { type: "audio/webm" }),
         timing: { reaction_ms: null, speech_duration_ms: 1000, longest_pause_ms: null, pause_count: null, timings: { source: "test" } },
       };
     }
-    stop() { return undefined; }
+    stop() { voiceMock.stops += 1; }
   },
 }));
 
@@ -42,6 +59,12 @@ describe("App", () => {
     window.localStorage.clear();
     voiceMock.available = false;
     voiceMock.failStart = false;
+    voiceMock.stops = 0;
+    voiceMock.startGate = undefined;
+    nativeAppEvents.listener = undefined;
+    nativeAppEvents.lastListener = undefined;
+    nativeAppEvents.registrationGate = undefined;
+    nativeAppEvents.removals = 0;
     vi.restoreAllMocks();
   });
 
@@ -470,13 +493,16 @@ describe("App", () => {
     expect(await screen.findByText("Желим да отворим рачун.")).toBeInTheDocument();
   });
 
-  it("uses the latest alphabet when an in-flight transcription finishes", async () => {
+  it("ignores a transcription after leaving practice and uses the new alphabet on retry", async () => {
     voiceMock.available = true;
     const baseFetch = mockApi();
     let finishTranscription!: (value: { ok: boolean; status: number; json: () => Promise<unknown> }) => void;
     const transcription = new Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>((resolve) => { finishTranscription = resolve; });
+    let transcriptionCalls = 0;
     const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
-      input.toString() === "/api/transcriptions" ? transcription : baseFetch(input, init));
+      input.toString() === "/api/transcriptions"
+        ? ++transcriptionCalls === 1 ? transcription : Promise.resolve({ ok: true, status: 200, json: async () => ({ text: "Platic\u0301u bankovnom karticom." }) })
+        : baseFetch(input, init));
     vi.stubGlobal("fetch", fetchMock);
     render(<App />);
 
@@ -488,6 +514,9 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("radio", { name: /Кириллица/ }));
     await act(async () => { finishTranscription({ ok: true, status: 200, json: async () => ({ text: "Platic\u0301u bankovnom karticom." }) }); });
     fireEvent.click(screen.getByRole("button", { name: "Практика" }));
+    expect(screen.queryByLabelText("Ваш ответ")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Ответить голосом" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Завершить запись" }));
     const answer = await screen.findByLabelText("Ваш ответ");
     expect(answer).toHaveValue("Платићу банковном картицом.");
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
@@ -551,7 +580,7 @@ describe("App", () => {
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
     const answer = await recordAnswer();
     fireEvent.change(answer, { target: { value: "Moj odgovor" } });
-    fireEvent.click(screen.getByRole("button", { name: "Ответить голосом" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Ответить голосом" }));
     expect(answer).toHaveValue("Moj odgovor");
     expect(screen.getByRole("button", { name: "Проверить ответ" })).toBeDisabled();
     fireEvent.click(await screen.findByRole("button", { name: "Завершить запись" }));
@@ -560,7 +589,7 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Проверить ответ" })).toBeEnabled();
 
     voiceMock.failStart = true;
-    fireEvent.click(screen.getByRole("button", { name: "Ответить голосом" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Ответить голосом" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Не удалось получить доступ к микрофону");
     expect(answer).toHaveValue("Moj odgovor");
   });
@@ -585,6 +614,186 @@ describe("App", () => {
     await act(async () => { settleLate({ ok: true, status: 200, json: async () => ({ text: "Stari odgovor" }) }); });
     expect(answer).toHaveValue("Ručni odgovor");
     expect(screen.getByRole("button", { name: "Проверить ответ" })).toBeEnabled();
+  });
+
+  it("releases the microphone on web background and keeps the edited draft on resume", async () => {
+    voiceMock.available = true;
+    vi.stubGlobal("fetch", mockApi());
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    const answer = await recordAnswer();
+    fireEvent.change(answer, { target: { value: "Moj odgovor" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ответить голосом" }));
+    await screen.findByRole("button", { name: "Завершить запись" });
+    const stopsBeforeBackground = voiceMock.stops;
+    const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
+
+    fireEvent(document, new Event("visibilitychange"));
+    expect(voiceMock.stops).toBe(stopsBeforeBackground + 1);
+    expect(screen.getByRole("alert")).toHaveTextContent("Запись прервана");
+    expect(screen.getByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
+    expect(answer).toHaveValue("Moj odgovor");
+    expect(screen.getByRole("button", { name: "Ответить голосом" })).toBeEnabled();
+
+    visibility.mockReturnValue("visible");
+    fireEvent(document, new Event("visibilitychange"));
+    expect(answer).toHaveValue("Moj odgovor");
+    expect(voiceMock.stops).toBe(stopsBeforeBackground + 1);
+  });
+
+  it("stops hidden web recording when leaving practice and preserves the draft on return", async () => {
+    voiceMock.available = true;
+    vi.stubGlobal("fetch", mockApi());
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    const answer = await recordAnswer();
+    fireEvent.change(answer, { target: { value: "Moj odgovor" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ответить голосом" }));
+    await screen.findByRole("button", { name: "Завершить запись" });
+    const stopsBeforeNavigation = voiceMock.stops;
+
+    fireEvent.click(screen.getByRole("button", { name: "Настройки" }));
+    expect(voiceMock.stops).toBe(stopsBeforeNavigation + 1);
+    fireEvent.click(screen.getByRole("button", { name: "Практика" }));
+
+    expect(screen.getByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
+    expect(screen.getByLabelText("Ваш ответ")).toHaveValue("Moj odgovor");
+    expect(screen.getByRole("alert")).toHaveTextContent("Запись прервана");
+    expect(screen.getByRole("button", { name: "Ответить голосом" })).toBeEnabled();
+    expect(voiceMock.stops).toBe(stopsBeforeNavigation + 1);
+  });
+
+  it("stops a microphone request that completes after the page is hidden", async () => {
+    voiceMock.available = true;
+    let allowMicrophone!: () => void;
+    voiceMock.startGate = new Promise<void>((resolve) => { allowMicrophone = resolve; });
+    vi.stubGlobal("fetch", mockApi());
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Ответить голосом" }));
+    expect(await screen.findByRole("button", { name: "Остановить запись" })).toBeInTheDocument();
+    vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
+
+    fireEvent(document, new Event("visibilitychange"));
+    await act(async () => { allowMicrophone(); });
+
+    expect(voiceMock.stops).toBe(1);
+    expect(screen.queryByRole("button", { name: "Завершить запись" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ответить голосом" })).toBeEnabled();
+    expect(screen.getByRole("alert")).toHaveTextContent("Запись прервана");
+  });
+
+  it("ignores a transcription returned after backgrounding and keeps manual recovery available", async () => {
+    voiceMock.available = true;
+    const baseFetch = mockApi();
+    let completeTranscription!: (response: { ok: boolean; status: number; json: () => Promise<unknown> }) => void;
+    const pendingTranscription = new Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>((resolve) => { completeTranscription = resolve; });
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+      input.toString() === "/api/transcriptions" ? pendingTranscription : baseFetch(input, init));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Ответить голосом" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Завершить запись" }));
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.toString() === "/api/transcriptions")).toBe(true));
+    const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
+
+    fireEvent(document, new Event("visibilitychange"));
+    await act(async () => { completeTranscription({ ok: true, status: 200, json: async () => ({ text: "Stari odgovor" }) }); });
+    visibility.mockReturnValue("visible");
+    fireEvent(document, new Event("visibilitychange"));
+
+    expect(screen.queryByText("Stari odgovor")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Ваш ответ")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Ввести ответ вручную" }));
+    expect(screen.getByLabelText("Ваш ответ")).toBeInTheDocument();
+  });
+
+  it("stops native recording on app background and removes its listener on unmount", async () => {
+    vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(true);
+    voiceMock.available = true;
+    vi.stubGlobal("fetch", mockApi());
+    const rendered = render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Ответить голосом" }));
+    await screen.findByRole("button", { name: "Завершить запись" });
+    await waitFor(() => expect(nativeAppEvents.listener).toBeDefined());
+
+    act(() => { nativeAppEvents.listener?.({ isActive: false }); });
+    expect(voiceMock.stops).toBe(1);
+    expect(screen.getByRole("alert")).toHaveTextContent("Запись прервана");
+    expect(screen.getByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
+    rendered.unmount();
+    await waitFor(() => expect(nativeAppEvents.removals).toBe(1));
+  });
+
+  it("removes a native listener that registers after the trainer unmounts", async () => {
+    vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(true);
+    voiceMock.available = true;
+    let completeRegistration!: () => void;
+    nativeAppEvents.registrationGate = new Promise<void>((resolve) => { completeRegistration = resolve; });
+    vi.stubGlobal("fetch", mockApi());
+    const rendered = render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Ответить голосом" }));
+    await screen.findByRole("button", { name: "Завершить запись" });
+
+    rendered.unmount();
+    const stopsAfterUnmount = voiceMock.stops;
+    await act(async () => { completeRegistration(); });
+    await waitFor(() => expect(nativeAppEvents.removals).toBe(1));
+    nativeAppEvents.lastListener?.({ isActive: false });
+    expect(voiceMock.stops).toBe(stopsAfterUnmount);
+  });
+
+  it("stops recording when the native pager scrolls away from practice", async () => {
+    vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(true);
+    voiceMock.available = true;
+    vi.stubGlobal("fetch", mockApi());
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Ответить голосом" }));
+    await screen.findByRole("button", { name: "Завершить запись" });
+    const pager = document.querySelector<HTMLElement>(".android-pager")!;
+    Object.defineProperty(pager, "clientWidth", { configurable: true, value: 400 });
+    pager.scrollLeft = 800;
+
+    fireEvent.scroll(pager);
+    expect(voiceMock.stops).toBe(1);
+    fireEvent.click(screen.getByRole("button", { name: "Тренировка" }));
+    expect(screen.getByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("Запись прервана");
+    expect(screen.getByRole("button", { name: "Ответить голосом" })).toBeEnabled();
+  });
+
+  it("lets an in-flight answer check finish after backgrounding without submitting twice", async () => {
+    voiceMock.available = true;
+    const baseFetch = mockApi();
+    let finishAttempt!: (response: { ok: boolean; status: number; json: () => Promise<unknown> }) => void;
+    const pendingAttempt = new Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>((resolve) => { finishAttempt = resolve; });
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+      input.toString() === "/api/attempts" ? pendingAttempt : baseFetch(input, init));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    const answer = await recordAnswer();
+    fireEvent.change(answer, { target: { value: "Moj odgovor" } });
+    fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url.toString() === "/api/attempts")).toHaveLength(1));
+    const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
+
+    fireEvent(document, new Event("visibilitychange"));
+    expect(screen.getByLabelText("Ваш ответ")).toHaveValue("Moj odgovor");
+    const response = await baseFetch("/api/attempts", { method: "POST" });
+    await act(async () => { finishAttempt(response); });
+    visibility.mockReturnValue("visible");
+    fireEvent(document, new Event("visibilitychange"));
+
+    expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
+    const attempts = fetchMock.mock.calls.filter(([url]) => url.toString() === "/api/attempts");
+    expect(attempts).toHaveLength(1);
+    expect(JSON.parse(attempts[0][1]?.body as string).transcript_sr).toBe("Moj odgovor");
   });
 
   it("creates a persisted empty custom topic", async () => {

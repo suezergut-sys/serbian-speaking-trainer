@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 import type { Session } from "@supabase/supabase-js";
 
@@ -236,6 +237,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
   function showAndroidPanel(panel: number) {
     const pager = androidPagerRef.current;
+    if (panel !== 1) interruptVoice();
     setAndroidPanel(panel);
     if (!pager) return;
     const left = panel * pager.clientWidth;
@@ -336,13 +338,47 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const isReviewMode = session?.topic.id === "review-phrases";
   const voiceBusy = voiceState === "connecting" || voiceState === "recording" || voiceState === "transcribing";
 
-  function stopVoice() {
+  const stopVoice = useCallback(() => {
     voiceEpochRef.current += 1;
     voiceControllerRef.current?.abort();
     voiceControllerRef.current = undefined;
     if (voiceRef.current) { voiceRef.current.stop(); voiceRef.current = undefined; }
     voiceTimingRef.current = undefined;
     setVoiceState("idle");
+  }, []);
+
+  const interruptVoice = useCallback(() => {
+    if (!voiceRef.current && !voiceControllerRef.current) return;
+    stopVoice();
+    setVoiceState("error");
+    setError("Запись прервана. Текущая фраза и текст ответа сохранены. Запишите ответ снова или введите его вручную.");
+  }, [stopVoice]);
+
+  useEffect(() => {
+    let active = true;
+    const onVisibilityChange = () => {
+      if (active && document.visibilityState === "hidden") interruptVoice();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    let nativeListener: { remove: () => Promise<void> } | undefined;
+    if (isNative) {
+      void CapacitorApp.addListener("appStateChange", ({ isActive }) => {
+        if (active && !isActive) interruptVoice();
+      }).then((listener) => {
+        if (active) nativeListener = listener;
+        else void listener.remove().catch(() => undefined);
+      }).catch(() => undefined);
+    }
+    return () => {
+      active = false;
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      if (nativeListener) void nativeListener.remove().catch(() => undefined);
+    };
+  }, [interruptVoice, isNative]);
+
+  function showView(next: AppView) {
+    if (next !== "practice") interruptVoice();
+    setView(next);
   }
 
   async function finishVoice() {
@@ -637,7 +673,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
         <header className="android-header">
           <strong>Serbo<span>Talk</span></strong>
           <nav aria-label="Панели приложения">
-            <button type="button" aria-label="Темы" aria-current={androidPanel === 0 || showTopicChooser ? "page" : undefined} onClick={() => { if (session) { setShowTopicChooser((current) => !current); showAndroidPanel(1); } else showAndroidPanel(0); }}><Icon name="home" /></button>
+            <button type="button" aria-label="Темы" aria-current={androidPanel === 0 || showTopicChooser ? "page" : undefined} onClick={() => { if (session) { interruptVoice(); setShowTopicChooser((current) => !current); showAndroidPanel(1); } else showAndroidPanel(0); }}><Icon name="home" /></button>
             <button type="button" aria-label="Тренировка" aria-current={androidPanel === 1 ? "page" : undefined} onClick={() => showAndroidPanel(1)}><Icon name="mic" /></button>
             <button type="button" aria-label="Статистика" aria-current={androidPanel === 2 ? "page" : undefined} onClick={() => showAndroidPanel(2)}><Icon name="chart" /></button>
             <button type="button" aria-label="Настройки" aria-current={androidPanel === 3 ? "page" : undefined} onClick={() => showAndroidPanel(3)}><Icon name="settings" /></button>
@@ -649,7 +685,11 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
           ref={androidPagerRef}
           onScroll={(event) => {
             const width = event.currentTarget.clientWidth;
-            if (width) setAndroidPanel(Math.round(event.currentTarget.scrollLeft / width));
+            if (width) {
+              const panel = Math.round(event.currentTarget.scrollLeft / width);
+              if (panel !== 1) interruptVoice();
+              setAndroidPanel(panel);
+            }
           }}
         >
           <section className="android-page android-topics-page" aria-label="Выбор темы">
@@ -748,10 +788,10 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
           <span className="brand__copy"><strong>Serbo<span>Talk</span></strong><small>Говори. Понимай. Будь ближе.</small></span>
         </button>
         <nav className="main-nav" aria-label="Основная навигация">
-          <button className={view === "practice" ? "is-active" : ""} type="button" onClick={() => setView("practice")}><Icon name="home" />Практика</button>
-          <button className={view === "statistics" ? "is-active" : ""} type="button" onClick={() => setView("statistics")}><Icon name="chart" />Статистика</button>
-          <button className={view === "settings" ? "is-active" : ""} type="button" onClick={() => setView("settings")}><Icon name="settings" />Настройки</button>
-          {account.role === "admin" && !Capacitor.isNativePlatform() && <button className={view === "admin" ? "is-active" : ""} type="button" onClick={() => setView("admin")}><Icon name="settings" />Пользователи</button>}
+          <button className={view === "practice" ? "is-active" : ""} type="button" onClick={() => showView("practice")}><Icon name="home" />Практика</button>
+          <button className={view === "statistics" ? "is-active" : ""} type="button" onClick={() => showView("statistics")}><Icon name="chart" />Статистика</button>
+          <button className={view === "settings" ? "is-active" : ""} type="button" onClick={() => showView("settings")}><Icon name="settings" />Настройки</button>
+          {account.role === "admin" && !Capacitor.isNativePlatform() && <button className={view === "admin" ? "is-active" : ""} type="button" onClick={() => showView("admin")}><Icon name="settings" />Пользователи</button>}
         </nav>
         <div className="profile">
           <div className={`connection connection--${backendState}`} role="status" aria-label={backendState === "online" ? "Backend готов" : backendState === "offline" ? "Backend недоступен" : "Подключение"}><span /></div>
