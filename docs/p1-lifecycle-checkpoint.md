@@ -19,7 +19,7 @@
 - [x] Реализовано: остановка mic/STT при hidden/native inactive, переходе web-панели, уходе с Android practice через header/scroll. Draft/exercise сохраняются; после возврата доступна новая запись или ручной ответ, показано сообщение о прерывании.
 - [x] Frontend 77/77, TypeScript, ESLint и production build прошли. Lifecycle browser 2/2, обычные mock practice + network 9/9 и local web 3/3 прошли. Существующее предупреждение chunk >500 КБ сохранено.
 - [x] GPT-6.1 Sol / medium принял финальные App/VoiceRecorder, component и browser tests без подтверждённых замечаний.
-- [ ] Опубликовать web и проверить Ready/production.
+- [x] 01.10.2026, 07:46 МСК: [PR #39](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/39) объединён, runtime SHA `428109f2850ef65a2827dcebfd05e5256275049f`; web READY, aliases и публичный production smoke проверены.
 - [ ] Перенести в согласованный Android-релиз и проверить реальные события устройства.
 - [ ] Пройти авторизованный голосовой сценарий и ручную приёмку.
 
@@ -31,3 +31,11 @@
 - Первый общий mock-запуск по короткому имени `network.spec.mjs` также выбрал `local-network.spec.mjs`; loopback guard штатно отказал без testlab env. После выбора точных путей `e2e/mocked.spec.mjs e2e/network.spec.mjs` прошли 9/9. Локальный replay затем прошёл отдельно через `-Suite all`. Ошибка выбора тестов не была runtime дефектом.
 - PLAYWRIGHT_NO_COPY_PROMPT запрещает автоматическую ARIA snapshot; error-context может содержать stack/source guard ошибки, но snapshot страницы не собирается. Трассы, видео, снимки, аудио и credentials не сохраняются.
 - Контракт Capacitor App проверен в установленных `@capacitor/app` definitions; native-event tests используют mock, а не новый APK. Android 1.15/code 25 и native assets не менялись.
+
+## Публикация
+
+Web: [production](https://serbian-speaking-trainer.vercel.app), deployment `dpl_8Hx5ECZgzGrtU8DPdr2BHnKjodSH`, [deployment URL](https://serbian-speaking-trainer-r28j114k4-suezerguts-projects.vercel.app). Backend остаётся на SHA `edb0b74dc1ab4daf8711c9cd4d77c535f14ad875`, новых миграций нет.
+
+Chrome 154: `/`, `/privacy`, `/terms` — 200; Google-вход виден, lifecycle/recovery markers в текущем bundle, testlab markers отсутствуют, `/testlab.html` — 404, page errors — 0. GitHub checks не настроены; локальные gates и независимое ревью приняты до merge.
+
+Проверка публичная: авторизованный production/STT пока не подтверждён из-за известного request-header policy сбоя личного Chrome-плагина. Личная сессия не копировалась. При ручной приёмке: начать запись, уйти в настройки или свернуть, вернуться, проверить выключенный mic и сохранённый draft; повторить во время STT и во время оценки; оценка должна завершиться без повторной отправки. Для Android эти действия проверяются на следующем отдельно согласованном APK.
