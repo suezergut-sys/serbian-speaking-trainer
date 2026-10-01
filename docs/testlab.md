@@ -50,7 +50,7 @@ node node_modules/@playwright/test/cli.js install android
 cd ..
 .\scripts\start-testlab-emulator.ps1 -Headless
 .\scripts\build-testlab-android.ps1
-adb -s emulator-5554 install -r artifacts/testlab/SerboTalk-andorid16-1.15.apk
+adb -s emulator-5554 install -r artifacts/testlab/SerboTalk-andorid16-1.16.apk
 .\scripts\run-testlab.ps1 -Platform android
 ```
 
@@ -91,3 +91,7 @@ Mock browser suite: из `frontend` запустите `node node_modules/@playw
 `scripts/testing/benchmark_review_catalog.py` создаёт собственную синтетическую SQLite в игнорируемом artifacts/testlab, фиксирует время и использует mock AI/identity. Для before передайте `--backend` на неизменяемый снимок backend внутри workspace; для after — текущий backend и `--compare-to` на before report. Параметры доступны через `--help`. Runner сравнивает fixture hash, количество карточек и неизменность legacy JSON, считает SQL, ORM-объекты, размер ответа, p50/p95. Секреты и пользовательский контент в отчёт не попадают.
 
 По умолчанию выполняются 3 прогрева и 20 измерений. Активация просроченных карточек происходит во время прогрева: этот замер описывает установившийся локальный запрос, не первый вызов, сеть, Vercel cold start или телефон. Пример результатов и ограничения: [p1-review-summary-checkpoint.md](p1-review-summary-checkpoint.md).
+
+## Android 1.16: native lifecycle
+
+После установки lab APK 1.16: `scripts/run-testlab.ps1 -Platform android -Suite lifecycle`. Сценарий проверяет версию установленного lab package, использует настоящий native Home/resume и события App, но синтетический mic и локальный fake STT. Только lab package очищается; обычное приложение и Google-сессия не затрагиваются. Одновременно допустим один Android runner. Обычный полный цикл: `-Platform android -Suite practice`. Результаты: [android-1.16-release.md](android-1.16-release.md).

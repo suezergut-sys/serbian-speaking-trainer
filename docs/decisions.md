@@ -305,3 +305,8 @@
 - App удаляет только свой native listener, включая позднее разрешение addListener после unmount. VoiceRecorder освобождает tracks/chunks при start/stop ошибке, закрывает поздний stream после таймаута и ограничивает ожидание stop 30 секундами. Размер аудио в этом срезе не менялся.
 - 77 frontend тестов, TypeScript, ESLint, production build, lifecycle mock 2/2, practice/network mock 9/9 и local web 3/3 прошли. Независимое ревью принято. Новая Android UI/физический mic/lifecycle и manual acceptance открыты. Подробности: `docs/p1-lifecycle-checkpoint.md`.
 - Lifecycle web опубликован через PR #39 на SHA `428109f2850ef65a2827dcebfd05e5256275049f`: READY, aliases и публичный Chrome smoke подтверждены. Авторизованная практика, Android-перенос и ручная приёмка остаются открытыми. `docs/p1-lifecycle-checkpoint.md` содержит URL и границы проверки.
+
+# 2026-10-01 — контрольный Android 1.16
+
+- По явной команде на публикацию и отдельному согласованию номера выпущены метаданные 1.16/code 26. Накопленный клиент P1.2–P1.5 включён в production и отдельный lab bundle; локальный вход остаётся только в lab application ID.
+- Проверены 77 frontend tests, TypeScript, ESLint, production build, Gradle обеих сборок, метаданные, разделение конфигурации и совпадение сертификата с прежней версией. Полный журнал: [android-1.16-release.md](android-1.16-release.md). Ручная приёмка и оставшиеся задачи P1 не закрываются выпуском APK.
