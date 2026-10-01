@@ -59,3 +59,11 @@ Android runner очищает только lab package. Радио и прове
 `TESTLAB_ANDROID_INPUT=webview` — явно выбранный диагностический режим без native tap/swipe/IME Back при проблеме UiAutomator. Отчёт отличает его от native режима; он не закрывает приёмку аппаратной навигации. Итоговые grading/OS denial прошли в native режиме на API 36; реальный микрофон/физический телефон этим не принимаются.
 
 Chrome extension повторно проверен 01.10.2026: профиль Maksim обнаружен, список вкладок недоступен из-за `Timed out waiting for Statsig values`. Авторизованный Chrome-сценарий не выполнен; CLI/изолированный Playwright и Supabase connector не подменяют личную сессию.
+
+## Публикация — 01.10.2026
+
+- [PR #45](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/45) объединён. Runtime SHA `0e3e72dddaefe7d3ff80d64f039892e35940aaf3`; обязательных CI jobs в repository нет, локальные quality gates и независимое ревью выше выполнены.
+- Web deployment `dpl_2vac5amCuwYroXCo39wbCHC6or7P`: READY, production target и SHA сверены API. [Deployment](https://serbian-speaking-trainer-1dfj0cxde-suezerguts-projects.vercel.app), [production alias](https://serbian-speaking-trainer.vercel.app). Alias указывает на этот deployment.
+- Публичный Chrome 154.0.8037.57: `/`, privacy, terms — 200, Google login виден, page errors 0; `/testlab.html` — 404; testlab markers отсутствуют. Cloud asset `index-DQeRzqzh.js` содержит новый Back handler, прежние alignment/recovery/summary paths сохранены. Первый smoke ожидал двойные кавычки вокруг backButton, cloud minifier использовал backticks; проверка исправлена по реально полученному asset и повторена успешно.
+- Backend runtime не менялся и не redeployed: health 200, topics/monthly stats без авторизации 401. Production schema/data не изменялись. Авторизованный production сценарий не проверен.
+- APK остаётся 1.16/code26. Back исправлен в исходниках; выпущенный APK не получил его до отдельной команды на Android-релиз. Ручная приёмка и P1 целиком остаются открытыми.

@@ -327,3 +327,5 @@
 - Native AVD radio/network и signed local JWT проверки расширены; физический телефон/production OAuth не заменяются mocks. RLS/grants Supabase отмечены отдельным открытым замечанием, production remediation не применялась. [Доказательства](p1-pooler-android-checkpoint.md).
 
 - Полный native AVD resilience прошёл со SwiftShader/скрытым Qt/явно выключенным host audio для synthetic suite. Grading не дублируется при Home/resume; OS denied mic даёт NotAllowedError и доступный ручной ввод. Cleanup проверяет фактическое восстановление radio/permission и проваливает прогон при ошибке. Пять guards и GPT-6.1 Sol/medium review прошли; новый APK не собирался.
+
+- PR #45 merged; web READY на `0e3e72dddaefe7d3ff80d64f039892e35940aaf3`, публичный Chrome/API smoke прошёл. Backend schema/runtime и APK не менялись. [Полный журнал](p1-pooler-android-checkpoint.md).
