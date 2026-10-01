@@ -379,6 +379,31 @@ describe("App", () => {
     expect(JSON.parse(startCalls[0][1]?.body as string)).toEqual({ review_mode: true, length: 10 });
   });
 
+  it("opens the Android topics panel from home while preserving the exercise and draft", async () => {
+    vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(true);
+    voiceMock.available = true;
+    vi.stubGlobal("fetch", mockApi());
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
+    const answer = await recordAnswer();
+    fireEvent.change(answer, { target: { value: "Moj odgovor" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ответить голосом" }));
+    await screen.findByRole("button", { name: "Завершить запись" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Темы" }));
+    expect(screen.getByRole("button", { name: "Темы" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("button", { name: "Тренировка" })).not.toHaveAttribute("aria-current");
+    expect(screen.queryByLabelText("Сменить тему")).not.toBeInTheDocument();
+    expect(voiceMock.stops).toBe(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Тренировка" }));
+    expect(screen.getByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
+    expect(screen.getByLabelText("Ваш ответ")).toHaveValue("Moj odgovor");
+    expect(screen.getByRole("button", { name: "Тренировка" })).toHaveAttribute("aria-current", "page");
+  });
+
   it("shows the user list only for an administrator", async () => {
     vi.stubGlobal("fetch", mockApi(false, [], "admin"));
     render(<App />);

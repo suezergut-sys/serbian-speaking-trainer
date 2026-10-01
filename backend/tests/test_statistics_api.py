@@ -1,9 +1,10 @@
 from datetime import datetime, timezone
 
 from fastapi.testclient import TestClient
+from sqlalchemy import event
 from sqlalchemy.orm import Session
 
-from app.models import Attempt, Exercise, ReviewPhrase, TopicPhrase, TrainingSession
+from app.models import Attempt, Exercise, ReviewPhrase, TopicPhrase, TopicPreset, TrainingSession, User
 
 
 def _add_attempt(db: Session, *, created_at: datetime, suffix: str, score: float = 0.8) -> None:
@@ -92,6 +93,43 @@ def test_monthly_statistics_validates_month_and_timezone(api_client: TestClient)
     assert invalid_timezone.status_code == 422
 
 
+def test_monthly_statistics_reads_only_timestamps_and_scores(
+    api_client: TestClient,
+    db_session: Session,
+) -> None:
+    _add_attempt(db_session, created_at=datetime(2026, 9, 1, 2, 30, tzinfo=timezone.utc), suffix="projection", score=0.95)
+    db_session.add(ReviewPhrase(
+        source_ru="Освоенная", source_normalized="освоенная", status="mastered",
+        mastered_at=datetime(2026, 9, 1, 2, 30, tzinfo=timezone.utc),
+    ))
+    db_session.commit()
+    sql: list[str] = []
+
+    def capture_sql(_connection, _cursor, statement, _parameters, _context, _executemany) -> None:
+        sql.append(statement)
+
+    assert db_session.bind is not None
+    event.listen(db_session.bind, "before_cursor_execute", capture_sql)
+    try:
+        response = api_client.get("/api/statistics/monthly", params={"month": "2026-08", "utc_offset_minutes": -180})
+    finally:
+        event.remove(db_session.bind, "before_cursor_execute", capture_sql)
+
+    assert response.status_code == 200
+    assert response.json()["total_phrases"] == 1
+    assert response.json()["correct_translations"] == 1
+    assert response.json()["mastered_phrases"] == 1
+    assert response.json()["days"][30]["date"] == "2026-08-31"
+    assert response.json()["days"][30]["mastered_phrase_count"] == 1
+    attempt_sql = [statement for statement in sql if "FROM attempts" in statement]
+    mastered_sql = [statement for statement in sql if "FROM review_phrases" in statement]
+    assert len(attempt_sql) == len(mastered_sql) == 1
+    assert "SELECT attempts.created_at, attempts.overall_score" in attempt_sql[0]
+    assert "SELECT review_phrases.mastered_at" in mastered_sql[0]
+    assert "transcript_sr" not in attempt_sql[0]
+    assert "source_ru" not in mastered_sql[0]
+
+
 def test_phrase_statistics_are_grouped_by_database_topics_and_paginated(
     api_client: TestClient,
     db_session: Session,
@@ -138,3 +176,49 @@ def test_phrase_statistics_are_grouped_by_database_topics_and_paginated(
 
     invalid = api_client.get("/api/statistics/phrases", params={"page_size": "25"})
     assert invalid.status_code == 422
+
+
+def test_phrase_statistics_hides_foreign_topic_title_for_stale_reference(
+    api_client: TestClient,
+    db_session: Session,
+) -> None:
+    other_user = User(id="22222222-2222-2222-2222-222222222222", email="other-statistics@example.com")
+    db_session.add(other_user)
+    db_session.flush()
+    own_topic = TopicPreset(
+        id="own-statistics-topic", owner_user_id="00000000-0000-0000-0000-000000000001",
+        title_ru="Моя тема", description_ru="Описание",
+    )
+    foreign_topic = TopicPreset(
+        id="foreign-statistics-topic", owner_user_id=other_user.id,
+        title_ru="Секретное название", description_ru="Описание",
+    )
+    db_session.add_all([own_topic, foreign_topic])
+    db_session.flush()
+    db_session.add_all([
+        ReviewPhrase(
+            source_ru="Устаревшая связь", source_normalized="устаревшая связь",
+            intended_sr_variants_json=["Stara veza"], topic_id=foreign_topic.id,
+        ),
+        ReviewPhrase(
+            source_ru="Своя тема", source_normalized="своя тема",
+            intended_sr_variants_json=["Moja tema"], topic_id=own_topic.id,
+        ),
+        ReviewPhrase(
+            user_id=other_user.id, source_ru="Чужая фраза", source_normalized="чужая фраза",
+            intended_sr_variants_json=["Tuđa rečenica"], topic_id=foreign_topic.id,
+        ),
+    ])
+    db_session.commit()
+
+    response = api_client.get("/api/statistics/phrases", params={"page_size": "all"})
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["total"] == 2
+    assert "Секретное название" not in response.text
+    assert "Чужая фраза" not in response.text
+    groups = {group["topic_id"]: group for group in payload["groups"]}
+    assert groups[foreign_topic.id]["topic_title"] == "Свои фразы"
+    assert groups[foreign_topic.id]["phrases"][0]["source_ru"] == "Устаревшая связь"
+    assert groups[own_topic.id]["topic_title"] == "Моя тема"

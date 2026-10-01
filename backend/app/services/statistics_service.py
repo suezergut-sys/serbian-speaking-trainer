@@ -43,13 +43,10 @@ class StatisticsService:
             if attempt.overall_score is not None and attempt.overall_score >= 0.95:
                 correct_counts[local_day - 1] += 1
 
-        for phrase in self.review_phrases.list_mastered_between(
+        for mastered_at in self.review_phrases.list_mastered_between(
             local_start.astimezone(timezone.utc),
             local_end.astimezone(timezone.utc),
         ):
-            mastered_at = phrase.mastered_at
-            if mastered_at is None:
-                continue
             if mastered_at.tzinfo is None:
                 mastered_at = mastered_at.replace(tzinfo=timezone.utc)
             local_day = mastered_at.astimezone(local_timezone).day
