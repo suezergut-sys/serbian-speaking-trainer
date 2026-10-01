@@ -213,7 +213,7 @@
 
 - [x] 01.10.2026: авторизованный production navigation smoke во встроенном браузере: темы, активность, список фраз, настройки и возврат; console errors 0. Полный голосовой цикл остаётся открытым. [Доказательства](p1-pooler-android-checkpoint.md).
 
-## Контрольный Android 1.17 — build verified, publication pending
+## Контрольный Android 1.17 — опубликован и развернут
 
 - [x] Версия `1.17` / `versionCode 27` отдельно согласована владельцем 01.10.2026.
 - [x] Production/lab APK собраны, metadata/guards/подпись проверены, обе установки на AVD API 36 успешны. Python 163 passed / 8 skipped, frontend 82, isolated browser 13, Node guards 5; lint/typecheck/`tsc -b` и Gradle обеих сборок прошли.
@@ -222,5 +222,7 @@
 - [x] Production APK 1.17 login-surface smoke: Google login visible, testlab login absent, app data preserved; OAuth не завершён. Public Chrome 154 smoke: bundle `index-DQeRzqzh.js`, privacy/terms 200, testlab 404, page errors 0. Full fixture-based resilience/lifecycle suite passed.
 - [ ] Обычный Android practice flow не подтверждён: до 15 s bounded-polling patch UiAutomator получил transient `device.info=null` после auth/topics/transcription 200; после patch повтор потерял AVD при QEMU crash. AVD retries приостановлены.
 - [ ] Свежих Android performance metrics в этом release slice нет.
-- [ ] Release publication, release SHA/URL и deployment metadata ожидают подтверждения. Public Chrome smoke и production APK login-surface smoke прошли; обычный Android practice UI flow и OAuth не подтверждены. См. [checkpoint Android 1.17](android-1.17-release.md).
+- [x] Опубликован [GitHub release v1.17](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.17), PR #48, release SHA `eba91beb4532f2f2d8dd14afa699d42648d34d05`; asset digest/size совпали.
+- [x] Vercel frontend deployment `dpl_4JsuVfsmSLj9nWSkyhvj1cRWjzYw` READY/production на release SHA; deployment URL и production alias подтверждены. Post-Ready Chrome 154, authorized IAB navigation и API smoke прошли. [Доказательства](android-1.17-release.md).
+- [ ] Обычный Android practice UI flow, Google OAuth, настоящий STT и физическая ручная приёмка не подтверждены. Свежих Android performance metrics нет.
 - [ ] Физическая ручная приёмка, полный voice цикл и остальные открытые P0/P1/RLS пункты остаются открытыми независимо от выпуска.
