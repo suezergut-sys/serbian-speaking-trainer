@@ -1,6 +1,6 @@
 # Android-релизы и проверки
 
-Последняя документированная контрольная Android-версия: `1.16` (`versionCode 26`), согласована 01.10.2026. Контрольная версия `1.17` (`versionCode 27`) отдельно согласована; состав и ожидающие подтверждения выпуска приведены в [android-1.17-release.md](android-1.17-release.md). Состав, проверки и открытая ручная приёмка 1.16 — в [android-1.16-release.md](android-1.16-release.md). Исторические пункты ниже сохраняют исходные даты; текущий перенос отмечается отдельно.
+Последняя контрольная Android-версия: `1.17` (`versionCode 27`), опубликована 01.10.2026. Состав, проверки и открытая ручная приёмка — в [android-1.17-release.md](android-1.17-release.md); предыдущая 1.16 описана в [android-1.16-release.md](android-1.16-release.md). Исторические пункты ниже сохраняют исходные даты; текущий перенос отмечается отдельно.
 
 Этот список хранит изменения для следующих Android-сборок и проверки собранной версии. Следующее повышение версии и сборка APK требуют отдельной команды владельца.
 
@@ -122,31 +122,33 @@
 - [x] 01.10.2026: [release v1.16](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.16) опубликован, web READY на release SHA; URL/hash/signature в [android-1.16-release.md](android-1.16-release.md).
 - [ ] Ручная приёмка физического телефона: Google, настоящий STT, разрешения, системный Back/свайпы, длительное отключение сети, оба алфавита.
 
-## После 1.16 — точная подсветка и домик
+## Перенесено в 1.17 — точная подсветка и домик
 
-- [ ] Перенести word-level подсветку evidence/correction с исключением неизменённых соседних слов в следующий отдельно заказанный APK; проверить `jutreneg prevoza` в обоих алфавитах.
-- [ ] Перенести удаление быстрого chooser: домик открывает панель тем, при возврате сохраняются session/exercise/draft, активный voice прекращается; проверить native taps/swipe.
+- [x] Перенести word-level подсветку evidence/correction с исключением неизменённых соседних слов в APK 1.17; AVD fixture `jutreneg` / `јутренег` подтвердил выделение точного слова в обоих алфавитах. [Доказательства](android-1.17-release.md).
+- [x] Перенести удаление быстрого chooser: домик открывает темы, сохраняет session/exercise/draft; native taps/swipe проверены на AVD 1.17. [Доказательства](android-1.17-release.md).
+- [ ] Проверить подсветку и возврат домой на физическом телефоне с настоящей практикой/голосом.
 - [ ] Проверить прежний payload статистики с новым backend в Android; backend projection не требует новой версии клиента. [Проверки и замеры](p1-word-highlights-statistics-checkpoint.md).
 
-## После 1.16 — системный Back и дополнительные проверки
+## Перенесено в 1.17 — системный Back
 
-- [ ] Перенести обработчик Back: settings/stats → practice при текущей сессии, practice → topics, topics → exit; проверить сохранение draft и остановку voice.
-- [ ] Проверить IME/Back на новом APK и физическом телефоне.
+- [x] Перенести обработчик Back: settings/stats → practice при текущей сессии, practice → topics, topics → exit; AVD проверил сохранение draft, IME и native exit. [Доказательства](android-1.17-release.md).
+- [ ] Проверить IME/Back и сохранение draft на физическом телефоне.
 - [x] 01.10.2026: AVD/1.16: реальное отключение Wi-Fi/data на 120 секунд, retry с прежним ID, synthetic connecting/STT, 413 и signed fixture expiry/refresh прошли. [Доказательства](p1-pooler-android-checkpoint.md).
 
 - [x] 01.10.2026: полный native resilience на AVD/1.16: grading Home/resume без дублирования и OS mic denial с ручным вводом; исходные радио/permission восстановлены. Итоговый повтор offline 30 секунд, длительный 120 секунд подтверждён отдельными предыдущими прогонами. Настоящая запись на телефоне остаётся открытой.
 
-## Контрольная версия 1.17 — сборка есть, выпуск ожидает проверок
+## Контрольная версия 1.17 — опубликована
 
 - [x] Сформированы production/lab APK 1.17/code 27; metadata, prod/lab guards, production подпись и install-r на AVD API 36 проверены. Артефакты и digest: [checkpoint 1.17](android-1.17-release.md).
 - [x] В сборке находится накопленный клиентский bundle: точная подсветка evidence/correction, домик с сохранением текущей практики и системный Back. Предшествующие web/backend доказательства: [PR #43](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/43), [PR #45](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/45).
 - [x] Reviewer финально подтвердил diff без блокеров; syntax runner прошёл. На 1.17 проверены radio-off/retry, IME/System Back, Settings/Stats Back, домик/сохранение draft, swipe, background connecting/STT, 413 recovery, grading Home/resume и подсветка `jutreneg` в обоих алфавитах.
 - [x] На APK 1.17 прошёл полный AVD resilience run и `android-lifecycle.mjs` (lifecycle/hint-race), оба exit 0: permission denial/revoke, expired fixture 401 → новая сессия, native exit и cleanup. Успешный полный запуск после relaunch QEMU включал offline 30 s; отдельный первый прогон подтвердил offline 120 s + retry до более позднего locator failure. Feature acceptance выполнена с fixtures/mock; реальный STT/OAuth не проверялись.
 - [x] Production APK 1.17 smoke подтвердил видимый Google login, отсутствие testlab login и сохранность app data; OAuth не завершён. Public Chrome 154 smoke прошёл: privacy/terms 200, testlab 404, page errors 0.
-- [x] Full native resilience/lifecycle suite and production login-surface smoke прошли на 1.17; public Chrome 154 smoke прошёл. Подробности и границы: [checkpoint 1.17](android-1.17-release.md).
+- [x] GitHub release v1.17 опубликован через [PR #48](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/48), release SHA `eba91beb4532f2f2d8dd14afa699d42648d34d05`; серверный asset digest/size совпал. [Доказательства](android-1.17-release.md).
+- [x] Full native resilience/lifecycle suite, production login-surface smoke и public Chrome 154 smoke прошли. Подробности и границы: [checkpoint 1.17](android-1.17-release.md).
 - [ ] Обычный Android practice flow не подтверждён: до 15 s bounded-polling patch UiAutomator получил transient `device.info=null` после API 200; после patch следующий прогон потерял AVD при QEMU crash. Повторный AVD запуск приостановлен по инфраструктурной причине.
 - [ ] Новых Android performance metrics нет; не выводить скорость из smoke или HTTP status.
-- [ ] Зафиксировать release SHA/URL и production deployment metadata после публикации.
-- [ ] Выполнить release publication; production/native smoke и AVD проверки уже зафиксированы отдельно, физическая ручная приёмка остаётся открытой.
+- [x] Vercel frontend deployment `dpl_4JsuVfsmSLj9nWSkyhvj1cRWjzYw` READY на SHA `eba91beb4532f2f2d8dd14afa699d42648d34d05`; production alias и deployment URL, Chrome/IAB/API проверки зафиксированы в [checkpoint 1.17](android-1.17-release.md).
+- [ ] Обычный Android practice UI flow и физическая ручная приёмка остаются открытыми; Google OAuth и настоящий STT не проходили.
 
-На этом этапе 1.17 — собранная и установленная контрольная сборка; публикация не подтверждена. Контрольная версия 1.17 не закрывает открытые пункты P0/P1 и ручную приёмку.
+Версия 1.17 опубликована как обычный production APK; lab APK не входит в release. Vercel READY evidence зафиксирован в checkpoint. Контрольная версия не закрывает открытые пункты P0/P1 и физическую ручную приёмку.
