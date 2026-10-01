@@ -93,7 +93,7 @@
 
 - [x] 30.09.2026: убрать N+1 названий тем из списка повторения через JOIN с сохранением видимости и порядка; SQL 85 → 3 на одинаковой фикстуре. [Проверки и замеры](p1-review-summary-checkpoint.md).
 - [x] 01.10.2026: исследовать темы и статистику: SQL внутри Python-циклов не найден; счётчики тем уже используют GROUP BY, список статистики — COUNT и страницу.
-- [x] 01.10.2026: месячная статистика получает только date/score и mastered_at; HTTP JSON совпал, локальный paired SQLite benchmark: ORM rows 950→0, p50 17,188→6,540 мс. Публикация отдельно. [Доказательства](p1-word-highlights-statistics-checkpoint.md).
+- [x] 01.10.2026: месячная статистика получает только date/score и mastered_at; HTTP JSON совпал, локальный paired SQLite benchmark: ORM rows 950→0, p50 17,188→6,540 мс. Опубликовано через PR #43, web/backend READY. [Доказательства](p1-word-highlights-statistics-checkpoint.md).
 - [x] 01.10.2026: owner-scoped stats OUTER JOIN и stale foreign-topic regression без раскрытия title реализованы; свои/публичные темы и HTTP контракт сохранены. [Доказательства](p1-word-highlights-statistics-checkpoint.md).
 - [x] 30.09.2026: web получает счётчик повторения агрегатом, без загрузки фраз; поздние ответы и повторное добавление покрыты тестами. [Доказательства](p1-review-summary-checkpoint.md).
 - [ ] Проверить остальные счётчики тем и статистики.
@@ -182,7 +182,7 @@
 ## Текущий срез 01.10.2026 после APK 1.16
 
 - [x] Реализация точной подсветки/домика и P1.3 проекций/owner join; проверки и локальный benchmark зафиксированы.
-- [ ] Опубликовать срез web/backend, дождаться Ready и проверить production aliases/public smoke.
+- [x] 01.10.2026: срез опубликован через [PR #43](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/43), runtime SHA `bd7e9fb1f7e13644e16182d6cdab3f713c56948c`; web/backend READY, production aliases/public smoke подтверждены. [Доказательства](p1-word-highlights-statistics-checkpoint.md).
 - [ ] Android-перенос и ручная приёмка; текущий APK 1.16 не пересобирался.
 
 [Контрольная точка](p1-word-highlights-statistics-checkpoint.md).
