@@ -127,3 +127,11 @@
 - [ ] Перенести word-level подсветку evidence/correction с исключением неизменённых соседних слов в следующий отдельно заказанный APK; проверить `jutreneg prevoza` в обоих алфавитах.
 - [ ] Перенести удаление быстрого chooser: домик открывает панель тем, при возврате сохраняются session/exercise/draft, активный voice прекращается; проверить native taps/swipe.
 - [ ] Проверить прежний payload статистики с новым backend в Android; backend projection не требует новой версии клиента. [Проверки и замеры](p1-word-highlights-statistics-checkpoint.md).
+
+## После 1.16 — системный Back и дополнительные проверки
+
+- [ ] Перенести обработчик Back: settings/stats → practice при текущей сессии, practice → topics, topics → exit; проверить сохранение draft и остановку voice.
+- [ ] Проверить IME/Back на новом APK и физическом телефоне.
+- [x] 01.10.2026: AVD/1.16: реальное отключение Wi-Fi/data на 120 секунд, retry с прежним ID, synthetic connecting/STT, 413 и signed fixture expiry/refresh прошли. [Доказательства](p1-pooler-android-checkpoint.md).
+
+- [x] 01.10.2026: полный native resilience на AVD/1.16: grading Home/resume без дублирования и OS mic denial с ручным вводом; исходные радио/permission восстановлены. Итоговый повтор offline 30 секунд, длительный 120 секунд подтверждён отдельными предыдущими прогонами. Настоящая запись на телефоне остаётся открытой.

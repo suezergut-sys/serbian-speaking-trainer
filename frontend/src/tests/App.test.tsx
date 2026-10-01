@@ -13,9 +13,16 @@ const nativeAppEvents = vi.hoisted(() => ({
   removals: 0,
 }));
 
+const nativeBackEvents = vi.hoisted(() => ({ listener: undefined as (() => void) | undefined, exits: 0, removals: 0 }));
+
 vi.mock("@capacitor/app", () => ({
   App: {
+    exitApp: async () => { nativeBackEvents.exits += 1; },
     addListener: async (_event: string, listener: (state: { isActive: boolean }) => void) => {
+      if (_event === "backButton") {
+        nativeBackEvents.listener = listener as unknown as () => void;
+        return { remove: async () => { nativeBackEvents.removals += 1; nativeBackEvents.listener = undefined; } };
+      }
       if (nativeAppEvents.registrationGate) await nativeAppEvents.registrationGate;
       nativeAppEvents.listener = listener;
       nativeAppEvents.lastListener = listener;
@@ -65,7 +72,32 @@ describe("App", () => {
     nativeAppEvents.lastListener = undefined;
     nativeAppEvents.registrationGate = undefined;
     nativeAppEvents.removals = 0;
+    nativeBackEvents.listener = undefined; nativeBackEvents.exits = 0; nativeBackEvents.removals = 0;
     vi.restoreAllMocks();
+  });
+
+  it("routes native Back from settings to practice, then topics, before exiting", async () => {
+    vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(true);
+    vi.stubGlobal("fetch", mockApi());
+    voiceMock.available = true;
+    const rendered = render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Ответить голосом" }));
+    await screen.findByRole("button", { name: "Завершить запись" });
+    fireEvent.click(screen.getByRole("button", { name: "Завершить запись" }));
+    const answer = await screen.findByLabelText("Ваш ответ");
+    fireEvent.change(answer, { target: { value: "Sačuvaj odgovor." } });
+    fireEvent.click(screen.getByRole("button", { name: "Настройки" }));
+    await act(async () => nativeBackEvents.listener?.());
+    expect(screen.getByRole("button", { name: "Тренировка" })).toHaveAttribute("aria-current", "page");
+    expect(answer).toHaveValue("Sačuvaj odgovor.");
+    await act(async () => nativeBackEvents.listener?.());
+    expect(screen.getByRole("button", { name: "Темы" })).toHaveAttribute("aria-current", "page");
+    expect(nativeBackEvents.exits).toBe(0);
+    await act(async () => nativeBackEvents.listener?.());
+    expect(nativeBackEvents.exits).toBe(1);
+    rendered.unmount();
+    expect(nativeBackEvents.removals).toBe(1);
   });
 
   it("renders public legal pages without authentication", () => {

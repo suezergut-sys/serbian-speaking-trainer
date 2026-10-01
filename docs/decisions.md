@@ -319,3 +319,11 @@
 - Месячная статистика использует scalar projection timestamps/score, прежний HTTP JSON/timezone остаются; owner-scoped OUTER JOIN скрывает чужое название темы при stale reference. Схема БД не менялась. Проверки и paired SQLite benchmark: [p1-word-highlights-statistics-checkpoint.md](p1-word-highlights-statistics-checkpoint.md). Android 1.16/code 26 и APK не менялись.
 
 - PR #43 опубликован: runtime SHA `bd7e9fb1f7e13644e16182d6cdab3f713c56948c`, web/backend READY, aliases и публичный production Chrome/API smoke подтверждены. Авторизованная production статистика/практика, Android-перенос и ручная приёмка остаются открытыми. [Доказательства](p1-word-highlights-statistics-checkpoint.md).
+
+# 2026-10-01 — проверки Supabase и Android устойчивости
+
+- Management SQL и application Supavisor transport проверяются отдельно: plugin восстановил readonly доступ, но не выдаёт пароль БД. Подготовлен guarded runner с максимум тремя соединениями, без prepared statements и без session search_path. Полный прогон до получения DATABASE_URL остаётся открытым.
+- В исходнике системный Back возвращает пользователя через practice/topics; выход только с topics. Native listener закрывается после unmount, voice остановка и draft сохраняются. APK без отдельного заказа не меняется.
+- Native AVD radio/network и signed local JWT проверки расширены; физический телефон/production OAuth не заменяются mocks. RLS/grants Supabase отмечены отдельным открытым замечанием, production remediation не применялась. [Доказательства](p1-pooler-android-checkpoint.md).
+
+- Полный native AVD resilience прошёл со SwiftShader/скрытым Qt/явно выключенным host audio для synthetic suite. Grading не дублируется при Home/resume; OS denied mic даёт NotAllowedError и доступный ручной ввод. Cleanup проверяет фактическое восстановление radio/permission и проваливает прогон при ошибке. Пять guards и GPT-6.1 Sol/medium review прошли; новый APK не собирался.

@@ -186,6 +186,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const androidPagerRef = useRef<HTMLDivElement | null>(null);
   const presentedExerciseRef = useRef<string | undefined>(undefined);
   const [androidPanel, setAndroidPanel] = useState(0);
+  const androidBackHandlerRef = useRef<() => void>(() => undefined);
   const voiceSupported = supportsVoiceRecording();
   const isNative = Capacitor.isNativePlatform();
 
@@ -232,16 +233,6 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     setAnswer((current) => displaySerbian(current, next));
     setAlphabet(next);
     saveSerbianAlphabet(account.id, next);
-  }
-
-  function showAndroidPanel(panel: number) {
-    const pager = androidPagerRef.current;
-    if (panel !== 1) interruptVoice();
-    setAndroidPanel(panel);
-    if (!pager) return;
-    const left = panel * pager.clientWidth;
-    if (typeof pager.scrollTo === "function") pager.scrollTo({ left, behavior: "auto" });
-    else pager.scrollLeft = left;
   }
 
   function saveConnectionSettings(event: React.FormEvent<HTMLFormElement>) {
@@ -352,6 +343,43 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     setVoiceState("error");
     setError("Запись прервана. Текущая фраза и текст ответа сохранены. Запишите ответ снова или введите его вручную.");
   }, [stopVoice]);
+
+  function showAndroidPanel(panel: number) {
+    const pager = androidPagerRef.current;
+    if (panel !== 1) interruptVoice();
+    setAndroidPanel(panel);
+    if (!pager) return;
+    const left = panel * pager.clientWidth;
+    if (typeof pager.scrollTo === "function") pager.scrollTo({ left, behavior: "auto" });
+    else pager.scrollLeft = left;
+  }
+
+  useEffect(() => {
+    androidBackHandlerRef.current = () => {
+      if (androidPanel !== 0) {
+        showAndroidPanel(session && androidPanel > 1 ? 1 : 0);
+      } else {
+        interruptVoice();
+        void CapacitorApp.exitApp().catch(() => undefined);
+      }
+    };
+  });
+
+  useEffect(() => {
+    if (!isNative) return;
+    let active = true;
+    let handle: { remove: () => Promise<void> } | undefined;
+    void CapacitorApp.addListener("backButton", () => {
+      if (active) androidBackHandlerRef.current();
+    }).then((listener) => {
+      if (active) handle = listener;
+      else void listener.remove().catch(() => undefined);
+    }).catch(() => undefined);
+    return () => {
+      active = false;
+      if (handle) void handle.remove().catch(() => undefined);
+    };
+  }, [isNative]);
 
   useEffect(() => {
     let active = true;
