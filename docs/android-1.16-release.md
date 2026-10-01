@@ -29,11 +29,19 @@
 - [x] Android lab 1.16: native Home/resume во время синтетической записи, App active/inactive events, recorder/track stop ровно один раз, сохранение draft, отсутствие дополнительного STT при возврате и явный retry прошли.
 - [x] Задержанный POST hint завершился 503 после перехода: подсказка показана сразу, единственный запрос hint, оценка 92% и следующая фраза доступны до завершения сохранения; ошибок после позднего 503 нет.
 - [x] Отдельный обычный Android lab flow (расшифровка → ручная правка → оценка → новая фраза) прошёл. Production APK 1.16/code 26 запускается: Google-вход виден, lab-вход отсутствует; данные обычного приложения не очищались.
-- [ ] Опубликовать release commit/APK, обновить frontend deployment и проверить его aliases.
+- [x] Код опубликован через [PR #41](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/41), release SHA `bc59c25519313cdaf2213392579fa54015bc5235`. [GitHub release v1.16](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.16) опубликован с обычным APK; asset size/digest совпали с локальным файлом.
+- [x] Frontend deployment `dpl_2ZtTrn147yaJFFsT4dniCmfpttoo` — READY, production alias указывает на этот release SHA; повторный публичный Chrome smoke прошёл.
+
+## Публикация
+
+- [Web production](https://serbian-speaking-trainer.vercel.app); [deployment](https://serbian-speaking-trainer-donmrjedk-suezerguts-projects.vercel.app).
+- [Скачать APK 1.16](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/download/v1.16/SerboTalk-andorid16-1.16.apk).
+- Локальная копия: `C:/Users/MSumin/Codex проекты локальные/Serbian Speaking Trainer/artifacts/SerboTalk-andorid16-1.16.apk`.
+- Сборка содержит те же согласованные runtime/version файлы, что release SHA; после сборки менялись только tests/docs. Миграций или backend-изменений в release PR нет.
 
 ## Production и границы проверки
 
-Завершённые runtime-срезы уже опубликованы: web `428109f2850ef65a2827dcebfd05e5256275049f`, backend `edb0b74dc1ab4daf8711c9cd4d77c535f14ad875`. Публичная повторная проверка 01.10.2026: Chrome 154, `/`, `/privacy`, `/terms` — 200, testlab.html — 404, page errors — 0; API health — 200. В обычном web bundle есть все новые функции и нет lab-конфигурации.
+Завершённые runtime-срезы опубликованы: web release `bc59c25519313cdaf2213392579fa54015bc5235` (bundle `index-DZ57lPfv.js` совпадает с APK); backend `edb0b74dc1ab4daf8711c9cd4d77c535f14ad875`, deployment `dpl_dUS3LpucDLW84GTWpy57wkaSSfx9` — READY. В PR #41 backend не менялся, поэтому его повторная сборка не требовалась. Публичная повторная проверка 01.10.2026: Chrome 154, `/`, `/privacy`, `/terms` — 200, testlab.html — 404, page errors — 0; API health — 200. В обычном web bundle есть все новые функции и нет lab-конфигурации.
 
 Автоматические Android-сценарии используют локальный backend, подписанную тестовую сессию и fake AI/STT. Синтетическое аудио существует только в памяти; пользовательский голос и OpenAI budget не используются. Успех lab не означает проверку Google OAuth, настоящего STT, физических разрешений, отключения всей сети или скорости облачного AI. Последние сопоставимые замеры — в P1 checkpoint-документах; этот smoke не выдаётся за benchmark.
 

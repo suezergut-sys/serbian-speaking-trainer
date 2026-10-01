@@ -310,3 +310,5 @@
 
 - По явной команде на публикацию и отдельному согласованию номера выпущены метаданные 1.16/code 26. Накопленный клиент P1.2–P1.5 включён в production и отдельный lab bundle; локальный вход остаётся только в lab application ID.
 - Проверены 77 frontend tests, TypeScript, ESLint, production build, Gradle обеих сборок, метаданные, разделение конфигурации и совпадение сертификата с прежней версией. Полный журнал: [android-1.16-release.md](android-1.16-release.md). Ручная приёмка и оставшиеся задачи P1 не закрываются выпуском APK.
+
+- Контрольный выпуск опубликован через PR #41, SHA `bc59c25519313cdaf2213392579fa54015bc5235`; frontend READY и публичный smoke прошёл, backend READY/health 200 без нового изменения. GitHub release v1.16 содержит только обычный APK; server asset digest/size совпали. Android native lifecycle/hint-race, обычный lab flow и production public login smoke прошли; Google/реальный STT/физическая ручная приёмка открыты. Полные доказательства: `docs/android-1.16-release.md`.
