@@ -19,7 +19,7 @@
 | --- | --- | --- |
 | P0 — надёжность и удобство практики | Основные исправления опубликованы, новое замечание прав Supabase открыто | Исправить RLS/grants отдельным срезом; получить ручную приёмку |
 | P1 — скорость и мобильная устойчивость | P1.2, счётчик P1.3 и часть P1.4 опубликованы; телефонная приёмка приостановлена | Продолжать независимые веб-срезы; вернуться к телефону после возобновления владельцем |
-| P2 — рост данных и сопровождение | Начат веб-срез отложенной загрузки и компактных выборок; реализация и ревью завершены; публикация ожидается | Закончить публикацию и production checks; далее уточнять приоритет по замерам |
+| P2 — рост данных и сопровождение | Начат веб-срез отложенной загрузки и компактных выборок; веб-срез опубликован и проверен; остальные требования открыты | Продолжить оставшиеся выборки/историю и замеры роста данных |
 
 ## P0 — непрерывная и надёжная практика
 
@@ -203,7 +203,7 @@
 - [x] Frontend 88 tests; focused App + DeferredPanel 63; lint и production build прошли.
 - [x] Browser 15/15 passed: изолированный выбор network/lifecycle/mock сценариев, lazy panels, result navigation, direct Stats↔Admin, chunk failure/retry и practice на латинице/кириллице/смешанном тексте.
 - [x] Reviewer финально одобрил исправленный distinct React component key для прямого перехода Stats↔Admin.
-- [ ] Опубликовать web/backend изменения и проверить production.
+- [x] 01.10.2026: web/backend опубликованы через PR #50; оба READY на `9f243ee857f0fc37513031c0d55cf360dc6ce155`, authorized IAB и API smoke прошли. [Доказательства](p2-web-checkpoint.md).
 - [ ] Передавать накопленные клиентские изменения в Android только по отдельной команде на Android-релиз; текущий APK остаётся 1.17/code 27.
 
 Сопоставимые build sizes: main JS 529.55 KB / 157.54 KB gzip → 519.35 KB / 155.32 KB gzip; Statistics 10.14 KB / 3.07 KB gzip; Admin 2.19 KB / 0.96 KB gzip. Отдельный build с production environment дал main JS 519.43 KB / 155.38 KB gzip и chunks `index-uZqMQ3LK.js`, `StatisticsView-CbyNHLmJ.js`, `AdminUsersView-DiffH-kH.js`; не сравнивать его напрямую с paired build из-за различия конфигурации. Main chunk всё ещё больше 500 KB. Это не latency/performance benchmark.
