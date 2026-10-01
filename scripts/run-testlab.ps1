@@ -29,7 +29,7 @@ try {
         }
         node node_modules/@playwright/test/cli.js test @specs
     }
-    elseif ($Suite -eq "lifecycle") { node e2e/android-lifecycle-1-16.mjs }
+    elseif ($Suite -eq "lifecycle") { node e2e/android-lifecycle.mjs }
     elseif ($Suite -eq "resilience") { node e2e/android-resilience.mjs }
     else { node e2e/android-testlab.mjs }
     if ($LASTEXITCODE -ne 0) { throw "$Platform testlab run failed" }

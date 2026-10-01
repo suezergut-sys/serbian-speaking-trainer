@@ -212,3 +212,15 @@
 - [ ] Исправление RLS/grants Supabase отдельной миграцией; P0/P1 полностью не закрыты.
 
 - [x] 01.10.2026: авторизованный production navigation smoke во встроенном браузере: темы, активность, список фраз, настройки и возврат; console errors 0. Полный голосовой цикл остаётся открытым. [Доказательства](p1-pooler-android-checkpoint.md).
+
+## Контрольный Android 1.17 — build verified, publication pending
+
+- [x] Версия `1.17` / `versionCode 27` отдельно согласована владельцем 01.10.2026.
+- [x] Production/lab APK собраны, metadata/guards/подпись проверены, обе установки на AVD API 36 успешны. Python 163 passed / 8 skipped, frontend 82, isolated browser 13, Node guards 5; lint/typecheck/`tsc -b` и Gradle обеих сборок прошли.
+- [x] Reviewer diff без блокеров и syntax runner passed. AVD 1.17 прошёл radio-off/retry, IME и Settings/Stats Back, home → topics с сохранённым draft, swipe, connecting/STT background, 413 recovery, grading Home/resume и однословную подсветку в обоих алфавитах.
+- [x] Полный AVD resilience exit 0 после QEMU relaunch; permission revoke/denial, expired 401 refresh, native exit и cleanup прошли. `android-lifecycle.mjs` lifecycle/hint-race smoke passed.
+- [x] Production APK 1.17 login-surface smoke: Google login visible, testlab login absent, app data preserved; OAuth не завершён. Public Chrome 154 smoke: bundle `index-DQeRzqzh.js`, privacy/terms 200, testlab 404, page errors 0. Full fixture-based resilience/lifecycle suite passed.
+- [ ] Обычный Android practice flow не подтверждён: до 15 s bounded-polling patch UiAutomator получил transient `device.info=null` после auth/topics/transcription 200; после patch повтор потерял AVD при QEMU crash. AVD retries приостановлены.
+- [ ] Свежих Android performance metrics в этом release slice нет.
+- [ ] Release publication, release SHA/URL и deployment metadata ожидают подтверждения. Public Chrome smoke и production APK login-surface smoke прошли; обычный Android practice UI flow и OAuth не подтверждены. См. [checkpoint Android 1.17](android-1.17-release.md).
+- [ ] Физическая ручная приёмка, полный voice цикл и остальные открытые P0/P1/RLS пункты остаются открытыми независимо от выпуска.

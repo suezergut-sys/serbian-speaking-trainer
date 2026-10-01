@@ -2,7 +2,7 @@ import { _android, expect } from "@playwright/test";
 import { loginTestlab } from "./flow.mjs";
 
 const packageName = "com.serbiantalk.trainer.testlab";
-const expectedVersion = "1.16";
+const expectedVersion = process.env.TESTLAB_ANDROID_VERSION ?? "1.17";
 if (!process.env.TESTLAB_EMAIL || !process.env.TESTLAB_PASSWORD) throw new Error("TESTLAB_EMAIL and TESTLAB_PASSWORD are required");
 
 const devices = await _android.devices();
@@ -21,7 +21,7 @@ const apiStatuses = [];
 try {
   const packageDetails = await device.shell(`dumpsys package ${packageName}`);
   if (!packageDetails.includes(`versionName=${expectedVersion}`)) {
-    throw new Error("Installed testlab package is not version 1.16");
+    throw new Error(`Installed testlab package is not version ${expectedVersion}`);
   }
 
   stage = "testlab app launch";
@@ -147,11 +147,11 @@ try {
   await hintRouteSettled;
   await expect(page.getByRole("alert")).toHaveCount(0);
   expect(hintRequests).toBe(1);
-  process.stdout.write("Android testlab 1.16 lifecycle and hint-race smoke passed.\n");
+  process.stdout.write(`Android testlab ${expectedVersion} lifecycle and hint-race smoke passed.\n`);
 } catch (error) {
   const statuses = apiStatuses.slice(-12).join(", ") || "no API responses";
   const reason = error instanceof Error ? `${error.name}: ${error.message.split("\n")[0]}` : "unknown error";
-  throw new Error(`Android testlab 1.16 smoke failed at ${stage}; API statuses: ${statuses}; ${reason}`);
+  throw new Error(`Android testlab ${expectedVersion} smoke failed at ${stage}; API statuses: ${statuses}; ${reason}`);
 } finally {
   releaseHintSave?.();
   if (hintRouteSettled && !closeHintRoute) closeHintRoute = () => undefined;
