@@ -173,11 +173,14 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const nextRequestIdRef = useRef<string | undefined>(undefined);
   const flowEpochRef = useRef(0);
   const voiceEpochRef = useRef(0);
+  const answerEditEpochRef = useRef(0);
+  const voiceStartEditEpochRef = useRef(0);
   const hintEpochRef = useRef(0);
   const flowControllerRef = useRef<AbortController | undefined>(undefined);
   const voiceControllerRef = useRef<AbortController | undefined>(undefined);
   const [showTopicChooser, setShowTopicChooser] = useState(false);
   const catalogEpochRef = useRef(0);
+  const catalogControllerRef = useRef<AbortController | undefined>(undefined);
   const reviewSummaryEpochRef = useRef(0);
   const accountRefreshEpochRef = useRef(0);
   const androidPagerRef = useRef<HTMLDivElement | null>(null);
@@ -257,8 +260,10 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     });
   }, []);
 
-  useEffect(() => {
+  const loadCatalog = useCallback(() => {
+    catalogControllerRef.current?.abort();
     const controller = new AbortController();
+    catalogControllerRef.current = controller;
     const epoch = ++catalogEpochRef.current;
     fetchTopics(controller.signal)
       .then((availableTopics) => {
@@ -277,8 +282,18 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
         if (catalogEpochRef.current !== epoch) return;
         setBackendState("offline");
       });
-    return () => { catalogEpochRef.current += 1; controller.abort(); };
   }, [refreshReviewSummary]);
+
+  function retryCatalog() {
+    setBackendState("checking");
+    setError(undefined);
+    loadCatalog();
+  }
+
+  useEffect(() => {
+    loadCatalog();
+    return () => { catalogEpochRef.current += 1; catalogControllerRef.current?.abort(); };
+  }, [loadCatalog]);
 
   useEffect(() => () => {
     flowEpochRef.current += 1;
@@ -292,6 +307,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     for (const request of hintRequestsRef.current.values()) request.abort();
     hintRequestsRef.current.clear();
     nextExerciseRef.current?.controller.abort();
+    catalogControllerRef.current?.abort();
     voiceRef.current?.stop();
   }, []);
   useEffect(() => {
@@ -299,14 +315,17 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     const refreshWhenVisible = () => {
       if (document.visibilityState !== "visible") return;
       controller?.abort();
+      catalogControllerRef.current?.abort();
       controller = new AbortController();
       const epoch = ++catalogEpochRef.current;
       void fetchTopics(controller.signal)
         .then((availableTopics) => {
           if (catalogEpochRef.current !== epoch) return;
           setTopics(availableTopics);
+          setSelectedTopic((current) => current ?? availableTopics[0]?.id);
+          setBackendState("online");
         })
-        .catch(() => undefined);
+        .catch(() => { if (catalogEpochRef.current === epoch) setBackendState("offline"); });
       void refreshReviewSummary(controller.signal).catch(() => undefined);
     };
     document.addEventListener("visibilitychange", refreshWhenVisible);
@@ -315,6 +334,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const selectedTopicData = topics.find((topic) => topic.id === selectedTopic);
   const currentTopic = session?.topic ?? selectedTopicData;
   const isReviewMode = session?.topic.id === "review-phrases";
+  const voiceBusy = voiceState === "connecting" || voiceState === "recording" || voiceState === "transcribing";
 
   function stopVoice() {
     voiceEpochRef.current += 1;
@@ -340,9 +360,11 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       startUiTiming("transcription");
       const transcript = await transcribeAudio(exerciseId, recording.audio, controller.signal);
       if (voiceEpochRef.current !== epoch) return;
-      voiceTimingRef.current = recording.timing;
-      setAnswer(displaySerbian(transcript.text, alphabetRef.current));
-      setHasTranscript(true);
+      if (answerEditEpochRef.current === voiceStartEditEpochRef.current) {
+        voiceTimingRef.current = recording.timing;
+        setAnswer(displaySerbian(transcript.text, alphabetRef.current));
+        setHasTranscript(true);
+      }
       setVoiceState("idle");
     } catch {
       if (voiceEpochRef.current !== epoch) return;
@@ -355,11 +377,19 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
   async function startVoice() {
     if (!exercise || !voiceSupported) return;
-    stopVoice(); setAnswer(""); setHasTranscript(false); setError(undefined); setVoiceState("connecting");
+    stopVoice(); voiceStartEditEpochRef.current = answerEditEpochRef.current;
+    setError(undefined); setVoiceState("connecting");
     const epoch = voiceEpochRef.current;
     const recorder = new VoiceRecorder(); voiceRef.current = recorder;
     try { await recorder.start(); if (voiceEpochRef.current === epoch && voiceRef.current === recorder) setVoiceState("recording"); }
     catch { recorder.stop(); if (voiceEpochRef.current !== epoch) return; if (voiceRef.current === recorder) voiceRef.current = undefined; setVoiceState("error"); setError("Не удалось получить доступ к микрофону. Проверьте разрешение браузера."); }
+  }
+
+  function enterAnswerManually() {
+    voiceTimingRef.current = undefined;
+    setHasTranscript(true);
+    setVoiceState("idle");
+    setError(undefined);
   }
 
   async function startTraining(topicId: string) {
@@ -453,7 +483,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
   async function checkAnswer(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!exercise || !session || !hasTranscript || !answer.trim() || checkingRef.current) return;
+    if (!exercise || !session || !hasTranscript || !answer.trim() || checkingRef.current || voiceBusy) return;
     startUiTiming("check");
     const transcript = toSerbianLatin(answer.trim());
     const timing = voiceTimingRef.current;
@@ -479,9 +509,12 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       if (isReviewMode || count < session.requested_length) {
         const nextController = new AbortController();
         const nextId = requestId();
+        nextRequestIdRef.current = nextId;
         const prepared = fetchNextExercise(session.id, nextId, nextController.signal);
         nextExerciseRef.current = { sessionId: session.id, requestId: nextId, promise: prepared, controller: nextController };
-        void prepared.catch(() => undefined);
+        void prepared.catch(() => {
+          if (nextExerciseRef.current?.promise === prepared) nextExerciseRef.current = undefined;
+        });
       }
       const refreshSideData = () => {
         void refreshReviewSummary().catch(() => undefined);
@@ -656,7 +689,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                 <button type="submit" disabled={loading || newPhrase.trim().length < 3 || Boolean(preparedPhrase && !phraseTopicId)}>{preparedPhrase ? "Сохранить" : "Перевести"}</button>
               </form>
             </details>
-            {backendState === "offline" && <p className="android-error" role="alert">Нет подключения к сервису.</p>}
+            {backendState === "offline" && <div className="android-error" role="alert">Нет подключения к сервису. <button type="button" onClick={retryCatalog}>Повторить загрузку тем</button></div>}
           </section>
 
           <section className="android-page android-training-page" aria-label="Тренировка">
@@ -676,10 +709,11 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
                 {!attempt ? <form className="android-answer" onSubmit={checkAnswer}>
                   {hasTranscript ? <><label className="sr-only" htmlFor="android-serbian-answer">Ваш ответ</label>
-                    <textarea id="android-serbian-answer" value={answer} readOnly={checking} onChange={(event) => { voiceTimingRef.current = undefined; setAnswer(event.target.value); }} placeholder="Исправьте распознанный ответ" rows={3} /></> : <p className="voice-prompt">Произнесите ответ в микрофон</p>}
+                    <textarea id="android-serbian-answer" value={answer} readOnly={checking} onChange={(event) => { answerEditEpochRef.current += 1; voiceTimingRef.current = undefined; setAnswer(event.target.value); }} placeholder="Введите ответ на сербском языке" rows={3} /></> : <p className="voice-prompt">Произнесите ответ в микрофон</p>}
                   {voiceState === "connecting" || voiceState === "recording" || voiceState === "transcribing" ? <button className="mic-button is-active" type="button" aria-label={voiceState === "recording" ? "Завершить запись" : "Остановить запись"} disabled={checking || voiceState === "transcribing"} onClick={voiceState === "recording" ? finishVoice : stopVoice}><Icon name="mic" size={34} /></button> : <button className="mic-button" type="button" aria-label="Ответить голосом" disabled={checking || !voiceSupported} onClick={startVoice}><Icon name="mic" size={34} /></button>}
                   {(!voiceSupported || voiceState !== "idle") && <p className="android-voice-state" role="status">{!voiceSupported ? "Микрофон недоступен. Разрешите доступ в настройках устройства." : voiceState === "connecting" ? "Подключаем микрофон…" : voiceState === "recording" ? "Запись" : voiceState === "transcribing" ? "Распознаём…" : "Повторите запись"}</p>}
-                  {hasTranscript && <button className="android-primary" type="submit" disabled={checking || !answer.trim()}>{checking ? "Проверяем…" : "Проверить"}</button>}
+                  {!hasTranscript && (voiceState === "error" || !voiceSupported) && <button type="button" onClick={enterAnswerManually}>Ввести ответ вручную</button>}
+                  {hasTranscript && <button className="android-primary" type="submit" disabled={checking || voiceBusy || !answer.trim()}>{checking ? "Проверяем…" : "Проверить"}</button>}
                 </form> : renderFeedback(true)}
                 {error && <p className="android-error" role="alert">{error}</p>}
               </div>
@@ -781,6 +815,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                 <div className="welcome-card__glow"/><span className="welcome-card__icon"><Icon name={topicIcons[currentTopic?.id ?? ""] ?? "message"} size={32} /></span>
                 <p className="kicker">Выбранная ситуация</p><h2>{customTopic.trim() || currentTopic?.title_ru || "Выберите тему"}</h2>
                 <p>{selectedTopicData?.phrase_count === 0 ? "Тема пока пустая. Добавьте в неё фразы — автоматической генерации не будет." : currentTopic?.description_ru || "Темы загрузятся после подключения к backend."}</p>
+                {backendState === "offline" && <button className="answer-submit" type="button" onClick={retryCatalog}>Повторить загрузку тем</button>}
                 <div className="welcome-card__steps"><span><b>1</b> Получите фразу</span><span><b>2</b> Ответьте голосом</span><span><b>3</b> Разберите результат</span></div>
                 {error && <p className="error" role="alert">{error}</p>}
               </div>
@@ -792,11 +827,12 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                   {!attempt ? (
                     <form onSubmit={checkAnswer}>
                       <div className="answer-input">
-                        {hasTranscript ? <><label className="sr-only" htmlFor="serbian-answer">Ваш ответ</label><textarea id="serbian-answer" value={answer} readOnly={checking} onChange={(event) => { voiceTimingRef.current = undefined; setAnswer(event.target.value); }} placeholder="Исправьте распознанный ответ" rows={4} /></> : <p className="voice-prompt">Произнесите ответ в микрофон. После распознавания текст можно исправить.</p>}
+                        {hasTranscript ? <><label className="sr-only" htmlFor="serbian-answer">Ваш ответ</label><textarea id="serbian-answer" value={answer} readOnly={checking} onChange={(event) => { answerEditEpochRef.current += 1; voiceTimingRef.current = undefined; setAnswer(event.target.value); }} placeholder="Введите ответ на сербском языке" rows={4} /></> : <p className="voice-prompt">Произнесите ответ в микрофон. После распознавания текст можно исправить.</p>}
                         {voiceState === "connecting" || voiceState === "recording" || voiceState === "transcribing" ? <button className="mic-button is-active" type="button" aria-label={voiceState === "recording" ? "Завершить запись" : "Остановить запись"} disabled={checking || voiceState === "transcribing"} onClick={voiceState === "recording" ? finishVoice : stopVoice}><Icon name="mic" size={30} /></button> : <button className="mic-button" type="button" aria-label="Ответить голосом" disabled={checking || !voiceSupported} onClick={startVoice}><Icon name="mic" size={30} /></button>}
                       </div>
-                      <div className="voice-status">{!voiceSupported ? "Микрофон недоступен. Разрешите доступ к нему в браузере или устройстве." : voiceState === "recording" ? "Идёт запись. Аудио не сохраняется" : voiceState === "transcribing" ? "Расшифровываем фразу…" : voiceState === "error" ? "Не удалось распознать ответ. Повторите запись." : hasTranscript ? "Проверьте распознанный текст и при необходимости исправьте его." : "Нажмите на микрофон, чтобы ответить."}</div>
-                      {hasTranscript && <button className="answer-submit" type="submit" disabled={checking || !answer.trim()}>{checking ? "Проверяем…" : "Проверить ответ"}<Icon name="arrow" /></button>}
+                      <div className="voice-status">{!voiceSupported ? "Микрофон недоступен. Разрешите доступ к нему в браузере или устройстве." : voiceState === "recording" ? "Идёт запись. Аудио не сохраняется" : voiceState === "transcribing" ? "Расшифровываем фразу…" : voiceState === "error" ? "Не удалось распознать ответ. Повторите запись." : hasTranscript ? "Введите ответ или исправьте распознанный текст." : "Нажмите на микрофон, чтобы ответить."}</div>
+                      {!hasTranscript && (voiceState === "error" || !voiceSupported) && <button type="button" onClick={enterAnswerManually}>Ввести ответ вручную</button>}
+                      {hasTranscript && <button className="answer-submit" type="submit" disabled={checking || voiceBusy || !answer.trim()}>{checking ? "Проверяем…" : "Проверить ответ"}<Icon name="arrow" /></button>}
                     </form>
                   ) : renderFeedback(false)}
                   {error && <p className="error" role="alert">{error}</p>}
