@@ -119,5 +119,5 @@
 - [x] Версия 1.16/code 26 согласована отдельно; весь завершённый клиентский набор P1.2–P1.5 перенесён и собран.
 - [x] Production и lab APK проверены на разделение конфигурации; подпись production совпадает с 1.15; обновление обеих установок в AVD API 36 прошло.
 - [x] Android 1.16 native Home/resume с synthetic mic, сохранение draft, retry, hint-save race и отдельный полный lab flow прошли; production APK login smoke прошёл без очистки данных. [Доказательства](android-1.16-release.md).
-- [ ] Завершить публикацию релиза и записать URL/SHA.
+- [x] 01.10.2026: [release v1.16](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.16) опубликован, web READY на release SHA; URL/hash/signature в [android-1.16-release.md](android-1.16-release.md).
 - [ ] Ручная приёмка физического телефона: Google, настоящий STT, разрешения, системный Back/свайпы, длительное отключение сети, оба алфавита.

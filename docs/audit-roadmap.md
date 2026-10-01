@@ -139,10 +139,11 @@
 - [ ] Выполнить регрессионные тесты, production PostgreSQL проверки конкуренции и сравнение производительности. Локальные проверки реализации P1.2/P1.4, paired benchmark и завершённое независимое ревью: [контрольная точка](p1-concurrency-checkpoint.md); публикация и ручная приёмка остаются отдельными шагами.
 - [x] 01.10.2026: обновить README, decisions, план и Android backlog для завершённых срезов и согласованного 1.16. [Доказательства](android-1.16-release.md).
 - [x] 01.10.2026: завершённые срезы web/backend опубликованы через PR #33/#35/#37/#39 и Ready; публичные проверки прошли. [Доказательства](android-1.16-release.md).
-- [ ] Завершить публикацию метаданных/артефакта 1.16 и проверить новый frontend deployment.
+- [x] 01.10.2026: метаданные/артефакт 1.16 опубликованы через [PR #41](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/41) и [release v1.16](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.16); frontend READY на `bc59c25519313cdaf2213392579fa54015bc5235`, production smoke прошёл. [Доказательства](android-1.16-release.md).
 - [ ] Проверить авторизованные production-сценарии с настоящим STT и получить ручную приёмку.
 - [x] 01.10.2026: отдельно согласовать 1.16/code 26, перенести завершённые срезы P1.2–P1.5 и собрать production/lab APK; metadata и подпись проверены. [Доказательства](android-1.16-release.md).
-- [ ] Зафиксировать SHA, URL, APK, результаты замеров и сценарий ручной проверки.
+- [x] 01.10.2026: release SHA, deployment/production URL, APK/hash/signature, выполненные проверки, ссылки на прежние сопоставимые замеры и ручной сценарий зафиксированы в [android-1.16-release.md](android-1.16-release.md).
+- [ ] Дополнить контрольную точку оставшимися production PostgreSQL и физическими Android замерами; текущий smoke не является benchmark.
 - [ ] Получить ручную приёмку владельца перед переходом к P2.
 
 ## P2 — рост данных и сопровождение
