@@ -44,4 +44,3 @@ it('retries monthly statistics after a network failure', async () => {
   expect(fetchMonthlyStatistics).toHaveBeenCalledTimes(2 * new Set(vi.mocked(fetchMonthlyStatistics).mock.calls.map(([month]) => month)).size);
   expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 });
-
