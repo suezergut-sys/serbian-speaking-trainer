@@ -12,6 +12,9 @@ try {
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 } finally { Pop-Location }
 
+node --test (Join-Path $RepositoryRoot "scripts\testing\android_resilience_guards.test.mjs")
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
 Push-Location (Join-Path $RepositoryRoot "frontend")
 try {
     pnpm test --run

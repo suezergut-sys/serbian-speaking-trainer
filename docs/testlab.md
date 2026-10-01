@@ -95,3 +95,11 @@ Mock browser suite: из `frontend` запустите `node node_modules/@playw
 ## Android 1.16: native lifecycle
 
 После установки lab APK 1.16: `scripts/run-testlab.ps1 -Platform android -Suite lifecycle`. Сценарий проверяет версию установленного lab package, использует настоящий native Home/resume и события App, но синтетический mic и локальный fake STT. Только lab package очищается; обычное приложение и Google-сессия не затрагиваются. Одновременно допустим один Android runner. Обычный полный цикл: `-Platform android -Suite practice`. Результаты: [android-1.16-release.md](android-1.16-release.md).
+
+## Android resilience и Supavisor
+
+`run-testlab.ps1 -Platform android -Suite resilience` проверяет настоящее отключение радио, сохранение draft/retry, native lifecycle при connecting/STT и local signed JWT expiry. Только lab package; network state восстанавливается. `scripts/testing/audit_supabase_pooler.py` использует DATABASE_URL из игнорируемого artifacts/testlab/pooler-audit.env; без ключа --isolated-fixtures выполняет только SELECT 1. Полный concurrency прогон использует собственные private schemas и mock AI. [Методика и результаты](p1-pooler-android-checkpoint.md).
+
+Скрытый запуск эмулятора: `scripts/start-testlab-emulator.ps1 -Headless`. На текущем Windows host используется SwiftShader и скрытое Qt-окно вместо нестабильного headless QEMU; аудиовход общим launcher не выключается. Runner сверяет установленную lab-версию до очистки данных, восстанавливает радио/permission и проверяет итоговые состояния. Частичный отказ cleanup означает неуспешный тест. Пять regression guards запускаются через `node --test scripts/testing/android_resilience_guards.test.mjs` и входят в `scripts/check.ps1`.
+
+При Windows crash с host audio для синтетического прогона можно явно добавить `-SyntheticAudioOnly`: эмулятор запускается с `-audio none`. Этот режим не годится для проверки настоящей записи. Qt renderer также может аварийно завершиться; runner фиксирует неуспех, а не скрывает его автоматическим повтором.
