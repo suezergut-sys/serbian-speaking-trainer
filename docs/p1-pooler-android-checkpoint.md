@@ -37,7 +37,7 @@
 
 ## Что остаётся
 
-- [ ] Выполнить runner через настоящее подключение приложения/Supavisor. Management SQL plugin не доказывает поведение transaction pooler. Требуется DATABASE_URL в игнорируемом `artifacts/testlab/pooler-audit.env`; sensitive Vercel env невозможно прочитать обратно. Пароль не отправлять в чат/документацию.
+- [x] 01.10.2026: подключение к transaction Supavisor проекта проверено через psycopg/SQLAlchemy, три connection probes и все пять isolated mock concurrency checks прошли. Credential хранится только в локальном ignored файле; в документацию и Git не включён. Это bounded concurrency, не нагрузка на росте данных.
 - [ ] Дополнить сопоставимые PostgreSQL замеры и нагрузку на росте данных; однократный EXPLAIN не закрывает этот пункт.
 - [ ] Исправить права Supabase отдельной проверяемой миграцией.
 - [ ] Перенести накопленные клиентские изменения/Back в отдельно заказанный APK, согласовав версию; проверить на нём Back, IME, swipe и exit.
@@ -67,3 +67,15 @@ Chrome extension повторно проверен 01.10.2026: профиль Ma
 - Публичный Chrome 154.0.8037.57: `/`, privacy, terms — 200, Google login виден, page errors 0; `/testlab.html` — 404; testlab markers отсутствуют. Cloud asset `index-DQeRzqzh.js` содержит новый Back handler, прежние alignment/recovery/summary paths сохранены. Первый smoke ожидал двойные кавычки вокруг backButton, cloud minifier использовал backticks; проверка исправлена по реально полученному asset и повторена успешно.
 - Backend runtime не менялся и не redeployed: health 200, topics/monthly stats без авторизации 401. Production schema/data не изменялись. Авторизованный production сценарий не проверен.
 - APK остаётся 1.16/code26. Back исправлен в исходниках; выпущенный APK не получил его до отдельной команды на Android-релиз. Ручная приёмка и P1 целиком остаются открытыми.
+
+## Настоящий transaction pooler — 01.10.2026
+
+Параметры подтверждены через авторизованный Supabase Connect: shared transaction pooler, порт 6543, TLS require. Действующий пароль владельца проверен; expected database/role подтверждены. DATABASE_URL сохранён в ignored `artifacts/testlab/pooler-audit.env` оригинального checkout, runner получает его через `--env-file`. Не копировать этот файл в Git, отчёты или frontend.
+
+`audit_supabase_pooler.py --isolated-fixtures` завершился с exit 0: три параллельных SELECT 1 (1686,929 / 1685,988 / 1682,034 мс включая создание подключения), максимум три соединения, named prepared statements отключены. Это диагностические connect timings, не p50/p95 или сравнительный benchmark.
+
+Все проверки прошли: legacy AI wait, idempotent AI wait, quota reservation, fencing, parallel finalization. Использованы mock AI и собственные временные schemas. После cleanup отдельный SELECT pg_namespace подтвердил 0 оставшихся serbotalk_audit schemas. Пользовательские таблицы не изменялись.
+
+Sensitive Vercel DATABASE_URL не был прочитан: прогон проверяет подтверждённый pooler этого production-проекта и код сервиса на isolated fixtures; он не воспроизводит конкурентные HTTP-запросы deployed Vercel backend. Репрезентативная нагрузка, рост данных, настоящая voice-практика и физический телефон остаются открытыми.
+
+Авторизованный встроенный браузер дополнительно подтвердил загрузку тем, недельной активности, списка фраз, настроек и возврат к темам; console errors 0. Это навигационный smoke, не полный голосовой цикл и не benchmark.
