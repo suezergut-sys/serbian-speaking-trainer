@@ -930,7 +930,7 @@ describe("App", () => {
     render(<App />);
 
     fireEvent.click(await screen.findByRole("button", { name: /Статистика/ }));
-    expect(screen.getByRole("heading", { name: "Статистика" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Статистика" })).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Календарь занятий" })).toBeInTheDocument();
     expect(screen.getByLabelText("Итоги недели")).toHaveTextContent("10фраз за неделю");
     expect(screen.getByRole("heading", { name: "Фразы по дням" })).toBeInTheDocument();
@@ -1175,6 +1175,35 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Практика" }));
     expect(screen.getByLabelText("Ваш ответ")).toHaveValue("Moj odgovor");
     expect(screen.getByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
+  });
+
+  it("keeps practice usable while statistics is still loading", async () => {
+    voiceMock.available = true;
+    const baseFetch = mockApi();
+    let finishStatistics!: (response: { ok: boolean; status: number; json: () => Promise<unknown> }) => void;
+    const pendingStatistics = new Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>((resolve) => { finishStatistics = resolve; });
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+      input.toString().includes("/statistics/monthly") ? pendingStatistics : baseFetch(input, init));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    const answer = await recordAnswer();
+    fireEvent.change(answer, { target: { value: "Čuvam nacrt" } });
+    expect(fetchMock.mock.calls.some(([url]) => url.toString().includes("/statistics/monthly"))).toBe(false);
+
+    fireEvent.click(screen.getByRole("button", { name: "Статистика" }));
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.toString().includes("/statistics/monthly"))).toBe(true));
+    fireEvent.click(screen.getByRole("button", { name: "Практика" }));
+    expect(screen.getByLabelText("Ваш ответ")).toHaveValue("Čuvam nacrt");
+    expect(screen.getByRole("button", { name: "Проверить ответ" })).toBeEnabled();
+
+    const month = new Date();
+    await act(async () => finishStatistics({ ok: true, status: 200, json: async () => ({
+      month: `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, "0")}`,
+      active_days: 0, total_phrases: 0, total_translations: 0, correct_translations: 0,
+      mastered_phrases: 0, days: [],
+    }) }));
+    expect(screen.getByLabelText("Ваш ответ")).toHaveValue("Čuvam nacrt");
   });
 
   it("shows an AI outage without a grade and reuses the same request ID on retry", async () => {

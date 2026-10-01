@@ -7,8 +7,7 @@ import { getApiBaseUrl, setApiBaseUrl } from "./api/baseUrl";
 import { addReviewPhrase, BackendError, createTopic, fetchNextExercise, fetchReviewSummary, fetchTopics, prepareReviewPhrase, revealWordHint, startTrainingSession, submitAttempt, transcribeAudio } from "./api/training";
 import type { Attempt, AttemptTimings, Exercise, PreparedReviewPhrase, TopicListItem, TrainingSession, WordHint } from "./types/training";
 import { supportsVoiceRecording, VoiceRecorder } from "./voiceRecorder";
-import { StatisticsView } from "./StatisticsView";
-import { AdminUsersView } from "./AdminUsersView";
+import { DeferredPanel } from "./DeferredPanel";
 import { fetchCurrentUser } from "./api/users";
 import { initializeAuth, isAuthConfigured, onAuthStateChange, signInWithGoogle, signOut } from "./auth";
 import type { CurrentUser } from "./types/auth";
@@ -23,6 +22,13 @@ import "./styles.css";
 type BackendState = "checking" | "online" | "offline";
 type VoiceState = "idle" | "connecting" | "recording" | "transcribing" | "error";
 type AppView = "practice" | "statistics" | "settings" | "admin";
+
+const loadStatistics = (retryUrl?: string) => (retryUrl
+  ? import(/* @vite-ignore */ retryUrl) as Promise<typeof import("./StatisticsView")>
+  : import("./StatisticsView")).then(({ StatisticsView }) => ({ default: StatisticsView }));
+const loadAdminUsers = (retryUrl?: string) => (retryUrl
+  ? import(/* @vite-ignore */ retryUrl) as Promise<typeof import("./AdminUsersView")>
+  : import("./AdminUsersView")).then(({ AdminUsersView }) => ({ default: AdminUsersView }));
 
 function PhraseLoading() {
   return <div className="phrase-loading auth-loading" role="status" aria-label="Подготовка фразы">
@@ -787,7 +793,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
           </section>
 
           <section className="android-page android-statistics-page" aria-label="Статистика">
-            {androidPanel === 2 && <StatisticsView alphabet={alphabet} />}
+            {androidPanel === 2 && <DeferredPanel load={loadStatistics} panelProps={{ alphabet }} label="статистику" />}
             <footer className="android-service-bar">
               <span className="avatar">{account.display_name?.slice(0, 1).toLocaleUpperCase() || "A"}</span>
               <span><strong>{account.display_name || account.email}</strong><small>{account.daily_usage.limit === null ? `${account.daily_usage.used} фраз` : `${account.daily_usage.remaining} из ${account.daily_usage.limit}`}</small></span>
@@ -836,7 +842,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
         </form>
       )}
 
-      {view === "admin" ? <AdminUsersView /> : view === "statistics" ? <StatisticsView alphabet={alphabet} /> : view === "settings" ? <SettingsView alphabet={alphabet} onAlphabetChange={changeAlphabet} /> : (
+      {view === "admin" ? <DeferredPanel key="admin" load={loadAdminUsers} panelProps={{}} label="пользователей" /> : view === "statistics" ? <DeferredPanel key="statistics" load={loadStatistics} panelProps={{ alphabet }} label="статистику" /> : view === "settings" ? <SettingsView alphabet={alphabet} onAlphabetChange={changeAlphabet} /> : (
         <main className="workspace">
           <aside className="topics-panel panel">
             <div className="panel-heading"><h2>Темы для практики</h2><p>Выберите ситуацию и начните разговор на сербском языке</p></div>

@@ -1,9 +1,7 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
-
 :root {
   color: #eaf2ff;
   background: #020914;
-  font-family: "Manrope", system-ui, sans-serif;
+  font-family: system-ui, "Segoe UI", Roboto, Arial, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   --blue: #40a4ff;
@@ -407,6 +405,11 @@ button { cursor: pointer; }
 .auth-loading__ring img { width: 76px; height: 76px; border-radius: 22px; object-fit: cover; }
 .phrase-loading { align-content: center; min-height: 300px; height: 100%; }
 .phrase-loading p { color: #dcecff; }
+.deferred-panel { display: grid; justify-items: start; align-content: center; gap: 1rem; min-height: 180px; width: min(1120px, calc(100% - 2rem)); margin: 2rem auto; padding: 1.5rem; color: #dcecff; }
+.deferred-panel p { margin: 0; }
+.deferred-panel button { border: 1px solid var(--line); border-radius: 10px; padding: .7rem 1rem; background: rgba(64, 164, 255, .18); color: #eaf2ff; font-weight: 700; }
+.deferred-panel button:focus-visible { outline: 3px solid var(--cyan); outline-offset: 3px; }
+.android-statistics-page .deferred-panel { width: 100%; margin: 0; }
 @keyframes auth-orbit { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .auth-loading__ring::before { animation: none; } }
 .auth-card h1 { margin: 0 0 12px; }

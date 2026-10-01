@@ -6,7 +6,7 @@ import { displaySerbian, type SerbianAlphabet } from "./serbianScript";
 
 const weekDays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 type StatisticsTab = "activity" | "phrases";
-type PageSize = "10" | "50" | "all";
+type PageSize = "10" | "50";
 
 function monthKey(value: Date): string {
   return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}`;
@@ -33,18 +33,19 @@ function PhrasesTab({ alphabet }: { alphabet: SerbianAlphabet }) {
   const [statistics, setStatistics] = useState<PhraseStatistics>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
     fetchPhraseStatistics(page, pageSize, controller.signal)
-      .then(setStatistics)
+      .then((result) => { if (!controller.signal.aborted) setStatistics(result); })
       .catch((requestError: unknown) => {
-        if (requestError instanceof DOMException && requestError.name === "AbortError") return;
+        if (controller.signal.aborted || requestError instanceof DOMException && requestError.name === "AbortError") return;
         setError(true);
       })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [page, pageSize]);
+  }, [page, pageSize, retry]);
 
   function changePage(nextPage: number) {
     setLoading(true); setError(false); setPage(nextPage);
@@ -55,14 +56,14 @@ function PhrasesTab({ alphabet }: { alphabet: SerbianAlphabet }) {
   }
 
   if (loading) return <div className="statistics-state panel">Загружаем фразы…</div>;
-  if (error || !statistics) return <div className="statistics-state panel" role="alert">Не удалось загрузить фразы.</div>;
+  if (error || !statistics) return <div className="statistics-state panel" role="alert">Не удалось загрузить фразы. <button type="button" onClick={() => { setLoading(true); setError(false); setRetry((value) => value + 1); }}>Повторить загрузку фраз</button></div>;
 
   return <section className="phrase-statistics panel" aria-labelledby="phrases-title">
     <div className="statistics-card__heading">
       <div><p className="kicker">Интервальное повторение</p><h2 id="phrases-title">Фразы</h2></div>
       <label className="page-size-control">На странице
         <select value={pageSize} onChange={(event) => changePageSize(event.target.value as PageSize)}>
-          <option value="10">10</option><option value="50">50</option><option value="all">Все</option>
+          <option value="10">10</option><option value="50">50</option>
         </select>
       </label>
     </div>
@@ -80,11 +81,11 @@ function PhrasesTab({ alphabet }: { alphabet: SerbianAlphabet }) {
           </table></div>
         </section>)}
       </div>
-      {pageSize !== "all" && <nav className="phrase-pagination" aria-label="Пагинация фраз">
+      <nav className="phrase-pagination" aria-label="Пагинация фраз">
         <button type="button" disabled={statistics.page <= 1} onClick={() => changePage(statistics.page - 1)}>Назад</button>
         <span>Страница {statistics.page} из {statistics.total_pages}</span>
         <button type="button" disabled={statistics.page >= statistics.total_pages} onClick={() => changePage(statistics.page + 1)}>Вперёд</button>
-      </nav>}
+      </nav>
     </>}
   </section>;
 }
@@ -94,23 +95,24 @@ function ActivityTab() {
   const [statistics, setStatistics] = useState<MonthlyStatistics[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [retry, setRetry] = useState(0);
   const months = [...new Set(week.map(monthKey))];
   const monthKeys = months.join(",");
 
   useEffect(() => {
     const controller = new AbortController();
     Promise.all(monthKeys.split(",").map((month) => fetchMonthlyStatistics(month, controller.signal)))
-      .then(setStatistics)
+      .then((result) => { if (!controller.signal.aborted) setStatistics(result); })
       .catch((requestError: unknown) => {
-        if (requestError instanceof DOMException && requestError.name === "AbortError") return;
+        if (controller.signal.aborted || requestError instanceof DOMException && requestError.name === "AbortError") return;
         setError(true);
       })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [monthKeys]);
+  }, [monthKeys, retry]);
 
   if (loading) return <div className="statistics-state panel">Загружаем статистику…</div>;
-  if (error || !statistics.length) return <div className="statistics-state panel" role="alert">Не удалось загрузить статистику.</div>;
+  if (error || !statistics.length) return <div className="statistics-state panel" role="alert">Не удалось загрузить статистику. <button type="button" onClick={() => { setLoading(true); setError(false); setRetry((value) => value + 1); }}>Повторить загрузку статистики</button></div>;
   const byDate = new Map(statistics.flatMap((month) => month.days).map((day) => [day.date, day]));
   const days = week.map((date) => byDate.get(dateKey(date)) ?? { date: dateKey(date), phrase_count: 0, translation_count: 0, correct_translation_count: 0, mastered_phrase_count: 0 });
   const total = days.reduce((sum, day) => sum + day.phrase_count, 0);

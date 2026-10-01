@@ -42,3 +42,19 @@ class UserRepository(Repository[User]):
             )
         )
         return int(self.session.scalar(statement) or 0)
+
+    def count_attempts_between_by_user(self, start: datetime, end: datetime) -> dict[str, int]:
+        statement = (
+            select(TrainingSession.user_id, func.count(Attempt.id))
+            .select_from(Attempt)
+            .join(Exercise, Exercise.id == Attempt.exercise_id)
+            .join(TrainingSession, TrainingSession.id == Exercise.session_id)
+            .join(User, User.id == TrainingSession.user_id)
+            .where(
+                User.email != "legacy@local.invalid",
+                Attempt.created_at >= start,
+                Attempt.created_at < end,
+            )
+            .group_by(TrainingSession.user_id)
+        )
+        return {str(user_id): int(count) for user_id, count in self.session.execute(statement)}
