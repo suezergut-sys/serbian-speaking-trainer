@@ -1,6 +1,6 @@
 # Android-релизы и проверки
 
-Последняя контрольная Android-версия: `1.16` (`versionCode 26`), согласована 01.10.2026. Состав, проверки и открытая ручная приёмка — в [android-1.16-release.md](android-1.16-release.md). Исторические пункты ниже сохраняют исходные даты; текущий перенос отмечен отдельно.
+Последняя документированная контрольная Android-версия: `1.16` (`versionCode 26`), согласована 01.10.2026. Контрольная версия `1.17` (`versionCode 27`) отдельно согласована; состав и ожидающие подтверждения выпуска приведены в [android-1.17-release.md](android-1.17-release.md). Состав, проверки и открытая ручная приёмка 1.16 — в [android-1.16-release.md](android-1.16-release.md). Исторические пункты ниже сохраняют исходные даты; текущий перенос отмечается отдельно.
 
 Этот список хранит изменения для следующих Android-сборок и проверки собранной версии. Следующее повышение версии и сборка APK требуют отдельной команды владельца.
 
@@ -135,3 +135,16 @@
 - [x] 01.10.2026: AVD/1.16: реальное отключение Wi-Fi/data на 120 секунд, retry с прежним ID, synthetic connecting/STT, 413 и signed fixture expiry/refresh прошли. [Доказательства](p1-pooler-android-checkpoint.md).
 
 - [x] 01.10.2026: полный native resilience на AVD/1.16: grading Home/resume без дублирования и OS mic denial с ручным вводом; исходные радио/permission восстановлены. Итоговый повтор offline 30 секунд, длительный 120 секунд подтверждён отдельными предыдущими прогонами. Настоящая запись на телефоне остаётся открытой.
+
+## Контрольная версия 1.17 — сборка есть, выпуск ожидает проверок
+
+- [x] Сформированы production/lab APK 1.17/code 27; metadata, prod/lab guards, production подпись и install-r на AVD API 36 проверены. Артефакты и digest: [checkpoint 1.17](android-1.17-release.md).
+- [x] В сборке находится накопленный клиентский bundle: точная подсветка evidence/correction, домик с сохранением текущей практики и системный Back. Предшествующие web/backend доказательства: [PR #43](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/43), [PR #45](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/45).
+- [x] Reviewer финально подтвердил diff без блокеров; syntax runner прошёл. На 1.17 проверены radio-off/retry, IME/System Back, Settings/Stats Back, домик/сохранение draft, swipe, background connecting/STT, 413 recovery, grading Home/resume и подсветка `jutreneg` в обоих алфавитах.
+- [x] На APK 1.17 прошёл полный AVD resilience run и `android-lifecycle.mjs` (lifecycle/hint-race), оба exit 0: permission denial/revoke, expired fixture 401 → новая сессия, native exit и cleanup. Успешный полный запуск после relaunch QEMU включал offline 30 s; отдельный первый прогон подтвердил offline 120 s + retry до более позднего locator failure. Feature acceptance выполнена с fixtures/mock; реальный STT/OAuth не проверялись.
+- [x] Production APK 1.17 smoke подтвердил видимый Google login, отсутствие testlab login и сохранность app data; OAuth не завершён. Public Chrome 154 smoke прошёл: privacy/terms 200, testlab 404, page errors 0.
+- [ ] Обычный Android practice flow повторяется после QEMU `Windows Event 1000` / lost-device сбоя; он не засчитан как успех или app failure. Release publication ожидается.
+- [ ] Зафиксировать release SHA/URL и production URL после публикации; затем выполнить production smoke.
+- [ ] Выполнить публикацию, production smoke, APK/AVD проверки и ручную приёмку раздельными статусами.
+
+На этом этапе 1.17 — собранная и установленная контрольная сборка; публикация не подтверждена. Контрольная версия 1.17 не закрывает открытые пункты P0/P1 и ручную приёмку.

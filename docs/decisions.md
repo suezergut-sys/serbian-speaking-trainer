@@ -329,3 +329,14 @@
 - Полный native AVD resilience прошёл со SwiftShader/скрытым Qt/явно выключенным host audio для synthetic suite. Grading не дублируется при Home/resume; OS denied mic даёт NotAllowedError и доступный ручной ввод. Cleanup проверяет фактическое восстановление radio/permission и проваливает прогон при ошибке. Пять guards и GPT-6.1 Sol/medium review прошли; новый APK не собирался.
 
 - PR #45 merged; web READY на `0e3e72dddaefe7d3ff80d64f039892e35940aaf3`, публичный Chrome/API smoke прошёл. Backend schema/runtime и APK не менялись. [Полный журнал](p1-pooler-android-checkpoint.md).
+
+# 2026-10-01 — согласован контрольный Android 1.17
+
+- Версия `1.17` / `versionCode 27` отдельно согласована владельцем. В плановый состав входят перенос web word-level подсветки, домика с возвратом к темам и сохранением текущей практики, системного Back и необходимых унаследованных P1 сценариев.
+- APK 1.17/code 27 production/lab собраны, метаданные и подпись проверены, install-r на AVD API 36 прошёл. Проверки: Python 163 passed / 8 skipped, frontend 82, isolated browser 13, Node guards 5; lint/typecheck/`tsc -b`, bundle sync и Gradle prod/lab прошли. SHA/размеры и границы проверки записаны в [android-1.17-release.md](android-1.17-release.md).
+- Reviewer artifact audit подтвердил совпадение пяти production dist files, отсутствие постоянного-key patterns/lab-host markers, HTTPS metadata, `mixedContent=false` и signature v2. Reviewer финально подтвердил diff без блокеров; syntax runner passed.
+- AVD 1.17 прошёл radio-off/retry, IME Back, Settings/Stats Back, возврат домой к темам с сохранённым draft, swipe, background при connecting/STT, 413 recovery, grading Home/resume без дублирования и подсветку одного слова в latinica и ćirilica. Полная fixture-based resilience/feature acceptance прошла; реальный STT/OAuth и обычный practice flow проверяются отдельно.
+- Полная resilience suite и lifecycle/hint-race smoke завершились успешно; отдельно подтверждены permission denial/revoke, expired-session refresh, native exit и cleanup. Последующий дополнительный practice-прогон завершился QEMU `Windows Event 1000` / lost-device; это инфраструктурный сбой, успешная проверка не засчитана. Повтор practice flow ожидается.
+- Production APK native login-surface smoke прошёл: Google login видим, testlab login отсутствует, app data сохранены; OAuth не завершён. Public Chrome 154 smoke текущего bundle `index-DQeRzqzh.js` прошёл: `/privacy` и `/terms` 200, testlab 404, page errors 0. Обычный Android practice flow повторяется; release publication позже.
+- Release publication и production smoke ожидаются. Эти статусы не считаются закрытыми до соответствующих результатов; P0/P1 и физическая ручная приёмка остаются открытыми.
+- Выпуск не закрывает полную P0/P1 приёмку, физическую ручную проверку, voice/OAuth сценарии или открытое замечание Supabase RLS/grants.

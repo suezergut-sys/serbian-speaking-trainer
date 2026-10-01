@@ -16,7 +16,7 @@ const releases=[];
 const report={variant:'lab',syntheticAudio:true,inputMode};
 const attempts=[]; let wifi, data;
 try {
-  report.apkVersion=requireApkVersion((await device.shell(`dumpsys package ${pkg}`)).toString(),process.env.TESTLAB_ANDROID_VERSION ?? '1.16');
+  report.apkVersion=requireApkVersion((await device.shell(`dumpsys package ${pkg}`)).toString(),process.env.TESTLAB_ANDROID_VERSION ?? '1.17');
   wifi=(await device.shell('settings get global wifi_on')).toString().trim();
   data=(await device.shell('settings get global mobile_data')).toString().trim();
   radios=createRadioGuard(command=>device.shell(command),wifi,data);
@@ -70,6 +70,17 @@ try {
   await expect.poll(()=>page.evaluate(()=>window.visualViewport.height),{timeout:10000}).toBeGreaterThanOrEqual(viewportWithKeyboard);
   await tap(page.getByRole('button',{name:'Настройки',exact:true}));
   await expect(page.getByRole('heading',{name:'Настройки',exact:true})).toBeInViewport();
+  if(inputMode==='native')await device.input.press('Back');
+  else await tap(page.getByRole('button',{name:'Тренировка',exact:true}));
+  await expect(page.getByRole('button',{name:'Тренировка',exact:true})).toHaveAttribute('aria-current','page');
+  await tap(page.getByRole('button',{name:'Статистика',exact:true}));
+  await expect(page.getByRole('button',{name:'Статистика',exact:true})).toHaveAttribute('aria-current','page');
+  if(inputMode==='native')await device.input.press('Back');
+  else await tap(page.getByRole('button',{name:'Тренировка',exact:true}));
+  await expect(page.getByRole('button',{name:'Тренировка',exact:true})).toHaveAttribute('aria-current','page');
+  await tap(page.getByRole('button',{name:'Темы',exact:true}));
+  await expect(page.getByRole('button',{name:'Темы',exact:true})).toHaveAttribute('aria-current','page');
+  await expect(page.locator('.android-topics-page')).toBeInViewport();
   await tap(page.getByRole('button',{name:'Тренировка',exact:true}));
   await expect(answer).toHaveValue('Tekst sa tastaturom.');
   // Native swipe right from practice to topics (same pager direction as the home destination).
@@ -79,7 +90,7 @@ try {
   }else await page.getByRole('button',{name:'Темы',exact:true}).click();
   await expect(page.getByRole('button',{name:'Темы',exact:true})).toHaveAttribute('aria-current','page');
   await tap(page.getByRole('button',{name:'Тренировка',exact:true}));await expect(answer).toHaveValue('Tekst sa tastaturom.');
-  report.keyboardAndNavigation={draftPreserved:true,realSwipe:inputMode==='native',nativeImeBack:inputMode==='native',submitReachable:true};
+  report.keyboardAndNavigation={draftPreserved:true,realSwipe:inputMode==='native',nativeImeBack:inputMode==='native',settingsStatsBack:inputMode==='native',homeOpensTopics:true,submitReachable:true};
   console.log('Android: keyboard/pager passed');
   stage='background during microphone connection';
   await page.evaluate(()=>{
@@ -118,6 +129,7 @@ try {
   stage='oversize synthetic upload';
   await page.evaluate(()=>{
     const Original=window.MediaRecorder;
+    window.__beforeOversizeRecorder=Original;
     window.MediaRecorder=class extends Original {
       stop(){this.state='inactive';this.dispatchEvent(new BlobEvent('dataavailable',{data:new Blob([new Uint8Array(1000001)],{type:'audio/webm'})}));this.dispatchEvent(new Event('stop'));}
     };
@@ -129,9 +141,10 @@ try {
   await expect(answer).toHaveValue('Tekst sa tastaturom.');
   await expect(page.getByRole('button',{name:'Проверить',exact:true})).toBeEnabled();
   report.sizeLimit={syntheticBytes:1000001,status:413,draftPreserved:true};
+  await page.evaluate(()=>{window.MediaRecorder=window.__beforeOversizeRecorder;});
   console.log('Android: oversized recording recovery passed');
   stage='background during grading';
-  let releaseGrade;let gradeEntered=false;
+  let releaseGrade;let gradeEntered=false;let gradeResponse;
   const gradeGate=new Promise(resolve=>{releaseGrade=resolve;});releases.push(()=>releaseGrade());
   const beforeGrade=attempts.length;
   await page.route('**/api/attempts',async route=>{
@@ -142,7 +155,7 @@ try {
       if(url.hostname!=='10.0.2.2'||url.port!=='8765')throw Error('Expected local fixture API');
       url.hostname='127.0.0.1';
       const response=await fetch(url,{method:request.method(),headers:request.headers(),body:request.postData(),signal:AbortSignal.timeout(30000)});
-      const body=await response.text();gradeEntered=true;await gradeGate;
+      const body=await response.text();gradeResponse=JSON.parse(body);gradeEntered=true;await gradeGate;
       await route.fulfill({status:response.status,contentType:'application/json',body}).catch(()=>{});
     }catch{await route.abort().catch(()=>{});}
   });
@@ -155,6 +168,26 @@ try {
   if(attempts.length!==beforeGrade+1)throw Error('Grading duplicated during resume');
   report.grading={nativeHomeResume:true,pendingRequestRetained:true,singleSubmission:true};
   console.log('Android: grading background/resume passed');
+  stage='word-level highlight in both alphabets';
+  await tap(page.getByRole('button',{name:'Следующая',exact:true}));await record();
+  const incorrect='Malo ćemo kasniti zbog jutreneg prevoza.';
+  await answer.fill(incorrect);await closeKeyboard();
+  // A render-only structured fixture, not an AI-quality or persisted-attempt check.
+  await page.route('**/api/attempts',async route=>{
+    const fixture={...gradeResponse,exercise_id:route.request().postDataJSON().exercise_id,transcript_sr:incorrect,overall_score:.88,base_score:.88,
+      analysis:{...gradeResponse.analysis,verdict:'needs_work',corrected_sr:'Malo ćemo kasniti zbog jutarnjeg prevoza.',issues:[{type:'grammar',skill_key:'present_tense',severity:.5,confidence:1,evidence:'jutreneg prevoza',correction:'jutarnjeg prevoza'}]}};
+    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(fixture)});
+  });
+  await tap(page.getByRole('button',{name:'Проверить',exact:true}));
+  const marks=page.locator('.android-training-page .result-phrases mark');
+  await expect(marks).toHaveCount(1);await expect(marks).toHaveText('jutreneg');
+  await tap(page.getByRole('button',{name:'Настройки',exact:true}));
+  await page.getByRole('radio',{name:/Кириллица/}).check();
+  await tap(page.getByRole('button',{name:'Тренировка',exact:true}));
+  await expect(marks).toHaveCount(1);await expect(marks).toHaveText('јутренег');
+  await page.unrouteAll({behavior:'wait'});
+  report.wordHighlight={latin:true,cyrillic:true,unchangedNeighborExcluded:true,structuredRenderingFixture:true};
+  console.log('Android: exact word highlight passed in both alphabets');
   stage='auth refresh on expiration';
   // Sign an expired LOCAL fixture JWT in the runner. No production credential is read or used.
   const fixtureEnv=Object.fromEntries(readFileSync(new URL('../../.env.testlab',import.meta.url),'utf8').split(/\r?\n/).map(line=>{const i=line.indexOf('=');return [line.slice(0,i),line.slice(i+1)];}));
@@ -204,6 +237,17 @@ try {
   await page.getByLabel('Ваш ответ').fill('Ručni odgovor.');await closeKeyboard();
   await expect(page.getByRole('button',{name:'Проверить',exact:true})).toBeEnabled();
   report.microphoneDenied={osPermissionRevoked:true,nativeMediaApi:true,manualInputAvailable:true};
+  if(inputMode==='native'){
+    stage='Back from practice to topics and exit';
+    await device.input.press('Back');
+    await expect(page.getByRole('button',{name:'Темы',exact:true})).toHaveAttribute('aria-current','page');
+    await device.input.press('Back');
+    await expect.poll(async()=>{
+      const state=(await device.shell('dumpsys activity activities')).toString();
+      return state.split('\n').filter(line=>/topResumedActivity|mResumedActivity/.test(line)).some(line=>line.includes(pkg+'/'));
+    }).toBe(false);
+    report.nativeExit={practiceToTopics:true,topicsToExit:true};
+  }
   console.log(JSON.stringify(report));
 }catch(error){
  if(stage==='fixture login'&&page)console.log(JSON.stringify(await page.evaluate(async()=>({
@@ -235,7 +279,10 @@ finally{
 async function record(){await page.getByRole('button',{name:'Ответить голосом',exact:true}).click();await page.getByRole('button',{name:'Завершить запись',exact:true}).click();await expect(page.getByLabel('Ваш ответ')).toBeVisible();}
 async function imeVisible(){const state=(await device.shell('dumpsys input_method')).toString();return /mInputShown=true|mIsInputViewShown=true/.test(state);}
 async function closeKeyboard(){
- if(inputMode==='native'&&await imeVisible())await device.input.press('Back');
+ if(inputMode==='native'&&await imeVisible()){
+  await device.input.press('Back');
+  await expect(page.getByRole('button',{name:'Тренировка',exact:true})).toHaveAttribute('aria-current','page');
+ }
  else await page.evaluate(()=>{if(document.activeElement instanceof HTMLElement)document.activeElement.blur();});
 }
 async function backgroundResume(){

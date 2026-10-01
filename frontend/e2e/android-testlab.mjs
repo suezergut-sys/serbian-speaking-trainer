@@ -50,7 +50,11 @@ try {
       }
       return { x: x - viewport.offsetLeft, y: y - viewport.offsetTop, width: viewport.width, height: viewport.height };
     });
-    const { bounds } = await device.info({ clazz: "android.webkit.WebView", pkg: packageName });
+    let bounds;
+    await expect.poll(async () => {
+      try { bounds = (await device.info({ clazz: "android.webkit.WebView", pkg: packageName })).bounds; return Boolean(bounds?.width && bounds?.height); }
+      catch { return false; }
+    }, { timeout: 15_000, message: "Native WebView bounds must be available before tapping" }).toBe(true);
     await device.input.tap({ x: Math.round(bounds.x + point.x * bounds.width / point.width),
       y: Math.round(bounds.y + point.y * bounds.height / point.height) });
   };
