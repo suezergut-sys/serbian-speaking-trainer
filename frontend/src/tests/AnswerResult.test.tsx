@@ -35,6 +35,32 @@ describe("AnswerResult", () => {
     expect(screen.getByText("Вариант перевода")).toBeInTheDocument();
   });
 
+  it("marks only the changed word inside a multiword evidence phrase", () => {
+    const answer = "Nemam jutreneg prevoza danas.";
+    const issue = { ...attempt.analysis.issues[0], evidence: "jutreneg prevoza", correction: "jutarnjeg prevoza" };
+    render(<AnswerResult source="Русская фраза" answer={answer} attempt={{ ...attempt, analysis: { ...attempt.analysis, issues: [issue] } }} />);
+    const marks = document.querySelectorAll("mark");
+    expect(marks).toHaveLength(1);
+    expect(marks[0]).toHaveTextContent("jutreneg");
+    expect(screen.getByText("Ваш вариант").parentElement).toHaveTextContent(answer);
+  });
+
+  it("marks reordered and removed words, leaving unchanged words and pure insertions unmarked", () => {
+    const issues = [
+      { ...attempt.analysis.issues[0], evidence: "račun otvorim", correction: "otvorim račun" },
+      { ...attempt.analysis.issues[0], evidence: "baš da idem", correction: "da idem" },
+      { ...attempt.analysis.issues[0], evidence: "želim kući", correction: "želim da idem kući" },
+    ];
+    render(<AnswerResult source="Русская фраза" answer="račun otvorim, baš da idem; želim kući." attempt={{ ...attempt, analysis: { ...attempt.analysis, issues } }} />);
+    expect(Array.from(document.querySelectorAll("mark"), (mark) => mark.textContent)).toEqual(["račun", "otvorim", "baš"]);
+  });
+
+  it("leaves repeated words unmarked when their alignment is ambiguous", () => {
+    const issue = { ...attempt.analysis.issues[0], evidence: "da da idem", correction: "da idem" };
+    render(<AnswerResult source="Русская фраза" answer="da da idem" attempt={{ ...attempt, analysis: { ...attempt.analysis, issues: [issue] } }} />);
+    expect(document.querySelector("mark")).not.toBeInTheDocument();
+  });
+
   it("does not mark ambiguous repeated text or a word fragment", () => {
     const answer = "račun račun računar";
     const issues = [

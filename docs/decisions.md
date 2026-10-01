@@ -312,3 +312,8 @@
 - Проверены 77 frontend tests, TypeScript, ESLint, production build, Gradle обеих сборок, метаданные, разделение конфигурации и совпадение сертификата с прежней версией. Полный журнал: [android-1.16-release.md](android-1.16-release.md). Ручная приёмка и оставшиеся задачи P1 не закрываются выпуском APK.
 
 - Контрольный выпуск опубликован через PR #41, SHA `bc59c25519313cdaf2213392579fa54015bc5235`; frontend READY и публичный smoke прошёл, backend READY/health 200 без нового изменения. GitHub release v1.16 содержит только обычный APK; server asset digest/size совпали. Android native lifecycle/hint-race, обычный lab flow и production public login smoke прошли; Google/реальный STT/физическая ручная приёмка открыты. Полные доказательства: `docs/android-1.16-release.md`.
+
+# 2026-10-01 — минимальный ошибочный фрагмент и P1.3 статистика
+
+- Подсветка выравнивает только evidence/correction по словам, исключая неизменённые слова; prompt требует минимального evidence. Жёлтый цвет не обозначает порядок слов отдельно. Домик native UI открывает панель тем, chooser удалён; session/draft и остановка voice сохранены.
+- Месячная статистика использует scalar projection timestamps/score, прежний HTTP JSON/timezone остаются; owner-scoped OUTER JOIN скрывает чужое название темы при stale reference. Схема БД не менялась. Проверки и paired SQLite benchmark: [p1-word-highlights-statistics-checkpoint.md](p1-word-highlights-statistics-checkpoint.md). Android 1.16/code 26 и APK не менялись.

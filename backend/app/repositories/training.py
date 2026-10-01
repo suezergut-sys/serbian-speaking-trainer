@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import NamedTuple
 
 from sqlalchemy import and_, func, or_, select, union, update
 from sqlalchemy.orm import Session
@@ -7,6 +8,11 @@ from app.models import Attempt, AttemptRequest, ErrorEvent, Exercise, ReviewPhra
 from app.repositories.base import Repository
 
 DEFAULT_USER_ID = "00000000-0000-0000-0000-000000000001"
+
+
+class MonthlyAttempt(NamedTuple):
+    created_at: datetime
+    overall_score: float | None
 
 
 class TrainingSessionRepository(Repository[TrainingSession]):
@@ -64,9 +70,9 @@ class AttemptRepository(Repository[Attempt]):
         super().__init__(session, Attempt)
         self.user_id = user_id
 
-    def list_created_between(self, start: datetime, end: datetime) -> list[Attempt]:
+    def list_created_between(self, start: datetime, end: datetime) -> list[MonthlyAttempt]:
         statement = (
-            select(Attempt)
+            select(Attempt.created_at, Attempt.overall_score)
             .join(Exercise, Exercise.id == Attempt.exercise_id)
             .join(TrainingSession, TrainingSession.id == Exercise.session_id)
             .where(
@@ -76,7 +82,7 @@ class AttemptRepository(Repository[Attempt]):
             )
             .order_by(Attempt.created_at)
         )
-        return list(self.session.scalars(statement))
+        return [MonthlyAttempt(created_at, overall_score) for created_at, overall_score in self.session.execute(statement)]
 
     def count_checked_exercises(self, session_id: str) -> int:
         statement = (
@@ -223,7 +229,10 @@ class ReviewPhraseRepository(Repository[ReviewPhrase]):
         topic_title = func.coalesce(TopicPreset.title_ru, "Свои фразы")
         statement = (
             select(ReviewPhrase, topic_title)
-            .outerjoin(TopicPreset, TopicPreset.id == ReviewPhrase.topic_id)
+            .outerjoin(TopicPreset, and_(
+                TopicPreset.id == ReviewPhrase.topic_id,
+                or_(TopicPreset.owner_user_id.is_(None), TopicPreset.owner_user_id == self.user_id),
+            ))
             .where(ReviewPhrase.user_id == self.user_id)
             .order_by(topic_title, ReviewPhrase.created_at, ReviewPhrase.id)
             .offset(offset)
@@ -232,9 +241,9 @@ class ReviewPhraseRepository(Repository[ReviewPhrase]):
             statement = statement.limit(limit)
         return [(row[0], str(row[1])) for row in self.session.execute(statement).all()]
 
-    def list_mastered_between(self, start: datetime, end: datetime) -> list[ReviewPhrase]:
+    def list_mastered_between(self, start: datetime, end: datetime) -> list[datetime]:
         statement = (
-            select(ReviewPhrase)
+            select(ReviewPhrase.mastered_at)
             .where(
                 ReviewPhrase.user_id == self.user_id,
                 ReviewPhrase.mastered_at >= start,

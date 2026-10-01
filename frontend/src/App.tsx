@@ -179,7 +179,6 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const hintEpochRef = useRef(0);
   const flowControllerRef = useRef<AbortController | undefined>(undefined);
   const voiceControllerRef = useRef<AbortController | undefined>(undefined);
-  const [showTopicChooser, setShowTopicChooser] = useState(false);
   const catalogEpochRef = useRef(0);
   const catalogControllerRef = useRef<AbortController | undefined>(undefined);
   const reviewSummaryEpochRef = useRef(0);
@@ -673,7 +672,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
         <header className="android-header">
           <strong>Serbo<span>Talk</span></strong>
           <nav aria-label="Панели приложения">
-            <button type="button" aria-label="Темы" aria-current={androidPanel === 0 || showTopicChooser ? "page" : undefined} onClick={() => { if (session) { interruptVoice(); setShowTopicChooser((current) => !current); showAndroidPanel(1); } else showAndroidPanel(0); }}><Icon name="home" /></button>
+            <button type="button" aria-label="Темы" aria-current={androidPanel === 0 ? "page" : undefined} onClick={() => showAndroidPanel(0)}><Icon name="home" /></button>
             <button type="button" aria-label="Тренировка" aria-current={androidPanel === 1 ? "page" : undefined} onClick={() => showAndroidPanel(1)}><Icon name="mic" /></button>
             <button type="button" aria-label="Статистика" aria-current={androidPanel === 2 ? "page" : undefined} onClick={() => showAndroidPanel(2)}><Icon name="chart" /></button>
             <button type="button" aria-label="Настройки" aria-current={androidPanel === 3 ? "page" : undefined} onClick={() => showAndroidPanel(3)}><Icon name="settings" /></button>
@@ -694,13 +693,13 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
         >
           <section className="android-page android-topics-page" aria-label="Выбор темы">
             <div className="android-topic-list" aria-label="Темы тренировки">
-              <button className={isReviewMode ? "android-topic is-selected" : "android-topic"} type="button" disabled={reviewPhraseCount === 0} onClick={() => { setShowTopicChooser(false); showAndroidPanel(1); void startReviewTraining(); }}>
+              <button className={isReviewMode ? "android-topic is-selected" : "android-topic"} type="button" disabled={reviewPhraseCount === 0} onClick={() => { showAndroidPanel(1); void startReviewTraining(); }}>
                 <span className="topic__icon"><Icon name="repeat" /></span>
                 <strong>Повторение</strong>
                 <small>{reviewPhraseCount}<span>к повторению</span></small>
               </button>
               {topics.map((topic) => (
-                <button className={selectedTopic === topic.id && !customTopic ? "android-topic is-selected" : "android-topic"} key={topic.id} type="button" onClick={() => { setShowTopicChooser(false); selectTopic(topic.id); showAndroidPanel(1); }}>
+                <button className={selectedTopic === topic.id && !customTopic ? "android-topic is-selected" : "android-topic"} key={topic.id} type="button" onClick={() => { selectTopic(topic.id); showAndroidPanel(1); }}>
                   <span className={`topic__icon topic__icon--${topicIcons[topic.id] ?? "message"}`}><Icon name={topicIcons[topic.id] ?? "message"} /></span>
                   <strong>{topic.title_ru}</strong>
                   <small>{topic.phrase_count}<span> неизученных</span></small>
@@ -733,7 +732,6 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
           </section>
 
           <section className="android-page android-training-page" aria-label="Тренировка">
-            {showTopicChooser && session && <div className="practice-topic-chooser" aria-label="Сменить тему"><p>Сменить тему</p><button type="button" onClick={() => { setShowTopicChooser(false); void startReviewTraining(); }}>Повторение</button>{topics.map((topic) => <button type="button" key={topic.id} onClick={() => { setShowTopicChooser(false); selectTopic(topic.id); }}>{topic.title_ru}</button>)}</div>}
             {preparingPhrase && !session ? <PhraseLoading /> : sessionComplete ? (
               <div className="practice-done"><h1>{topicExhausted ? "Все фразы темы пройдены" : "Тренировка завершена"}</h1><p>{topicExhausted ? `${completedCount} фраз проверено. В этой теме пока нет следующих фраз.` : `${completedCount} из ${session?.requested_length ?? 10} фраз проверено.`}</p><button className="android-primary" type="button" onClick={resetTraining}>Выбрать новую тему</button></div>
             ) : !session ? (

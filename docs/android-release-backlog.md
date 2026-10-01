@@ -121,3 +121,9 @@
 - [x] Android 1.16 native Home/resume с synthetic mic, сохранение draft, retry, hint-save race и отдельный полный lab flow прошли; production APK login smoke прошёл без очистки данных. [Доказательства](android-1.16-release.md).
 - [x] 01.10.2026: [release v1.16](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.16) опубликован, web READY на release SHA; URL/hash/signature в [android-1.16-release.md](android-1.16-release.md).
 - [ ] Ручная приёмка физического телефона: Google, настоящий STT, разрешения, системный Back/свайпы, длительное отключение сети, оба алфавита.
+
+## После 1.16 — точная подсветка и домик
+
+- [ ] Перенести word-level подсветку evidence/correction с исключением неизменённых соседних слов в следующий отдельно заказанный APK; проверить `jutreneg prevoza` в обоих алфавитах.
+- [ ] Перенести удаление быстрого chooser: домик открывает панель тем, при возврате сохраняются session/exercise/draft, активный voice прекращается; проверить native taps/swipe.
+- [ ] Проверить прежний payload статистики с новым backend в Android; backend projection не требует новой версии клиента. [Проверки и замеры](p1-word-highlights-statistics-checkpoint.md).
