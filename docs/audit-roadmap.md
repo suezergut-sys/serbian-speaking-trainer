@@ -200,3 +200,11 @@
 - [ ] Android-перенос и ручная приёмка; текущий APK 1.16 не пересобирался.
 
 [Контрольная точка](p1-word-highlights-statistics-checkpoint.md).
+
+## Контрольная точка без физического телефона — 01.10.2026
+
+- [x] Read-only PostgreSQL планы, guarded pooler runner, source Back fix и полный native AVD resilience; пять cleanup/version guards и независимое ревью GPT-6.1 Sol/medium. [Доказательства](p1-pooler-android-checkpoint.md).
+- [x] Публикация через [PR #45](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/45), runtime `0e3e72dddaefe7d3ff80d64f039892e35940aaf3`; web READY и публичный Chrome/API smoke прошли. Backend runtime не менялся.
+- [ ] Настоящее приложение/Supavisor concurrency и сопоставимые замеры роста данных: требуется private DATABASE_URL.
+- [ ] Физический телефон, новый отдельно заказанный APK, авторизованная production практика и ручная приёмка.
+- [ ] Исправление RLS/grants Supabase отдельной миграцией; P0/P1 полностью не закрыты.
