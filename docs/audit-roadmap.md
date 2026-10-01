@@ -88,12 +88,13 @@
 - [x] Снять парный конкурентный benchmark на одинаковой SQLite фикстуре: writer p50/p95 изменился с 1105,23/1118,25 мс до 8,40/9,62 мс; competing writer успевал во время AI в 20/20 (было 0/20), открытых транзакций во время AI — 0/20 (было 20/20). Это измеряет независимую запись в БД, не общую скорость проверки ответа. Условия и отчёты: [контрольная точка](p1-concurrency-checkpoint.md).
 - [x] Исправить и проверить расчёт квоты на границе UTC-суток под обеими блокировками; SQLite и PostgreSQL регрессии прошли, независимое ревью GPT-6.1 Sol / medium принято без замечаний.
 - [x] Опубликовать этот срез через [PR #33](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/33): web/backend READY на `fafdcbe7b72064e6ef0845db87e1bd37d6e99b80`, production миграция выполнена. [Доказательства и границы проверки](p1-concurrency-checkpoint.md).
-- [ ] Провести нагрузочную конкурентную проверку на production Supabase PostgreSQL через используемый pooler. Успешный локальный PostgreSQL 17.11 прогон не считается production-проверкой.
+- [x] 01.10.2026: bounded concurrency на production Supavisor проекта: три connection probes, legacy/idempotent AI wait, quota reservation, fencing и parallel finalization прошли на isolated mock fixtures; cleanup подтверждён. [Доказательства](p1-pooler-android-checkpoint.md).
+- [ ] Выполнить репрезентативную нагрузку и проверить deployed HTTP concurrency; bounded private-schema прогон не закрывает стресс-тест.
 
 Приёмка: конкурентные проверки подтверждают отсутствие двойного расходования лимита и дубликатов; ожидание AI не удерживает прежнюю блокировку БД.
 
 - [x] 01.10.2026: подготовить guarded Supavisor runner с private schema fixtures; 16 guard tests прошли. [Доказательства](p1-pooler-android-checkpoint.md).
-- [ ] Выполнить prepared runner через DATABASE_URL/Supavisor; plugin Management SQL не заменяет этот прогон.
+- [x] 01.10.2026: prepared runner через настоящий DATABASE_URL/Supavisor выполнен, все пять mock checks прошли; секрет остался в ignored файле. [Доказательства](p1-pooler-android-checkpoint.md).
 
 ### P1.3 — запросы и компактные данные
 
@@ -205,6 +206,9 @@
 
 - [x] Read-only PostgreSQL планы, guarded pooler runner, source Back fix и полный native AVD resilience; пять cleanup/version guards и независимое ревью GPT-6.1 Sol/medium. [Доказательства](p1-pooler-android-checkpoint.md).
 - [x] Публикация через [PR #45](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/45), runtime `0e3e72dddaefe7d3ff80d64f039892e35940aaf3`; web READY и публичный Chrome/API smoke прошли. Backend runtime не менялся.
-- [ ] Настоящее приложение/Supavisor concurrency и сопоставимые замеры роста данных: требуется private DATABASE_URL.
+- [x] 01.10.2026: bounded Supavisor concurrency проверен, private DATABASE_URL настроен локально. [Доказательства](p1-pooler-android-checkpoint.md).
+- [ ] Сопоставимые замеры роста данных, репрезентативная нагрузка и deployed HTTP concurrency.
 - [ ] Физический телефон, новый отдельно заказанный APK, авторизованная production практика и ручная приёмка.
 - [ ] Исправление RLS/grants Supabase отдельной миграцией; P0/P1 полностью не закрыты.
+
+- [x] 01.10.2026: авторизованный production navigation smoke во встроенном браузере: темы, активность, список фраз, настройки и возврат; console errors 0. Полный голосовой цикл остаётся открытым. [Доказательства](p1-pooler-android-checkpoint.md).
