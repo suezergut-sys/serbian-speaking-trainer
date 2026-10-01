@@ -22,7 +22,7 @@ Runner локального web: `scripts/run-testlab.ps1 -Platform web -Suite n
 
 - [x] Реализация: повтор каталога, ручной ответ после ошибки, сохранение draft/edit epoch, блокировка проверки при voiceBusy и retry prefetch первым нажатием. Frontend 66/66, TypeScript, ESLint и production build прошли; после последнего lint fix App 50/50 и targeted mock topics/start 2/2 прошли. Существующее предупреждение о chunk >500 КБ остаётся.
 - [x] Независимое ревью GPT-6.1 Sol / medium приняло финальные App/component, E2E и runner, включая последнюю lint-дельту, без подтверждённых замечаний.
-- [ ] Опубликовать web, дождаться Ready и проверить production URL.
+- [x] 01.10.2026, 07:29 МСК: [PR #37](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/37) объединён, runtime web SHA `51f9f49868210ae7b246123883f991b60890022a`; deployment READY и production aliases проверены.
 - [ ] Проверить авторизованный production/STT сценарий.
 - [ ] Включить исправления в следующий согласованный Android-релиз и проверить на целевом клиенте.
 - [ ] Получить ручную приёмку владельца.
@@ -34,3 +34,13 @@ Runner локального web: `scripts/run-testlab.ps1 -Platform web -Suite n
 - Local web `-Suite all`: 3/3 — обычная практика, задержанный hint без двойного штрафа и потеря ответа уже сохранённой попытки. Replay вернул прежний attempt ID/usage; счётчик переводов вырос ровно на один.
 - Установленный Android lab 1.15: обычный full flow прошёл. Это прежний bundle и mock STT; физическая сеть, настоящий микрофон, background/resume и новая Android UI пока не проверены.
 - Финальный testlab web пересобран после lint fix и доступен на `127.0.0.1:5178`; auth/API и AVD сохранены. Новых миграций/AI prompts/models нет, backend не менялся.
+
+## Production
+
+Web: [production](https://serbian-speaking-trainer.vercel.app), deployment `dpl_5Gn8rYmGts6pN8Uz4yHmHT276YT6`, [deployment URL](https://serbian-speaking-trainer-rl1e7jevn-suezerguts-projects.vercel.app). Backend не пересобирался: остаётся ранее опубликованный SHA `edb0b74dc1ab4daf8711c9cd4d77c535f14ad875`, `/api/health` — 200.
+
+Публичный Chrome 154 smoke: `/`, `/privacy`, `/terms` — 200; Google-вход виден, новый bundle содержит кнопки восстановления, testlab markers отсутствуют, `/testlab.html` — 404, page errors — 0. GitHub checks не настроены; до merge приняты локальные gates и независимое ревью.
+
+Это проверка публичной загрузки и состава bundle, не авторизованного сценария. Известная ошибка личного Chrome-плагина `request-header policy` не устранена; личные cookies/сессия не копировались. Настоящий голос, целевой Android и ручная приёмка остаются открытыми.
+
+Для ручной проверки в web: повторить загрузку после краткого отключения; при ошибке микрофона/STT выбрать ручной ввод; исправить ответ во время ожидания повторной расшифровки; повторить оценку после потери ответа; после ошибки фоновой подготовки нажать «Следующая» один раз. Не применять fault injection к production API: контролируемые сбои автоматизированы только локально.
