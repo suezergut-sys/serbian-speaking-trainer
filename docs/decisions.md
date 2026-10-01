@@ -298,3 +298,9 @@
 - Изолированный local web lost-response тест дал серверу сохранить попытку и оборвал ответ: повтор вернул прежний attempt ID с прежним использованием квоты, месячный счётчик увеличился ровно на одну попытку. Mock network 6/6, обычный mock voice/alphabet 3/3 и local web 3/3 прошли; старый Android lab 1.15 совместим. Новая клиентская реализация в APK не переносилась. Независимое ревью принято. Полные gates/публикация: `docs/p1-network-checkpoint.md`.
 - Read-only проверка P1.3 подтвердила отсутствие N+1 в темах/статистике; следующий отдельный срез — выбрать только даты/оценки месячной статистики вместо целых ORM-объектов и ограничить JOIN владельцем темы для устаревших ссылок. Совместимость payload и локальных суток требует отдельных тестов/замеров; это пока не реализовано.
 - Web recovery опубликован через PR #37 на SHA `51f9f49868210ae7b246123883f991b60890022a`, READY; публичный Chrome 154 smoke прошёл. Backend не менялся, health 200. Авторизованный production и перенос в Android открыты; доказательства: `docs/p1-network-checkpoint.md`.
+
+# 2026-10-01 — lifecycle голосового ввода
+
+- Активная запись и текущий STT прекращаются при скрытии web, native appStateChange/isActive=false и уходе из practice через web nav/Android pager/header. Draft и exercise сохраняются, voice epoch подавляет поздний transcript. Уже отправленная оценка продолжается; проверен единственный POST при background/resume.
+- App удаляет только свой native listener, включая позднее разрешение addListener после unmount. VoiceRecorder освобождает tracks/chunks при start/stop ошибке, закрывает поздний stream после таймаута и ограничивает ожидание stop 30 секундами. Размер аудио в этом срезе не менялся.
+- 77 frontend тестов, TypeScript, ESLint, production build, lifecycle mock 2/2, practice/network mock 9/9 и local web 3/3 прошли. Независимое ревью принято. Новая Android UI/физический mic/lifecycle и manual acceptance открыты. Подробности: `docs/p1-lifecycle-checkpoint.md`.
