@@ -143,8 +143,10 @@
 - [x] Reviewer финально подтвердил diff без блокеров; syntax runner прошёл. На 1.17 проверены radio-off/retry, IME/System Back, Settings/Stats Back, домик/сохранение draft, swipe, background connecting/STT, 413 recovery, grading Home/resume и подсветка `jutreneg` в обоих алфавитах.
 - [x] На APK 1.17 прошёл полный AVD resilience run и `android-lifecycle.mjs` (lifecycle/hint-race), оба exit 0: permission denial/revoke, expired fixture 401 → новая сессия, native exit и cleanup. Успешный полный запуск после relaunch QEMU включал offline 30 s; отдельный первый прогон подтвердил offline 120 s + retry до более позднего locator failure. Feature acceptance выполнена с fixtures/mock; реальный STT/OAuth не проверялись.
 - [x] Production APK 1.17 smoke подтвердил видимый Google login, отсутствие testlab login и сохранность app data; OAuth не завершён. Public Chrome 154 smoke прошёл: privacy/terms 200, testlab 404, page errors 0.
-- [ ] Обычный Android practice flow повторяется после QEMU `Windows Event 1000` / lost-device сбоя; он не засчитан как успех или app failure. Release publication ожидается.
-- [ ] Зафиксировать release SHA/URL и production URL после публикации; затем выполнить production smoke.
-- [ ] Выполнить публикацию, production smoke, APK/AVD проверки и ручную приёмку раздельными статусами.
+- [x] Full native resilience/lifecycle suite and production login-surface smoke прошли на 1.17; public Chrome 154 smoke прошёл. Подробности и границы: [checkpoint 1.17](android-1.17-release.md).
+- [ ] Обычный Android practice flow не подтверждён: до 15 s bounded-polling patch UiAutomator получил transient `device.info=null` после API 200; после patch следующий прогон потерял AVD при QEMU crash. Повторный AVD запуск приостановлен по инфраструктурной причине.
+- [ ] Новых Android performance metrics нет; не выводить скорость из smoke или HTTP status.
+- [ ] Зафиксировать release SHA/URL и production deployment metadata после публикации.
+- [ ] Выполнить release publication; production/native smoke и AVD проверки уже зафиксированы отдельно, физическая ручная приёмка остаётся открытой.
 
 На этом этапе 1.17 — собранная и установленная контрольная сборка; публикация не подтверждена. Контрольная версия 1.17 не закрывает открытые пункты P0/P1 и ручную приёмку.
