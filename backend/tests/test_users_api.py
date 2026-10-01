@@ -19,6 +19,7 @@ from app.services.auth_service import (
     SupabaseAuthService,
     UserService,
 )
+from app.services import auth_service
 
 
 def test_supabase_auth_validates_confirmed_user_payload() -> None:
@@ -115,6 +116,106 @@ def test_current_user_and_admin_user_list(api_client: TestClient, db_session: Se
     assert response.json()[0]["email"] == "learner@example.com"
     assert response.json()[0]["registered_at"]
     assert response.json()[0]["last_active_at"]
+
+
+def test_admin_user_counts_keep_utc_boundaries_owners_and_zeroes(
+    api_client: TestClient,
+    db_session: Session,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fixed_now = datetime(2026, 10, 1, 12, tzinfo=timezone.utc)
+
+    class FrozenDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return fixed_now if tz is None else fixed_now.astimezone(tz)
+
+    monkeypatch.setattr(auth_service, "datetime", FrozenDateTime)
+    legacy = db_session.get(User, LEGACY_USER_ID)
+    assert legacy is not None
+    legacy.email = "legacy@local.invalid"
+    legacy.role = "admin"
+    users = [
+        User(id=f"00000000-0000-0000-0000-{index:012d}", email=f"user{index}@example.com",
+             role="user", access_tier="free", registered_at=fixed_now - timedelta(days=index))
+        for index in (2, 3, 4)
+    ]
+    db_session.add_all(users)
+    db_session.flush()
+
+    def add_attempt(user_id: str, created_at: datetime, suffix: str, session: TrainingSession | None = None) -> TrainingSession:
+        owned_session = session or TrainingSession(user_id=user_id, normalized_topic_json={})
+        if session is None:
+            db_session.add(owned_session)
+            db_session.flush()
+        exercise = Exercise(session_id=owned_session.id, source_ru=f"Phrase {suffix}")
+        db_session.add(exercise)
+        db_session.flush()
+        db_session.add(Attempt(exercise_id=exercise.id, transcript_sr=f"Odgovor {suffix}", created_at=created_at))
+        return owned_session
+
+    day_start = datetime(2026, 10, 1, tzinfo=timezone.utc)
+    first_session = add_attempt(users[0].id, day_start, "a-start")
+    add_attempt(users[0].id, fixed_now, "a-same-session", first_session)
+    add_attempt(users[0].id, fixed_now, "a-other-session")
+    add_attempt(users[0].id, day_start - timedelta(microseconds=1), "a-yesterday")
+    add_attempt(users[0].id, day_start + timedelta(days=1), "a-tomorrow")
+    add_attempt(users[1].id, fixed_now, "b-first")
+    add_attempt(users[1].id, fixed_now, "b-second")
+    add_attempt(legacy.id, fixed_now, "legacy")
+    db_session.flush()
+
+    selects: list[str] = []
+
+    def capture_sql(_connection, _cursor, statement, _parameters, _context, _executemany) -> None:
+        if statement.lstrip().upper().startswith("SELECT"):
+            selects.append(statement)
+
+    assert db_session.bind is not None
+    event.listen(db_session.bind, "before_cursor_execute", capture_sql)
+    try:
+        response = api_client.get("/api/admin/users")
+    finally:
+        event.remove(db_session.bind, "before_cursor_execute", capture_sql)
+
+    assert response.status_code == 200
+    assert [(row["id"], row["phrases_today"]) for row in response.json()] == [
+        (users[0].id, 3), (users[1].id, 2), (users[2].id, 0),
+    ]
+    assert len(selects) == 2
+    service = UserService(db_session)
+    assert service.usage(users[0], fixed_now).used == 3
+    assert service.usage(users[1], fixed_now).used == 2
+    assert service.usage(users[2], fixed_now).used == 0
+
+
+def test_admin_user_select_count_is_constant_as_users_grow(db_session: Session) -> None:
+    assert db_session.bind is not None
+    service = UserService(db_session)
+
+    def select_count() -> int:
+        selects: list[str] = []
+
+        def capture_sql(_connection, _cursor, statement, _parameters, _context, _executemany) -> None:
+            if statement.lstrip().upper().startswith("SELECT"):
+                selects.append(statement)
+
+        event.listen(db_session.bind, "before_cursor_execute", capture_sql)
+        try:
+            service.list_users()
+        finally:
+            event.remove(db_session.bind, "before_cursor_execute", capture_sql)
+        assert any("GROUP BY training_sessions.user_id" in statement for statement in selects)
+        return len(selects)
+
+    one_user_queries = select_count()
+    db_session.add_all([
+        User(id=f"00000000-0000-0000-0000-{index:012d}", email=f"growth{index}@example.com")
+        for index in range(10, 15)
+    ])
+    db_session.flush()
+
+    assert one_user_queries == select_count() == 2
 
 
 def test_admin_email_is_promoted_by_backend_configuration(db_session: Session) -> None:

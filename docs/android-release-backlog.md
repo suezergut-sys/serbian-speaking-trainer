@@ -152,3 +152,11 @@
 - [ ] Обычный Android practice UI flow и физическая ручная приёмка остаются открытыми; Google OAuth и настоящий STT не проходили.
 
 Версия 1.17 опубликована как обычный production APK; lab APK не входит в release. Vercel READY evidence зафиксирован в checkpoint. Контрольная версия не закрывает открытые пункты P0/P1 и физическую ручную приёмку.
+
+## Накоплено после 1.17 — веб-срез P1/P2
+
+- [x] Реализованы и проверены в web отложенные Statistics/Admin с retry, системный шрифт, страницы фраз 10/50 и retry/stale-response guard. [Checkpoint](p2-web-checkpoint.md), [PR #50](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/50).
+- [ ] Перенести клиентский набор в следующий явно заказанный Android-релиз; проверить чтение обоих алфавитов и lazy chunks в WebView, Back/свайпы, draft и повтор загрузки.
+- [ ] Ручная Android-приёмка и замеры остаются открытыми; [телефонные тесты остановлены](p1-physical-android-checkpoint.md).
+
+APK 1.17/code27, native assets и package version в этом срезе не менялись. Backend admin aggregate совместим с прежним клиентом; новую сборку сам по себе не требует.

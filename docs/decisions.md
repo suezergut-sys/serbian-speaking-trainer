@@ -342,3 +342,11 @@
 - Vercel frontend `dpl_4JsuVfsmSLj9nWSkyhvj1cRWjzYw` READY/production на том же SHA; alias и deployment URL зафиксированы в checkpoint. После Ready Chrome 154 smoke, authorized IAB navigation themes → activity → phrases → settings → practice (errors 0) и API `/api/health` 200 / unauthenticated topics and monthly statistics 401 прошли. Backend runtime не менялся.
 - P0/P1 и физическая ручная приёмка остаются открытыми; выпуск не считается их полной приёмкой.
 - Выпуск не закрывает полную P0/P1 приёмку, физическую ручную проверку, voice/OAuth сценарии или открытое замечание Supabase RLS/grants.
+
+# 2026-10-01 — независимые срезы P1/P2
+
+- По поручению владельца продолжаем веб-задачи без ожидания телефонной приёмки. Черновик USB harness остаётся отдельно; сохранён [опыт USB](p1-physical-android-checkpoint.md), автоматического возобновления нет.
+- Statistics/Admin разделены динамическими импортами с разными React key и локальным retry загрузки. Учебное состояние хранится в TrainerApp; при сбое раздела практика доступна. Внешний запрос шрифта заменён системным стеком.
+- UI фраз ограничен страницами 10/50; legacy API all сохранён для Android 1.17. Ошибки запросов статистики допускают retry, поздние ответы отменённых запросов игнорируются.
+- Счётчики администратора агрегируются по владельцу и UTC-дню; контракт и правила квоты не меняются. Два SELECT вместо 1+N подтверждены SQL integration tests, а не runtime benchmark.
+- 125 backend passed / 8 skipped, 88 frontend tests, 15 browser tests и независимое ревью прошли. [Checkpoint](p2-web-checkpoint.md), [PR #50](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/50). Публикация/Android/ручная приёмка отмечаются отдельно.

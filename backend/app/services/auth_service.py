@@ -215,11 +215,13 @@ class UserService:
 
     def list_users(self) -> list[AdminUserResponse]:
         now = datetime.now(timezone.utc)
+        start = datetime.combine(now.date(), time.min, tzinfo=timezone.utc)
+        counts = self.users.count_attempts_between_by_user(start, start + timedelta(days=1))
         return [
             AdminUserResponse(
                 id=user.id, email=user.email, display_name=user.display_name, role=user.role,
                 access_tier=user.access_tier, registered_at=user.registered_at,
-                last_active_at=user.last_active_at, phrases_today=self.usage(user, now).used,
+                last_active_at=user.last_active_at, phrases_today=counts.get(user.id, 0),
             )
             for user in self.users.list_real_users()
         ]
