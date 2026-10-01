@@ -62,6 +62,12 @@ adb -s emulator-5554 install -r artifacts/testlab/SerboTalk-andorid16-1.15.apk
 
 Браузерные mock-сценарии используют production build с отдельным режимом `e2e`, затем preview; сервер разработки не используется как эталон скорости. Серии запускаются через `E2E_SAMPLES_PER_SCRIPT` и `E2E_WARMUP_PER_SCRIPT`. Сводка: `node e2e/summary.mjs --platform web` либо `--platform android-webview` из `frontend`. Сводка запрещает смешивать платформы.
 
+## Проверки сетевых сбоев
+
+Mock browser suite: из `frontend` запустите `node node_modules/@playwright/test/cli.js test network.spec.mjs`. Для настоящего локального backend используйте `scripts/run-testlab.ps1 -Platform web -Suite network`; `-Suite all` включает также обычную практику. Сначала пересоберите текущий testlab web через `scripts/build-testlab-web.ps1`.
+
+Сбой после сохранения попытки моделируется отказом ответа, а не повторной AI-оценкой. Проверяются прежний request ID, единственная сохранённая попытка и неизменное использование квоты при replay. Credentials читаются runner из игнорируемого env и остаются в памяти. Этот suite проверяет восстановление запросов; он не измеряет качество STT, физическое отключение Android-сети или background/resume. Доказательства: [p1-network-checkpoint.md](p1-network-checkpoint.md).
+
 ## Что сохраняется
 
 - `Server-Timing`: total/auth/user_sync, SQL cursor execution time и число SQL, длительность OpenAI SDK и число вызовов. Время DB не включает ожидание соединения, ORM и commit. SDK-время включает его внутренние retries.
