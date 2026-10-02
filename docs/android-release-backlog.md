@@ -182,5 +182,5 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 
 - [x] Выявлена первопричина 1.18: web bundle с пустым API URL → emulator fallback. Android build mode и обязательная проверка endpoint добавлены.
 - [x] Проверки и сборка 1.19: frontend suite/guard tests, lint/typecheck, web/native builds, Chrome 5, source review, packaged API/metadata/assets/signature прошли.
-- [ ] Публикация 1.19; [checkpoint](android-1.19-release.md).
+- [x] 02.10.2026: [PR #56](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/56) merged; GitHub APK 1.19 опубликован, digest/size совпали; web READY и авторизованный профиль/готовая практика проверены; [checkpoint](android-1.19-release.md).
 - [ ] Ручной Google-вход на физическом телефоне после явного возобновления тестов.
