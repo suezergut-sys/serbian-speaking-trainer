@@ -367,3 +367,7 @@
 - [x] Владелец согласовал1.18/code28; весь накопленный клиент после1.17 перенесён: startup/недели/lazy panels/system font/страницы10/50 и тёмные стрелки. Production APK собран, metadata/assets/signature/guards и independent review прошли; frontend99 и browser18 passed.
 - [x] 02.10.2026: [PR #54](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/54) merged; APK v1.18 опубликован, digest/size совпали; web READY на release SHA, авторизованные startup/недели/тёмные стрелки проверены; [checkpoint](android-1.18-release.md).
 - [ ] Физическая ручная приёмка и реальные voice/скоростные замеры остаются открытыми; телефонные тесты не возобновлялись.
+
+## Android Auth regression — 02.10.2026
+
+Сравнение APK 1.17/1.18 подтвердило потерю API endpoint при сборке 1.18 в web mode: на телефоне использовался fallback `http://10.0.2.2:8000`. Исправлены команды сборки: `android:sync`, `android:apk`, `android:cloud-apk` используют проверяемый mode android. Добавлена блокировка пустого/относительного/локального API URL; web mode и testlab сохраняют свои контракты. Сообщение о сетевой ошибке профиля больше не утверждает, что неисправен Supabase. Номер 1.19/code29 отдельно согласован владельцем. [Доказательства](android-1.19-release.md).
