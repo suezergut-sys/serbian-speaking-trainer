@@ -112,8 +112,7 @@ async function submit(page) {
 
 test("failed session start can be retried from the selected topic", async ({ page }) => {
   const state = await installApp(page, { failStart: true });
-  await page.getByRole("button", { name: /В банке/ }).first().click();
-  await expect(page.getByRole("alert")).toContainText("Не удалось начать тренировку");
+  await expect(page.getByRole("alert")).toContainText("Не удалось подготовить");
   await page.getByRole("button", { name: /В банке/ }).first().click();
   await expect(page.locator(".practice-stage .interactive-phrase")).toBeVisible();
   expect(state.start).toBe(2);
