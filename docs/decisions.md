@@ -371,3 +371,5 @@
 ## Android Auth regression — 02.10.2026
 
 Сравнение APK 1.17/1.18 подтвердило потерю API endpoint при сборке 1.18 в web mode: на телефоне использовался fallback `http://10.0.2.2:8000`. Исправлены команды сборки: `android:sync`, `android:apk`, `android:cloud-apk` используют проверяемый mode android. Добавлена блокировка пустого/относительного/локального API URL; web mode и testlab сохраняют свои контракты. Сообщение о сетевой ошибке профиля больше не утверждает, что неисправен Supabase. Номер 1.19/code29 отдельно согласован владельцем. [Доказательства](android-1.19-release.md).
+
+02.10.2026: исправленный APK 1.19 опубликован через [PR #56](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/56), размер/хэш подтверждены. Web READY на release SHA, авторизованный профиль и готовая практика проверены. Ручной Android OAuth остаётся открытым; [checkpoint](android-1.19-release.md).

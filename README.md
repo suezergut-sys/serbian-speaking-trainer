@@ -256,3 +256,5 @@ pnpm build
 ## Исправление Android-входа 1.19 — 02.10.2026
 
 APK 1.18 ошибочно получил web-конфигурацию с пустым API URL и обращался к адресу эмулятора. Android-команды теперь используют `build:android` с `.env.android`, проверяют публичный HTTPS API и клиентскую Auth-конфигурацию до сборки. Web build остаётся отдельным. [Проверки и состояние выпуска](docs/android-1.19-release.md).
+
+02.10.2026: исправленный APK 1.19 опубликован через [PR #56](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/56), размер/хэш подтверждены. Web READY на release SHA, авторизованный профиль и готовая практика проверены. Ручной Android OAuth остаётся открытым; [checkpoint](docs/android-1.19-release.md).
