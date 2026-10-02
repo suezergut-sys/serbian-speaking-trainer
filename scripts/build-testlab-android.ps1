@@ -1,6 +1,8 @@
 $ErrorActionPreference = "Stop"
 $Repository = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $Frontend = Join-Path $Repository "frontend"
+$packageVersion = (Get-Content -LiteralPath (Join-Path $Frontend "package.json") -Raw | ConvertFrom-Json).version
+$androidVersion = ([version]$packageVersion).ToString(2)
 $variables = @("VITE_API_BASE_URL", "VITE_SUPABASE_URL", "VITE_SUPABASE_PUBLISHABLE_KEY")
 $previous = @{}
 foreach ($name in $variables) { $previous[$name] = [Environment]::GetEnvironmentVariable($name, "Process") }
@@ -31,7 +33,7 @@ try {
     } finally { Pop-Location }
     $destination = Join-Path $Repository "artifacts\testlab"
     New-Item -ItemType Directory -Path $destination -Force | Out-Null
-    Copy-Item -LiteralPath "android\app\build\outputs\apk\lab\debug\SerboTalk-andorid16-1.17.apk" -Destination $destination
+    Copy-Item -LiteralPath ("android\app\build\outputs\apk\lab\debug\SerboTalk-andorid16-{0}.apk" -f $androidVersion) -Destination $destination
 } finally {
     foreach ($name in $variables) { [Environment]::SetEnvironmentVariable($name, $previous[$name], "Process") }
     Pop-Location

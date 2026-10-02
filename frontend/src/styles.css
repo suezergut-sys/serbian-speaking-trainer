@@ -265,7 +265,10 @@ button { cursor: pointer; }
 .statistics-tabs button.is-active { background: rgba(48, 143, 224, .2); color: #b9e2ff; box-shadow: inset 0 0 0 1px rgba(79, 175, 255, .22); }
 .activity-toolbar { display: grid; grid-template-columns: 2.75rem minmax(0, 1fr) 2.75rem; align-items: center; gap: .5rem; color: #b9e2ff; font-size: .8rem; }
 .activity-toolbar strong { text-align: center; }
-.activity-toolbar button { min-height: 2.75rem; padding: .25rem; font-size: 1.6rem; }
+.activity-toolbar button { display: grid; place-items: center; min-height: 2.75rem; padding: .25rem; border: 1px solid rgba(76, 158, 232, .28); border-radius: 10px; background: rgba(17, 52, 91, .38); color: #8dbce8; font: inherit; font-size: 1.6rem; line-height: 1; cursor: pointer; }
+.activity-toolbar button:hover { border-color: #63b9ff; background: rgba(48, 143, 224, .2); color: #b9e2ff; }
+.activity-toolbar button:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 3px; }
+.activity-toolbar button:active { background: #123b6d; }
 .month-switcher { display: grid; grid-template-columns: 38px minmax(170px, auto) 38px; align-items: center; overflow: hidden; border: 1px solid rgba(65, 153, 235, .35); border-radius: 12px; background: rgba(7, 25, 48, .8); }
 .month-switcher button { height: 42px; border: 0; background: rgba(54, 139, 222, .08); color: #77c0ff; font-size: 1.45rem; }
 .month-switcher button:hover { background: rgba(54, 139, 222, .2); }

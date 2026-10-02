@@ -1,8 +1,9 @@
 import { _android, expect } from "@playwright/test";
+import { readFileSync } from "node:fs";
 import { loginTestlab } from "./flow.mjs";
 
 const packageName = "com.serbiantalk.trainer.testlab";
-const expectedVersion = process.env.TESTLAB_ANDROID_VERSION ?? "1.17";
+const expectedVersion = process.env.TESTLAB_ANDROID_VERSION ?? JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version.split(".").slice(0, 2).join(".");
 if (!process.env.TESTLAB_EMAIL || !process.env.TESTLAB_PASSWORD) throw new Error("TESTLAB_EMAIL and TESTLAB_PASSWORD are required");
 
 const devices = await _android.devices();
