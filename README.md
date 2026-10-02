@@ -250,5 +250,5 @@ pnpm build
 ## Контрольный Android 1.18 — 02.10.2026
 
 - [x] Владелец согласовал1.18/code28; весь накопленный клиент после1.17 перенесён: startup/недели/lazy panels/system font/страницы10/50 и тёмные стрелки. Production APK собран, metadata/assets/signature/guards и independent review прошли; frontend99 и browser18 passed.
-- [ ] Опубликовать APK и подтвердить web deployment; [checkpoint](docs/android-1.18-release.md).
+- [x] 02.10.2026: [PR #54](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/54) merged; APK v1.18 опубликован, digest/size совпали; web READY на release SHA, авторизованные startup/недели/тёмные стрелки проверены; [checkpoint](docs/android-1.18-release.md).
 - [ ] Физическая ручная приёмка и реальные voice/скоростные замеры остаются открытыми; телефонные тесты не возобновлялись.

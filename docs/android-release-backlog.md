@@ -156,7 +156,8 @@
 ## Накоплено после 1.17 — веб-срез P1/P2
 
 - [x] Реализованы и проверены в web отложенные Statistics/Admin с retry, системный шрифт, страницы фраз 10/50 и retry/stale-response guard. [Checkpoint](p2-web-checkpoint.md), [PR #50](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/50).
-- [ ] Перенести клиентский набор в следующий явно заказанный Android-релиз; проверить чтение обоих алфавитов и lazy chunks в WebView, Back/свайпы, draft и повтор загрузки.
+- [x] 02.10.2026: клиентский набор перенесён в опубликованный APK 1.18; assets/signature/metadata проверены. [Checkpoint](android-1.18-release.md).
+- [ ] Проверить чтение обоих алфавитов и lazy chunks в WebView, Back/свайпы, draft и повтор загрузки на устройстве.
 - [ ] Ручная Android-приёмка и замеры остаются открытыми; [телефонные тесты остановлены](p1-physical-android-checkpoint.md).
 
 APK 1.17/code27, native assets и package version в этом срезе не менялись. Backend admin aggregate совместим с прежним клиентом; новую сборку сам по себе не требует.
@@ -165,7 +166,8 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 
 - [x] Общий клиент скрывает topics/summary/first exercise под loading, автоматически выбирает review или первую непустую тему; навигация к тренировке использует готовую фразу.
 - [x] Центрированная недельная навигация статистики, abort/retry и переходы между месяцами/годами проверены component и Android-layout browser tests.
-- [ ] Включить в следующий отдельно заказанный APK; проверить cold start/login, review/обычную тему, свайп/mic без повторного выбора, шрифты/пагинацию прошлых срезов и реальные ошибки сети.
+- [x] 02.10.2026: startup/недели включены в опубликованный APK 1.18; assets проверены. [Checkpoint](android-1.18-release.md).
+- [ ] Проверить на устройстве cold start/login, review/обычную тему, свайп/mic без повторного выбора, шрифты/пагинацию прошлых срезов и реальные ошибки сети.
 - [ ] Проверить на физическом Android после явного возобновления телефонных тестов.
 
 [Доказательства](ready-practice-week-checkpoint.md). APK 1.17/code27 не пересобран, native sync не выполнялся.
@@ -173,5 +175,5 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 ## Контрольный Android 1.18 — 02.10.2026
 
 - [x] Владелец согласовал1.18/code28; весь накопленный клиент после1.17 перенесён: startup/недели/lazy panels/system font/страницы10/50 и тёмные стрелки. Production APK собран, metadata/assets/signature/guards и independent review прошли; frontend99 и browser18 passed.
-- [ ] Опубликовать APK и подтвердить web deployment; [checkpoint](android-1.18-release.md).
+- [x] 02.10.2026: [PR #54](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/54) merged; APK v1.18 опубликован, digest/size совпали; web READY на release SHA, авторизованные startup/недели/тёмные стрелки проверены; [checkpoint](android-1.18-release.md).
 - [ ] Физическая ручная приёмка и реальные voice/скоростные замеры остаются открытыми; телефонные тесты не возобновлялись.
