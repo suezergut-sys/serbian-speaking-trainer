@@ -109,7 +109,7 @@ function AuthenticatedApp() {
         const user = await fetchCurrentUser();
         if (active && lastToken === token) { setAccount(user); setAuthError(undefined); }
       } catch {
-        if (active && lastToken === token) setAuthError("Не удалось загрузить профиль. Проверьте настройку Supabase Auth на backend.");
+        if (active && lastToken === token) setAuthError("Не удалось загрузить профиль. Проверьте подключение к интернету и повторите вход.");
       } finally {
         if (active && lastToken === token) setAuthReady(true);
       }

@@ -1,14 +1,15 @@
 {
   "name": "serbian-speaking-trainer-frontend",
   "private": true,
-  "version": "1.18.0",
+  "version": "1.19.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "android:sync": "pnpm build && cap sync android",
+    "build:android": "tsc -b && vite build --mode android",
+    "android:sync": "pnpm build:android && cap sync android",
     "android:apk": "pnpm android:sync && cd android && gradlew.bat assembleProdDebug",
-    "android:cloud-apk": "vite build --mode android && cap sync android && cd android && gradlew.bat assembleProdDebug",
+    "android:cloud-apk": "pnpm android:apk",
     "lint": "eslint .",
     "test": "vitest",
     "test:e2e:mock": "playwright test mocked.spec.mjs",
