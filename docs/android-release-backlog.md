@@ -169,3 +169,9 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 - [ ] Проверить на физическом Android после явного возобновления телефонных тестов.
 
 [Доказательства](ready-practice-week-checkpoint.md). APK 1.17/code27 не пересобран, native sync не выполнялся.
+
+## Контрольный Android 1.18 — 02.10.2026
+
+- [x] Владелец согласовал1.18/code28; весь накопленный клиент после1.17 перенесён: startup/недели/lazy panels/system font/страницы10/50 и тёмные стрелки. Production APK собран, metadata/assets/signature/guards и independent review прошли; frontend99 и browser18 passed.
+- [ ] Опубликовать APK и подтвердить web deployment; [checkpoint](android-1.18-release.md).
+- [ ] Физическая ручная приёмка и реальные voice/скоростные замеры остаются открытыми; телефонные тесты не возобновлялись.

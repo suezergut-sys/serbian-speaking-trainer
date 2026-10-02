@@ -28,6 +28,10 @@ for (const native of [false, true]) {
     const navigation = page.getByRole('navigation',{name:'Выбор недели'});
     await expect(navigation).toHaveText('‹Неделя · 5 янв. — 11 янв.');
     await expect(page.getByRole('button',{name:'Следующая неделя'})).toHaveCount(0);
+    const previous = page.getByRole('button', {name:'Предыдущая неделя'});
+    await expect(previous).toHaveCSS('background-color', 'rgba(17, 52, 91, 0.38)');
+    await expect(previous).toHaveCSS('color', 'rgb(141, 188, 232)');
+    await expect(previous).toHaveCSS('border-radius', '10px');
     await page.getByRole('button',{name:'Предыдущая неделя'}).click();
     await expect(navigation).toContainText('Неделя · 29 дек. — 4 янв.');
     await expect(page.getByLabel('Итоги недели')).toBeVisible();

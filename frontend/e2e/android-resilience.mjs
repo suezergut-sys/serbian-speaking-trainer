@@ -16,7 +16,7 @@ const releases=[];
 const report={variant:'lab',syntheticAudio:true,inputMode};
 const attempts=[]; let wifi, data;
 try {
-  report.apkVersion=requireApkVersion((await device.shell(`dumpsys package ${pkg}`)).toString(),process.env.TESTLAB_ANDROID_VERSION ?? '1.17');
+  report.apkVersion=requireApkVersion((await device.shell(`dumpsys package ${pkg}`)).toString(),process.env.TESTLAB_ANDROID_VERSION ?? JSON.parse(readFileSync(new URL('../package.json',import.meta.url),'utf8')).version.split('.').slice(0,2).join('.'));
   wifi=(await device.shell('settings get global wifi_on')).toString().trim();
   data=(await device.shell('settings get global mobile_data')).toString().trim();
   radios=createRadioGuard(command=>device.shell(command),wifi,data);

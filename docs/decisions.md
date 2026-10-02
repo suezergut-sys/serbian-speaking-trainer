@@ -361,3 +361,9 @@
 - Android version/native assets не меняются. [Checkpoint](ready-practice-week-checkpoint.md); публикация, перенос в APK и физическая приёмка фиксируются отдельно.
 
 02.10.2026: startup/week-navigation опубликованы через [PR #52](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/52); frontend READY на `d4a9e629973dcc7d70ac9e1225c1376cfcd56fff`. Authorized production подтвердил default review/готовую фразу, прошлую неделю и скрытие forward на текущей; ошибок console 0. [Checkpoint](ready-practice-week-checkpoint.md). APK 1.17 остаётся прежним.
+
+## Контрольный Android 1.18 — 02.10.2026
+
+- [x] Владелец согласовал1.18/code28; весь накопленный клиент после1.17 перенесён: startup/недели/lazy panels/system font/страницы10/50 и тёмные стрелки. Production APK собран, metadata/assets/signature/guards и independent review прошли; frontend99 и browser18 passed.
+- [ ] Опубликовать APK и подтвердить web deployment; [checkpoint](android-1.18-release.md).
+- [ ] Физическая ручная приёмка и реальные voice/скоростные замеры остаются открытыми; телефонные тесты не возобновлялись.
