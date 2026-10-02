@@ -257,10 +257,11 @@
 - [x] Frontend 99 component tests и 17 браузерных регрессий прошли; отдельный delayed startup scenario также прошёл.
 - [x] Финальное независимое ревью, lint/typecheck/build прошли; [checkpoint](ready-practice-week-checkpoint.md).
 - [x] 02.10.2026: [PR #52](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/52) merged; frontend READY на `d4a9e629973dcc7d70ac9e1225c1376cfcd56fff`, авторизованный startup и выбор недель прошли. Финальный browser suite 18/18, console errors 0. [Доказательства](ready-practice-week-checkpoint.md).
-- [ ] Перенести срез в явно заказанный Android-релиз и получить физическую приёмку; текущий APK 1.17 не менялся.
+- [x] 02.10.2026: срез перенесён в явно заказанный и опубликованный APK 1.18; [checkpoint](android-1.18-release.md).
+- [ ] Получить физическую ручную приёмку APK 1.18 после возобновления телефонных тестов.
 
 ## Контрольный Android 1.18 — 02.10.2026
 
 - [x] Владелец согласовал1.18/code28; весь накопленный клиент после1.17 перенесён: startup/недели/lazy panels/system font/страницы10/50 и тёмные стрелки. Production APK собран, metadata/assets/signature/guards и independent review прошли; frontend99 и browser18 passed.
-- [ ] Опубликовать APK и подтвердить web deployment; [checkpoint](android-1.18-release.md).
+- [x] 02.10.2026: [PR #54](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/54) merged; APK v1.18 опубликован, digest/size совпали; web READY на release SHA, авторизованные startup/недели/тёмные стрелки проверены; [checkpoint](android-1.18-release.md).
 - [ ] Физическая ручная приёмка и реальные voice/скоростные замеры остаются открытыми; телефонные тесты не возобновлялись.
