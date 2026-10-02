@@ -352,3 +352,10 @@
 - 125 backend passed / 8 skipped, 88 frontend tests, 15 browser tests и независимое ревью прошли. [Checkpoint](p2-web-checkpoint.md), [PR #50](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/50). Публикация/Android/ручная приёмка отмечаются отдельно.
 
 01.10.2026: web/backend срез P1/P2 опубликован через [PR #50](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/50), оба Vercel deployment READY на `9f243ee857f0fc37513031c0d55cf360dc6ce155`; авторизованные переходы Stats/Admin/фразы 10/50 и HTTP smoke прошли, console errors 0. Доказательства: [checkpoint](p2-web-checkpoint.md). APK и телефонные проверки не менялись.
+
+# 2026-10-02 — стартовый экран готов целиком
+
+- Загрузка каталога и summary параллельна; выбор темы и подготовка первой фразы входят в startup gate. Нормальный старт раскрывает готовые темы одним этапом, без автоматического переключения native pager на тренировку.
+- Default review при непустой очереди, иначе первая доступная тема. Пустой каталог/ошибка не оставляют вечный loader; доступны ручные действия и retry. Background refresh/retry каталога сохраняет учебную сессию и черновик; повтор selected topic не перезапускает её.
+- Недельная статистика использует прежний месячный API, локальные календарные границы и abort guards. Центрированный заголовок, предыдущая неделя, следующая только до текущей; future navigation отсутствует.
+- Android version/native assets не меняются. [Checkpoint](ready-practice-week-checkpoint.md); публикация, перенос в APK и физическая приёмка фиксируются отдельно.

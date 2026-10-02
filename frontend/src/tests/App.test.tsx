@@ -1,4 +1,5 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { StrictMode } from "react";
 import { Capacitor } from "@capacitor/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -242,6 +243,164 @@ describe("App", () => {
     expect(screen.queryByText(/Эмулятор:/)).not.toBeInTheDocument();
   });
 
+  it("starts the review carousel before a regular topic when review phrases are available", async () => {
+    const fetchMock = mockApi(false, [{ id: "review-1" }]);
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
+    const starts = fetchMock.mock.calls.filter(([url]) => url.toString() === "/api/sessions/start");
+    expect(starts).toHaveLength(1);
+    expect(JSON.parse(starts[0][1]?.body as string)).toEqual({ review_mode: true, length: 10 });
+    expect(screen.getByRole("button", { name: /Фразы для повторения/ })).toHaveClass("is-selected");
+    expect(screen.getByRole("button", { name: /В банке/ })).not.toHaveClass("is-selected");
+  });
+
+  it("skips empty topics when choosing the default practice session", async () => {
+    const baseFetch = mockApi();
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const response = await baseFetch(input, init);
+      if (input.toString() !== "/api/topics") return response;
+      return { ok: true, status: 200, json: async () => [{
+        id: "empty", title_ru: "Аренда", description_ru: "Пока без фраз", likely_intents: [],
+        suggested_vocabulary: [], is_custom: false, phrase_count: 0,
+      }, ...await response.json()] };
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
+    const starts = fetchMock.mock.calls.filter(([url]) => url.toString() === "/api/sessions/start");
+    expect(starts).toHaveLength(1);
+    expect(JSON.parse(starts[0][1]?.body as string)).toMatchObject({ topic_id: "bank" });
+    expect(screen.getByRole("button", { name: /В банке/ })).toHaveClass("is-selected");
+    expect(screen.getByRole("button", { name: /Аренда/ })).not.toHaveClass("is-selected");
+  });
+
+  it("reveals manual controls for an empty catalog without starting a session", async () => {
+    const baseFetch = mockApi();
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+      input.toString() === "/api/topics"
+        ? Promise.resolve({ ok: true, status: 200, json: async () => [] })
+        : baseFetch(input, init));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Темы для практики" })).toBeInTheDocument();
+    expect(screen.getByText("Пока нет фраз для тренировки. Добавьте фразу или создайте тему.")).toBeInTheDocument();
+    expect(screen.getAllByText("Своя тема").length).toBeGreaterThan(0);
+    expect(fetchMock.mock.calls.some(([url]) => url.toString() === "/api/sessions/start")).toBe(false);
+  });
+
+  it("retries a failed default session without reloading", async () => {
+    const baseFetch = mockApi();
+    let starts = 0;
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+      input.toString() === "/api/sessions/start" && ++starts === 1
+        ? Promise.resolve({ ok: false, status: 503, json: async () => ({ detail: "Unavailable" }) })
+        : baseFetch(input, init));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+
+    expect(await screen.findByRole("button", { name: "Повторить загрузку" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /В банке/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Повторить загрузку" }));
+    expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
+    expect(starts).toBe(2);
+  });
+
+  it("does not leave a preparation spinner after retry cancels a manual start", async () => {
+    vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(true);
+    const baseFetch = mockApi();
+    let finishManual!: (response: { ok: boolean; status: number; json: () => Promise<unknown> }) => void;
+    const pendingManual = new Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>((resolve) => { finishManual = resolve; });
+    let starts = 0;
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (!input.toString().endsWith("/api/sessions/start")) return baseFetch(input, init);
+      starts += 1;
+      return starts === 2 ? pendingManual
+        : Promise.resolve({ ok: false, status: 503, json: async () => ({ detail: "Unavailable" }) });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    await waitFor(() => expect(starts).toBe(2));
+    fireEvent.click(screen.getByRole("button", { name: "Темы" }));
+    fireEvent.click(screen.getByRole("button", { name: "Повторить загрузку" }));
+    await waitFor(() => expect(starts).toBe(3));
+    await screen.findByRole("button", { name: "Темы" });
+    fireEvent.click(screen.getByRole("button", { name: "Тренировка" }));
+    expect(screen.queryByRole("status", { name: "Подготовка фразы" })).not.toBeInTheDocument();
+    const response = await baseFetch("/api/sessions/start", { method: "POST", body: JSON.stringify({ topic_id: "bank" }) });
+    await act(async () => finishManual(response));
+    expect(screen.queryByRole("heading", { name: "Я хочу открыть счёт." })).not.toBeInTheDocument();
+  });
+
+  it("does not start after a late catalog response reaches an unmounted account", async () => {
+    const baseFetch = mockApi();
+    let finishTopics!: (response: { ok: boolean; status: number; json: () => Promise<unknown> }) => void;
+    const pendingTopics = new Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>((resolve) => { finishTopics = resolve; });
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+      input.toString() === "/api/topics" ? pendingTopics : baseFetch(input, init));
+    vi.stubGlobal("fetch", fetchMock);
+    const rendered = render(<App />);
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.toString() === "/api/topics")).toBe(true));
+    rendered.unmount();
+    const topics = await baseFetch("/api/topics");
+    await act(async () => finishTopics(topics));
+    expect(fetchMock.mock.calls.some(([url]) => url.toString() === "/api/sessions/start")).toBe(false);
+  });
+
+  it("starts only one default session under StrictMode", async () => {
+    const fetchMock = mockApi();
+    vi.stubGlobal("fetch", fetchMock);
+    render(<StrictMode><App /></StrictMode>);
+
+    expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
+    expect(fetchMock.mock.calls.filter(([url]) => url.toString().endsWith("/api/sessions/start"))).toHaveLength(1);
+  });
+
+  it("has the first exercise ready on the native training panel without a topic tap", async () => {
+    vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(true);
+    voiceMock.available = true;
+    const fetchMock = mockApi();
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+
+    const topicsButton = await screen.findByRole("button", { name: "Темы" });
+    expect(topicsButton).toHaveAttribute("aria-current", "page");
+    fireEvent.click(screen.getByRole("button", { name: "Тренировка" }));
+    expect(screen.getByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ответить голосом" })).toBeEnabled();
+    expect(fetchMock.mock.calls.filter(([url]) => url.toString().endsWith("/api/sessions/start"))).toHaveLength(1);
+  });
+
+  it("retries a failed visibility refresh without clearing the active exercise or draft", async () => {
+    voiceMock.available = true;
+    const baseFetch = mockApi();
+    let topicCalls = 0;
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (input.toString() === "/api/topics" && ++topicCalls === 2) return Promise.reject(new Error("offline"));
+      return baseFetch(input, init);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    const answer = await recordAnswer();
+    fireEvent.change(answer, { target: { value: "Čuvam odgovor" } });
+
+    vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible");
+    fireEvent(document, new Event("visibilitychange"));
+    expect(await screen.findByRole("status", { name: "Backend недоступен" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Ваш ответ")).toHaveValue("Čuvam odgovor");
+    fireEvent.click(screen.getByRole("button", { name: "Повторить загрузку тем" }));
+    expect(await screen.findByRole("status", { name: "Backend готов" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Ваш ответ")).toHaveValue("Čuvam odgovor");
+    expect(screen.getByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
+    expect(fetchMock.mock.calls.filter(([url]) => url.toString() === "/api/sessions/start")).toHaveLength(1);
+    expect(topicCalls).toBe(3);
+  });
+
   it("does not reload the profile for a repeated auth event with the same token", async () => {
     const fetchMock = mockApi();
     vi.stubGlobal("fetch", fetchMock);
@@ -253,21 +412,26 @@ describe("App", () => {
     expect(fetchMock.mock.calls.filter(([url]) => url.toString() === "/api/auth/me")).toHaveLength(1);
   });
 
-  it("allows training while the review summary is still loading", async () => {
+  it("keeps topic controls hidden until the review summary and first exercise are ready", async () => {
     const fetchMock = mockApi();
     let finishReview!: (response: { ok: boolean; status: number; json: () => Promise<unknown> }) => void;
     const reviewResponse = new Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>((resolve) => {
       finishReview = resolve;
     });
-    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+    const pendingFetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
       input.toString() === "/api/review-phrases/summary" ? reviewResponse : fetchMock(input, init),
-    ));
+    );
+    vi.stubGlobal("fetch", pendingFetch);
 
     render(<App />);
 
-    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    await waitFor(() => expect(pendingFetch).toHaveBeenCalledWith("/api/review-phrases/summary", expect.anything()));
+    expect(screen.getByRole("status", { name: "Подготовка фразы" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /В банке/ })).not.toBeInTheDocument();
+    expect(pendingFetch.mock.calls.some(([url]) => url.toString() === "/api/sessions/start")).toBe(false);
+    await act(async () => finishReview({ ok: true, status: 200, json: async () => ({ phrase_count: 0 }) }));
     expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
-    finishReview({ ok: true, status: 200, json: async () => ({ phrase_count: 0 }) });
+    expect(pendingFetch.mock.calls.filter(([url]) => url.toString() === "/api/sessions/start")).toHaveLength(1);
   });
 
   it("uses the summary count without fetching review history", async () => {
@@ -289,12 +453,14 @@ describe("App", () => {
     const fetchMock = mockApi();
     vi.stubGlobal("fetch", fetchMock);
     render(<App />);
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/review-phrases/summary", expect.anything()));
+    await screen.findByRole("button", { name: /Фразы для повторения/ });
 
     fireEvent.click(screen.getByRole("button", { name: /Фразы для повторения/ }));
 
     expect(await screen.findByText("Пока нет фраз для повторения. Добавьте фразу ниже или выполните обычную тренировку.")).toBeInTheDocument();
-    expect(fetchMock.mock.calls.some(([url]) => url.toString() === "/api/sessions/start")).toBe(false);
+    const starts = fetchMock.mock.calls.filter(([url]) => url.toString() === "/api/sessions/start");
+    expect(starts).toHaveLength(1);
+    expect(JSON.parse(starts[0][1]?.body as string)).toMatchObject({ topic_id: "bank" });
   });
 
   it("retries an initial topics timeout without reloading the page", async () => {
@@ -306,13 +472,13 @@ describe("App", () => {
     vi.stubGlobal("fetch", fetchMock);
     render(<App />);
     expect(await screen.findByRole("status", { name: "Backend недоступен" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Повторить загрузку тем" }));
+    fireEvent.click(screen.getByRole("button", { name: "Повторить загрузку" }));
     expect(await screen.findByRole("status", { name: "Backend готов" })).toBeInTheDocument();
     expect(await screen.findByRole("button", { name: /В банке/ })).toBeInTheDocument();
     expect(topicCalls).toBe(2);
   });
 
-  it("shows phrase preparation while a selected topic starts", async () => {
+  it("shows phrase preparation while the default topic starts", async () => {
     const baseFetch = mockApi();
     let finishStart!: (response: { ok: boolean; status: number; json: () => Promise<unknown> }) => void;
     const pendingStart = new Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>((resolve) => { finishStart = resolve; });
@@ -322,22 +488,23 @@ describe("App", () => {
     vi.stubGlobal("fetch", fetchMock);
     render(<App />);
 
-    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.toString() === "/api/sessions/start")).toBe(true));
     expect(screen.getByRole("status", { name: "Подготовка фразы" })).toHaveTextContent("Подготовка фразы");
+    expect(screen.queryByRole("button", { name: /В банке/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Начать тренировку" })).not.toBeInTheDocument();
     const response = await baseFetch("/api/sessions/start", { method: "POST", body: JSON.stringify({ topic_id: "bank" }) });
     finishStart(response);
     expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
   });
 
-  it("leaves preparation when a pending start is replaced by an empty topic", async () => {
+  it("shows an empty topic as a manual path after the default start fails", async () => {
     const baseFetch = mockApi();
     const emptyTopic = {
       id: "empty", title_ru: "Пустая тема", description_ru: "Нет фраз", likely_intents: [],
       suggested_vocabulary: [], is_custom: true, phrase_count: 0,
     };
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      if (input.toString() === "/api/sessions/start") return new Promise<never>(() => undefined);
+      if (input.toString() === "/api/sessions/start") return { ok: false, status: 503, json: async () => ({ detail: "Unavailable" }) };
       if (input.toString() === "/api/topics") {
         const response = await baseFetch(input, init);
         return { ok: true, status: 200, json: async () => [...await response.json(), emptyTopic] };
@@ -346,8 +513,8 @@ describe("App", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
     render(<App />);
-    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
-    expect(await screen.findByRole("status", { name: "Подготовка фразы" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /В банке/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Повторить загрузку" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Пустая тема/ }));
     expect(screen.queryByRole("status", { name: "Подготовка фразы" })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Пустая тема" })).toBeInTheDocument();
@@ -1373,7 +1540,7 @@ describe("App", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
-  it("ignores a late next phrase after the user switches topics", async () => {
+  it("ignores a late next phrase after the user restarts practice", async () => {
     voiceMock.available = true;
     const baseFetch = mockApi();
     let settleNext!: (response: { ok: boolean; status: number; json: () => Promise<unknown> }) => void;
@@ -1387,6 +1554,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
     await screen.findByText("Ответ естественный и точный.");
     fireEvent.click(screen.getByRole("button", { name: /Следующая фраза/ }));
+    fireEvent.click(screen.getByRole("button", { name: "SerboTalk — к практике" }));
     fireEvent.click(screen.getByRole("button", { name: /В банке/ }));
     expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
     await act(async () => { settleNext({ ok: true, status: 201, json: async () => ({
@@ -1438,6 +1606,7 @@ describe("App", () => {
     await recordAnswer();
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
     await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.toString() === "/api/attempts")).toBe(true));
+    fireEvent.click(screen.getByRole("button", { name: "SerboTalk — к практике" }));
     fireEvent.click(screen.getByRole("button", { name: /В банке/ }));
     expect(await screen.findByRole("button", { name: "Ответить голосом" })).toBeInTheDocument();
     const response = outcome === "result"
@@ -1449,7 +1618,7 @@ describe("App", () => {
     expect(screen.queryByLabelText("Ваш ответ")).not.toBeInTheDocument();
   });
 
-  it("ignores a transcription that finishes after the topic changes", async () => {
+  it("ignores a transcription that finishes after practice restarts", async () => {
     voiceMock.available = true;
     const baseFetch = mockApi();
     let finishTranscription!: (value: { ok: boolean; status: number; json: () => Promise<unknown> }) => void;
@@ -1462,6 +1631,7 @@ describe("App", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Ответить голосом" }));
     fireEvent.click(await screen.findByRole("button", { name: "Завершить запись" }));
     await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.toString() === "/api/transcriptions")).toBe(true));
+    fireEvent.click(screen.getByRole("button", { name: "SerboTalk — к практике" }));
     fireEvent.click(screen.getByRole("button", { name: /В банке/ }));
     finishTranscription({ ok: true, status: 200, json: async () => ({ text: "Stari odgovor" }) });
     await screen.findByRole("heading", { name: "Я хочу открыть счёт." });

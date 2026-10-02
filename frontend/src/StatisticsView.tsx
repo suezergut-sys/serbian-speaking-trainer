@@ -91,7 +91,9 @@ function PhrasesTab({ alphabet }: { alphabet: SerbianAlphabet }) {
 }
 
 function ActivityTab() {
-  const [week] = useState(currentWeek);
+  const [thisWeek] = useState(currentWeek);
+  const [weekOffset, setWeekOffset] = useState(0);
+  const week = thisWeek.map((date) => new Date(date.getFullYear(), date.getMonth(), date.getDate() + weekOffset * 7));
   const [statistics, setStatistics] = useState<MonthlyStatistics[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -111,16 +113,29 @@ function ActivityTab() {
     return () => controller.abort();
   }, [monthKeys, retry]);
 
-  if (loading) return <div className="statistics-state panel">Загружаем статистику…</div>;
-  if (error || !statistics.length) return <div className="statistics-state panel" role="alert">Не удалось загрузить статистику. <button type="button" onClick={() => { setLoading(true); setError(false); setRetry((value) => value + 1); }}>Повторить загрузку статистики</button></div>;
+  function changeWeek(direction: number) {
+    const nextOffset = Math.min(0, weekOffset + direction);
+    const nextMonths = [...new Set(thisWeek.map((date) => monthKey(new Date(date.getFullYear(), date.getMonth(), date.getDate() + nextOffset * 7))))].join(",");
+    if (nextMonths !== monthKeys) { setLoading(true); setError(false); }
+    setWeekOffset(nextOffset);
+  }
+
+  const weekTitle = `${new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short" }).format(week[0])} — ${new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short" }).format(week[6])}`;
+  const toolbar = <nav className="activity-toolbar" aria-label="Выбор недели">
+    <button type="button" aria-label="Предыдущая неделя" onClick={() => changeWeek(-1)}>‹</button>
+    <strong aria-live="polite">Неделя · {weekTitle}</strong>
+    {weekOffset < 0 ? <button type="button" aria-label="Следующая неделя" onClick={() => changeWeek(1)}>›</button> : <span aria-hidden="true" />}
+  </nav>;
+
+  if (loading) return <>{toolbar}<div className="statistics-state panel" role="status">Загружаем статистику…</div></>;
+  if (error || !statistics.length) return <>{toolbar}<div className="statistics-state panel" role="alert">Не удалось загрузить статистику. <button type="button" onClick={() => { setLoading(true); setError(false); setRetry((value) => value + 1); }}>Повторить загрузку статистики</button></div></>;
   const byDate = new Map(statistics.flatMap((month) => month.days).map((day) => [day.date, day]));
   const days = week.map((date) => byDate.get(dateKey(date)) ?? { date: dateKey(date), phrase_count: 0, translation_count: 0, correct_translation_count: 0, mastered_phrase_count: 0 });
   const total = days.reduce((sum, day) => sum + day.phrase_count, 0);
   const activeDays = days.filter((day) => day.phrase_count > 0).length;
   const maxCount = Math.max(1, ...days.map((day) => day.translation_count), ...days.map((day) => day.mastered_phrase_count));
-  const weekTitle = `${new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short" }).format(week[0])} — ${new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short" }).format(week[6])}`;
   return <>
-    <div className="activity-toolbar"><strong>Текущая неделя · {weekTitle}</strong></div>
+    {toolbar}
     <section className="statistics-summary" aria-label="Итоги недели"><div className="panel"><span>{activeDays}</span><small>активных дней</small></div><div className="panel"><span>{total}</span><small>фраз за неделю</small></div></section>
     <section className="statistics-card panel" aria-labelledby="calendar-title">
       <div className="statistics-card__heading"><div><p className="kicker">Регулярность</p><h2 id="calendar-title">Календарь занятий</h2></div><span className="calendar-legend"><span><i /> от 1 перевода</span><span><i className="is-intensive" /> от 10 попыток</span></span></div>

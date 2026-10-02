@@ -23,6 +23,11 @@ test("secondary panels load on demand while practice remains usable", async ({ p
       suggested_vocabulary: [], is_custom: false, phrase_count: 20,
     }];
     else if (path === "/api/review-phrases/summary") body = { phrase_count: 0 };
+    else if (path === "/api/sessions/start") body = {
+      session: { id: "lazy-session", status: "active", level: "A2", started_at: "2026-10-02T09:00:00Z", requested_length: 10, completed_count: 0,
+        topic: { id: "bank", title_ru: "В банке", description_ru: "Счёт и платежи", source: "preset", target_level: "A2", likely_intents: [], suggested_vocabulary: [], excluded_domains: [], normalized_prompt_context: "Банк" } },
+      exercise: { id: "lazy-exercise", session_id: "lazy-session", source_ru: "Я хочу открыть счёт.", targeted_skills: [], expected_level: "A2", difficulty: 1, word_hints: [] },
+    };
     else if (path === "/api/statistics/monthly") {
       await slowStatistics;
       const now = new Date();

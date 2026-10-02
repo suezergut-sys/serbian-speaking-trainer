@@ -263,7 +263,9 @@ button { cursor: pointer; }
 .statistics-tabs { display: flex; gap: .45rem; padding: .3rem; width: fit-content; border: 1px solid rgba(65, 153, 235, .25); border-radius: 12px; background: rgba(7, 25, 48, .7); }
 .statistics-tabs button { padding: .6rem 1.1rem; border: 0; border-radius: 9px; background: transparent; color: #7897c5; font-weight: 700; }
 .statistics-tabs button.is-active { background: rgba(48, 143, 224, .2); color: #b9e2ff; box-shadow: inset 0 0 0 1px rgba(79, 175, 255, .22); }
-.activity-toolbar { display: flex; justify-content: flex-end; color: #b9e2ff; font-size: .8rem; }
+.activity-toolbar { display: grid; grid-template-columns: 2.75rem minmax(0, 1fr) 2.75rem; align-items: center; gap: .5rem; color: #b9e2ff; font-size: .8rem; }
+.activity-toolbar strong { text-align: center; }
+.activity-toolbar button { min-height: 2.75rem; padding: .25rem; font-size: 1.6rem; }
 .month-switcher { display: grid; grid-template-columns: 38px minmax(170px, auto) 38px; align-items: center; overflow: hidden; border: 1px solid rgba(65, 153, 235, .35); border-radius: 12px; background: rgba(7, 25, 48, .8); }
 .month-switcher button { height: 42px; border: 0; background: rgba(54, 139, 222, .08); color: #77c0ff; font-size: 1.45rem; }
 .month-switcher button:hover { background: rgba(54, 139, 222, .2); }

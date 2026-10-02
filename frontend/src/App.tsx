@@ -22,6 +22,7 @@ import "./styles.css";
 type BackendState = "checking" | "online" | "offline";
 type VoiceState = "idle" | "connecting" | "recording" | "transcribing" | "error";
 type AppView = "practice" | "statistics" | "settings" | "admin";
+type StartupState = "loading" | "ready" | "fallback";
 
 const loadStatistics = (retryUrl?: string) => (retryUrl
   ? import(/* @vite-ignore */ retryUrl) as Promise<typeof import("./StatisticsView")>
@@ -139,6 +140,7 @@ function AuthenticatedApp() {
 
 function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentUser; onAccountChange: (account: CurrentUser) => void; onSignOut: () => void }) {
   const [backendState, setBackendState] = useState<BackendState>("checking");
+  const [startupState, setStartupState] = useState<StartupState>("loading");
   const [showConnectionSettings, setShowConnectionSettings] = useState(false);
   const [apiEndpoint, setApiEndpoint] = useState(getApiBaseUrl());
   const [view, setView] = useState<AppView>("practice");
@@ -191,6 +193,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const accountRefreshEpochRef = useRef(0);
   const androidPagerRef = useRef<HTMLDivElement | null>(null);
   const presentedExerciseRef = useRef<string | undefined>(undefined);
+  const initialExerciseTimingPendingRef = useRef(false);
   const [androidPanel, setAndroidPanel] = useState(0);
   const androidBackHandlerRef = useRef<() => void>(() => undefined);
   const voiceSupported = supportsVoiceRecording();
@@ -198,8 +201,8 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
   useEffect(() => { startUiTiming("topics"); }, []);
   useEffect(() => {
-    if (topics.length) finishUiTimingWhenVisible("topics", isNative ? ".android-topic-list .android-topic" : ".topics .topic");
-  }, [topics, isNative]);
+    if (startupState !== "loading" && topics.length) finishUiTimingWhenVisible("topics", isNative ? ".android-topic-list .android-topic" : ".topics .topic");
+  }, [topics, isNative, startupState]);
   useEffect(() => {
     if (exercise && !attempt) {
       const selector = isNative ? ".android-page .interactive-phrase" : ".practice-stage .interactive-phrase";
@@ -220,6 +223,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
   function invalidateFlow() {
     flowEpochRef.current += 1;
+    initialExerciseTimingPendingRef.current = false;
     hintEpochRef.current += 1;
     flowControllerRef.current?.abort();
     flowControllerRef.current = undefined;
@@ -260,32 +264,108 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
   const loadCatalog = useCallback(() => {
     catalogControllerRef.current?.abort();
+    flowControllerRef.current?.abort();
+    flowEpochRef.current += 1;
+    flowControllerRef.current = undefined;
+    checkingRef.current = false;
+    advancingRef.current = false;
     const controller = new AbortController();
     catalogControllerRef.current = controller;
     const epoch = ++catalogEpochRef.current;
-    fetchTopics(controller.signal)
+    const summaryEpoch = ++reviewSummaryEpochRef.current;
+    void (async () => {
+      await Promise.resolve();
+      if (controller.signal.aborted || catalogEpochRef.current !== epoch) return;
+      setChecking(false); setAdvancing(false); setPreparingPhrase(false);
+      setStartupState("loading");
+      setBackendState("checking");
+      setError(undefined);
+      const [topicsResult, summaryResult] = await Promise.allSettled([
+        fetchTopics(controller.signal), fetchReviewSummary(controller.signal),
+      ]);
+      if (controller.signal.aborted || catalogEpochRef.current !== epoch) return;
+      if (topicsResult.status === "rejected") {
+        setBackendState("offline");
+        setError("Не удалось загрузить темы. Проверьте соединение и попробуйте снова.");
+        setStartupState("fallback");
+        return;
+      }
+      const availableTopics = topicsResult.value;
+      const firstTopic = availableTopics.find((topic) => topic.phrase_count > 0);
+      setTopics(availableTopics);
+      setSelectedTopic(firstTopic?.id);
+      setBackendState("online");
+      if (summaryResult.status === "rejected") {
+        setError("Не удалось загрузить фразы для повторения. Выберите тему или повторите загрузку.");
+        setStartupState("fallback");
+        return;
+      }
+      const reviewCount = summaryResult.value.phrase_count;
+      if (reviewSummaryEpochRef.current === summaryEpoch) setReviewPhraseCount(reviewCount);
+      setSelectedTopic(reviewCount > 0 ? undefined : firstTopic?.id);
+      if (reviewCount === 0 && !firstTopic) {
+        setError("Пока нет фраз для тренировки. Добавьте фразу или создайте тему.");
+        setStartupState("fallback");
+        return;
+      }
+      if (!Capacitor.isNativePlatform()) startUiTiming("first_phrase");
+      flowControllerRef.current = controller;
+      try {
+        let started;
+        if (reviewCount > 0) {
+          try {
+            started = await startTrainingSession({ review_mode: true }, controller.signal);
+          } catch (requestError) {
+            if (!(requestError instanceof BackendError && requestError.code === "review_queue_empty")) throw requestError;
+            if (reviewSummaryEpochRef.current === summaryEpoch) setReviewPhraseCount(0);
+            if (!firstTopic) {
+              setError("Пока нет фраз для тренировки. Добавьте фразу или создайте тему.");
+              setStartupState("fallback");
+              return;
+            }
+            setSelectedTopic(firstTopic.id);
+            started = await startTrainingSession({ topic_id: firstTopic.id }, controller.signal);
+          }
+        } else {
+          started = await startTrainingSession({ topic_id: firstTopic!.id }, controller.signal);
+        }
+        if (controller.signal.aborted || catalogEpochRef.current !== epoch) return;
+        setSession(started.session); setExercise(started.exercise); setExerciseNumber(1);
+        setCompletedCount(started.session.completed_count ?? 0);
+        if (Capacitor.isNativePlatform()) initialExerciseTimingPendingRef.current = true;
+        setStartupState("ready");
+      } catch {
+        if (controller.signal.aborted || catalogEpochRef.current !== epoch) return;
+        setError("Не удалось подготовить первую фразу. Выберите тему или повторите загрузку.");
+        setStartupState("fallback");
+      } finally {
+        if (catalogEpochRef.current === epoch) flowControllerRef.current = undefined;
+      }
+    })();
+  }, []);
+
+  const refreshReadyCatalog = useCallback(() => {
+    catalogControllerRef.current?.abort();
+    const controller = new AbortController();
+    catalogControllerRef.current = controller;
+    const epoch = ++catalogEpochRef.current;
+    setBackendState("checking");
+    void fetchTopics(controller.signal)
       .then((availableTopics) => {
-        if (catalogEpochRef.current !== epoch) return;
+        if (controller.signal.aborted || catalogEpochRef.current !== epoch) return;
         setTopics(availableTopics);
-        setSelectedTopic((current) => current ?? availableTopics[0]?.id);
+        setSelectedTopic((current) => current ?? availableTopics.find((topic) => topic.phrase_count > 0)?.id);
         setBackendState("online");
-        void refreshReviewSummary(controller.signal)
-          .catch((requestError: unknown) => {
-            if (catalogEpochRef.current !== epoch) return;
-            if (requestError instanceof DOMException && requestError.name === "AbortError") return;
-            setError("Не удалось загрузить фразы для повторения.");
-          });
       })
       .catch(() => {
-        if (catalogEpochRef.current !== epoch) return;
-        setBackendState("offline");
+        if (!controller.signal.aborted && catalogEpochRef.current === epoch) setBackendState("offline");
       });
+    void refreshReviewSummary(controller.signal).catch(() => undefined);
   }, [refreshReviewSummary]);
 
   function retryCatalog() {
-    setBackendState("checking");
-    setError(undefined);
-    loadCatalog();
+    if (startupState === "ready") refreshReadyCatalog();
+    else loadCatalog();
   }
 
   useEffect(() => {
@@ -309,26 +389,12 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     voiceRef.current?.stop();
   }, []);
   useEffect(() => {
-    let controller: AbortController | undefined;
     const refreshWhenVisible = () => {
-      if (document.visibilityState !== "visible") return;
-      controller?.abort();
-      catalogControllerRef.current?.abort();
-      controller = new AbortController();
-      const epoch = ++catalogEpochRef.current;
-      void fetchTopics(controller.signal)
-        .then((availableTopics) => {
-          if (catalogEpochRef.current !== epoch) return;
-          setTopics(availableTopics);
-          setSelectedTopic((current) => current ?? availableTopics[0]?.id);
-          setBackendState("online");
-        })
-        .catch(() => { if (catalogEpochRef.current === epoch) setBackendState("offline"); });
-      void refreshReviewSummary(controller.signal).catch(() => undefined);
+      if (startupState === "ready" && document.visibilityState === "visible") refreshReadyCatalog();
     };
     document.addEventListener("visibilitychange", refreshWhenVisible);
-    return () => { controller?.abort(); document.removeEventListener("visibilitychange", refreshWhenVisible); };
-  }, [refreshReviewSummary]);
+    return () => document.removeEventListener("visibilitychange", refreshWhenVisible);
+  }, [refreshReadyCatalog, startupState]);
   const selectedTopicData = topics.find((topic) => topic.id === selectedTopic);
   const currentTopic = session?.topic ?? selectedTopicData;
   const isReviewMode = session?.topic.id === "review-phrases";
@@ -352,6 +418,10 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
   function showAndroidPanel(panel: number) {
     const pager = androidPagerRef.current;
+    if (panel === 1 && initialExerciseTimingPendingRef.current) {
+      initialExerciseTimingPendingRef.current = false;
+      startUiTiming("first_phrase");
+    }
     if (panel !== 1) interruptVoice();
     setAndroidPanel(panel);
     if (!pager) return;
@@ -475,6 +545,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       if (flowEpochRef.current !== epoch) return;
       setSession(started.session); setExercise(started.exercise); setExerciseNumber(1);
       setCompletedCount(started.session.completed_count ?? 0);
+      setStartupState("ready");
     } catch (requestError) {
       if (flowEpochRef.current !== epoch) return;
       setError(requestError instanceof BackendError && (requestError.code === "topic_empty" || requestError.status === 409)
@@ -485,6 +556,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   }
 
   async function startReviewTraining() {
+    if (isReviewMode && session && exercise && !sessionComplete) return;
     startUiTiming("first_phrase");
     invalidateFlow(); stopVoice();
     setSession(undefined); setExercise(undefined); setCompletedCount(0); setSessionComplete(false); setTopicExhausted(false);
@@ -502,6 +574,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       if (flowEpochRef.current !== epoch) return;
       setSession(started.session); setExercise(started.exercise); setExerciseNumber(1);
       setAnswer(""); setHasTranscript(false); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
+      setStartupState("ready");
     } catch (requestError) {
       if (flowEpochRef.current !== epoch) return;
       if (requestError instanceof BackendError && requestError.code === "review_queue_empty") {
@@ -610,6 +683,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   }
 
   function selectTopic(topicId: string) {
+    if (session?.topic.id === topicId && exercise && !sessionComplete) return;
     if (session || preparingPhrase || sessionComplete) resetTraining();
     setSelectedTopic(topicId); setCustomTopic("");
     setSession(undefined); setExercise(undefined);
@@ -700,6 +774,8 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     </div>;
   }
 
+  if (startupState === "loading") return <main className="auth-page auth-page--loading"><PhraseLoading /></main>;
+
   if (isNative) {
     return (
       <div className="android-shell">
@@ -720,6 +796,10 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
             const width = event.currentTarget.clientWidth;
             if (width) {
               const panel = Math.round(event.currentTarget.scrollLeft / width);
+              if (panel === 1 && initialExerciseTimingPendingRef.current) {
+                initialExerciseTimingPendingRef.current = false;
+                startUiTiming("first_phrase");
+              }
               if (panel !== 1) interruptVoice();
               setAndroidPanel(panel);
             }
@@ -762,7 +842,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                 <button type="submit" disabled={loading || newPhrase.trim().length < 3 || Boolean(preparedPhrase && !phraseTopicId)}>{preparedPhrase ? "Сохранить" : "Перевести"}</button>
               </form>
             </details>
-            {backendState === "offline" && <div className="android-error" role="alert">Нет подключения к сервису. <button type="button" onClick={retryCatalog}>Повторить загрузку тем</button></div>}
+            {(startupState === "fallback" || backendState === "offline") && <div className="android-error" role="alert">{startupState === "fallback" ? error : "Нет подключения к сервису."} <button type="button" onClick={retryCatalog}>Повторить загрузку</button></div>}
           </section>
 
           <section className="android-page android-training-page" aria-label="Тренировка">
@@ -827,6 +907,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
         </nav>
         <div className="profile">
           <div className={`connection connection--${backendState}`} role="status" aria-label={backendState === "online" ? "Backend готов" : backendState === "offline" ? "Backend недоступен" : "Подключение"}><span /></div>
+          {backendState === "offline" && <button className="connection-settings-button" type="button" aria-label="Повторить загрузку тем" onClick={retryCatalog}><Icon name="repeat" /></button>}
           <span className="avatar">{account.display_name?.slice(0, 1).toLocaleUpperCase() || "A"}</span><span className="profile__copy"><strong>{account.display_name || account.email}</strong><small>{account.daily_usage.limit === null ? `${account.daily_usage.used} фраз · без лимита` : `${account.daily_usage.remaining} из ${account.daily_usage.limit} фраз осталось`}</small></span>
           <button className="sign-out-button" type="button" onClick={onSignOut}>Выйти</button>
           {account.role === "admin" && <button className="connection-settings-button" type="button" aria-label="Настроить подключение" onClick={() => setShowConnectionSettings((current) => !current)}><Icon name="settings" /></button>}
@@ -887,7 +968,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                 <div className="welcome-card__glow"/><span className="welcome-card__icon"><Icon name={topicIcons[currentTopic?.id ?? ""] ?? "message"} size={32} /></span>
                 <p className="kicker">Выбранная ситуация</p><h2>{customTopic.trim() || currentTopic?.title_ru || "Выберите тему"}</h2>
                 <p>{selectedTopicData?.phrase_count === 0 ? "Тема пока пустая. Добавьте в неё фразы — автоматической генерации не будет." : currentTopic?.description_ru || "Темы загрузятся после подключения к backend."}</p>
-                {backendState === "offline" && <button className="answer-submit" type="button" onClick={retryCatalog}>Повторить загрузку тем</button>}
+                {(startupState === "fallback" || backendState === "offline") && <button className="answer-submit" type="button" onClick={retryCatalog}>Повторить загрузку</button>}
                 <div className="welcome-card__steps"><span><b>1</b> Получите фразу</span><span><b>2</b> Ответьте голосом</span><span><b>3</b> Разберите результат</span></div>
                 {error && <p className="error" role="alert">{error}</p>}
               </div>
