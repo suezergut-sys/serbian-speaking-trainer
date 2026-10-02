@@ -359,3 +359,5 @@
 - Default review при непустой очереди, иначе первая доступная тема. Пустой каталог/ошибка не оставляют вечный loader; доступны ручные действия и retry. Background refresh/retry каталога сохраняет учебную сессию и черновик; повтор selected topic не перезапускает её.
 - Недельная статистика использует прежний месячный API, локальные календарные границы и abort guards. Центрированный заголовок, предыдущая неделя, следующая только до текущей; future navigation отсутствует.
 - Android version/native assets не меняются. [Checkpoint](ready-practice-week-checkpoint.md); публикация, перенос в APK и физическая приёмка фиксируются отдельно.
+
+02.10.2026: startup/week-navigation опубликованы через [PR #52](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/52); frontend READY на `d4a9e629973dcc7d70ac9e1225c1376cfcd56fff`. Authorized production подтвердил default review/готовую фразу, прошлую неделю и скрытие forward на текущей; ошибок console 0. [Checkpoint](ready-practice-week-checkpoint.md). APK 1.17 остаётся прежним.

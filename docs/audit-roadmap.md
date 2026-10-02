@@ -256,5 +256,5 @@
 - [x] P2.1: «Неделя · даты» по центру, предыдущая неделя, следующая только до текущей; границы месяцев/годов и stale responses проверены.
 - [x] Frontend 99 component tests и 17 браузерных регрессий прошли; отдельный delayed startup scenario также прошёл.
 - [x] Финальное независимое ревью, lint/typecheck/build прошли; [checkpoint](ready-practice-week-checkpoint.md).
-- [ ] Опубликовать web и подтвердить production; Android-перенос отдельно.
+- [x] 02.10.2026: [PR #52](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/52) merged; frontend READY на `d4a9e629973dcc7d70ac9e1225c1376cfcd56fff`, авторизованный startup и выбор недель прошли. Финальный browser suite 18/18, console errors 0. [Доказательства](ready-practice-week-checkpoint.md).
 - [ ] Перенести срез в явно заказанный Android-релиз и получить физическую приёмку; текущий APK 1.17 не менялся.
