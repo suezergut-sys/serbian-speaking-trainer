@@ -208,7 +208,8 @@
 - [x] Публикация через [PR #45](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/45), runtime `0e3e72dddaefe7d3ff80d64f039892e35940aaf3`; web READY и публичный Chrome/API smoke прошли. Backend runtime не менялся.
 - [x] 01.10.2026: bounded Supavisor concurrency проверен, private DATABASE_URL настроен локально. [Доказательства](p1-pooler-android-checkpoint.md).
 - [ ] Сопоставимые замеры роста данных, репрезентативная нагрузка и deployed HTTP concurrency.
-- [ ] Физический телефон, новый отдельно заказанный APK, авторизованная production практика и ручная приёмка.
+- [x] 01.10.2026: физический Android доступ и установка lab 1.17 подтверждены; fixture practice на телефоне дошла до transcript. Это не завершённая production практика или ручная приёмка. [Текущий статус](p1-physical-android-checkpoint.md).
+- [ ] Завершить practice, 3 свежих sample-замера, физические IME/Back, lifecycle/resilience, настоящий STT/OAuth и настоящее отключение сети; проверки на телефоне остановлены владельцем.
 - [ ] Исправление RLS/grants Supabase отдельной миграцией; P0/P1 полностью не закрыты.
 
 - [x] 01.10.2026: авторизованный production navigation smoke во встроенном браузере: темы, активность, список фраз, настройки и возврат; console errors 0. Полный голосовой цикл остаётся открытым. [Доказательства](p1-pooler-android-checkpoint.md).
@@ -226,3 +227,14 @@
 - [x] Vercel frontend deployment `dpl_4JsuVfsmSLj9nWSkyhvj1cRWjzYw` READY/production на release SHA; deployment URL и production alias подтверждены. Post-Ready Chrome 154, authorized IAB navigation и API smoke прошли. [Доказательства](android-1.17-release.md).
 - [ ] Обычный Android practice UI flow, Google OAuth, настоящий STT и физическая ручная приёмка не подтверждены. Свежих Android performance metrics нет.
 - [ ] Физическая ручная приёмка, полный voice цикл и остальные открытые P0/P1/RLS пункты остаются открытыми независимо от выпуска.
+
+## Физический Android 1.17 — остановлено владельцем
+
+- [x] ADB читает устройство; production 1.17 открывает Topics с авторизованной сессией, mic permission granted и WebView debug socket доступен. Это не доказательство installation/upgrade или OAuth.
+- [x] Установленный ранее lab 1.17 успешно переустановлен через `install-r` после разрешения USB install владельцем; APK не пересобирался.
+- [x] Fixture auth/login/topics/first phrase и synthetic record → transcript дошли на телефоне. Grade/next не достигнуты. Host-helper checks: 5 fixture transport + 3 lab reset + 5 resilience guards passed.
+- [ ] Обычная завершённая practice, grade/next recovery и три sample metrics.
+- [ ] Физические IME/System Back, lifecycle/resilience, настоящий STT/OAuth и реальное отключение Wi-Fi/radio.
+- [ ] Два новых metric guards и reviewer final recheck.
+
+Владелец остановил проверки на телефоне; автоматического продолжения нет. Runner/harness изменения на `codex/p1-physical-android` экспериментальны и не опубликованы. [Подробная контрольная точка и инструкции возобновления](p1-physical-android-checkpoint.md).

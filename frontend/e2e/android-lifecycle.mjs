@@ -1,11 +1,13 @@
 import { _android, expect } from "@playwright/test";
 import { loginTestlab } from "./flow.mjs";
+import { installAndroidFixtureTransport } from "./android-fixture-transport.mjs";
+import { resetAndroidFixtureSession } from "./android-fixture-session.mjs";
 
 const packageName = "com.serbiantalk.trainer.testlab";
 const expectedVersion = process.env.TESTLAB_ANDROID_VERSION ?? "1.17";
 if (!process.env.TESTLAB_EMAIL || !process.env.TESTLAB_PASSWORD) throw new Error("TESTLAB_EMAIL and TESTLAB_PASSWORD are required");
 
-const devices = await _android.devices();
+const devices = await _android.devices({ omitDriverInstall: process.env.TESTLAB_ANDROID_OMIT_DRIVER_INSTALL === '1' });
 const serial = process.env.TESTLAB_ANDROID_SERIAL;
 const device = serial
   ? devices.find((candidate) => candidate.serial() === serial)
@@ -26,11 +28,14 @@ try {
 
   stage = "testlab app launch";
   await device.shell(`am force-stop ${packageName}`);
-  await device.shell(`pm clear ${packageName}`);
   await device.shell(`monkey -p ${packageName} 1`);
   stage = "open Android WebView";
   const webView = await device.webView({ pkg: packageName }, { timeout: 30_000 });
   page = await webView.page();
+  page.setDefaultTimeout(30_000);
+  page.setDefaultNavigationTimeout(30_000);
+  await installAndroidFixtureTransport(page);
+  await resetAndroidFixtureSession(page, webView);
   await installSyntheticMedia(page);
   page.on("response", (response) => {
     const path = new URL(response.url()).pathname;

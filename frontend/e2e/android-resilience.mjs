@@ -3,15 +3,17 @@ import { createHmac } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { loginTestlab, installSyntheticMicrophone } from './flow.mjs';
 import { createRadioGuard, requireApkVersion, restoreMicrophonePermission } from './android-resilience-utils.mjs';
+import { installAndroidFixtureTransport } from './android-fixture-transport.mjs';
+import { resetAndroidFixtureSession } from './android-fixture-session.mjs';
 const pkg='com.serbiantalk.trainer.testlab';
 const inputMode=process.env.TESTLAB_ANDROID_INPUT ?? 'native';
 if(!['native','webview'].includes(inputMode))throw Error('Input mode must be native or webview');
 const offlineHoldSeconds=Number(process.env.TESTLAB_OFFLINE_HOLD_SECONDS ?? 120);
 if(!Number.isInteger(offlineHoldSeconds)||offlineHoldSeconds<30||offlineHoldSeconds>300||offlineHoldSeconds%30)throw Error('Offline hold must be 30..300 seconds in 30-second steps');
-const device=(await _android.devices()).find(d=>d.serial()===(process.env.TESTLAB_ANDROID_SERIAL ?? 'emulator-5554'));
+const device=(await _android.devices({omitDriverInstall:process.env.TESTLAB_ANDROID_OMIT_DRIVER_INSTALL==='1'})).find(d=>d.serial()===(process.env.TESTLAB_ANDROID_SERIAL ?? 'emulator-5554'));
 if(!device) throw Error('Expected Android test device unavailable');
 device.setDefaultTimeout(30000);
-let page, stage='launch', radios, originalPermission;
+let page, stage='launch', radios, originalPermission, transport;
 const releases=[];
 const report={variant:'lab',syntheticAudio:true,inputMode};
 const attempts=[]; let wifi, data;
@@ -19,10 +21,15 @@ try {
   report.apkVersion=requireApkVersion((await device.shell(`dumpsys package ${pkg}`)).toString(),process.env.TESTLAB_ANDROID_VERSION ?? '1.17');
   wifi=(await device.shell('settings get global wifi_on')).toString().trim();
   data=(await device.shell('settings get global mobile_data')).toString().trim();
-  radios=createRadioGuard(command=>device.shell(command),wifi,data);
   console.log('Android: launching lab');
-  await device.shell(`am force-stop ${pkg}`);await device.shell(`pm clear ${pkg}`);await device.shell(`monkey -p ${pkg} 1`);
-  page=await (await device.webView({pkg},{timeout:30000})).page();
+  await device.shell(`am force-stop ${pkg}`);await device.shell(`monkey -p ${pkg} 1`);
+  const webView=await device.webView({pkg},{timeout:30000});
+  page=await webView.page();
+  page.setDefaultTimeout(30_000);page.setDefaultNavigationTimeout(30_000);
+  transport=await installAndroidFixtureTransport(page);
+  await resetAndroidFixtureSession(page,webView);
+  report.fixtureTransport=transport.hostProxy?'host-proxy':'direct';
+  if(!transport.hostProxy)radios=createRadioGuard(command=>device.shell(command),wifi,data);
   console.log('Android: lab WebView attached');
   await installSyntheticMicrophone(page);
   stage='fixture login';
@@ -42,24 +49,24 @@ try {
   await answer.fill(draft);await closeKeyboard();
   const phrase=page.locator('.android-training-page .interactive-phrase');const originalPhrase=await phrase.getAttribute('aria-label');
   stage='offline';
-  await radios.disable();
+  if(transport.hostProxy)transport.setOffline(true);else await radios.disable();
   const offline=await page.evaluate(async()=>{try{return (await fetch('http://10.0.2.2:8765/api/health',{signal:AbortSignal.timeout(3000)})).ok;}catch{return false;}});
   if(offline) throw Error('Radio disable did not disconnect backend');
   await tap(page.getByRole('button',{name:'Проверить',exact:true}));
   await expect(page.getByRole('alert')).toBeVisible({timeout:40000});
   await expect(answer).toHaveValue(draft);await expect(phrase).toHaveAttribute('aria-label',originalPhrase);
   await expect(page.getByRole('button',{name:'Проверить',exact:true})).toBeEnabled();
-  // Keep a genuine device disconnection across background/resume, not a route abort.
+  // Direct mode checks actual radios; host-proxy mode injects a fixture transport outage.
   await device.shell('input keyevent KEYCODE_HOME');
-  for(let elapsed=0;elapsed<offlineHoldSeconds;elapsed+=30){await new Promise(resolve=>setTimeout(resolve,30000));console.log(`Android: radios remain offline ${elapsed+30}s`);}
+  for(let elapsed=0;elapsed<offlineHoldSeconds;elapsed+=30){await new Promise(resolve=>setTimeout(resolve,30000));console.log(`Android: ${transport.hostProxy?'fixture transport':'radios'} remain offline ${elapsed+30}s`);}
   await device.shell(`monkey -p ${pkg} 1`);await expect(answer).toHaveValue(draft);
-  await radios.restore();
+  if(transport.hostProxy)transport.setOffline(false);else await radios.restore();
   await expect.poll(()=>page.evaluate(async()=>{try{return (await fetch('http://10.0.2.2:8765/api/health',{signal:AbortSignal.timeout(3000)})).ok;}catch{return false;}}),{timeout:30000}).toBe(true);
   await tap(page.getByRole('button',{name:'Проверить',exact:true}));
   await expect(page.locator('.android-training-page .feedback')).toBeVisible();
   if(attempts.length!==2 || attempts[0].client_request_id!==attempts[1].client_request_id || attempts[0].transcript_sr!==attempts[1].transcript_sr) throw Error('Retry request identity changed');
-  report.deviceNetworkRetry={radioDisabled:true,offlineHoldSeconds,draftPreserved:true,sameAttemptRequest:true};
-  console.log('Android: device offline/retry passed');
+  report.deviceNetworkRetry={radioDisabled:!transport.hostProxy,simulatedTransportFailure:transport.hostProxy,offlineHoldSeconds,draftPreserved:true,sameAttemptRequest:true};
+  console.log(`Android: ${transport.hostProxy?'fixture transport outage':'device offline'}/retry passed`);
   await tap(page.getByRole('button',{name:'Следующая',exact:true}));
   await expect(phrase).not.toHaveAttribute('aria-label',originalPhrase);
   stage='keyboard and swipe';
@@ -122,6 +129,7 @@ try {
   await expect.poll(()=>transcriptEntered).toBe(true);
   await backgroundResume();releaseTranscript();
   await page.unrouteAll({behavior:'wait'});
+  transport=await installAndroidFixtureTransport(page);
   await expect(answer).toHaveValue('Tekst sa tastaturom.');
   await expect(page.getByRole('button',{name:'Ответить голосом',exact:true})).toBeEnabled();
   report.transcription={nativeHomeResume:true,lateResponseIgnored:true,draftPreserved:true};
@@ -165,6 +173,7 @@ try {
   await expect(answer).not.toBeEditable();releaseGrade();
   await expect(page.locator('.android-training-page .feedback')).toBeVisible();
   await page.unrouteAll({behavior:'wait'});
+  transport=await installAndroidFixtureTransport(page);
   if(attempts.length!==beforeGrade+1)throw Error('Grading duplicated during resume');
   report.grading={nativeHomeResume:true,pendingRequestRetained:true,singleSubmission:true};
   console.log('Android: grading background/resume passed');
@@ -186,6 +195,7 @@ try {
   await tap(page.getByRole('button',{name:'Тренировка',exact:true}));
   await expect(marks).toHaveCount(1);await expect(marks).toHaveText('јутренег');
   await page.unrouteAll({behavior:'wait'});
+  transport=await installAndroidFixtureTransport(page);
   report.wordHighlight={latin:true,cyrillic:true,unchangedNeighborExcluded:true,structuredRenderingFixture:true};
   console.log('Android: exact word highlight passed in both alphabets');
   stage='auth refresh on expiration';
@@ -204,6 +214,8 @@ try {
   await device.shell('am force-stop '+pkg);await device.shell(`monkey -p ${pkg} 1`);
   page=await (await device.webView({pkg},{timeout:30000})).page();
   // A new WebView attachment observes refresh response; validate refreshed metadata instead of exporting any token.
+  transport=await installAndroidFixtureTransport(page);
+  if(transport.hostProxy)await page.reload();
   await expect(page.getByRole('button',{name:/Собеседование/}).first()).toBeVisible({timeout:30000});
   await expect.poll(()=>page.evaluate(()=>{const key=Object.keys(localStorage).find(k=>k.startsWith('sb-')&&k.endsWith('-auth-token'));return Boolean(key&&JSON.parse(localStorage.getItem(key)).expires_at>Date.now()/1000+60);})).toBe(true);
   report.authRefresh={signedExpiredFixtureRejected:401,newValidSession:true,productionOAuthTested:false};
@@ -217,6 +229,8 @@ try {
   await expect.poll(async()=>(await device.shell(`pidof ${pkg}`)).toString().trim()).toBe('');
   await device.shell(`monkey -p ${pkg} 1`);
   page=await (await device.webView({pkg},{timeout:30000})).page();
+  transport=await installAndroidFixtureTransport(page);
+  if(transport.hostProxy)await page.reload();
   await expect(page.getByRole('button',{name:/Собеседование/}).first()).toBeVisible({timeout:30000});
   const denied=(await device.shell(`dumpsys package ${pkg}`)).toString();
   if(!/android\.permission\.RECORD_AUDIO: granted=false, flags=\[[^\]]*USER_FIXED/.test(denied))throw Error('OS permission denial was not applied');

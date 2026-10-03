@@ -54,11 +54,42 @@ adb -s emulator-5554 install -r artifacts/testlab/SerboTalk-andorid16-1.16.apk
 .\scripts\run-testlab.ps1 -Platform android
 ```
 
+Этот пример относится к AVD. Для физического телефона не запускайте его целиком: `install android` пытается автоматически установить Playwright Android driver, а APK build здесь не нужен. Порядок продолжения на телефоне приведён ниже.
+
 Тестовое приложение `com.serbiantalk.trainer.testlab` устанавливается рядом с обычным `com.serbiantalk.trainer`. Flavor `lab` использует отдельные assets; обычный flavor `prod` не получает тестовый вход. Имена APK одинаковы по обязательному шаблону, каталоги различаются. Локальные службы доступны AVD через `10.0.2.2`; провайдер и backend слушают только loopback Windows. На физическом устройстве нужна отдельная настройка транспорта, эти адреса там не работают.
 
 Автоматизация использует отдельный тестовый браузер и Android WebView через поддерживаемый экспериментальный Android API Playwright. Работа runner не зависит от расширения личного Chrome или захвата Windows-окна эмулятора. Размер окна не меняет разрешение устройства; задержки вызовов Computer Use не являются метрикой приложения.
 
-Для ручной проверки запускайте эмулятор без `-Headless`: `-WindowScale 0.5` уменьшает его окно через Qt. Перед повторным запуском закройте предыдущий экземпляр этого AVD. Автоматические проверки используют software GPU без Vulkan; стабильность и скорость эмулятора не заменяют замеры на физическом телефоне. Runner очищает данные только отдельного пакета `com.serbiantalk.trainer.testlab`, обычное приложение не затрагивается.
+Для ручной проверки запускайте эмулятор без `-Headless`: `-WindowScale 0.5` уменьшает его окно через Qt. Перед повторным запуском закройте предыдущий экземпляр этого AVD. Автоматические проверки используют software GPU без Vulkan; стабильность и скорость эмулятора не заменяют замеры на физическом телефоне. Не полагайтесь на прежнее описание `pm clear`: Xiaomi может запрещать его с `CLEAR_APP_USER_DATA`. Черновые изменения предлагают очищать только WebView storage lab-пакета после проверки package и локального HTTP/HTTPS origin. Этот способ ещё не прошёл итоговую проверку и не должен считаться готовой гарантией очистки.
+
+## Возобновление остановленных физических проверок
+
+Состояние на 01.10.2026: владелец остановил проверки телефона; не возобновляйте их автоматически и не запрашивайте ответ, пока владелец не вернётся к тестам. APK 1.17 уже собраны, production опубликован, lab 1.17 установлен; повторная сборка приложения и изменение версии для продолжения не нужны. Изменения harness в ветке `codex/p1-physical-android` не опубликованы, экспериментальны; два новых metric guards не запускались, reviewer final recheck ожидается.
+
+Ранее на телефоне дошли fixture-проверки auth/login/topics/первой фразы и synthetic record → transcript. Обычная оценка/следующая фраза не пройдены. Результат предварительного помощника не означает проверку Google OAuth или реального STT.
+
+Перед возобновлением проверьте, что владелец снова разрешил тестирование и ADB показывает устройство со статусом `device`; не записывайте serial. Установите оба официальных cached Playwright Android driver APK штатным способом, с включённой владельцем USB-установкой, например:
+
+```powershell
+adb install -r -t "<official-cached-driver-apk-1>"
+adb install -r -t "<official-cached-driver-apk-2>"
+```
+
+Оба прямых install attempts ранее закончились `INSTALL_FAILED_USER_RESTRICTED`/canceled, а автоматическая установка Playwright через `shell cmd package` не завершалась и оставляла ожидание socket. Поэтому перед запуском runner отдельно подтвердите успешную установку обоих driver packages. Только после этого можно включить `TESTLAB_ANDROID_OMIT_DRIVER_INSTALL=1`, чтобы runner пропустил автоматическую переустановку; этот режим на телефоне пока не проверен. Пример продолжения без APK rebuild:
+
+```powershell
+cd frontend
+$env:TESTLAB_ANDROID_OMIT_DRIVER_INSTALL = "1"
+cd ..
+.\scripts\run-testlab.ps1 -Platform android -Suite practice
+Remove-Item Env:TESTLAB_ANDROID_OMIT_DRIVER_INSTALL -ErrorAction SilentlyContinue
+```
+
+Запускайте это только после возобновления тестирования владельцем и успешной preinstall обоих drivers. APK build не запускайте. Системный proxy не использовался; необходимость дополнительных разрешений для native input не проверена.
+
+Для mock fixture traffic используется исключительно opt-in маршрут Playwright `page.route`: только `http://10.0.2.2:8765/` и `:8766/` пересылаются на соответствующие порты PC loopback `127.0.0.1`. Он не является системным proxy и не меняет Wi-Fi телефона. Fixture outage/retry — искусственный сценарий, он не подтверждает настоящее отключение radio или сети. Настоящий OAuth/STT/practice проверяются отдельно при штатном production соединении.
+
+Устранение прежнего reset-сбоя тоже остаётся черновым: `pm clear` давал `SecurityException`, runner продолжал со старым JWT и ждал не тот экран. Root убрал вызовы `pm clear` из трёх runners; новая lab-only очистка WebView storage с проверкой package/origin имеет три unit checks, но не прошла final review/device verification. Не считайте её готовой до итоговой проверки.
 
 Браузерные mock-сценарии используют production build с отдельным режимом `e2e`, затем preview; сервер разработки не используется как эталон скорости. Серии запускаются через `E2E_SAMPLES_PER_SCRIPT` и `E2E_WARMUP_PER_SCRIPT`. Сводка: `node e2e/summary.mjs --platform web` либо `--platform android-webview` из `frontend`. Сводка запрещает смешивать платформы.
 
