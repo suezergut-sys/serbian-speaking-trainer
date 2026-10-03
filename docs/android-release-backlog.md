@@ -184,3 +184,14 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 - [x] Проверки и сборка 1.19: frontend suite/guard tests, lint/typecheck, web/native builds, Chrome 5, source review, packaged API/metadata/assets/signature прошли.
 - [x] 02.10.2026: [PR #56](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/56) merged; GitHub APK 1.19 опубликован, digest/size совпали; web READY и авторизованный профиль/готовая практика проверены; [checkpoint](android-1.19-release.md).
 - [ ] Ручной Google-вход на физическом телефоне после явного возобновления тестов.
+
+## 03.10.2026 — интерфейс и выпуск 1.20
+
+- [x] Читаемая кнопка ручного ввода при STT error, правило общего стиля в AGENTS.
+- [x] Web: статистика с недели и тремя карточками, профиль/выход в настройках, удаление backend controls, два круглых действия под transcript.
+- [x] Frontend 116 tests, lint/typecheck/build, Chrome 9 сценариев + 2 расширенных week/settings checks; backend/scripts gate и Node guards прошли.
+- [x] Номер 1.20/code30 отдельно согласован владельцем; весь текущий клиент от main 1.19 перенесён в production APK; metadata/assets/API/signature проверены.
+- [ ] Публикация PR/APK и подтверждение server digest — см. [релиз](android-1.20-release.md).
+- [ ] Физическая ручная приёмка; телефонные/ADB/AVD проверки остаются остановленными владельцем.
+- [x] [Мягкие подсказки](transcription-assistance-design.md) спроектированы.
+- [ ] Личное ревью проекта подсказок, затем отдельная реализация; в 1.20 не включена.

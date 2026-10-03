@@ -10,6 +10,10 @@ for (const native of [false, true]) {
     const months = [];
     await page.route('**/api/**', async route => {
       const url = new URL(route.request().url());
+    if (url.pathname === "/api/statistics/phrases") {
+      await route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({total:0,page:1,page_size:"10",total_pages:0,groups:[]})});
+      return;
+    }
       let body;
       if (url.pathname === '/api/auth/me') body = { id:'week-user', email:'learner@example.invalid', display_name:'Ученик', avatar_url:null, role:'user', access_tier:'free', registered_at:'2025-12-01T00:00:00Z', last_active_at:'2026-01-05T00:00:00Z', daily_usage:{used:0,limit:10,remaining:10,resets_at:'2026-01-06T00:00:00Z'} };
       else if (url.pathname === '/api/topics') body = [];
@@ -44,5 +48,18 @@ for (const native of [false, true]) {
       return Math.abs((row.left+row.right)/2-(label.left+label.right)/2);
     });
     expect(bounds).toBeLessThan(1);
+    const cards = page.locator('.statistics-summary > div');
+    await expect(cards).toHaveCount(3);
+    const boxes = await cards.evaluateAll(elements => elements.map(element => ({top: element.getBoundingClientRect().top, left: element.getBoundingClientRect().left})));
+    expect(boxes[0].top).toBe(boxes[1].top);
+    expect(boxes[1].top).toBe(boxes[2].top);
+    expect(boxes[0].left).toBeLessThan(boxes[1].left);
+    expect(boxes[1].left).toBeLessThan(boxes[2].left);
+    await expect(page.getByRole('heading', {name:'Статистика'})).toHaveCount(0);
+    await expect(page.locator('.statistics-page').getByRole('button', {name:'Выйти'})).toHaveCount(0);
+    await page.getByRole('button', {name:'Настройки',exact:true}).click();
+    await expect(page.getByRole('region', {name:'Профиль'})).toBeVisible();
+    await expect(page.getByRole('button', {name:'Выйти'})).toBeVisible();
+    await expect(page.getByLabel('Адрес общего backend')).toHaveCount(0);
   });
 }

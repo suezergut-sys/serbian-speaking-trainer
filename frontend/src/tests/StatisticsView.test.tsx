@@ -17,7 +17,6 @@ afterEach(cleanup);
 it('offers bounded pages and retries failed phrase loading without changing the selection', async () => {
   vi.mocked(fetchPhraseStatistics).mockRejectedValueOnce(new Error('offline'));
   render(<StatisticsView/>);
-  fireEvent.click(screen.getByRole('button',{name:'Фразы'}));
   fireEvent.click(await screen.findByRole('button',{name:'Повторить загрузку фраз'}));
   await screen.findByRole('heading',{name:'Актуальная тема'});
   expect(screen.queryByRole('option',{name:'Все'})).not.toBeInTheDocument();
@@ -29,7 +28,6 @@ it('ignores a retired request even when its mock transport resolves after abort'
   let retire!:(value:PhraseStatistics)=>void;
   vi.mocked(fetchPhraseStatistics).mockImplementationOnce(() => new Promise(resolve => {retire=resolve;}));
   render(<StrictMode><StatisticsView/></StrictMode>);
-  fireEvent.click(screen.getByRole('button',{name:'Фразы'}));
   await screen.findByRole('heading',{name:'Актуальная тема'});
   await act(async () => retire(phrases('Устаревшая тема')));
   expect(screen.queryByText('Устаревшая тема')).not.toBeInTheDocument();
@@ -84,8 +82,25 @@ it('reuses monthly data within a month and ignores late data after navigating ag
     fireEvent.click(screen.getByRole('button', {name:'Предыдущая неделя'}));
     await waitFor(() => expect(februaryRequests).toBe(1));
     fireEvent.click(screen.getByRole('button', {name:'Предыдущая неделя'}));
-    expect(await screen.findByLabelText('Итоги недели')).toHaveTextContent('9фраз за неделю');
+    expect(await screen.findByLabelText('Итоги недели')).toHaveTextContent('9Повторений');
     await act(async () => finishOld(month(88)));
-    expect(screen.getByLabelText('Итоги недели')).toHaveTextContent('9фраз за неделю');
+    expect(screen.getByLabelText('Итоги недели')).toHaveTextContent('9Повторений');
   } finally { vi.useRealTimers(); }
+});
+
+
+it('starts at the week selector and shows days, attempts and mastered totals as three cards', async () => {
+  const today = new Date();
+  const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - ((today.getDay() + 6) % 7));
+  const key = `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, '0')}-${String(monday.getDate()).padStart(2, '0')}`;
+  vi.mocked(fetchMonthlyStatistics).mockImplementation(async month => ({month,active_days:1,total_phrases:2,total_translations:8,correct_translations:7,mastered_phrases:3,days:key.startsWith(month) ? [{date:key,phrase_count:2,translation_count:8,correct_translation_count:7,mastered_phrase_count:3}] : []}));
+  const { container } = render(<StatisticsView />);
+  const summary = await screen.findByLabelText('Итоги недели');
+  expect(summary.children).toHaveLength(3);
+  expect(summary.children[0]).toHaveTextContent('1Дней');
+  expect(summary.children[1]).toHaveTextContent('8Повторений');
+  expect(summary.children[2]).toHaveTextContent('3Выучено');
+  expect(container.querySelector('main')?.firstElementChild).toHaveAttribute('aria-label', 'Выбор недели');
+  expect(screen.queryByRole('heading', { name: 'Статистика' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('navigation', { name: 'Разделы статистики' })).not.toBeInTheDocument();
 });

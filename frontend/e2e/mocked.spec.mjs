@@ -86,3 +86,51 @@ for (const { label, typed, normalized } of [
     });
   }
 }
+
+
+for (const native of [false, true]) {
+test(`${native ? "Android layout" : "web"} dark error recovery and transcript actions at phone width`, async ({ page }) => {
+  await page.setViewportSize({ width: 393, height: 851 });
+  if (native) await page.addInitScript(() => { window.CapacitorCustomPlatform = { name: "android" }; });
+  const submitted = [];
+  await mockApp(page, submitted);
+  let transcriptionCount = 0;
+  await page.route("**/api/transcriptions", async route => {
+    transcriptionCount++;
+    await route.fulfill({ status: transcriptionCount === 1 ? 502 : 200, contentType: "application/json", body: JSON.stringify(transcriptionCount === 1 ? {detail: "unavailable"} : {text: "Želim da otvorim račun."}) });
+  });
+  await page.goto("/");
+  await page.getByRole("heading", {name: "Я хочу открыть счёт."}).waitFor();
+  await page.getByRole("button", {name: "Ответить голосом"}).click();
+  await page.getByRole("button", {name: "Завершить запись"}).click();
+  const manual = page.getByRole("button", {name: "Ввести ответ вручную"});
+  await expect(manual).toBeVisible();
+  const styles = await manual.evaluate(element => {
+    const style = getComputedStyle(element);
+    return {background: style.backgroundColor, color: style.color, font: style.fontFamily, bodyFont: getComputedStyle(document.body).fontFamily};
+  });
+  expect(styles.background).toBe("rgb(7, 22, 42)");
+  expect(styles.color).toBe("rgb(220, 234, 255)");
+  expect(styles.font).toBe(styles.bodyFont);
+  await page.getByRole("button", {name: "Ответить голосом"}).click();
+  await page.getByRole("button", {name: "Завершить запись"}).click();
+  await expect(page.getByLabel("Ваш ответ")).toHaveValue("Želim da otvorim račun.");
+  const check = page.getByRole("button", {name: native ? "Проверить" : "Проверить ответ", exact: true});
+  const retry = page.getByRole("button", {name: "Записать заново"});
+  await expect(check).toBeVisible();
+  await expect(retry).toBeVisible();
+  const checkBox = await check.boundingBox();
+  const retryBox = await retry.boundingBox();
+  const textBox = await page.getByLabel("Ваш ответ").boundingBox();
+  expect(checkBox.x).toBeLessThan(retryBox.x);
+  expect(checkBox.y).toBeGreaterThanOrEqual(textBox.y + textBox.height);
+  expect(checkBox.width).toBe(checkBox.height);
+  await expect(retry.locator(".mic-retry-ring")).toBeVisible();
+  expect(await retry.evaluate(element => getComputedStyle(element).animationName)).toBe("none");
+  expect(submitted).toHaveLength(0);
+  await check.click();
+  await expect(page.getByText("Верный перевод.", {exact: true}).first()).toBeVisible();
+  expect(submitted).toHaveLength(1);
+});
+
+}

@@ -272,3 +272,15 @@
 - [x] Проверки и сборка 1.19: frontend suite/guard tests, lint/typecheck, web/native builds, Chrome 5, source review, packaged API/metadata/assets/signature прошли.
 - [x] 02.10.2026: [PR #56](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/56) merged; GitHub APK 1.19 опубликован, digest/size совпали; web READY и авторизованный профиль/готовая практика проверены; [checkpoint](android-1.19-release.md).
 - [ ] Ручной Google-вход на физическом телефоне после явного возобновления тестов.
+
+## Доработки 03.10.2026 — UI и Android 1.20
+
+- [x] Пункты 1–3: тёмная читаемая кнопка при ошибке STT и правило общего стиля; недельная статистика с «Дней / Повторений / Выучено»; профиль/выход в настройках; зелёная галочка и неподвижный микрофон-повтор под transcript.
+- [x] Web-проверки: frontend 116, metadata 2/2, lint/typecheck/build, Chrome 9 + 2 расширенных сценария; backend/scripts 165 passed / 8 skipped; Node guards 5/5. [Доказательства](android-1.20-release.md).
+- [x] Android 1.20/code30 отдельно согласован; production APK собран от актуального main 1.19. Package metadata, подпись, production API и побайтное совпадение assets подтверждены.
+- [ ] Публикация PR и APK, серверный digest и web production — статус в [релизном документе](android-1.20-release.md).
+- [ ] Физическая Android-приёмка; ранее остановленные владельцем телефонные/ADB/AVD проверки не возобновлены.
+- [x] Пункт 4: [проект мягкой помощи распознаванию](transcription-assistance-design.md) подготовлен с ограничениями орфографических правок, подтверждением фонетики/окончаний и предложенной политикой mastery.
+- [ ] Личное ревью владельца и реализация мягкой помощи; эта функция не включена в текущий релиз.
+
+Эта задача не закрывает P0/P1/P2 целиком.

@@ -3,7 +3,6 @@ import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 import type { Session } from "@supabase/supabase-js";
 
-import { getApiBaseUrl, setApiBaseUrl } from "./api/baseUrl";
 import { addReviewPhrase, BackendError, createTopic, fetchNextExercise, fetchReviewSummary, fetchTopics, prepareReviewPhrase, revealWordHint, startTrainingSession, submitAttempt, transcribeAudio } from "./api/training";
 import type { Attempt, AttemptTimings, Exercise, PreparedReviewPhrase, TopicListItem, TrainingSession, WordHint } from "./types/training";
 import { supportsVoiceRecording, VoiceRecorder } from "./voiceRecorder";
@@ -30,6 +29,23 @@ const loadStatistics = (retryUrl?: string) => (retryUrl
 const loadAdminUsers = (retryUrl?: string) => (retryUrl
   ? import(/* @vite-ignore */ retryUrl) as Promise<typeof import("./AdminUsersView")>
   : import("./AdminUsersView")).then(({ AdminUsersView }) => ({ default: AdminUsersView }));
+
+function AnswerActions({ answer, loading, native, voiceState, voiceSupported, startVoice, finishVoice, stopVoice }: {
+  answer: string; loading: boolean; native: boolean; voiceState: VoiceState; voiceSupported: boolean;
+  startVoice: () => void; finishVoice: () => void; stopVoice: () => void;
+}) {
+  const busy = voiceState === "connecting" || voiceState === "recording" || voiceState === "transcribing";
+  return <div className="answer-actions">
+    {answer.trim() && <button className="answer-check-button" type="submit" aria-label={loading ? "Проверяем…" : native ? "Проверить" : "Проверить ответ"} disabled={loading || busy}><Icon name="tick" size={34} /></button>}
+    <button className={`mic-button${busy ? " is-active" : ""}${answer.trim() && !busy ? " mic-button--retry" : ""}`} type="button"
+      aria-label={busy ? voiceState === "recording" ? "Завершить запись" : "Остановить запись" : answer.trim() ? "Записать заново" : "Ответить голосом"}
+      disabled={loading || !voiceSupported || voiceState === "transcribing"}
+      onClick={busy ? voiceState === "recording" ? finishVoice : stopVoice : startVoice}>
+      {answer.trim() && !busy && <span className="mic-retry-ring"><Icon name="repeat" size={68} /></span>}
+      <Icon name="mic" size={30} />
+    </button>
+  </div>;
+}
 
 function PhraseLoading() {
   return <div className="phrase-loading auth-loading" role="status" aria-label="Подготовка фразы">
@@ -75,6 +91,7 @@ function Icon({ name, size = 20 }: { name: string; size?: number }) {
     mic: <><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></>,
     pencil: <><path d="m4 16-1 5 5-1L19 9l-4-4Z"/><path d="m13 7 4 4"/></>,
     bulb: <><path d="M9 18h6M10 22h4"/><path d="M8.5 15.5A7 7 0 1 1 15.5 15.5c-.9.7-1.3 1.3-1.5 2.5h-4c-.2-1.2-.6-1.8-1.5-2.5Z"/></>,
+    tick: <path d="m5 12 4 4L19 6" />,
     check: <><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/></>,
     arrow: <><path d="M5 12h14M14 7l5 5-5 5"/></>,
     clock: <><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></>,
@@ -141,8 +158,6 @@ function AuthenticatedApp() {
 function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentUser; onAccountChange: (account: CurrentUser) => void; onSignOut: () => void }) {
   const [backendState, setBackendState] = useState<BackendState>("checking");
   const [startupState, setStartupState] = useState<StartupState>("loading");
-  const [showConnectionSettings, setShowConnectionSettings] = useState(false);
-  const [apiEndpoint, setApiEndpoint] = useState(getApiBaseUrl());
   const [view, setView] = useState<AppView>("practice");
   const [topics, setTopics] = useState<TopicListItem[]>([]);
   const [selectedTopic, setSelectedTopic] = useState<string>();
@@ -243,16 +258,6 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     setAnswer((current) => displaySerbian(current, next));
     setAlphabet(next);
     saveSerbianAlphabet(account.id, next);
-  }
-
-  function saveConnectionSettings(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    try {
-      setApiBaseUrl(apiEndpoint);
-      window.location.reload();
-    } catch {
-      setError("Адрес сервера должен начинаться с http:// или https://");
-    }
   }
 
   const refreshReviewSummary = useCallback((signal?: AbortSignal) => {
@@ -862,10 +867,10 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                 {!attempt ? <form className="android-answer" onSubmit={checkAnswer}>
                   {hasTranscript ? <><label className="sr-only" htmlFor="android-serbian-answer">Ваш ответ</label>
                     <textarea id="android-serbian-answer" value={answer} readOnly={checking} onChange={(event) => { answerEditEpochRef.current += 1; voiceTimingRef.current = undefined; setAnswer(event.target.value); }} placeholder="Введите ответ на сербском языке" rows={3} /></> : <p className="voice-prompt">Произнесите ответ в микрофон</p>}
-                  {voiceState === "connecting" || voiceState === "recording" || voiceState === "transcribing" ? <button className="mic-button is-active" type="button" aria-label={voiceState === "recording" ? "Завершить запись" : "Остановить запись"} disabled={checking || voiceState === "transcribing"} onClick={voiceState === "recording" ? finishVoice : stopVoice}><Icon name="mic" size={34} /></button> : <button className="mic-button" type="button" aria-label="Ответить голосом" disabled={checking || !voiceSupported} onClick={startVoice}><Icon name="mic" size={34} /></button>}
+                  <AnswerActions answer={answer} loading={checking} native={isNative} voiceState={voiceState} voiceSupported={voiceSupported} startVoice={() => void startVoice()} finishVoice={() => void finishVoice()} stopVoice={stopVoice} />
                   {(!voiceSupported || voiceState !== "idle") && <p className="android-voice-state" role="status">{!voiceSupported ? "Микрофон недоступен. Разрешите доступ в настройках устройства." : voiceState === "connecting" ? "Подключаем микрофон…" : voiceState === "recording" ? "Запись" : voiceState === "transcribing" ? "Распознаём…" : "Повторите запись"}</p>}
                   {!hasTranscript && (voiceState === "error" || !voiceSupported) && <button type="button" onClick={enterAnswerManually}>Ввести ответ вручную</button>}
-                  {hasTranscript && <button className="android-primary" type="submit" disabled={checking || voiceBusy || !answer.trim()}>{checking ? "Проверяем…" : "Проверить"}</button>}
+
                 </form> : renderFeedback(true)}
                 {error && <p className="android-error" role="alert">{error}</p>}
               </div>
@@ -874,18 +879,10 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
           <section className="android-page android-statistics-page" aria-label="Статистика">
             {androidPanel === 2 && <DeferredPanel load={loadStatistics} panelProps={{ alphabet }} label="статистику" />}
-            <footer className="android-service-bar">
-              <span className="avatar">{account.display_name?.slice(0, 1).toLocaleUpperCase() || "A"}</span>
-              <span><strong>{account.display_name || account.email}</strong><small>{account.daily_usage.limit === null ? `${account.daily_usage.used} фраз` : `${account.daily_usage.remaining} из ${account.daily_usage.limit}`}</small></span>
-              <button type="button" onClick={onSignOut}>Выйти</button>
-            </footer>
-            {account.role === "admin" && <details className="android-action-card android-admin-settings">
-              <summary><Icon name="settings" /> Backend</summary>
-              <form onSubmit={saveConnectionSettings}><input value={apiEndpoint} onChange={(event) => setApiEndpoint(event.target.value)} aria-label="Адрес общего backend" /><button type="submit">Сохранить</button></form>
-            </details>}
+
           </section>
           <section className="android-page android-settings-page" aria-label="Настройки приложения">
-            <SettingsView alphabet={alphabet} onAlphabetChange={changeAlphabet} />
+            <SettingsView alphabet={alphabet} onAlphabetChange={changeAlphabet} account={account} onSignOut={onSignOut} />
           </section>
         </div>
       </div>
@@ -908,22 +905,12 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
         <div className="profile">
           <div className={`connection connection--${backendState}`} role="status" aria-label={backendState === "online" ? "Backend готов" : backendState === "offline" ? "Backend недоступен" : "Подключение"}><span /></div>
           {backendState === "offline" && <button className="connection-settings-button" type="button" aria-label="Повторить загрузку тем" onClick={retryCatalog}><Icon name="repeat" /></button>}
-          <span className="avatar">{account.display_name?.slice(0, 1).toLocaleUpperCase() || "A"}</span><span className="profile__copy"><strong>{account.display_name || account.email}</strong><small>{account.daily_usage.limit === null ? `${account.daily_usage.used} фраз · без лимита` : `${account.daily_usage.remaining} из ${account.daily_usage.limit} фраз осталось`}</small></span>
-          <button className="sign-out-button" type="button" onClick={onSignOut}>Выйти</button>
-          {account.role === "admin" && <button className="connection-settings-button" type="button" aria-label="Настроить подключение" onClick={() => setShowConnectionSettings((current) => !current)}><Icon name="settings" /></button>}
         </div>
       </header>
 
-      {account.role === "admin" && showConnectionSettings && (
-        <form className="connection-settings" onSubmit={saveConnectionSettings}>
-          <label htmlFor="api-endpoint">Адрес общего backend</label>
-          <input id="api-endpoint" value={apiEndpoint} onChange={(event) => setApiEndpoint(event.target.value)} placeholder="https://trainer.example.com" inputMode="url" />
-          <button type="submit">Подключиться</button>
-          <p>Эмулятор: http://10.0.2.2:8000. На телефоне укажите HTTPS-адрес или LAN-адрес компьютера с запущенным backend.</p>
-        </form>
-      )}
 
-      {view === "admin" ? <DeferredPanel key="admin" load={loadAdminUsers} panelProps={{}} label="пользователей" /> : view === "statistics" ? <DeferredPanel key="statistics" load={loadStatistics} panelProps={{ alphabet }} label="статистику" /> : view === "settings" ? <SettingsView alphabet={alphabet} onAlphabetChange={changeAlphabet} /> : (
+
+      {view === "admin" ? <DeferredPanel key="admin" load={loadAdminUsers} panelProps={{}} label="пользователей" /> : view === "statistics" ? <DeferredPanel key="statistics" load={loadStatistics} panelProps={{ alphabet }} label="статистику" /> : view === "settings" ? <SettingsView alphabet={alphabet} onAlphabetChange={changeAlphabet} account={account} onSignOut={onSignOut} /> : (
         <main className="workspace">
           <aside className="topics-panel panel">
             <div className="panel-heading"><h2>Темы для практики</h2><p>Выберите ситуацию и начните разговор на сербском языке</p></div>
@@ -981,11 +968,11 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                     <form onSubmit={checkAnswer}>
                       <div className="answer-input">
                         {hasTranscript ? <><label className="sr-only" htmlFor="serbian-answer">Ваш ответ</label><textarea id="serbian-answer" value={answer} readOnly={checking} onChange={(event) => { answerEditEpochRef.current += 1; voiceTimingRef.current = undefined; setAnswer(event.target.value); }} placeholder="Введите ответ на сербском языке" rows={4} /></> : <p className="voice-prompt">Произнесите ответ в микрофон. После распознавания текст можно исправить.</p>}
-                        {voiceState === "connecting" || voiceState === "recording" || voiceState === "transcribing" ? <button className="mic-button is-active" type="button" aria-label={voiceState === "recording" ? "Завершить запись" : "Остановить запись"} disabled={checking || voiceState === "transcribing"} onClick={voiceState === "recording" ? finishVoice : stopVoice}><Icon name="mic" size={30} /></button> : <button className="mic-button" type="button" aria-label="Ответить голосом" disabled={checking || !voiceSupported} onClick={startVoice}><Icon name="mic" size={30} /></button>}
                       </div>
+                      <AnswerActions answer={answer} loading={checking} native={isNative} voiceState={voiceState} voiceSupported={voiceSupported} startVoice={() => void startVoice()} finishVoice={() => void finishVoice()} stopVoice={stopVoice} />
                       <div className="voice-status">{!voiceSupported ? "Микрофон недоступен. Разрешите доступ к нему в браузере или устройстве." : voiceState === "recording" ? "Идёт запись. Аудио не сохраняется" : voiceState === "transcribing" ? "Расшифровываем фразу…" : voiceState === "error" ? "Не удалось распознать ответ. Повторите запись." : hasTranscript ? "Введите ответ или исправьте распознанный текст." : "Нажмите на микрофон, чтобы ответить."}</div>
                       {!hasTranscript && (voiceState === "error" || !voiceSupported) && <button type="button" onClick={enterAnswerManually}>Ввести ответ вручную</button>}
-                      {hasTranscript && <button className="answer-submit" type="submit" disabled={checking || voiceBusy || !answer.trim()}>{checking ? "Проверяем…" : "Проверить ответ"}<Icon name="arrow" /></button>}
+
                     </form>
                   ) : renderFeedback(false)}
                   {error && <p className="error" role="alert">{error}</p>}
