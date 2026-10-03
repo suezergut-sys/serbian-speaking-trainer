@@ -16,7 +16,7 @@
 - [x] Production health200; auth/me без токена401; web /, /privacy, /terms200, testlab404. Публичные bundles содержат новый переключатель/receipt payload/cyan ring. Авторизованный IAB: готовая практика → настройки с switch Value0 и описанием → практика; console errors0. Реальная запись/проверка/выход/смена предпочтений не выполнялись.
 - [x] Владелец отдельно подтвердил1.21/code31 в этом чате.
 - [x] APK1.21/code31 собран; metadata/signature/HTTPS API/assets/guards прошли; [checkpoint1.21](android-1.21-release.md).
-- [ ] APK публикация GitHub release.
+- [x] [PR #63](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/63) merged, APK1.21 опубликован в GitHub release, серверный digest/size совпали; frontend READY на release SHA, 7 assets совпали с APK; [checkpoint](android-1.21-release.md).
 - [ ] Физическая Android OAuth/STT приёмка. Телефонные/ADB/AVD тесты по прежней команде владельца не возобновлялись.
 
 Ограничения: не все ошибки речи исправляются; только ограниченные неоднозначности при строгом совпадении контекста. Дополнительный AI-проход из проектного документа остаётся будущим этапом. Настройка не синхронизируется между устройствами.
