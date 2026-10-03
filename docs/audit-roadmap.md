@@ -290,5 +290,6 @@
 
 - [x] Web/backend реализация и автоматические проверки завершены; [доказательства](soft-assistance-checkpoint.md).
 - [x] [PR #61](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/61) merged; frontend/backend READY на `4b2de1776b73d71639d6ceaa9a29b192e604033e`, PostgreSQL migration/RLS/grants и production smoke подтверждены; [доказательства](soft-assistance-checkpoint.md).
-- [ ] Android перенос/сборка/публикация после согласования следующей версии.
+- [x] Владелец подтвердил1.21/code31; весь клиент перенесён и собран, signature/metadata/API/7 assets проверены; [checkpoint1.21](android-1.21-release.md).
+- [ ] Публикация APK1.21 и подтверждение release asset.
 - [ ] Физическая приёмка, настоящая речь и OAuth; ADB/AVD остаются остановленными.

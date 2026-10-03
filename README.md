@@ -274,4 +274,4 @@ APK 1.18 ошибочно получил web-конфигурацию с пус�
 
 Кнопки проверки и повтора оформлены как два синих светящихся круга с бирюзовым ободком: зелёная галочка и микрофон в неподвижных стрелках. Реализована ограниченная локальная политика, без дополнительных AI-вызовов; неизвестные ошибки остаются для обычной проверки. [Контракт и доказательства](docs/soft-assistance-checkpoint.md).
 
-03.10.2026: мягкие подсказки и новый дизайн опубликованы через [PR #61](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/61); backend/frontend READY на runtime SHA `4b2de1776b73d71639d6ceaa9a29b192e604033e`. Android выпуск ожидает отдельного согласования номера1.21/code31; [доказательства](docs/soft-assistance-checkpoint.md).
+03.10.2026: мягкие подсказки и новый дизайн опубликованы через [PR #61](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/61); backend/frontend READY на runtime SHA `4b2de1776b73d71639d6ceaa9a29b192e604033e`. Номер Android1.21/code31 отдельно согласован, APK собран и проверен; публикация описана в [checkpoint1.21](docs/android-1.21-release.md); [доказательства](docs/soft-assistance-checkpoint.md).
