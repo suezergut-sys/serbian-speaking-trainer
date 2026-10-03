@@ -26,8 +26,10 @@ Production-вариант `prodDebug`, package `com.serbiantalk.trainer`, вер
 - [x] Backend/scripts quality gate прошёл: 165 tests passed, 8 skipped; внешние AI-вызовы mocked. Node resilience guards 5/5 прошли.
 - [x] `pnpm android:cloud-apk` / `assembleProdDebug` прошли; native production build mode сохранил HTTPS API.
 - [x] aapt metadata и apksigner verification прошли. 7 dist files побайтно совпали с APK. Подтверждён API `https://serbian-speaking-trainer-api.vercel.app`; testlab login, local fixture key, mixedContent и постоянные-key patterns не обнаружены.
-- [ ] GitHub PR/релиз и серверный digest.
-- [ ] Проверка web production после публикации.
+- [x] [PR #58](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/58) merged; release SHA `a93e2bd3561245fb64074f0becdefcf98fea4477`. [GitHub release v1.20](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.20) опубликован с одним production APK; asset 607385600, серверный digest/size совпали с локальным файлом.
+- [x] Frontend deployment `dpl_GJdBjzXaNFAFz5YAyWXNbd3fYhuh` READY/production; metadata `gitCommitSha` совпадает с release SHA, production alias подтверждён. [Deployment](https://serbian-speaking-trainer-6bjrqift3-suezerguts-projects.vercel.app), [production](https://serbian-speaking-trainer.vercel.app). После READY: `/`, `/privacy`, `/terms` 200, testlab 404; все 7 публичных assets побайтно совпали с APK/native dist. Авторизованный IAB smoke: готовая практика → статистика с недели и тремя карточками → настройки с профилем/выходом → практика; console errors 0. Голос/выход/смена настроек не выполнялись.
 - [ ] Ручная приёмка Google OAuth/STT на физическом Android — не выполнялась. Телефонные/ADB/AVD тесты остаются остановленными владельцем; данные приложения не сбрасывались.
 
 Известные ограничения: фактический голос и вход на устройстве этим релизом не подтверждены. Успешная Android-layout проверка в Chrome не заменяет приёмку на телефоне. APK собран с прежним debug-сертификатом, как предыдущие опубликованные версии; обновление по совпадающей подписи возможно. P0/P1/P2 полностью не закрываются этим изменением.
+
+[Скачать APK 1.20](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/download/v1.20/SerboTalk-andorid16-1.20.apk). Локальная копия в Downloads проверена по SHA-256.
