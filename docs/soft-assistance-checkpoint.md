@@ -14,7 +14,9 @@
 - [x] Backend deployment `dpl_W3R2j9UU5X4xeyQj362bKbxukJtG` READY/production; [deployment](https://serbian-speaking-trainer-14mul6ydk-suezerguts-projects.vercel.app). Frontend `dpl_HiSmjj1JdLedFk47hdEwU1bSEAmJ` READY/production; [deployment](https://serbian-speaking-trainer-4v6m5rehf-suezerguts-projects.vercel.app). Оба production alias и metadata gitCommitSha подтверждены на runtime SHA.
 - [x] Production PostgreSQL migration `e926b83f4d10` → `f31a7b901c22` прошла в backend build, seed0/0/0. SQL подтвердил owner postgres, RLS=true, policies0, grants anon=false/authenticated=false: browser Data API закрыт. Security advisor показывает только ожидаемый INFO `rls_enabled_no_policy` для этой приватной таблицы; это намеренно, прямых клиентских операций нет. [Описание RLS/grants](https://supabase.com/docs/guides/database/postgres/row-level-security).
 - [x] Production health200; auth/me без токена401; web /, /privacy, /terms200, testlab404. Публичные bundles содержат новый переключатель/receipt payload/cyan ring. Авторизованный IAB: готовая практика → настройки с switch Value0 и описанием → практика; console errors0. Реальная запись/проверка/выход/смена предпочтений не выполнялись.
-- [ ] APK: номер1.21/code31 предложен, ожидает отдельного согласования; сборка и публикация после согласования.
+- [x] Владелец отдельно подтвердил1.21/code31 в этом чате.
+- [x] APK1.21/code31 собран; metadata/signature/HTTPS API/assets/guards прошли; [checkpoint1.21](android-1.21-release.md).
+- [ ] APK публикация GitHub release.
 - [ ] Физическая Android OAuth/STT приёмка. Телефонные/ADB/AVD тесты по прежней команде владельца не возобновлялись.
 
 Ограничения: не все ошибки речи исправляются; только ограниченные неоднозначности при строгом совпадении контекста. Дополнительный AI-проход из проектного документа остаётся будущим этапом. Настройка не синхронизируется между устройствами.
