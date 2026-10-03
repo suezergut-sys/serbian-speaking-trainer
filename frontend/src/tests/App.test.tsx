@@ -66,17 +66,23 @@ describe("App", () => {
         id: "bank", title_ru: "В банке", description_ru: "Счёт и платежи",
         likely_intents: ["открыть счёт"], suggested_vocabulary: ["račun"], is_custom: false, phrase_count: 20,
       }];
-      else if (url.startsWith("/api/statistics/monthly?")) body = {
-        month: "2026-09", active_days: 2, total_phrases: 12, total_translations: 12,
-        correct_translations: 8, mastered_phrases: 1,
-        days: Array.from({ length: 30 }, (_, index) => ({
-          date: `2026-09-${String(index + 1).padStart(2, "0")}`,
-          phrase_count: index === 0 ? 10 : index === 2 ? 2 : 0,
-          translation_count: index === 0 ? 10 : index === 2 ? 2 : 0,
-          correct_translation_count: index === 0 ? 7 : index === 2 ? 1 : 0,
-          mastered_phrase_count: index === 0 ? 1 : 0,
-        })),
-      };
+      else if (url.startsWith("/api/statistics/monthly?")) {
+        const month = new URLSearchParams(url.split("?")[1]).get("month")!;
+        const today = new Date();
+        const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - ((today.getDay() + 6) % 7));
+        const mondayKey = `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, "0")}-${String(monday.getDate()).padStart(2, "0")}`;
+        const [year, monthNumber] = month.split("-").map(Number);
+        body = {
+          month, active_days: 1, total_phrases: 10, total_translations: 10,
+          correct_translations: 7, mastered_phrases: 1,
+          days: Array.from({ length: new Date(year, monthNumber, 0).getDate() }, (_, index) => {
+            const date = `${month}-${String(index + 1).padStart(2, "0")}`;
+            const active = date === mondayKey;
+            return { date, phrase_count: active ? 10 : 0, translation_count: active ? 10 : 0,
+              correct_translation_count: active ? 7 : 0, mastered_phrase_count: active ? 1 : 0 };
+          }),
+        };
+      }
       else if (url.startsWith("/api/statistics/phrases?")) body = {
         total: 1, page: 1, page_size: "10", total_pages: 1,
         groups: [{ topic_id: "bank", topic_title: "В банке", phrases: [{
@@ -124,10 +130,12 @@ describe("App", () => {
     vi.stubGlobal("fetch", mockApi());
 
     render(<App />);
+    expect(screen.getByRole("status", { name: "Авторизация и загрузка" }).closest(".auth-page--loading")).toBeInTheDocument();
 
     expect(await screen.findByRole("heading", { name: /Практикуйтесь в реальных ситуациях/ })).toBeInTheDocument();
     expect(await screen.findByRole("status", { name: "Backend готов" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /В банке/ })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /В банке.*20.*неизученных/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Настроить подключение" })).not.toBeInTheDocument();
     expect(screen.queryByText(/Эмулятор:/)).not.toBeInTheDocument();
   });
@@ -137,8 +145,15 @@ describe("App", () => {
     vi.stubGlobal("fetch", mockApi());
 
     render(<App />);
+    expect(screen.getByRole("status", { name: "Авторизация и загрузка" })).toHaveTextContent("Авторизация и загрузка...");
+    expect(screen.getByRole("img", { name: "SerboTalk" })).toHaveAttribute("src", expect.stringMatching(/^data:image\/png;base64,/));
 
-    expect(await screen.findByRole("region", { name: "Выбор темы" })).toBeInTheDocument();
+    const topicsPage = await screen.findByRole("region", { name: "Выбор темы" });
+    expect(topicsPage.querySelector("h1")).toBeNull();
+    expect(await screen.findByRole("button", { name: /В банке.*20.*неизученных/ })).toBeInTheDocument();
+    const reviewCard = screen.getByRole("button", { name: /Повторение.*0.*к повторению/ });
+    expect(reviewCard).toHaveClass("android-topic");
+    expect(reviewCard.querySelectorAll('svg path[fill="currentColor"]')).toHaveLength(2);
     expect(screen.getByRole("region", { name: "Тренировка" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Статистика" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Темы" })).toHaveAttribute("aria-current", "page");
@@ -154,8 +169,15 @@ describe("App", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
     expect(screen.getByRole("button", { name: "Тренировка" })).toHaveAttribute("aria-current", "page");
-    fireEvent.click(screen.getByRole("button", { name: "Начать" }));
+    expect(screen.queryByRole("button", { name: "Начать" })).not.toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Ваш ответ"), { target: { value: "Želim da otvorim račun." } });
+    fireEvent.click(screen.getByRole("button", { name: "Проверить" }));
+    expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
+    expect(screen.getAllByText("Я хочу открыть счёт.")).toHaveLength(1);
+    expect(screen.getByText("Ваш вариант").parentElement).toHaveTextContent("Želim da otvorim račun.");
+    expect(screen.getByText("Правильный вариант")).toBeInTheDocument();
+    expect(screen.getByText("Разбор")).toBeInTheDocument();
   });
 
   it("shows the user list only for an administrator", async () => {
@@ -183,7 +205,6 @@ describe("App", () => {
 
     render(<App />);
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
-    fireEvent.click(screen.getByRole("button", { name: /Начать тренировку/ }));
 
     expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
     expect(screen.getByText("modal_verbs")).toBeInTheDocument();
@@ -197,6 +218,7 @@ describe("App", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(<App />);
+    await screen.findByRole("button", { name: /В банке/ });
     fireEvent.change(await screen.findByLabelText("Своя тема"), {
       target: { value: "Поговорить с арендодателем" },
     });
@@ -214,16 +236,16 @@ describe("App", () => {
     render(<App />);
 
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
-    fireEvent.click(screen.getByRole("button", { name: /Начать тренировку/ }));
     const input = await screen.findByLabelText("Ваш ответ");
     fireEvent.change(input, { target: { value: "Želim da otvorim račun." } });
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
 
     expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
-    expect(screen.getByText("Канонический вариант")).toBeInTheDocument();
-    expect(screen.getAllByText("Želim da otvorim račun.")).toHaveLength(2);
+    expect(screen.getByText("Правильный вариант")).toBeInTheDocument();
+    expect(screen.getByText("Ваш вариант")).toBeInTheDocument();
+    expect(screen.getByText("Ваш вариант").parentElement).toHaveTextContent("Želim da otvorim račun.");
     expect(screen.getByLabelText("Прогресс навыков")).toHaveTextContent("Модальные глаголы");
-    fireEvent.click(screen.getByText("Подробный разбор"));
+    fireEvent.click(screen.getByText("Разбор"));
     expect(screen.getByText("Смысл и конструкция переданы правильно.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Следующая фраза/ })).toBeEnabled();
   });
@@ -233,7 +255,6 @@ describe("App", () => {
     render(<App />);
 
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
-    fireEvent.click(screen.getByRole("button", { name: /Начать тренировку/ }));
     fireEvent.change(await screen.findByLabelText("Ваш ответ"), { target: { value: "Želim da otvorim račun." } });
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
 
@@ -241,16 +262,18 @@ describe("App", () => {
     expect(screen.queryByLabelText("Прогресс навыков")).not.toBeInTheDocument();
   });
 
-  it("shows the monthly activity calendar and keeps progress as a placeholder", async () => {
+  it("shows only the current week and separates attempts from mastered phrases", async () => {
     vi.stubGlobal("fetch", mockApi());
     render(<App />);
 
     fireEvent.click(await screen.findByRole("button", { name: /Статистика/ }));
     expect(screen.getByRole("heading", { name: "Статистика" })).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Календарь занятий" })).toBeInTheDocument();
-    expect(screen.getByLabelText("1: 10 переводов")).toHaveClass("is-active", "is-intensive");
-    expect(screen.getByLabelText("2: 0 переводов")).not.toHaveClass("is-active");
-    expect(screen.getByRole("img", { name: /График переводов/ })).toBeInTheDocument();
+    expect(screen.getByLabelText("Итоги недели")).toHaveTextContent("10фраз за неделю");
+    expect(screen.getByRole("heading", { name: "Фразы по дням" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /График фраз по дням/ }).querySelectorAll(".daily-chart__column")).toHaveLength(7);
+    expect(screen.getByRole("img", { name: /График фраз по дням/ }).querySelector('[title*="всего 10"]')).toHaveAttribute("title", expect.stringContaining("правильно 7, неправильно 3, выучено 1"));
+    expect(screen.queryByRole("button", { name: /Прогресс/ })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Фразы" }));
     expect(await screen.findByRole("heading", { name: "В банке" })).toBeInTheDocument();
@@ -258,9 +281,6 @@ describe("App", () => {
     expect(screen.getByText("выучена")).toBeInTheDocument();
     expect(screen.getByLabelText("На странице")).toHaveValue("10");
 
-    fireEvent.click(screen.getByRole("button", { name: /Прогресс/ }));
-    expect(screen.getByRole("heading", { name: "Прогресс" })).toBeInTheDocument();
-    expect(screen.getByText("Раздел в разработке")).toBeInTheDocument();
   });
 
   it("reveals a word translation and sends used hints with the attempt", async () => {
@@ -269,7 +289,6 @@ describe("App", () => {
     render(<App />);
 
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
-    fireEvent.click(screen.getByRole("button", { name: /Начать тренировку/ }));
     fireEvent.click(await screen.findByRole("button", { name: "хочу" }));
     expect(await screen.findByText("želim")).toBeInTheDocument();
 
@@ -348,7 +367,6 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /Следующая фраза/ }));
     expect(await screen.findByText("Все фразы из карусели освоены. Отличная работа!")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /В банке/ }));
-    fireEvent.click(screen.getByRole("button", { name: /Начать тренировку/ }));
 
     const answer = await screen.findByLabelText("Ваш ответ");
     expect(answer).toHaveValue("");

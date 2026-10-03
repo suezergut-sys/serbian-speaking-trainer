@@ -12,11 +12,20 @@ import { fetchCurrentUser } from "./api/users";
 import { initializeAuth, isAuthConfigured, onAuthStateChange, signInWithGoogle, signOut } from "./auth";
 import type { CurrentUser } from "./types/auth";
 import { LegalPage } from "./LegalPage";
+import { AnswerResult } from "./AnswerResult";
+import appLogo from "./assets/app-logo.png?inline";
 import "./styles.css";
 
 type BackendState = "checking" | "online" | "offline";
 type VoiceState = "idle" | "connecting" | "recording" | "transcribing" | "error";
-type AppView = "practice" | "statistics" | "progress" | "admin";
+type AppView = "practice" | "statistics" | "admin";
+
+function PhraseLoading() {
+  return <div className="phrase-loading auth-loading" role="status" aria-label="Подготовка фразы">
+    <span className="auth-loading__ring"><img src={appLogo} alt="SerboTalk" /></span>
+    <p>Подготовка фразы</p>
+  </div>;
+}
 
 const topicIcons: Record<string, string> = {
   "job-interview": "briefcase", bank: "bank", vacation: "sun", cafe: "cup",
@@ -29,6 +38,7 @@ function Icon({ name, size = 20 }: { name: string; size?: number }) {
     home: <><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10M9 20v-6h6v6"/></>,
     chart: <><path d="M4 19V9M10 19V5M16 19v-7M22 19V2"/></>,
     progress: <><path d="M4 18h16M6 15l4-4 3 2 5-7"/><path d="M16 6h2v2"/></>,
+    repeat: <><path fill="currentColor" stroke="none" d="M2.4 8.1C5.6 1.1 15.7.6 21 5.1V2.5L24 8l-5.1 3.4.4-3.2C15.6 4.8 9.2 4.2 5.3 10.2Z"/><path fill="currentColor" stroke="none" d="M21.6 15.9C18.4 22.9 8.3 23.4 3 18.9v2.6L0 16l5.1-3.4-.4 3.2c3.7 3.4 10.1 4 14-2Z"/></>,
     briefcase: <><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V4h8v3M3 12h18M10 12v2h4v-2"/></>,
     bank: <><path d="m3 9 9-5 9 5M5 10h14M6 10v8M10 10v8M14 10v8M18 10v8M3 20h18"/></>,
     sun: <><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></>,
@@ -85,7 +95,10 @@ function AuthenticatedApp() {
     catch { setAuthError("Не удалось открыть вход через Google."); }
   }
 
-  if (!authReady) return <main className="auth-page"><div className="auth-card panel"><p>Проверяем вход…</p></div></main>;
+  if (!authReady) return <main className="auth-page auth-page--loading"><div className="auth-loading" role="status" aria-label="Авторизация и загрузка">
+    <span className="auth-loading__ring"><img src={appLogo} alt="SerboTalk" /></span>
+    <p>Авторизация и загрузка...</p>
+  </div></main>;
   if (!isAuthConfigured()) return <main className="auth-page"><div className="auth-card panel"><h1>Нужна настройка входа</h1><p>Добавьте VITE_SUPABASE_URL и VITE_SUPABASE_PUBLISHABLE_KEY в окружение frontend.</p></div></main>;
   if (!hasSession || !account) return <main className="auth-page"><div className="auth-card panel"><span className="brand__mark"><Icon name="message" size={34}/></span><h1>Добро пожаловать в SerboTalk</h1><p>Войдите или зарегистрируйтесь с Google, чтобы сохранять свой прогресс на всех устройствах.</p><button className="google-sign-in" type="button" onClick={() => void login()}>Войти через Google</button>{authError && <p className="error" role="alert">{authError}</p>}<nav className="auth-legal" aria-label="Правовая информация"><a href="/privacy">Конфиденциальность</a><a href="/terms">Условия</a></nav></div></main>;
   return <TrainerApp account={account} onAccountChange={setAccount} onSignOut={() => void signOut()} />;
@@ -109,6 +122,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const [answer, setAnswer] = useState("");
   const [attempt, setAttempt] = useState<Attempt>();
   const [loading, setLoading] = useState(false);
+  const [preparingPhrase, setPreparingPhrase] = useState(false);
   const [error, setError] = useState<string>();
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
   const [wordHints, setWordHints] = useState<Record<string, WordHint>>({});
@@ -190,23 +204,23 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     catch { recorder.stop(); if (voiceRef.current === recorder) voiceRef.current = undefined; setVoiceState("error"); setError("Не удалось получить доступ к микрофону. Проверьте разрешение браузера."); }
   }
 
-  async function startTraining() {
+  async function startTraining(topicId: string) {
     stopVoice(); setAnswer(""); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
+    setPreparingPhrase(true);
     setLoading(true); setError(undefined);
     try {
       const created = await createSession(
-        selectedTopic
-              ? { topic_id: selectedTopic }
-              : {},
+        { topic_id: topicId },
       );
-      setSession(created); setExercise(await fetchNextExercise(created.id)); setExerciseNumber(1);
+      const firstExercise = await fetchNextExercise(created.id);
+      setSession(created); setExercise(firstExercise); setExerciseNumber(1);
     } catch (requestError) {
       setSession(undefined); setExercise(undefined);
       setError(requestError instanceof BackendError && requestError.status === 409
         ? "В этой теме сейчас нет фраз для тренировки. Добавьте новую или дождитесь повторения."
         : "Не удалось начать тренировку. Проверьте, что backend запущен.");
     }
-    finally { setLoading(false); }
+    finally { setLoading(false); setPreparingPhrase(false); }
   }
 
   async function startReviewTraining() {
@@ -216,14 +230,15 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       setError("Пока нет фраз для повторения. Добавьте фразу ниже или выполните обычную тренировку.");
       return;
     }
-    setLoading(true);
+    setPreparingPhrase(true); setLoading(true);
     try {
       const created = await createSession({ review_mode: true });
-      setSession(created); setExercise(await fetchNextExercise(created.id)); setExerciseNumber(1);
+      const firstExercise = await fetchNextExercise(created.id);
+      setSession(created); setExercise(firstExercise); setExerciseNumber(1);
       setAnswer(""); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
     } catch {
       setError("Не удалось запустить повторение фраз.");
-    } finally { setLoading(false); }
+    } finally { setLoading(false); setPreparingPhrase(false); }
   }
 
   async function nextExercise() {
@@ -247,6 +262,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     try {
       setAttempt(await submitAttempt(exercise.id, answer.trim(), voiceTimingRef.current, Object.keys(wordHints)));
       setReviewPhrases(await fetchReviewPhrases());
+      setTopics(await fetchTopics());
       onAccountChange(await fetchCurrentUser());
     }
     catch (requestError) { setError(requestError instanceof BackendError && requestError.status === 429 ? "Дневной лимит 10 фраз исчерпан. Новые фразы будут доступны после 00:00 UTC." : "Не удалось проверить ответ. Попробуйте ещё раз."); }
@@ -261,6 +277,8 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   function selectTopic(topicId: string) {
     if (session) resetTraining();
     setSelectedTopic(topicId); setCustomTopic("");
+    setSession(undefined); setExercise(undefined);
+    if (topics.find((topic) => topic.id === topicId)?.phrase_count) void startTraining(topicId);
   }
 
   async function saveCustomTopic(event: React.FormEvent<HTMLFormElement>) {
@@ -326,18 +344,17 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
           }}
         >
           <section className="android-page android-topics-page" aria-label="Выбор темы">
-            <h1>Темы</h1>
             <div className="android-topic-list" aria-label="Темы тренировки">
               <button className={isReviewMode ? "android-topic is-selected" : "android-topic"} type="button" disabled={loading || reviewPhrases.length === 0} onClick={() => { showAndroidPanel(1); void startReviewTraining(); }}>
-                <span className="topic__icon"><Icon name="progress" /></span>
+                <span className="topic__icon"><Icon name="repeat" /></span>
                 <strong>Повторение</strong>
-                <small>{reviewPhrases.length}</small>
+                <small>{reviewPhrases.length}<span>к повторению</span></small>
               </button>
               {topics.map((topic) => (
-                <button className={selectedTopic === topic.id && !customTopic ? "android-topic is-selected" : "android-topic"} key={topic.id} type="button" onClick={() => { selectTopic(topic.id); showAndroidPanel(1); }}>
+                <button className={selectedTopic === topic.id && !customTopic ? "android-topic is-selected" : "android-topic"} key={topic.id} type="button" disabled={loading} onClick={() => { selectTopic(topic.id); showAndroidPanel(1); }}>
                   <span className={`topic__icon topic__icon--${topicIcons[topic.id] ?? "message"}`}><Icon name={topicIcons[topic.id] ?? "message"} /></span>
                   <strong>{topic.title_ru}</strong>
-                  <small>{topic.phrase_count}</small>
+                  <small>{topic.phrase_count}<span> неизученных</span></small>
                 </button>
               ))}
             </div>
@@ -367,16 +384,16 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
           </section>
 
           <section className="android-page android-training-page" aria-label="Тренировка">
-            {!session ? (
+            {preparingPhrase && !session ? <PhraseLoading /> : !session ? (
               <div className="android-training-start">
                 <span className="topic__icon"><Icon name={topicIcons[currentTopic?.id ?? ""] ?? "message"} size={26} /></span>
                 <h1>{customTopic.trim() || currentTopic?.title_ru || "Выберите тему"}</h1>
-                <button type="button" disabled={loading || backendState !== "online" || !selectedTopic || selectedTopicData?.phrase_count === 0} onClick={startTraining}>{loading ? "Загрузка…" : "Начать"}</button>
+                {error && <p className="android-error" role="alert">{error}</p>}
               </div>
             ) : (
               <div className="android-training-content">
                 <div className="android-training-meta"><span>{currentTopic?.title_ru}</span><small>{exerciseNumber}/{session.requested_length}</small></div>
-                <h1 className="interactive-phrase" aria-label={exercise?.source_ru ?? "Готовим фразу…"}>{exercise ? exercise.source_ru.split(/([А-Яа-яЁё]+)/g).filter(Boolean).map((part, index) => /^[А-Яа-яЁё]+$/.test(part) ? <span className="word-wrap" key={`${part}-${index}`}><button className={wordHints[part.toLocaleLowerCase("ru-RU")] ? "word-token is-used" : "word-token"} type="button" onClick={() => showWordHint(part)}>{part}</button>{activeHint === part.toLocaleLowerCase("ru-RU") && <span className="word-tooltip" role="status">{wordHints[part.toLocaleLowerCase("ru-RU")]?.translation_sr ?? "Загружаем…"}</span>}</span> : <span key={`${part}-${index}`}>{part}</span>) : "Готовим фразу…"}</h1>
+                {!attempt && <h1 className="interactive-phrase" aria-label={exercise?.source_ru ?? "Готовим фразу…"}>{exercise ? exercise.source_ru.split(/([А-Яа-яЁё]+)/g).filter(Boolean).map((part, index) => /^[А-Яа-яЁё]+$/.test(part) ? <span className="word-wrap" key={`${part}-${index}`}><button className={wordHints[part.toLocaleLowerCase("ru-RU")] ? "word-token is-used" : "word-token"} type="button" onClick={() => showWordHint(part)}>{part}</button>{activeHint === part.toLocaleLowerCase("ru-RU") && <span className="word-tooltip" role="status">{wordHints[part.toLocaleLowerCase("ru-RU")]?.translation_sr ?? "Загружаем…"}</span>}</span> : <span key={`${part}-${index}`}>{part}</span>) : "Готовим фразу…"}</h1>}
 
                 {!attempt ? <form className="android-answer" onSubmit={checkAnswer}>
                   <label className="sr-only" htmlFor="android-serbian-answer">Ваш ответ</label>
@@ -385,9 +402,9 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                   {voiceState !== "idle" && <p className="android-voice-state" role="status">{voiceState === "connecting" ? "Подключаем микрофон…" : voiceState === "recording" ? "Запись" : voiceState === "transcribing" ? "Распознаём…" : "Повторите запись"}</p>}
                   <button className="android-primary" type="submit" disabled={loading || !answer.trim()}>{loading ? "Проверяем…" : "Проверить"}</button>
                 </form> : <div className={`android-feedback feedback--${attempt.analysis.verdict}`}>
+                  <AnswerResult source={exercise?.source_ru ?? ""} answer={attempt.transcript_sr} attempt={attempt} />
                   <div className="feedback__score"><span>{Math.round(attempt.overall_score * 100)}%</span><strong>{attempt.analysis.verdict === "correct" ? "Верно" : attempt.analysis.verdict === "mostly_correct" ? "Почти верно" : "Попробуйте ещё"}</strong></div>
                   <p>{attempt.analysis.short_feedback_ru}</p>
-                  <div className="correction"><small>Правильный вариант</small><span>{attempt.analysis.corrected_sr}</span></div>
                   <details><summary>Разбор</summary><p>{attempt.analysis.detailed_feedback_ru}</p></details>
                   <button className="android-primary" type="button" disabled={loading} onClick={nextExercise}>{loading ? "Загрузка…" : "Следующая"}</button>
                 </div>}
@@ -423,7 +440,6 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
         <nav className="main-nav" aria-label="Основная навигация">
           <button className={view === "practice" ? "is-active" : ""} type="button" onClick={() => setView("practice")}><Icon name="home" />Практика</button>
           <button className={view === "statistics" ? "is-active" : ""} type="button" onClick={() => setView("statistics")}><Icon name="chart" />Статистика</button>
-          <button className={view === "progress" ? "is-active" : ""} type="button" onClick={() => setView("progress")}><Icon name="progress" />Прогресс</button>
           {account.role === "admin" && !Capacitor.isNativePlatform() && <button className={view === "admin" ? "is-active" : ""} type="button" onClick={() => setView("admin")}><Icon name="settings" />Пользователи</button>}
         </nav>
         <div className="profile">
@@ -443,27 +459,20 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
         </form>
       )}
 
-      {view === "admin" ? <AdminUsersView /> : view === "statistics" ? <StatisticsView /> : view === "progress" ? (
-        <main className="placeholder-page">
-          <div className="placeholder-page__icon"><Icon name="progress" size={34} /></div>
-          <p className="kicker">Раздел в разработке</p><h1>Прогресс</h1>
-          <p>Здесь появятся данные ваших тренировок. Сейчас можно продолжать практику — ответы уже учитываются системой обучения.</p>
-          <button type="button" onClick={() => setView("practice")}>Вернуться к практике <Icon name="arrow" /></button>
-        </main>
-      ) : (
+      {view === "admin" ? <AdminUsersView /> : view === "statistics" ? <StatisticsView /> : (
         <main className="workspace">
           <aside className="topics-panel panel">
             <div className="panel-heading"><h2>Темы для практики</h2><p>Выберите ситуацию и начните разговор на сербском языке</p></div>
             <button className={isReviewMode ? "review-topic is-selected" : "review-topic"} type="button" disabled={loading} onClick={() => void startReviewTraining()}>
-              <span className="topic__icon"><Icon name="progress" /></span>
+              <span className="topic__icon"><Icon name="repeat" /></span>
               <span className="topic__copy"><strong>Фразы для повторения</strong><small>{reviewPhrases.length ? `${reviewPhrases.length} требуют практики` : "Список пока пуст"}</small></span>
               <span className="review-topic__count">{reviewPhrases.length}</span>
             </button>
             <div className="topics" aria-label="Темы тренировки">
               {topics.map((topic) => (
-                <button className={selectedTopic === topic.id && !customTopic ? "topic is-selected" : "topic"} key={topic.id} type="button" onClick={() => selectTopic(topic.id)}>
+                <button className={selectedTopic === topic.id && !customTopic ? "topic is-selected" : "topic"} key={topic.id} type="button" disabled={loading} onClick={() => selectTopic(topic.id)}>
                   <span className={`topic__icon topic__icon--${topicIcons[topic.id] ?? "message"}`}><Icon name={topicIcons[topic.id] ?? "message"} /></span>
-                  <span className="topic__copy"><strong>{topic.title_ru}</strong><small>{topic.description_ru}</small></span><span className="topic__arrow">›</span>
+                  <span className="topic__copy"><strong>{topic.title_ru}</strong><small>{topic.description_ru}</small></span><span className="topic__unlearned"><strong>{topic.phrase_count}</strong><small>неизученных</small></span>
                 </button>
               ))}
             </div>
@@ -489,14 +498,13 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
           <section className="practice-stage" aria-labelledby="page-title">
             <div className="stage-heading"><p>Сербский язык · A2</p><h1 id="page-title">Практикуйтесь в реальных ситуациях</h1><span>Формулируйте ответ на сербском и получайте понятную обратную связь.</span></div>
-            {!session ? (
+            {preparingPhrase && !session ? <PhraseLoading /> : !session ? (
               <div className="welcome-card panel">
                 <div className="welcome-card__glow"/><span className="welcome-card__icon"><Icon name={topicIcons[currentTopic?.id ?? ""] ?? "message"} size={32} /></span>
                 <p className="kicker">Выбранная ситуация</p><h2>{customTopic.trim() || currentTopic?.title_ru || "Выберите тему"}</h2>
                 <p>{selectedTopicData?.phrase_count === 0 ? "Тема пока пустая. Добавьте в неё фразы — автоматической генерации не будет." : currentTopic?.description_ru || "Темы загрузятся после подключения к backend."}</p>
                 <div className="welcome-card__steps"><span><b>1</b> Получите фразу</span><span><b>2</b> Ответьте голосом или текстом</span><span><b>3</b> Разберите результат</span></div>
                 {error && <p className="error" role="alert">{error}</p>}
-                <button className="primary" type="button" disabled={loading || backendState !== "online" || !selectedTopic || selectedTopicData?.phrase_count === 0} onClick={startTraining}>{selectedTopicData?.phrase_count === 0 ? "Сначала добавьте фразу" : loading ? "Готовим первую фразу…" : "Начать тренировку"}<Icon name="arrow" /></button>
               </div>
             ) : (
               <>
@@ -519,7 +527,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                       <button className="answer-submit" type="submit" disabled={loading || !answer.trim()}>{loading ? "Анализируем…" : "Проверить ответ"}<Icon name="arrow" /></button>
                     </form>
                   ) : (
-                    <div className="submitted-answer"><small>Ваш вариант</small><p>{answer}</p><span><Icon name="arrow" /> Подробный разбор показан справа</span></div>
+                    <div className="submitted-answer"><span><Icon name="arrow" /> Результат проверки показан справа</span></div>
                   )}
                 </div>
                 {error && <p className="error" role="alert">{error}</p>}
@@ -530,11 +538,12 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
           <aside className={attempt ? "info-panel result-panel panel" : "info-panel result-panel result-panel--empty panel"}>
             <div className="panel-heading panel-heading--icon"><Icon name={attempt ? "check" : "progress"} /><div><h2>Анализ ответа</h2><p>{attempt ? "Результат текущей попытки" : "Появится после проверки"}</p></div></div>
             {attempt ? <div className={`feedback feedback--${attempt.analysis.verdict}`}>
+              <AnswerResult source={exercise?.source_ru ?? ""} answer={attempt.transcript_sr} attempt={attempt} />
               <div className="feedback__score"><span>{Math.round(attempt.overall_score * 100)}%</span><strong>{attempt.analysis.verdict === "correct" ? "Верно" : attempt.analysis.verdict === "mostly_correct" ? "Почти верно" : "Нужно доработать"}</strong></div>
               {attempt.hint_penalty > 0 && <div className="hint-penalty"><Icon name="bulb" /><span>Подсказки: −{Math.round(attempt.hint_penalty * 100)} баллов</span></div>}
-              <p>{attempt.analysis.short_feedback_ru}</p><div className="correction"><small>Канонический вариант</small><span>{attempt.analysis.corrected_sr}</span></div>
+              <p>{attempt.analysis.short_feedback_ru}</p>
               {(attempt.learner_updates?.length ?? 0) > 0 && <div className="mastery-list" aria-label="Прогресс навыков">{attempt.learner_updates?.map((skill) => <div key={skill.skill_key}><span>{skill.title_ru}</span><div><i style={{ width: `${Math.round(skill.mastery * 100)}%` }}/></div><b>{Math.round(skill.mastery * 100)}%</b></div>)}</div>}
-              <details><summary>Подробный разбор</summary><p>{attempt.analysis.detailed_feedback_ru}</p><div className="score-grid"><span>Смысл <b>{Math.round(attempt.analysis.semantic_score * 100)}</b></span><span>Грамматика <b>{Math.round(attempt.analysis.grammar_score * 100)}</b></span><span>Лексика <b>{Math.round(attempt.analysis.lexical_score * 100)}</b></span><span>Естественность <b>{Math.round(attempt.analysis.naturalness_score * 100)}</b></span></div>{attempt.analysis.issues.map((issue, index) => <p className="issue" key={`${issue.skill_key}-${issue.type}-${index}`}><b>{issue.skill_key}</b>: {issue.evidence}{issue.correction ? ` → ${issue.correction}` : ""}</p>)}</details>
+              <details><summary>Разбор</summary><p>{attempt.analysis.detailed_feedback_ru}</p><div className="score-grid"><span>Смысл <b>{Math.round(attempt.analysis.semantic_score * 100)}</b></span><span>Грамматика <b>{Math.round(attempt.analysis.grammar_score * 100)}</b></span><span>Лексика <b>{Math.round(attempt.analysis.lexical_score * 100)}</b></span><span>Естественность <b>{Math.round(attempt.analysis.naturalness_score * 100)}</b></span></div>{attempt.analysis.issues.map((issue, index) => <p className="issue" key={`${issue.skill_key}-${issue.type}-${index}`}><b>{issue.skill_key}</b>: {issue.evidence}{issue.correction ? ` → ${issue.correction}` : ""}</p>)}</details>
               <button className="answer-submit" type="button" disabled={loading} onClick={nextExercise}>{loading ? "Готовим…" : "Следующая фраза"}<Icon name="arrow" /></button>
             </div> : <div className="result-empty"><span><Icon name="chart" size={30} /></span><p>Ответьте на фразу — здесь появятся оценка, исправление и прогресс навыков.</p></div>}
           </aside>

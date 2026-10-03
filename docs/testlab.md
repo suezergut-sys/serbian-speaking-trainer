@@ -1,0 +1,102 @@
+# Проверки и замеры SerboTalk
+
+Локальная тестовая среда отделена от production: собственная SQLite в `artifacts/testlab`, тестовый пользователь без роли admin, локальный Supabase-совместимый провайдер подписанных сессий и fake AI/STT. Настоящий backend проверяет авторизацию обычным способом. Google OAuth, качество STT и сетевое время облачного AI проверяются отдельно; результаты локальных прогонов не означают их приёмку.
+
+## Запуск на Windows
+
+Используйте Python из окружения backend с установленными dev-зависимостями, Node/pnpm и Android SDK/JDK 21 для native-проверок. Команды выполняются из корня актуального checkout:
+
+Текущая проверенная реализация находится в `C:\Users\MSumin\.codex\worktrees\audit-p0\Serbian Speaking Trainer`, production-код опубликован через PR #31. Основной пользовательский checkout содержит несвязанные незакоммиченные изменения и автоматически не перезаписывался. Перед запуском команд переходите в указанный worktree; Python допускается брать из `.venv` основного checkout через параметр `-Python`.
+
+```powershell
+.\scripts\launch-testlab.ps1 -Python .\.venv\Scripts\python.exe
+.\scripts\build-testlab-web.ps1
+cd frontend
+pnpm exec vite preview --host 127.0.0.1 --port 5178 --strictPort --outDir dist-testlab-web
+```
+
+Preview остаётся запущенным. В другом терминале из корня:
+
+```powershell
+.\scripts\run-testlab.ps1 -Platform web
+```
+
+`setup_testlab.py` генерирует случайный пароль и ключ подписи в игнорируемом `.env.testlab`; значения не печатаются. Runner передаёт данные процессу тестов через окружение. Не копируйте этот файл в APK, Git, диагностические отчёты или CI-логи. Для ротации создайте новые случайные значения и перезапустите локальный auth.
+
+При запуске API testlab применяет Alembic к собственной SQLite. Поддерживаются пустая база и точно распознанная прежняя/текущая схема; история сохраняется. Неизвестная схема или revision отклоняется без сброса данных.
+
+## Конкурентные проверки PostgreSQL
+
+Для P1.2 используется отдельный portable PostgreSQL 17.11 из официального Windows-архива EDB. Скрипт извлекает только серверные bin/lib/share, не устанавливает Windows service и хранит кластер и случайный пароль в игнорируемом `artifacts/testlab/postgres`. Сервер слушает только `127.0.0.1:55432`; runner проверяет идентичность собственного кластера и разрешает только БД `serbotalk_concurrency_test`. Унаследованные параметры подключения `PG*` удаляются. Production PostgreSQL и его секреты этим runner не используются.
+
+```powershell
+python scripts/testing/postgres_testlab.py setup
+python scripts/testing/postgres_testlab.py start
+python scripts/testing/postgres_testlab.py run-tests --python .venv/Scripts/python.exe --pytest-file test_attempt_reservations.py --pytest-file test_attempt_idempotency_migration.py
+python scripts/testing/postgres_testlab.py stop
+```
+
+`setup` выполняется один раз, требует сети и отказывается перезаписывать существующий кластер. Скачивание проверяется HTTPS и границами архива; показанный SHA-256 является наблюдаемым хешем, а не подтверждением vendor checksum. При прерванной установке сохранённые файлы нужно сначала проверить; автоматически удалять каталог или повторно устанавливать поверх него нельзя. Каждый DB-тест создаёт уникальную схему и удаляет только её. Эти проверки подтверждают поведение прямого локального PostgreSQL, но не нагрузку через Supabase production pooler.
+
+Парный замер ожидания независимой SQLite-записи запускается `scripts/testing/benchmark_attempt_lock.py --label before --backend <снимок backend внутри checkout>` и затем `--label after --compare-to <before report в artifacts/testlab>`. По умолчанию: 3 прогрева, 20 измерений, fake AI с паузой 1000 мс; отчёт проверяет совпадение параметров и фикстуры. Результат этого среза: [контрольная точка P1.2/P1.4](p1-concurrency-checkpoint.md).
+
+## Android
+
+После отдельного согласования версии и команды на сборку:
+
+```powershell
+cd frontend
+node node_modules/@playwright/test/cli.js install android
+cd ..
+.\scripts\start-testlab-emulator.ps1 -Headless
+.\scripts\build-testlab-android.ps1
+adb -s emulator-5554 install -r artifacts/testlab/SerboTalk-andorid16-1.16.apk
+.\scripts\run-testlab.ps1 -Platform android
+```
+
+Тестовое приложение `com.serbiantalk.trainer.testlab` устанавливается рядом с обычным `com.serbiantalk.trainer`. Flavor `lab` использует отдельные assets; обычный flavor `prod` не получает тестовый вход. Имена APK одинаковы по обязательному шаблону, каталоги различаются. Локальные службы доступны AVD через `10.0.2.2`; провайдер и backend слушают только loopback Windows. На физическом устройстве нужна отдельная настройка транспорта, эти адреса там не работают.
+
+Автоматизация использует отдельный тестовый браузер и Android WebView через поддерживаемый экспериментальный Android API Playwright. Работа runner не зависит от расширения личного Chrome или захвата Windows-окна эмулятора. Размер окна не меняет разрешение устройства; задержки вызовов Computer Use не являются метрикой приложения.
+
+Для ручной проверки запускайте эмулятор без `-Headless`: `-WindowScale 0.5` уменьшает его окно через Qt. Перед повторным запуском закройте предыдущий экземпляр этого AVD. Автоматические проверки используют software GPU без Vulkan; стабильность и скорость эмулятора не заменяют замеры на физическом телефоне. Runner очищает данные только отдельного пакета `com.serbiantalk.trainer.testlab`, обычное приложение не затрагивается.
+
+Браузерные mock-сценарии используют production build с отдельным режимом `e2e`, затем preview; сервер разработки не используется как эталон скорости. Серии запускаются через `E2E_SAMPLES_PER_SCRIPT` и `E2E_WARMUP_PER_SCRIPT`. Сводка: `node e2e/summary.mjs --platform web` либо `--platform android-webview` из `frontend`. Сводка запрещает смешивать платформы.
+
+## Проверки сетевых сбоев
+
+Mock browser suite: из `frontend` запустите `node node_modules/@playwright/test/cli.js test e2e/network.spec.mjs`. Для настоящего локального backend используйте `scripts/run-testlab.ps1 -Platform web -Suite network`; `-Suite all` включает также обычную практику. Сначала пересоберите текущий testlab web через `scripts/build-testlab-web.ps1`.
+
+Сбой после сохранения попытки моделируется отказом ответа, а не повторной AI-оценкой. Проверяются прежний request ID, единственная сохранённая попытка и неизменное использование квоты при replay. Credentials читаются runner из игнорируемого env и остаются в памяти. Этот suite проверяет восстановление запросов; он не измеряет качество STT, физическое отключение Android-сети или background/resume. Доказательства: [p1-network-checkpoint.md](p1-network-checkpoint.md).
+
+## Проверки lifecycle
+
+Из `frontend`: `node node_modules/@playwright/test/cli.js test e2e/lifecycle.spec.mjs`. Изолированный mock browser suite моделирует hidden/visible, считает освобождённые tracks и проверяет draft/поздний STT. Только синтетические memory Blob, без реального микрофона. Native appStateChange и свайп проверяются component mocks; реальные Android-события проверяются после отдельного переноса в APK. [Результаты и ограничения](p1-lifecycle-checkpoint.md).
+
+## Что сохраняется
+
+- `Server-Timing`: total/auth/user_sync, SQL cursor execution time и число SQL, длительность OpenAI SDK и число вызовов. Время DB не включает ожидание соединения, ORM и commit. SDK-время включает его внутренние retries.
+- Опциональные User Timing метрики при `?perf`: темы, первая фраза, завершение расшифровки, оценка, следующая фраза. Конец замера — доступность элемента после кадров отрисовки.
+- Игнорируемые JSON-отчёты с длительностями, кодами ответа, размерами и обезличенными маршрутами. Методика и итоговые числа сохраняются в документации отдельно.
+
+Трассы, HAR, видео, снимки и автоматические ARIA-контексты ошибок отключены, чтобы пароль, токены и аудио не попадали в артефакты. Синтетический recorder создаёт только временные байты в памяти; реальный микрофон автоматические сценарии не включают. Пользовательское аудио запрещено сохранять независимо от режима.
+
+## Сопоставимые замеры
+
+До/после каждого изменения фиксируйте SHA, тип сборки, браузер/WebView/устройство, разрешение, сеть, AI-режим, прогрев и состояние данных. Прогоны последовательные, без параллельной сборки или второго runner. Для исходной серии — три прогрева и минимум 20 повторов; p95 на небольшой выборке предварительный. Холодный запуск отмечается отдельно от тёплого. Изменение учебного прогресса и размера тестовой БД учитывается; пользовательские базы никогда не сбрасываются ради измерения.
+
+Проверки Google-входа, настоящего STT, разрешений и прерываний микрофона, физических клавиатур/устройств и ручная приёмка владельца остаются отдельными пунктами плана. После большого раздела — production deploy, согласованный APK и ручной контроль.
+
+## Сопоставимый benchmark списка и счётчика повторения
+
+`scripts/testing/benchmark_review_catalog.py` создаёт собственную синтетическую SQLite в игнорируемом artifacts/testlab, фиксирует время и использует mock AI/identity. Для before передайте `--backend` на неизменяемый снимок backend внутри workspace; для after — текущий backend и `--compare-to` на before report. Параметры доступны через `--help`. Runner сравнивает fixture hash, количество карточек и неизменность legacy JSON, считает SQL, ORM-объекты, размер ответа, p50/p95. Секреты и пользовательский контент в отчёт не попадают.
+
+По умолчанию выполняются 3 прогрева и 20 измерений. Активация просроченных карточек происходит во время прогрева: этот замер описывает установившийся локальный запрос, не первый вызов, сеть, Vercel cold start или телефон. Пример результатов и ограничения: [p1-review-summary-checkpoint.md](p1-review-summary-checkpoint.md).
+
+## Android 1.16: native lifecycle
+
+После установки lab APK 1.16: `scripts/run-testlab.ps1 -Platform android -Suite lifecycle`. Сценарий проверяет версию установленного lab package, использует настоящий native Home/resume и события App, но синтетический mic и локальный fake STT. Только lab package очищается; обычное приложение и Google-сессия не затрагиваются. Одновременно допустим один Android runner. Обычный полный цикл: `-Platform android -Suite practice`. Результаты: [android-1.16-release.md](android-1.16-release.md).
+
+
+## Android USB — контрольная точка 01.10.2026
+
+Тесты на телефоне остановлены владельцем. Подтверждённые результаты, ограничения Xiaomi и подготовка возобновления записаны в [контрольной точке](p1-physical-android-checkpoint.md). Оснастка экспериментальна; полный цикл и замеры телефона не завершены.

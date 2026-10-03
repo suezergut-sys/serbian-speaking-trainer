@@ -83,16 +83,17 @@ class ReviewPhraseRepository(Repository[ReviewPhrase]):
             ReviewPhrase.source_normalized == source_normalized,
         ))
 
-    def list_active(self, *, limit: int = 100) -> list[ReviewPhrase]:
+    def list_active(self, *, limit: int | None = None) -> list[ReviewPhrase]:
         statement = (
             select(ReviewPhrase)
             .where(ReviewPhrase.user_id == self.user_id, ReviewPhrase.status == "active")
             .order_by(ReviewPhrase.updated_at.desc(), ReviewPhrase.id.desc())
-            .limit(limit)
         )
+        if limit is not None:
+            statement = statement.limit(limit)
         return list(self.session.scalars(statement))
 
-    def list_active_for_topic(self, topic_id: str, *, limit: int = 100) -> list[ReviewPhrase]:
+    def list_active_for_topic(self, topic_id: str, *, limit: int | None = None) -> list[ReviewPhrase]:
         statement = (
             select(ReviewPhrase)
             .where(
@@ -101,8 +102,9 @@ class ReviewPhraseRepository(Repository[ReviewPhrase]):
                 ReviewPhrase.topic_id == topic_id,
             )
             .order_by(ReviewPhrase.updated_at.desc(), ReviewPhrase.id.desc())
-            .limit(limit)
         )
+        if limit is not None:
+            statement = statement.limit(limit)
         return list(self.session.scalars(statement))
 
     def activate_due(self, now: datetime) -> list[ReviewPhrase]:

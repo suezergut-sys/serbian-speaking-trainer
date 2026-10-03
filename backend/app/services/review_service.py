@@ -20,10 +20,10 @@ from app.schemas import (
 from app.services.ai_adapter import AIServiceError, StructuredAIProvider
 
 CORRECT_SCORE_THRESHOLD = 0.95
-CORRECT_STREAK_TO_MASTER = 2
+CORRECT_STREAK_TO_MASTER = 3
 HINT_PENALTY_PER_WORD = 0.08
 MAX_HINT_PENALTY = 0.30
-BASE_INTERVAL_DAYS = {"easy": 14, "medium": 7, "hard": 3}
+BASE_INTERVAL_DAYS = {"easy": 3, "medium": 2, "hard": 1}
 INTERVAL_MULTIPLIERS = {"easy": 2.5, "medium": 2.0, "hard": 1.5}
 MAX_INTERVAL_DAYS = 365
 
