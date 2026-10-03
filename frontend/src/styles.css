@@ -14,8 +14,8 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; min-height: 100vh; background: #020914; }
-button, input, textarea { color: inherit; font: inherit; }
-button { cursor: pointer; }
+button, input, textarea, select { color: inherit; font: inherit; }
+button { cursor: pointer; background: var(--panel); }
 .icon { display: block; flex: 0 0 auto; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
@@ -176,7 +176,7 @@ button { cursor: pointer; }
 .word-tooltip small { margin-top: .25rem; color: #d9a95e; font-size: .54rem; font-weight: 500; }
 .skills { display: flex; flex-wrap: wrap; gap: .45rem; padding: 0 .5rem; }
 .skills span, .vocabulary span { padding: .35rem .55rem; border: 1px solid rgba(67, 153, 234, .28); border-radius: 999px; background: rgba(34, 104, 177, .1); color: #8fc5f4; font-size: .62rem; }
-.answer-input { display: grid; grid-template-columns: 1fr 82px; gap: .9rem; align-items: stretch; padding-top: .85rem; }
+.answer-input { display: grid; grid-template-columns: 1fr; gap: .9rem; align-items: stretch; padding-top: .85rem; }
 .answer-input textarea { width: 100%; min-height: 106px; resize: vertical; padding: .9rem 1rem; border: 1px solid rgba(91, 157, 224, .55); border-radius: 11px; outline: none; background: rgba(4, 16, 34, .6); color: #eef5ff; line-height: 1.55; }
 .answer-input textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(64,164,255,.08); }
 .answer-input textarea::placeholder { color: #647fa8; }
@@ -274,7 +274,7 @@ button { cursor: pointer; }
 .month-switcher button:hover { background: rgba(54, 139, 222, .2); }
 .month-switcher strong { padding: 0 .8rem; text-align: center; font-size: .78rem; text-transform: capitalize; }
 .statistics-state { display: grid; place-items: center; min-height: 360px; color: #88a6d2; }
-.statistics-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 220px)); gap: .8rem; }
+.statistics-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .8rem; }
 .statistics-summary > div { display: grid; gap: .1rem; padding: .85rem 1rem; }
 .statistics-summary span { color: #53dda3; font-size: 1.75rem; font-weight: 800; }
 .statistics-summary small { color: #7897c5; font-size: .66rem; }
@@ -380,7 +380,7 @@ button { cursor: pointer; }
   .answer-input { grid-template-columns: 1fr; }
   .mic-button { width: 64px; height: 64px; justify-self: center; }
   .score-grid { grid-template-columns: 1fr; }
-  .statistics-summary { grid-template-columns: 1fr 1fr; }
+  .statistics-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .statistics-card { padding: .9rem; }
   .statistics-card__heading { align-items: flex-start; flex-direction: column; }
   .practice-calendar { gap: .3rem; grid-template-columns: repeat(7, minmax(34px, 1fr)); }
@@ -633,7 +633,7 @@ button { cursor: pointer; }
 .android-statistics-page .statistics-header h1 { margin: .6rem 0 1rem; font-size: 1.55rem; }
 .android-statistics-page .statistics-tabs { width: 100%; }
 .android-statistics-page .statistics-tabs button { flex: 1; }
-.android-statistics-page .statistics-summary { grid-template-columns: 1fr 1fr; }
+.android-statistics-page .statistics-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .android-statistics-page .statistics-card, .android-statistics-page .phrase-statistics { padding: .8rem; }
 .android-statistics-page .practice-calendar { gap: .24rem; grid-template-columns: repeat(7, minmax(32px, 1fr)); }
 .android-statistics-page .calendar-day { min-height: 38px; }
@@ -662,3 +662,20 @@ button { cursor: pointer; }
 @media (min-width: 600px) {
   .android-page { padding-inline: max(1rem, calc((100% - 560px) / 2)); }
 }
+
+/* Shared controls retain the dark palette in native WebView and browsers. */
+.answer-actions { display: flex; align-items: center; justify-content: center; gap: 1.5rem; margin: 1rem 0; }
+.answer-check-button { display: grid; place-items: center; width: 76px; height: 76px; padding: 0; border: 2px solid #53dda3; border-radius: 50%; background: #10392e; color: #70efb4; box-shadow: 0 0 20px rgba(83, 221, 163, .18); }
+.answer-check-button:disabled { opacity: .4; cursor: not-allowed; }
+.answer-check-button:focus-visible, .mic-button:focus-visible { outline: 3px solid var(--cyan); outline-offset: 5px; }
+.mic-button--retry { position: relative; border-color: transparent; background: #0b2d5d; box-shadow: none; width: 76px; height: 76px; }
+.mic-retry-ring { position: absolute; inset: 2px; display: grid; place-items: center; color: var(--blue-bright); pointer-events: none; }
+.mic-retry-ring .icon { width: 100%; height: 100%; }
+.mic-button--retry > .icon { width: 25px; height: 25px; }
+
+.statistics-summary > div { min-width: 0; padding-inline: .65rem; }
+.settings-profile { padding: 1.25rem; }
+.settings-profile .profile { justify-content: flex-start; margin-bottom: 1.25rem; }
+.settings-profile .profile__copy { display: grid; min-width: 0; overflow-wrap: anywhere; }
+.settings-profile .sign-out-button { display: inline-flex; padding: .7rem 1rem; border: 1px solid var(--line); border-radius: 10px; background: #07162a; color: #eaf2ff; }
+.android-answer > button[type="button"], .practice-card form > button[type="button"] { padding: .75rem 1rem; border: 1px solid var(--line); border-radius: 12px; background: #07162a; color: #dceaff; font: inherit; }

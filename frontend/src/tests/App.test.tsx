@@ -83,7 +83,7 @@ describe("App", () => {
     voiceMock.available = true;
     const rendered = render(<App />);
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
-    fireEvent.click(await screen.findByRole("button", { name: "Ответить голосом" }));
+    fireEvent.click(await screen.findByRole("button", { name: /Ответить голосом|Записать заново/ }));
     await screen.findByRole("button", { name: "Завершить запись" });
     fireEvent.click(screen.getByRole("button", { name: "Завершить запись" }));
     const answer = await screen.findByLabelText("Ваш ответ");
@@ -223,10 +223,35 @@ describe("App", () => {
   }
 
   async function recordAnswer() {
-    fireEvent.click(await screen.findByRole("button", { name: "Ответить голосом" }));
+    fireEvent.click(await screen.findByRole("button", { name: /Ответить голосом|Записать заново/ }));
     fireEvent.click(await screen.findByRole("button", { name: "Завершить запись" }));
     return screen.findByLabelText("Ваш ответ");
   }
+
+  it("places check and static microphone retry below the transcript without automatically grading", async () => {
+    voiceMock.available = true;
+    const fetchMock = mockApi();
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    await screen.findByRole("heading", { name: "Я хочу открыть счёт." });
+    await recordAnswer();
+    const check = screen.getByRole("button", { name: "Проверить ответ" });
+    const retry = screen.getByRole("button", { name: "Записать заново" });
+    expect(check).toHaveClass("answer-check-button");
+    expect(check.parentElement?.firstElementChild).toBe(check);
+    expect(check.parentElement?.lastElementChild).toBe(retry);
+    expect(retry.querySelector(".mic-retry-ring")).toBeInTheDocument();
+    expect(retry).not.toHaveClass("is-active");
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).endsWith("/api/attempts"))).toHaveLength(0);
+    fireEvent.click(retry);
+    expect(await screen.findByRole("button", { name: "Завершить запись" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Проверить ответ" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Завершить запись" }));
+    await screen.findByRole("button", { name: "Проверить ответ" });
+    fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
+    expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).endsWith("/api/attempts"))).toHaveLength(1);
+  });
 
   it("loads available topics", async () => {
     vi.stubGlobal("fetch", mockApi());
@@ -372,7 +397,7 @@ describe("App", () => {
     expect(topicsButton).toHaveAttribute("aria-current", "page");
     fireEvent.click(screen.getByRole("button", { name: "Тренировка" }));
     expect(screen.getByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Ответить голосом" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Ответить голосом|Записать заново/ })).toBeEnabled();
     expect(fetchMock.mock.calls.filter(([url]) => url.toString().endsWith("/api/sessions/start"))).toHaveLength(1);
   });
 
@@ -588,7 +613,7 @@ describe("App", () => {
     expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
     const answer = await recordAnswer();
     fireEvent.change(answer, { target: { value: "Moj odgovor" } });
-    fireEvent.click(screen.getByRole("button", { name: "Ответить голосом" }));
+    fireEvent.click(screen.getByRole("button", { name: /Ответить голосом|Записать заново/ }));
     await screen.findByRole("button", { name: "Завершить запись" });
 
     fireEvent.click(screen.getByRole("button", { name: "Темы" }));
@@ -613,13 +638,16 @@ describe("App", () => {
     expect(screen.getByText("12 · без лимита")).toBeInTheDocument();
   });
 
-  it("shows connection settings only to an administrator", async () => {
+  it("moves the profile and sign out to settings and removes backend controls for administrators", async () => {
     vi.stubGlobal("fetch", mockApi(false, [], "admin"));
     render(<App />);
-
-    fireEvent.click(await screen.findByRole("button", { name: "Настроить подключение" }));
-    expect(screen.getByLabelText("Адрес общего backend")).toBeInTheDocument();
-    expect(screen.getByText(/Эмулятор:/)).toBeInTheDocument();
+    await screen.findByRole("heading", { name: "Я хочу открыть счёт." });
+    expect(screen.queryByRole("button", { name: "Выйти" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Настройки" }));
+    expect(screen.getByRole("region", { name: "Профиль" })).toHaveTextContent("Ученик");
+    expect(screen.getByRole("button", { name: "Выйти" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Настроить подключение" })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Адрес общего backend")).not.toBeInTheDocument();
   });
 
   it("starts a session and displays the first exercise", async () => {
@@ -631,7 +659,7 @@ describe("App", () => {
 
     expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
     expect(screen.queryByText("modal_verbs")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Ответить голосом/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Ответить голосом|Записать заново/ })).toBeDisabled();
     expect(screen.getByText(/Микрофон недоступен/)).toBeInTheDocument();
     expect(screen.queryByLabelText("Ваш ответ")).not.toBeInTheDocument();
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/sessions/start", expect.objectContaining({ method: "POST" })));
@@ -684,7 +712,7 @@ describe("App", () => {
     await waitFor(() => expect(nextCalls).toBe(1));
     fireEvent.click(next);
     await waitFor(() => expect(nextCalls).toBe(2));
-    expect(await screen.findByRole("button", { name: "Ответить голосом" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /Ответить голосом|Записать заново/ })).toBeInTheDocument();
     expect(screen.queryByText("Не удалось получить следующую фразу.")).not.toBeInTheDocument();
   });
 
@@ -713,7 +741,6 @@ describe("App", () => {
     expect((await screen.findAllByText("Желим да отворим рачун.")).length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole("button", { name: "Статистика" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Фразы" }));
     expect(await screen.findByText("Желим да отворим рачун.")).toBeInTheDocument();
   });
 
@@ -731,7 +758,7 @@ describe("App", () => {
     render(<App />);
 
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
-    fireEvent.click(await screen.findByRole("button", { name: "Ответить голосом" }));
+    fireEvent.click(await screen.findByRole("button", { name: /Ответить голосом|Записать заново/ }));
     fireEvent.click(await screen.findByRole("button", { name: "Завершить запись" }));
     await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.toString() === "/api/transcriptions")).toBe(true));
     fireEvent.click(screen.getByRole("button", { name: "Настройки" }));
@@ -739,7 +766,7 @@ describe("App", () => {
     await act(async () => { finishTranscription({ ok: true, status: 200, json: async () => ({ text: "Platic\u0301u bankovnom karticom." }) }); });
     fireEvent.click(screen.getByRole("button", { name: "Практика" }));
     expect(screen.queryByLabelText("Ваш ответ")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Ответить голосом" }));
+    fireEvent.click(screen.getByRole("button", { name: /Ответить голосом|Записать заново/ }));
     fireEvent.click(await screen.findByRole("button", { name: "Завершить запись" }));
     const answer = await screen.findByLabelText("Ваш ответ");
     expect(answer).toHaveValue("Платићу банковном картицом.");
@@ -776,11 +803,11 @@ describe("App", () => {
     render(<App />);
 
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
-    fireEvent.click(await screen.findByRole("button", { name: "Ответить голосом" }));
+    fireEvent.click(await screen.findByRole("button", { name: /Ответить голосом|Записать заново/ }));
     fireEvent.click(await screen.findByRole("button", { name: "Завершить запись" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Не удалось расшифровать речь");
     expect(screen.getByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Ответить голосом" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Ответить голосом|Записать заново/ })).toBeEnabled();
 
     fireEvent.click(screen.getByRole("button", { name: "Ввести ответ вручную" }));
     const answer = screen.getByLabelText("Ваш ответ");
@@ -804,7 +831,7 @@ describe("App", () => {
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
     const answer = await recordAnswer();
     fireEvent.change(answer, { target: { value: "Moj odgovor" } });
-    fireEvent.click(await screen.findByRole("button", { name: "Ответить голосом" }));
+    fireEvent.click(await screen.findByRole("button", { name: /Ответить голосом|Записать заново/ }));
     expect(answer).toHaveValue("Moj odgovor");
     expect(screen.getByRole("button", { name: "Проверить ответ" })).toBeDisabled();
     fireEvent.click(await screen.findByRole("button", { name: "Завершить запись" }));
@@ -813,7 +840,7 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Проверить ответ" })).toBeEnabled();
 
     voiceMock.failStart = true;
-    fireEvent.click(await screen.findByRole("button", { name: "Ответить голосом" }));
+    fireEvent.click(await screen.findByRole("button", { name: /Ответить голосом|Записать заново/ }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Не удалось получить доступ к микрофону");
     expect(answer).toHaveValue("Moj odgovor");
   });
@@ -831,7 +858,7 @@ describe("App", () => {
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
     const answer = await recordAnswer();
     fireEvent.change(answer, { target: { value: "Moj odgovor" } });
-    fireEvent.click(screen.getByRole("button", { name: "Ответить голосом" }));
+    fireEvent.click(screen.getByRole("button", { name: /Ответить голосом|Записать заново/ }));
     fireEvent.click(await screen.findByRole("button", { name: "Завершить запись" }));
     await waitFor(() => expect(transcriptions).toBe(2));
     fireEvent.change(answer, { target: { value: "Ručni odgovor" } });
@@ -847,7 +874,7 @@ describe("App", () => {
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
     const answer = await recordAnswer();
     fireEvent.change(answer, { target: { value: "Moj odgovor" } });
-    fireEvent.click(screen.getByRole("button", { name: "Ответить голосом" }));
+    fireEvent.click(screen.getByRole("button", { name: /Ответить голосом|Записать заново/ }));
     await screen.findByRole("button", { name: "Завершить запись" });
     const stopsBeforeBackground = voiceMock.stops;
     const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
@@ -857,7 +884,7 @@ describe("App", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Запись прервана");
     expect(screen.getByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
     expect(answer).toHaveValue("Moj odgovor");
-    expect(screen.getByRole("button", { name: "Ответить голосом" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Ответить голосом|Записать заново/ })).toBeEnabled();
 
     visibility.mockReturnValue("visible");
     fireEvent(document, new Event("visibilitychange"));
@@ -872,7 +899,7 @@ describe("App", () => {
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
     const answer = await recordAnswer();
     fireEvent.change(answer, { target: { value: "Moj odgovor" } });
-    fireEvent.click(screen.getByRole("button", { name: "Ответить голосом" }));
+    fireEvent.click(screen.getByRole("button", { name: /Ответить голосом|Записать заново/ }));
     await screen.findByRole("button", { name: "Завершить запись" });
     const stopsBeforeNavigation = voiceMock.stops;
 
@@ -883,7 +910,7 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
     expect(screen.getByLabelText("Ваш ответ")).toHaveValue("Moj odgovor");
     expect(screen.getByRole("alert")).toHaveTextContent("Запись прервана");
-    expect(screen.getByRole("button", { name: "Ответить голосом" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Ответить голосом|Записать заново/ })).toBeEnabled();
     expect(voiceMock.stops).toBe(stopsBeforeNavigation + 1);
   });
 
@@ -894,7 +921,7 @@ describe("App", () => {
     vi.stubGlobal("fetch", mockApi());
     render(<App />);
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
-    fireEvent.click(await screen.findByRole("button", { name: "Ответить голосом" }));
+    fireEvent.click(await screen.findByRole("button", { name: /Ответить голосом|Записать заново/ }));
     expect(await screen.findByRole("button", { name: "Остановить запись" })).toBeInTheDocument();
     vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
 
@@ -903,7 +930,7 @@ describe("App", () => {
 
     expect(voiceMock.stops).toBe(1);
     expect(screen.queryByRole("button", { name: "Завершить запись" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Ответить голосом" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Ответить голосом|Записать заново/ })).toBeEnabled();
     expect(screen.getByRole("alert")).toHaveTextContent("Запись прервана");
   });
 
@@ -917,7 +944,7 @@ describe("App", () => {
     vi.stubGlobal("fetch", fetchMock);
     render(<App />);
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
-    fireEvent.click(await screen.findByRole("button", { name: "Ответить голосом" }));
+    fireEvent.click(await screen.findByRole("button", { name: /Ответить голосом|Записать заново/ }));
     fireEvent.click(await screen.findByRole("button", { name: "Завершить запись" }));
     await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.toString() === "/api/transcriptions")).toBe(true));
     const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
@@ -940,7 +967,7 @@ describe("App", () => {
     vi.stubGlobal("fetch", mockApi());
     const rendered = render(<App />);
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
-    fireEvent.click(await screen.findByRole("button", { name: "Ответить голосом" }));
+    fireEvent.click(await screen.findByRole("button", { name: /Ответить голосом|Записать заново/ }));
     await screen.findByRole("button", { name: "Завершить запись" });
     await waitFor(() => expect(nativeAppEvents.listener).toBeDefined());
 
@@ -960,7 +987,7 @@ describe("App", () => {
     vi.stubGlobal("fetch", mockApi());
     const rendered = render(<App />);
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
-    fireEvent.click(await screen.findByRole("button", { name: "Ответить голосом" }));
+    fireEvent.click(await screen.findByRole("button", { name: /Ответить голосом|Записать заново/ }));
     await screen.findByRole("button", { name: "Завершить запись" });
 
     rendered.unmount();
@@ -977,7 +1004,7 @@ describe("App", () => {
     vi.stubGlobal("fetch", mockApi());
     render(<App />);
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
-    fireEvent.click(await screen.findByRole("button", { name: "Ответить голосом" }));
+    fireEvent.click(await screen.findByRole("button", { name: /Ответить голосом|Записать заново/ }));
     await screen.findByRole("button", { name: "Завершить запись" });
     const pager = document.querySelector<HTMLElement>(".android-pager")!;
     Object.defineProperty(pager, "clientWidth", { configurable: true, value: 400 });
@@ -988,7 +1015,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Тренировка" }));
     expect(screen.getByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
     expect(screen.getByRole("alert")).toHaveTextContent("Запись прервана");
-    expect(screen.getByRole("button", { name: "Ответить голосом" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Ответить голосом|Записать заново/ })).toBeEnabled();
   });
 
   it("lets an in-flight answer check finish after backgrounding without submitting twice", async () => {
@@ -1097,15 +1124,14 @@ describe("App", () => {
     render(<App />);
 
     fireEvent.click(await screen.findByRole("button", { name: /Статистика/ }));
-    expect(await screen.findByRole("heading", { name: "Статистика" })).toBeInTheDocument();
+    expect(await screen.findByRole("navigation", { name: "Выбор недели" })).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Календарь занятий" })).toBeInTheDocument();
-    expect(screen.getByLabelText("Итоги недели")).toHaveTextContent("10фраз за неделю");
+    expect(screen.getByLabelText("Итоги недели")).toHaveTextContent("10Повторений");
     expect(screen.getByRole("heading", { name: "Фразы по дням" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: /График фраз по дням/ }).querySelectorAll(".daily-chart__column")).toHaveLength(7);
     expect(screen.getByRole("img", { name: /График фраз по дням/ }).querySelector('[title*="всего 10"]')).toHaveAttribute("title", expect.stringContaining("правильно 7, неправильно 3, выучено 1"));
     expect(screen.queryByRole("button", { name: /Прогресс/ })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Фразы" }));
     expect(await screen.findByRole("heading", { name: "В банке" })).toBeInTheDocument();
     expect(screen.getByText("Želim da otvorim račun.")).toBeInTheDocument();
     expect(screen.getByText("выучена")).toBeInTheDocument();
@@ -1314,7 +1340,7 @@ describe("App", () => {
 
     await screen.findByText("1 требуют практики");
     fireEvent.click(await screen.findByRole("button", { name: /Фразы для повторения/ }));
-    expect(await screen.findByRole("button", { name: "Ответить голосом" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /Ответить голосом|Записать заново/ })).toBeInTheDocument();
     expect(nextExerciseCalls).toBe(0);
     fireEvent.change(await recordAnswer(), { target: { value: "Stari odgovor" } });
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
@@ -1327,7 +1353,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /В банке/ }));
 
     expect(screen.queryByLabelText("Ваш ответ")).not.toBeInTheDocument();
-    expect(await screen.findByRole("button", { name: /Ответить голосом/ })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /Ответить голосом|Записать заново/ })).toBeInTheDocument();
     expect(screen.queryByText("Stari odgovor")).not.toBeInTheDocument();
   });
 
@@ -1490,7 +1516,7 @@ describe("App", () => {
     expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
     await waitFor(() => expect(nextCalls).toBe(1));
     fireEvent.click(screen.getByRole("button", { name: /Следующая фраза/ }));
-    expect(await screen.findByRole("button", { name: "Ответить голосом" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /Ответить голосом|Записать заново/ })).toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     const ids = fetchMock.mock.calls.filter(([url]) => url.toString().endsWith("/next-exercise"))
       .map(([, init]) => JSON.parse(init?.body as string).client_request_id);
@@ -1586,6 +1612,7 @@ describe("App", () => {
     await act(async () => { authEvents.notify?.(null); });
     expect(await screen.findByRole("button", { name: "Войти через Google" })).toBeInTheDocument();
     await act(async () => { authEvents.notify?.({ access_token: "other-token" }); });
+    fireEvent.click(await screen.findByRole("button", { name: "Настройки" }));
     expect(await screen.findByText("Другой ученик")).toBeInTheDocument();
     const oldResponse = await baseFetch("/api/attempts", { method: "POST" });
     await act(async () => { settleAttempt({ ok: true, status: 200, json: async () => ({ ...await oldResponse.json(), daily_usage: { used: 3, limit: 10, remaining: 7, resets_at: "2026-09-23T00:00:00Z" } }) }); });
@@ -1608,7 +1635,7 @@ describe("App", () => {
     await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.toString() === "/api/attempts")).toBe(true));
     fireEvent.click(screen.getByRole("button", { name: "SerboTalk — к практике" }));
     fireEvent.click(screen.getByRole("button", { name: /В банке/ }));
-    expect(await screen.findByRole("button", { name: "Ответить голосом" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /Ответить голосом|Записать заново/ })).toBeInTheDocument();
     const response = outcome === "result"
       ? await baseFetch("/api/attempts", { method: "POST" })
       : { ok: false, status: 503, json: async () => ({ detail: { code: "analysis_unavailable", retryable: true } }) };
@@ -1628,7 +1655,7 @@ describe("App", () => {
     vi.stubGlobal("fetch", fetchMock);
     render(<App />);
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
-    fireEvent.click(await screen.findByRole("button", { name: "Ответить голосом" }));
+    fireEvent.click(await screen.findByRole("button", { name: /Ответить голосом|Записать заново/ }));
     fireEvent.click(await screen.findByRole("button", { name: "Завершить запись" }));
     await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.toString() === "/api/transcriptions")).toBe(true));
     fireEvent.click(screen.getByRole("button", { name: "SerboTalk — к практике" }));

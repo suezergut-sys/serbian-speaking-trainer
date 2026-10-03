@@ -5,7 +5,6 @@ import type { MonthlyStatistics, PhraseStatistics } from "./types/statistics";
 import { displaySerbian, type SerbianAlphabet } from "./serbianScript";
 
 const weekDays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
-type StatisticsTab = "activity" | "phrases";
 type PageSize = "10" | "50";
 
 function monthKey(value: Date): string {
@@ -131,12 +130,13 @@ function ActivityTab() {
   if (error || !statistics.length) return <>{toolbar}<div className="statistics-state panel" role="alert">Не удалось загрузить статистику. <button type="button" onClick={() => { setLoading(true); setError(false); setRetry((value) => value + 1); }}>Повторить загрузку статистики</button></div></>;
   const byDate = new Map(statistics.flatMap((month) => month.days).map((day) => [day.date, day]));
   const days = week.map((date) => byDate.get(dateKey(date)) ?? { date: dateKey(date), phrase_count: 0, translation_count: 0, correct_translation_count: 0, mastered_phrase_count: 0 });
-  const total = days.reduce((sum, day) => sum + day.phrase_count, 0);
-  const activeDays = days.filter((day) => day.phrase_count > 0).length;
+  const total = days.reduce((sum, day) => sum + day.translation_count, 0);
+  const mastered = days.reduce((sum, day) => sum + day.mastered_phrase_count, 0);
+  const activeDays = days.filter((day) => day.translation_count > 0).length;
   const maxCount = Math.max(1, ...days.map((day) => day.translation_count), ...days.map((day) => day.mastered_phrase_count));
   return <>
     {toolbar}
-    <section className="statistics-summary" aria-label="Итоги недели"><div className="panel"><span>{activeDays}</span><small>активных дней</small></div><div className="panel"><span>{total}</span><small>фраз за неделю</small></div></section>
+    <section className="statistics-summary" aria-label="Итоги недели"><div className="panel"><span>{activeDays}</span><small>Дней</small></div><div className="panel"><span>{total}</span><small>Повторений</small></div><div className="panel"><span>{mastered}</span><small>Выучено</small></div></section>
     <section className="statistics-card panel" aria-labelledby="calendar-title">
       <div className="statistics-card__heading"><div><p className="kicker">Регулярность</p><h2 id="calendar-title">Календарь занятий</h2></div><span className="calendar-legend"><span><i /> от 1 перевода</span><span><i className="is-intensive" /> от 10 попыток</span></span></div>
       <div className="practice-calendar">{weekDays.map((day) => <span className="calendar-weekday" key={day}>{day}</span>)}{days.map((day) => { const dayNumber = Number(day.date.slice(-2)); const className = ["calendar-day", day.translation_count > 0 && "is-active", day.translation_count >= 10 && "is-intensive"].filter(Boolean).join(" "); return <div className={className} key={day.date} aria-label={`${dayNumber}: ${day.translation_count} фраз`}><span>{dayNumber}</span>{day.translation_count > 0 && <small>{day.translation_count}</small>}</div>; })}</div>
@@ -150,10 +150,8 @@ function ActivityTab() {
 }
 
 export function StatisticsView({ alphabet = "latin" }: { alphabet?: SerbianAlphabet }) {
-  const [tab, setTab] = useState<StatisticsTab>("activity");
   return <main className="statistics-page">
-    <header className="statistics-header"><div><p className="kicker">Ваш прогресс</p><h1>Статистика</h1><span>Активность по дням и состояние фраз в интервальном повторении.</span></div></header>
-    <nav className="statistics-tabs" aria-label="Разделы статистики"><button className={tab === "activity" ? "is-active" : ""} type="button" onClick={() => setTab("activity")}>Активность</button><button className={tab === "phrases" ? "is-active" : ""} type="button" onClick={() => setTab("phrases")}>Фразы</button></nav>
-    {tab === "activity" ? <ActivityTab /> : <PhrasesTab alphabet={alphabet} />}
+    <ActivityTab />
+    <PhrasesTab alphabet={alphabet} />
   </main>;
 }

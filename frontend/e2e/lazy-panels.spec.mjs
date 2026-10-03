@@ -16,6 +16,10 @@ test("secondary panels load on demand while practice remains usable", async ({ p
   const slowStatistics = new Promise((resolve) => { finishStatistics = resolve; });
   await page.route("**/api/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
+    if (path === "/api/statistics/phrases") {
+      await route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({total:0,page:1,page_size:"10",total_pages:0,groups:[]})});
+      return;
+    }
     let body;
     if (path === "/api/auth/me") body = account;
     else if (path === "/api/topics") body = [{
@@ -58,14 +62,14 @@ test("secondary panels load on demand while practice remains usable", async ({ p
   expect(assets.some((url) => /StatisticsView|AdminUsersView/.test(url))).toBe(false);
 
   await page.getByRole("button", { name: "Статистика" }).click();
-  await expect(page.getByRole("heading", { name: "Статистика" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Выбор недели" })).toBeVisible();
   await expect.poll(() => assets.some((url) => /StatisticsView/.test(url))).toBe(true);
   await page.getByRole("button", { name: "Пользователи" }).click();
   await expect(page.getByRole("heading", { name: "Пользователи" })).toBeVisible();
   await expect.poll(() => assets.some((url) => /AdminUsersView/.test(url))).toBe(true);
   finishStatistics();
   await page.getByRole("button", { name: "Статистика" }).click();
-  await expect(page.getByRole("heading", { name: "Статистика" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Выбор недели" })).toBeVisible();
   await page.getByRole("button", { name: "Практика" }).click();
   await expect(page.getByRole("heading", { name: "Темы для практики" })).toBeVisible();
 });
@@ -79,6 +83,10 @@ test("statistics chunk can be retried after a network failure", async ({ page })
   });
   await page.route("**/api/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
+    if (path === "/api/statistics/phrases") {
+      await route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({total:0,page:1,page_size:"10",total_pages:0,groups:[]})});
+      return;
+    }
     const now = new Date();
     const body = path === "/api/auth/me" ? account
       : path === "/api/topics" ? []
@@ -105,6 +113,6 @@ test("statistics chunk can be retried after a network failure", async ({ page })
   await page.getByRole("button", { name: "Статистика" }).click();
   await expect(page.getByRole("alert")).toContainText("Не удалось открыть раздел");
   await page.getByRole("button", { name: "Повторить загрузку" }).click();
-  await expect(page.getByRole("heading", { name: "Статистика" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Выбор недели" })).toBeVisible();
   expect(requests).toBe(2);
 });
