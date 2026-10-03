@@ -191,7 +191,7 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 - [x] Web: статистика с недели и тремя карточками, профиль/выход в настройках, удаление backend controls, два круглых действия под transcript.
 - [x] Frontend 116 tests, lint/typecheck/build, Chrome 9 сценариев + 2 расширенных week/settings checks; backend/scripts gate и Node guards прошли.
 - [x] Номер 1.20/code30 отдельно согласован владельцем; весь текущий клиент от main 1.19 перенесён в production APK; metadata/assets/API/signature проверены.
-- [ ] Публикация PR/APK и подтверждение server digest — см. [релиз](android-1.20-release.md).
+- [x] 03.10.2026: PR #58 merged; GitHub v1.20 опубликован, asset digest/size совпали; Vercel READY на release SHA, alias и 7 assets подтверждены. Авторизованные статистика/настройки/возврат проверены; см. [релиз](android-1.20-release.md).
 - [ ] Физическая ручная приёмка; телефонные/ADB/AVD проверки остаются остановленными владельцем.
 - [x] [Мягкие подсказки](transcription-assistance-design.md) спроектированы.
 - [ ] Личное ревью проекта подсказок, затем отдельная реализация; в 1.20 не включена.
