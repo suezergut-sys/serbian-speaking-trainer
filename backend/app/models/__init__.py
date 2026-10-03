@@ -1,6 +1,7 @@
 from .entities import (
     Attempt,
     AttemptRequest,
+    TranscriptionReceipt,
     ErrorEvent,
     Exercise,
     LearnerSkill,
@@ -16,6 +17,7 @@ from .entities import (
 __all__ = [
     "Attempt",
     "AttemptRequest",
+    "TranscriptionReceipt",
     "ErrorEvent",
     "Exercise",
     "LearnerSkill",

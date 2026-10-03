@@ -21,6 +21,12 @@ from app.services.learner_model import LearnerModelService
 from app.services.review_service import ReviewService, normalize_ru
 from app.services.auth_service import UserService
 from app.models import User
+from app.repositories.transcriptions import TranscriptionReceiptRepository
+from app.schemas.transcriptions import TranscriptionChange
+
+
+class InvalidTranscriptionReceiptError(ValueError):
+    pass
 
 
 class ExerciseNotFoundError(LookupError):
@@ -67,6 +73,7 @@ class AttemptService:
         self.review = ReviewService(db, ai, user.id)
 
     def create(self, request: CreateAttemptRequest) -> AttemptResponse:
+        assistance = self._transcription_evidence(request)
         reserved = self._reserve(request)
         if isinstance(reserved, AttemptResponse):
             return reserved
@@ -83,7 +90,7 @@ class AttemptService:
             self._release(reserved)
             raise
         try:
-            return self._finalize(request, reserved, analysis)
+            return self._finalize(request, reserved, analysis, assistance)
         except Exception:
             self.db.rollback()
             self._release(reserved)
@@ -173,7 +180,23 @@ class AttemptService:
         self.db.expire_all()
         return reserved
 
-    def _finalize(self, request: CreateAttemptRequest, reserved: _Reservation, analysis) -> AttemptResponse:
+    def _transcription_evidence(self, request: CreateAttemptRequest) -> dict:
+        if request.transcription_id is None:
+            if request.accepted_transcription_changes:
+                raise InvalidTranscriptionReceiptError()
+            return {}
+        receipt = TranscriptionReceiptRepository(self.db, self.user.id).get_owned(str(request.transcription_id), request.exercise_id)
+        if receipt is None:
+            raise InvalidTranscriptionReceiptError()
+        changes = [TranscriptionChange.model_validate(c) for c in receipt.changes_json]
+        accepted = set(request.accepted_transcription_changes)
+        if any(i < 0 or i >= len(changes) or changes[i].action != "suggested" for i in accepted):
+            raise InvalidTranscriptionReceiptError()
+        return {"raw_text": receipt.raw_text, "policy_version": receipt.policy_version,
+            "changes": receipt.changes_json, "accepted": sorted(accepted), "assisted": bool(accepted)}
+
+    def _finalize(self, request: CreateAttemptRequest, reserved: _Reservation, analysis, assistance: dict | None = None) -> AttemptResponse:
+        assistance = assistance or {}
         locked_user = UserService(self.db).users.lock(self.user.id)
         entry = self.requests.get_by_client_id(reserved.request_id)
         now = datetime.now(timezone.utc)
@@ -213,7 +236,7 @@ class AttemptService:
                 speech_duration_ms=request.speech_duration_ms,
                 longest_pause_ms=request.longest_pause_ms,
                 pause_count=request.pause_count,
-                timings_json=request.timings,
+                timings_json={**request.timings, "transcription_assistance": assistance},
                 hinted_words_json=hinted_words,
                 analysis_json=analysis.model_dump(),
                 overall_score=overall_score,
@@ -232,7 +255,7 @@ class AttemptService:
                     evidence_json={"evidence": issue.evidence, "correction": issue.correction},
                 )
             )
-        learner_updates = self.learner_model.update_from_analysis(
+        learner_updates = [] if assistance.get("assisted") else self.learner_model.update_from_analysis(
             analysis,
             context_novelty=1.0 if exercise.generation_meta_json.get("novelty_signature") else 0.7,
         )
@@ -246,6 +269,7 @@ class AttemptService:
             review_phrase_id=exercise.generation_meta_json.get("review_phrase_id"),
             topic_id=exercise.generation_meta_json.get("topic_id"),
             topic_phrase_id=exercise.generation_meta_json.get("topic_phrase_id"),
+            transcription_assisted=bool(assistance.get("assisted")),
         )
         if not is_carousel and self.attempts.count_checked_exercises(training_session.id) >= requested_length:
             training_session.status = "completed"
@@ -261,6 +285,7 @@ class AttemptService:
             base_score=base_score,
             hint_penalty=hint_penalty,
             daily_usage=UserService(self.db).usage(locked_user),
+            transcription_assisted=bool(assistance.get("assisted")),
         )
         entry.attempt_id = attempt.id
         entry.response_json = response.model_dump(mode="json")
@@ -295,6 +320,10 @@ class AttemptService:
     @staticmethod
     def _payload_hash(request: CreateAttemptRequest) -> str:
         payload = request.model_dump(mode="json", exclude={"client_request_id"})
+        # Preserve hashes saved by older APKs for unassisted idempotent retries.
+        if request.transcription_id is None and not request.accepted_transcription_changes:
+            payload.pop("transcription_id", None)
+            payload.pop("accepted_transcription_changes", None)
         serialized = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 

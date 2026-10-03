@@ -64,9 +64,10 @@ export function fetchNextExercise(sessionId: string, clientRequestId: string, si
   });
 }
 
-export function transcribeAudio(exerciseId: string, audio: Blob, signal?: AbortSignal): Promise<TranscriptionResponse> {
+export function transcribeAudio(exerciseId: string, audio: Blob, signal?: AbortSignal, assistanceEnabled = false): Promise<TranscriptionResponse> {
   const form = new FormData();
   form.append("exercise_id", exerciseId);
+  form.append("assistance_enabled", String(assistanceEnabled));
   form.append("audio", audio, audioFilename(audio.type));
   return requestJson<TranscriptionResponse>("/api/transcriptions", {
     method: "POST",
@@ -88,6 +89,7 @@ export function submitAttempt(
   hintedWords: string[] = [],
   clientRequestId?: string,
   signal?: AbortSignal,
+  assistance?: { transcription_id: string; accepted_transcription_changes: number[] },
 ): Promise<Attempt> {
   return requestJson<Attempt>("/api/attempts", {
     method: "POST",
@@ -102,6 +104,7 @@ export function submitAttempt(
       timings: timing?.timings ?? {},
       hinted_words: hintedWords,
       client_request_id: clientRequestId,
+      ...assistance,
     }),
     signal,
   });

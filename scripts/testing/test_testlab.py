@@ -136,7 +136,7 @@ def test_current_unstamped_create_all_shape_is_stamped_without_rebuilding(tmp_pa
                 "VALUES ('history-user', 'history@example.invalid', 'user', 'free', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
             ))
         bootstrap_testlab_database(engine)
-        assert alembic_revision(engine) == "e926b83f4d10"
+        assert alembic_revision(engine) == "f31a7b901c22"
         with engine.connect() as connection:
             assert connection.execute(text("SELECT email FROM users WHERE id='history-user'")).scalar_one() == "history@example.invalid"
     finally:
@@ -153,7 +153,7 @@ def test_predecessor_testlab_schema_upgrades_and_preserves_history(tmp_path) -> 
                 "VALUES ('00000000-0000-0000-0000-000000000001', 'request-preserved', 'hash-preserved')"
             ))
         bootstrap_testlab_database(engine)
-        assert alembic_revision(engine) == "e926b83f4d10"
+        assert alembic_revision(engine) == "f31a7b901c22"
         with engine.connect() as connection:
             row = connection.execute(text(
                 "SELECT client_request_id, payload_hash, fencing_token FROM attempt_requests "
