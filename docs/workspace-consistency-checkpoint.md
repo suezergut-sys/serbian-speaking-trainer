@@ -35,6 +35,7 @@ Git worktree разделяет историю и refs, но у каждой к�
 - [x] `git fetch origin`, инвентаризация 7 worktree, сохранение и push двух recovery-веток.
 - [x] После первой синхронизации: 7/7 HEAD совпадают с origin/main, 7/7 Git status пуст.
 - [x] `pnpm --dir frontend install --frozen-lockfile` и `scripts/check.ps1`: 165 backend/scripts passed, 8 skipped; Node guards 5/5; frontend 116/116; lint, TypeScript и production web build прошли. AI mocked, API budget не использовался. Имеются deprecation warnings зависимостей и предупреждение Vite о chunk >500 kB; проверка завершилась с кодом 0. Android metadata 1.20/code30 подтверждены.
-- [ ] PR правил процесса, merge и повторная финальная проверка 7/7 на итоговом origin/main.
+- [x] Правила закоммичены и отправлены: [PR #60](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/60), GitHub MERGEABLE/CLEAN; настроенных CI checks нет.
+- [ ] Merge PR #60 после разрешения владельца и повторная финальная проверка 7/7 на его merged SHA.
 
 Этот change касается сопровождения и документации, не меняет runtime и не требует нового web deploy или APK. Состояние выпуска 1.20 и его ручной приёмки остаётся в [доказательствах релиза](android-1.20-release.md).

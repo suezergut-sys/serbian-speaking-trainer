@@ -291,6 +291,7 @@
 - [x] Исходное содержимое двух грязных копий сохранено отдельными commit/push в recovery-ветках; секреты и зависимости исключены, содержимое снимков проверено.
 - [x] Все семь рабочих копий обновлены до опубликованного `60f9fb2`; Git status пуст, Android metadata 1.20/code30 получены из Git без Capacitor sync/сборки.
 - [x] Обязательное завершение публикации с проверкой main/worktree добавлено в AGENTS/README/decisions.
-- [ ] Публикация правил через PR и финальная синхронизация на его merged SHA.
+- [x] Правила отправлены на GitHub: [PR #60](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/60); scripts/check.ps1: 165 backend/scripts passed / 8 skipped, Node 5/5, frontend 116/116, lint/typecheck/web build прошли.
+- [ ] Merge PR #60 после разрешения владельца и финальная синхронизация на его merged SHA.
 
 [Доказательства и проверки](workspace-consistency-checkpoint.md). Этот организационный срез не закрывает оставшиеся P0/P1/P2 и ручную Android-приёмку.
