@@ -329,6 +329,8 @@ def bootstrap_testlab_database(engine: Engine) -> None:
     del _entities
     current = _metadata_shape(Base.metadata)
     predecessor = {name: set(columns) for name, columns in current.items()}
+    predecessor.pop("transcription_receipts", None)
+    pre_receipt = {name: frozenset(columns) for name, columns in predecessor.items()}
     attempt_request_columns = predecessor.get("attempt_requests")
     if attempt_request_columns is None or not RESERVATION_COLUMNS <= attempt_request_columns:
         raise RuntimeError("Cannot identify the expected attempt request schema")
@@ -348,6 +350,14 @@ def bootstrap_testlab_database(engine: Engine) -> None:
             _alembic(engine, "stamp", head)
         elif stamped_revision != head:
             raise RuntimeError("Refusing current-shaped testlab database with an unexpected Alembic revision")
+        return
+
+    if shape == pre_receipt:
+        if stamped_revision is None:
+            _alembic(engine, "stamp", "e926b83f4d10")
+        elif stamped_revision != "e926b83f4d10":
+            raise RuntimeError("Refusing pre-assistance schema with unexpected Alembic revision")
+        _alembic(engine, "upgrade", "head")
         return
 
     if shape == predecessor:

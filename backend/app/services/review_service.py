@@ -141,6 +141,7 @@ class ReviewService:
         topic_id: str | None = None,
         topic_phrase_id: str | None = None,
         now: datetime | None = None,
+        transcription_assisted: bool = False,
     ) -> ReviewPhraseResponse | None:
         phrase = self.phrases.get_owned(review_phrase_id) if review_phrase_id else self.phrases.find_by_source(normalize_ru(source_ru))
         is_correct = score >= CORRECT_SCORE_THRESHOLD and not hinted_words
@@ -161,6 +162,13 @@ class ReviewService:
             phrase.topic_id = phrase.topic_id or topic_id
             phrase.topic_phrase_id = phrase.topic_phrase_id or topic_phrase_id
         phrase.attempts += 1
+        if transcription_assisted:
+            # Assistance neither advances nor resets earned mastery/streak and
+            # is not counted as a learning error. Require unassisted practice.
+            phrase.updated_at = now or datetime.now(timezone.utc)
+            self.db.flush()
+            topic = self.topics.get_visible(phrase.topic_id) if phrase.topic_id else None
+            return self._phrase_response(phrase, topic_title=topic.title_ru if topic else None)
         phrase.best_score = max(phrase.best_score, score)
         phrase.perfect_streak = phrase.perfect_streak + 1 if is_correct else 0
         if not is_correct:

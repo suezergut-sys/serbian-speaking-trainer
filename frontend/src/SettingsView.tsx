@@ -1,7 +1,9 @@
 import type { CurrentUser } from "./types/auth";
 import type { SerbianAlphabet } from "./serbianScript";
 
-export function SettingsView({ alphabet, onAlphabetChange, account, onSignOut }: {
+export function SettingsView({ alphabet, onAlphabetChange, account, onSignOut, assistanceEnabled = false, onAssistanceChange }: {
+  assistanceEnabled?: boolean;
+  onAssistanceChange?: (enabled: boolean) => void;
   account?: CurrentUser;
   onSignOut?: () => void;
   alphabet: SerbianAlphabet;
@@ -15,6 +17,11 @@ export function SettingsView({ alphabet, onAlphabetChange, account, onSignOut }:
       <label><input type="radio" name="serbian-alphabet" value="latin" checked={alphabet === "latin"} onChange={() => onAlphabetChange("latin")} /> Латиница <span>Želim da otvorim račun.</span></label>
       <label><input type="radio" name="serbian-alphabet" value="cyrillic" checked={alphabet === "cyrillic"} onChange={() => onAlphabetChange("cyrillic")} /> Кириллица <span>Желим да отворим рачун.</span></label>
     </fieldset>
+    <section className="assistance-settings panel">
+      <label><input type="checkbox" role="switch" checked={assistanceEnabled} onChange={event => onAssistanceChange?.(event.target.checked)} /> Мягкие подсказки при распознавании</label>
+      <p>Уточнять явные ошибки написания и предлагать варианты спорных букв и окончаний. Спорные варианты применяются только после вашего подтверждения.</p>
+      <small>По умолчанию выключено. Выбор сохраняется для этого аккаунта на этом устройстве и применяется к следующей записи.</small>
+    </section>
     {account && <section className="settings-profile panel" aria-label="Профиль">
       <div className="profile"><span className="avatar">{account.display_name?.slice(0, 1).toLocaleUpperCase() || "A"}</span>
         <span className="profile__copy"><strong>{account.display_name || account.email}</strong><small>{account.daily_usage.limit === null ? `${account.daily_usage.used} фраз · без лимита` : `${account.daily_usage.remaining} из ${account.daily_usage.limit} фраз осталось`}</small></span>

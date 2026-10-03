@@ -228,6 +228,31 @@ describe("App", () => {
     return screen.findByLabelText("Ваш ответ");
   }
 
+  it("applies only accepted assistance and keeps its evidence through manual edits", async () => {
+    voiceMock.available = true;
+    window.localStorage.setItem("serbotalk.soft-assistance.user-1", "true");
+    const baseFetch = mockApi();
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => input.toString() === "/api/transcriptions"
+      ? Promise.resolve({ ok: true, json: async () => ({ text: "Cemu?", raw_text: "Cemu?", transcription_id: "receipt-1", changes: [
+        { start: 0, end: 4, original: "Cemu", replacement: "Čemu", action: "suggested", kind: "phonetic_ambiguity", reason_code: "confirm_ambiguous_sound" },
+      ] }) }) : baseFetch(input, init));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    await screen.findByRole("heading", { name: "Я хочу открыть счёт." });
+    const answer = await recordAnswer();
+    expect(answer).toHaveValue("Cemu?");
+    const voiceRequest = fetchMock.mock.calls.find(([url]) => url.toString() === "/api/transcriptions")!;
+    expect((voiceRequest[1]?.body as FormData).get("assistance_enabled")).toBe("true");
+    fireEvent.click(screen.getByRole("button", { name: "Принять подсказку" }));
+    expect(answer).toHaveValue("Čemu?");
+    fireEvent.change(answer, { target: { value: "Čemu sada?" } });
+    expect(screen.queryByRole("button", { name: "Отменить" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.toString() === "/api/attempts")).toBe(true));
+    const submitted = fetchMock.mock.calls.find(([url]) => url.toString() === "/api/attempts")!;
+    expect(JSON.parse(submitted[1]?.body as string)).toMatchObject({ transcript_sr: "Čemu sada?", transcription_id: "receipt-1", accepted_transcription_changes: [0] });
+  });
+
   it("places check and static microphone retry below the transcript without automatically grading", async () => {
     voiceMock.available = true;
     const fetchMock = mockApi();

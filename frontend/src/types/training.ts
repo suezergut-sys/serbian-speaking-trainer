@@ -72,6 +72,7 @@ export type AnswerAnalysis = {
 };
 
 export type Attempt = {
+  transcription_assisted?: boolean;
   id: string;
   exercise_id: string;
   transcript_sr: string;
@@ -130,4 +131,8 @@ export type AttemptTimings = {
 
 export type TranscriptionResponse = {
   text: string;
+  raw_text?: string | null;
+  transcription_id?: string | null;
+  policy_version?: string | null;
+  changes?: Array<{ start: number; end: number; original: string; replacement: string; kind: string; action: "applied" | "suggested"; reason_code: string }>;
 };

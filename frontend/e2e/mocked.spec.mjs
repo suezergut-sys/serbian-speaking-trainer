@@ -63,6 +63,41 @@ async function mockApp(page, submitted) {
 }
 
 const measuredSamples = Number(process.env.E2E_SAMPLES_PER_SCRIPT ?? 1);
+for (const native of [false, true]) {
+  test(`${native ? "Android" : "web"} opt-in assistance and artwork`, async ({ page }) => {
+    await page.setViewportSize({ width: 393, height: 851 });
+    if (native) await page.addInitScript(() => { window.CapacitorCustomPlatform = { name: "android" }; });
+    await mockApp(page, []);
+    const payloads = [];
+    page.on("request", r => { if (new URL(r.url()).pathname === "/api/attempts") payloads.push(r.postDataJSON()); });
+    await page.route("**/api/transcriptions", r => r.fulfill({status:200,contentType:"application/json",body:JSON.stringify({text:"Cemu?",raw_text:"Cemu?",transcription_id:"receipt-1",changes:[{start:0,end:4,original:"Cemu",replacement:"Čemu",action:"suggested",kind:"phonetic_ambiguity",reason_code:"confirm_ambiguous_sound"}]})}));
+    await page.goto("/");
+    await page.getByRole("heading", {name:"Я хочу открыть счёт."}).waitFor();
+    await page.getByRole("button", {name:"Настройки",exact:true}).click();
+    const toggle = page.getByRole("switch");
+    await expect(toggle).not.toBeChecked();
+    await toggle.check();
+    await page.getByRole("button", {name:native ? "Тренировка" : "Практика",exact:true}).click();
+    await page.getByRole("button", {name:"Ответить голосом"}).click();
+    await page.getByRole("button", {name:"Завершить запись"}).click();
+    const answer = page.getByLabel("Ваш ответ");
+    await expect(answer).toHaveValue("Cemu?");
+    await page.getByRole("button", {name:"Принять подсказку"}).click();
+    await expect(answer).toHaveValue("Čemu?");
+    await page.getByText("Исходная расшифровка", {exact:true}).click();
+    await expect(page.getByText("Cemu?", {exact:true})).toBeVisible();
+    const check = page.getByRole("button", {name:native ? "Проверить" : "Проверить ответ",exact:true});
+    const retry = page.getByRole("button", {name:"Записать заново"});
+    await expect(check).toHaveCSS("border-color", "rgb(87, 201, 255)");
+    await expect(retry).toHaveCSS("border-color", "rgb(87, 201, 255)");
+    await expect(check).toHaveCSS("color", "rgb(83, 255, 208)");
+    await expect(retry).toHaveCSS("animation-name", "none");
+    await page.screenshot({path:`../artifacts/soft-assistance-${native ? "android" : "web"}.png`});
+    await check.click();
+    await expect(page.getByText("Верный перевод.", {exact:true}).first()).toBeVisible();
+    expect(payloads[0]).toMatchObject({transcription_id:"receipt-1",accepted_transcription_changes:[0],transcript_sr:"Čemu?"});
+  });
+}
 const warmups = Number(process.env.E2E_WARMUP_PER_SCRIPT ?? 0);
 if (!Number.isInteger(measuredSamples) || measuredSamples < 1 || measuredSamples > 30 ||
     !Number.isInteger(warmups) || warmups < 0 || warmups > 5) {

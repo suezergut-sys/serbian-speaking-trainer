@@ -11,6 +11,8 @@ import { fetchCurrentUser } from "./api/users";
 import { initializeAuth, isAuthConfigured, onAuthStateChange, signInWithGoogle, signOut } from "./auth";
 import type { CurrentUser } from "./types/auth";
 import { LegalPage } from "./LegalPage";
+import { readAssistance, saveAssistance, assistedText } from "./transcriptionAssistance";
+import { TranscriptionAssistanceView, type AssistanceDraft } from "./TranscriptionAssistanceView";
 import { SettingsView } from "./SettingsView";
 import { displaySerbian, displaySerbianInRussianText, readSerbianAlphabet, saveSerbianAlphabet, toSerbianLatin, type SerbianAlphabet } from "./serbianScript";
 import { AnswerResult } from "./AnswerResult";
@@ -36,12 +38,12 @@ function AnswerActions({ answer, loading, native, voiceState, voiceSupported, st
 }) {
   const busy = voiceState === "connecting" || voiceState === "recording" || voiceState === "transcribing";
   return <div className="answer-actions">
-    {answer.trim() && <button className="answer-check-button" type="submit" aria-label={loading ? "Проверяем…" : native ? "Проверить" : "Проверить ответ"} disabled={loading || busy}><Icon name="tick" size={34} /></button>}
+    {answer.trim() && <button className="answer-check-button" type="submit" aria-label={loading ? "Проверяем…" : native ? "Проверить" : "Проверить ответ"} disabled={loading || busy}><Icon name="tick" size={40} /></button>}
     <button className={`mic-button${busy ? " is-active" : ""}${answer.trim() && !busy ? " mic-button--retry" : ""}`} type="button"
       aria-label={busy ? voiceState === "recording" ? "Завершить запись" : "Остановить запись" : answer.trim() ? "Записать заново" : "Ответить голосом"}
       disabled={loading || !voiceSupported || voiceState === "transcribing"}
       onClick={busy ? voiceState === "recording" ? finishVoice : stopVoice : startVoice}>
-      {answer.trim() && !busy && <span className="mic-retry-ring"><Icon name="repeat" size={68} /></span>}
+      {answer.trim() && !busy && <span className="mic-retry-ring"><Icon name="retry" size={52} /></span>}
       <Icon name="mic" size={30} />
     </button>
   </div>;
@@ -80,6 +82,7 @@ function Icon({ name, size = 20 }: { name: string; size?: number }) {
     chart: <><path d="M4 19V9M10 19V5M16 19v-7M22 19V2"/></>,
     progress: <><path d="M4 18h16M6 15l4-4 3 2 5-7"/><path d="M16 6h2v2"/></>,
     repeat: <><path fill="currentColor" stroke="none" d="M2.4 8.1C5.6 1.1 15.7.6 21 5.1V2.5L24 8l-5.1 3.4.4-3.2C15.6 4.8 9.2 4.2 5.3 10.2Z"/><path fill="currentColor" stroke="none" d="M21.6 15.9C18.4 22.9 8.3 23.4 3 18.9v2.6L0 16l5.1-3.4-.4 3.2c3.7 3.4 10.1 4 14-2Z"/></>,
+    retry: <><path d="M3 10a9 9 0 0 1 16-4l2 2M21 14a9 9 0 0 1-16 4l-2-2" strokeWidth="2.8"/><path fill="currentColor" stroke="none" d="M21.4 3.7 22 9.5 16.3 8.2ZM2.6 20.3 2 14.5l5.7 1.3Z"/></>,
     briefcase: <><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V4h8v3M3 12h18M10 12v2h4v-2"/></>,
     bank: <><path d="m3 9 9-5 9 5M5 10h14M6 10v8M10 10v8M14 10v8M18 10v8M3 20h18"/></>,
     sun: <><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></>,
@@ -171,6 +174,8 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const [exerciseNumber, setExerciseNumber] = useState(1);
   const [answer, setAnswer] = useState("");
   const [hasTranscript, setHasTranscript] = useState(false);
+  const [assistanceEnabled, setAssistanceEnabled] = useState(() => readAssistance(account.id));
+  const [assistanceDraft, setAssistanceDraft] = useState<AssistanceDraft>();
   const [alphabet, setAlphabet] = useState<SerbianAlphabet>(() => readSerbianAlphabet(account.id));
   const alphabetRef = useRef(alphabet);
   const [attempt, setAttempt] = useState<Attempt>();
@@ -502,12 +507,13 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       if (voiceEpochRef.current !== epoch) return;
       voiceRef.current = undefined;
       startUiTiming("transcription");
-      const transcript = await transcribeAudio(exerciseId, recording.audio, controller.signal);
+      const transcript = await transcribeAudio(exerciseId, recording.audio, controller.signal, assistanceEnabled);
       if (voiceEpochRef.current !== epoch) return;
       if (answerEditEpochRef.current === voiceStartEditEpochRef.current) {
         voiceTimingRef.current = recording.timing;
         setAnswer(displaySerbian(transcript.text, alphabetRef.current));
         setHasTranscript(true);
+        setAssistanceDraft(transcript.transcription_id ? { response: transcript, selected: (transcript.changes ?? []).flatMap((c, i) => c.action === "applied" ? [i] : []), edited: false } : undefined);
       }
       setVoiceState("idle");
     } catch {
@@ -539,7 +545,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   async function startTraining(topicId: string) {
     startUiTiming("first_phrase");
     invalidateFlow();
-    stopVoice(); setAnswer(""); setHasTranscript(false); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
+    stopVoice(); setAnswer(""); setAssistanceDraft(undefined); setHasTranscript(false); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
     setSession(undefined); setExercise(undefined); setCompletedCount(0); setSessionComplete(false); setTopicExhausted(false);
     setPreparingPhrase(true); setError(undefined);
     const epoch = flowEpochRef.current;
@@ -578,7 +584,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       const started = await startTrainingSession({ review_mode: true }, controller.signal);
       if (flowEpochRef.current !== epoch) return;
       setSession(started.session); setExercise(started.exercise); setExerciseNumber(1);
-      setAnswer(""); setHasTranscript(false); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
+      setAnswer(""); setAssistanceDraft(undefined); setHasTranscript(false); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
       setStartupState("ready");
     } catch (requestError) {
       if (flowEpochRef.current !== epoch) return;
@@ -609,7 +615,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       nextExerciseRef.current = undefined; nextRequestIdRef.current = undefined;
       setExercise(next); setExerciseNumber((current) => isReviewMode ? current + 1 : Math.min(current + 1, session.requested_length));
       wordHintsRef.current = {}; savedHintsRef.current.clear();
-      setAnswer(""); setHasTranscript(false); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
+      setAnswer(""); setAssistanceDraft(undefined); setHasTranscript(false); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
     }
     catch (requestError) {
       if (flowEpochRef.current !== epoch) return;
@@ -621,11 +627,19 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       } else if (isReviewMode && requestError instanceof BackendError && (requestError.code === "review_queue_empty" || requestError.status === 409)) {
         reviewSummaryEpochRef.current += 1;
         setSession(undefined); setExercise(undefined); setReviewPhraseCount(0);
-        setAnswer(""); setHasTranscript(false); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
+        setAnswer(""); setAssistanceDraft(undefined); setHasTranscript(false); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
         setError("Все фразы из карусели освоены. Отличная работа!");
       } else setError("Не удалось получить следующую фразу.");
     }
     finally { if (flowEpochRef.current === epoch) { advancingRef.current = false; flowControllerRef.current = undefined; setAdvancing(false); } }
+  }
+
+  function toggleTranscriptionChange(index: number) {
+    if (!assistanceDraft || assistanceDraft.edited || checking || voiceBusy) return;
+    const selected = assistanceDraft.selected.includes(index) ? assistanceDraft.selected.filter(i => i !== index) : [...assistanceDraft.selected, index];
+    answerEditEpochRef.current += 1;
+    setAnswer(displaySerbian(assistedText(assistanceDraft.response, selected), alphabet));
+    setAssistanceDraft({ ...assistanceDraft, selected });
   }
 
   async function checkAnswer(event: React.FormEvent<HTMLFormElement>) {
@@ -635,7 +649,8 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     const transcript = toSerbianLatin(answer.trim());
     const timing = voiceTimingRef.current;
     const hintedWords = Object.keys(wordHintsRef.current).sort();
-    const payload = JSON.stringify({ exerciseId: exercise.id, transcript, timing, hintedWords });
+    const assistance = assistanceDraft?.response.transcription_id ? { transcription_id: assistanceDraft.response.transcription_id, accepted_transcription_changes: assistanceDraft.selected.filter(i => assistanceDraft.response.changes![i].action === "suggested") } : undefined;
+    const payload = JSON.stringify({ exerciseId: exercise.id, transcript, timing, hintedWords, assistance });
     const id = pendingAttemptRef.current?.payload === payload ? pendingAttemptRef.current.id : requestId();
     pendingAttemptRef.current = { payload, id };
     checkingRef.current = true;
@@ -644,7 +659,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     const controller = new AbortController();
     flowControllerRef.current = controller;
     try {
-      const completed = await submitAttempt(exercise.id, transcript, timing, hintedWords, id, controller.signal);
+      const completed = await submitAttempt(exercise.id, transcript, timing, hintedWords, id, controller.signal, assistance);
       if (flowEpochRef.current !== epoch) return;
       pendingAttemptRef.current = undefined;
       setAttempt(completed);
@@ -684,7 +699,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   function resetTraining() {
     invalidateFlow();
     stopVoice(); setView("practice"); setSession(undefined); setExercise(undefined); setExerciseNumber(1);
-    setAnswer(""); setHasTranscript(false); setAttempt(undefined); setError(undefined); setWordHints({}); setActiveHint(undefined); setCompletedCount(0); setSessionComplete(false); setTopicExhausted(false);
+    setAnswer(""); setAssistanceDraft(undefined); setHasTranscript(false); setAttempt(undefined); setError(undefined); setWordHints({}); setActiveHint(undefined); setCompletedCount(0); setSessionComplete(false); setTopicExhausted(false);
   }
 
   function selectTopic(topicId: string) {
@@ -772,6 +787,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     return <div className={`feedback ${native ? "android-feedback" : ""} feedback--${attempt.analysis.verdict}`}>
       <AnswerResult source={exercise?.source_ru ?? ""} answer={attempt.transcript_sr} attempt={attempt} alphabet={alphabet} />
       <div className="feedback__score"><span>{Math.round(attempt.overall_score * 100)}%</span><strong>{attempt.analysis.verdict === "correct" ? "Верно" : attempt.analysis.verdict === "mostly_correct" ? "Почти верно" : "Нужно доработать"}</strong></div>
+      {attempt.transcription_assisted && <p className="assisted-answer-label">С подсказкой — освоение не повышено</p>}
       {attempt.hint_penalty > 0 && <div className="hint-penalty"><Icon name="bulb" /><span>Подсказки: −{Math.round(attempt.hint_penalty * 100)} баллов</span></div>}
       <p>{displaySerbianInRussianText(attempt.analysis.short_feedback_ru, alphabet)}</p>
       <details><summary>Разбор</summary><p>{displaySerbianInRussianText(attempt.analysis.detailed_feedback_ru, alphabet)}</p><div className="score-grid"><span>Смысл <b>{Math.round(attempt.analysis.semantic_score * 100)}</b></span><span>Грамматика <b>{Math.round(attempt.analysis.grammar_score * 100)}</b></span><span>Лексика <b>{Math.round(attempt.analysis.lexical_score * 100)}</b></span><span>Естественность <b>{Math.round(attempt.analysis.naturalness_score * 100)}</b></span></div>{attempt.analysis.issues.map((issue, index) => <p className="issue" key={`${issue.skill_key}-${issue.type}-${index}`}>{displaySerbianInRussianText(issue.evidence, alphabet)}{issue.correction ? ` → ${displaySerbianInRussianText(issue.correction, alphabet)}` : ""}</p>)}</details>
@@ -866,7 +882,8 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
                 {!attempt ? <form className="android-answer" onSubmit={checkAnswer}>
                   {hasTranscript ? <><label className="sr-only" htmlFor="android-serbian-answer">Ваш ответ</label>
-                    <textarea id="android-serbian-answer" value={answer} readOnly={checking} onChange={(event) => { answerEditEpochRef.current += 1; voiceTimingRef.current = undefined; setAnswer(event.target.value); }} placeholder="Введите ответ на сербском языке" rows={3} /></> : <p className="voice-prompt">Произнесите ответ в микрофон</p>}
+                    <textarea id="android-serbian-answer" value={answer} readOnly={checking} onChange={(event) => { answerEditEpochRef.current += 1; voiceTimingRef.current = undefined; setAssistanceDraft(current => current ? { ...current, edited: true } : undefined); setAnswer(event.target.value); }} placeholder="Введите ответ на сербском языке" rows={3} /></> : <p className="voice-prompt">Произнесите ответ в микрофон</p>}
+                  <TranscriptionAssistanceView draft={assistanceDraft} alphabet={alphabet} disabled={checking || voiceBusy} onToggle={toggleTranscriptionChange} />
                   <AnswerActions answer={answer} loading={checking} native={isNative} voiceState={voiceState} voiceSupported={voiceSupported} startVoice={() => void startVoice()} finishVoice={() => void finishVoice()} stopVoice={stopVoice} />
                   {(!voiceSupported || voiceState !== "idle") && <p className="android-voice-state" role="status">{!voiceSupported ? "Микрофон недоступен. Разрешите доступ в настройках устройства." : voiceState === "connecting" ? "Подключаем микрофон…" : voiceState === "recording" ? "Запись" : voiceState === "transcribing" ? "Распознаём…" : "Повторите запись"}</p>}
                   {!hasTranscript && (voiceState === "error" || !voiceSupported) && <button type="button" onClick={enterAnswerManually}>Ввести ответ вручную</button>}
@@ -882,7 +899,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
           </section>
           <section className="android-page android-settings-page" aria-label="Настройки приложения">
-            <SettingsView alphabet={alphabet} onAlphabetChange={changeAlphabet} account={account} onSignOut={onSignOut} />
+            <SettingsView alphabet={alphabet} onAlphabetChange={changeAlphabet} account={account} onSignOut={onSignOut} assistanceEnabled={assistanceEnabled} onAssistanceChange={enabled => { interruptVoice(); saveAssistance(account.id, enabled); setAssistanceEnabled(enabled); }} />
           </section>
         </div>
       </div>
@@ -910,7 +927,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
 
 
-      {view === "admin" ? <DeferredPanel key="admin" load={loadAdminUsers} panelProps={{}} label="пользователей" /> : view === "statistics" ? <DeferredPanel key="statistics" load={loadStatistics} panelProps={{ alphabet }} label="статистику" /> : view === "settings" ? <SettingsView alphabet={alphabet} onAlphabetChange={changeAlphabet} account={account} onSignOut={onSignOut} /> : (
+      {view === "admin" ? <DeferredPanel key="admin" load={loadAdminUsers} panelProps={{}} label="пользователей" /> : view === "statistics" ? <DeferredPanel key="statistics" load={loadStatistics} panelProps={{ alphabet }} label="статистику" /> : view === "settings" ? <SettingsView alphabet={alphabet} onAlphabetChange={changeAlphabet} account={account} onSignOut={onSignOut} assistanceEnabled={assistanceEnabled} onAssistanceChange={enabled => { interruptVoice(); saveAssistance(account.id, enabled); setAssistanceEnabled(enabled); }} /> : (
         <main className="workspace">
           <aside className="topics-panel panel">
             <div className="panel-heading"><h2>Темы для практики</h2><p>Выберите ситуацию и начните разговор на сербском языке</p></div>
@@ -967,9 +984,10 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                   {!attempt ? (
                     <form onSubmit={checkAnswer}>
                       <div className="answer-input">
-                        {hasTranscript ? <><label className="sr-only" htmlFor="serbian-answer">Ваш ответ</label><textarea id="serbian-answer" value={answer} readOnly={checking} onChange={(event) => { answerEditEpochRef.current += 1; voiceTimingRef.current = undefined; setAnswer(event.target.value); }} placeholder="Введите ответ на сербском языке" rows={4} /></> : <p className="voice-prompt">Произнесите ответ в микрофон. После распознавания текст можно исправить.</p>}
+                        {hasTranscript ? <><label className="sr-only" htmlFor="serbian-answer">Ваш ответ</label><textarea id="serbian-answer" value={answer} readOnly={checking} onChange={(event) => { answerEditEpochRef.current += 1; voiceTimingRef.current = undefined; setAssistanceDraft(current => current ? { ...current, edited: true } : undefined); setAnswer(event.target.value); }} placeholder="Введите ответ на сербском языке" rows={4} /></> : <p className="voice-prompt">Произнесите ответ в микрофон. После распознавания текст можно исправить.</p>}
                       </div>
-                      <AnswerActions answer={answer} loading={checking} native={isNative} voiceState={voiceState} voiceSupported={voiceSupported} startVoice={() => void startVoice()} finishVoice={() => void finishVoice()} stopVoice={stopVoice} />
+                      <TranscriptionAssistanceView draft={assistanceDraft} alphabet={alphabet} disabled={checking || voiceBusy} onToggle={toggleTranscriptionChange} />
+                  <AnswerActions answer={answer} loading={checking} native={isNative} voiceState={voiceState} voiceSupported={voiceSupported} startVoice={() => void startVoice()} finishVoice={() => void finishVoice()} stopVoice={stopVoice} />
                       <div className="voice-status">{!voiceSupported ? "Микрофон недоступен. Разрешите доступ к нему в браузере или устройстве." : voiceState === "recording" ? "Идёт запись. Аудио не сохраняется" : voiceState === "transcribing" ? "Расшифровываем фразу…" : voiceState === "error" ? "Не удалось распознать ответ. Повторите запись." : hasTranscript ? "Введите ответ или исправьте распознанный текст." : "Нажмите на микрофон, чтобы ответить."}</div>
                       {!hasTranscript && (voiceState === "error" || !voiceSupported) && <button type="button" onClick={enterAnswerManually}>Ввести ответ вручную</button>}
 

@@ -679,3 +679,27 @@ button { cursor: pointer; background: var(--panel); }
 .settings-profile .profile__copy { display: grid; min-width: 0; overflow-wrap: anywhere; }
 .settings-profile .sign-out-button { display: inline-flex; padding: .7rem 1rem; border: 1px solid var(--line); border-radius: 10px; background: #07162a; color: #eaf2ff; }
 .android-answer > button[type="button"], .practice-card form > button[type="button"] { padding: .75rem 1rem; border: 1px solid var(--line); border-radius: 12px; background: #07162a; color: #dceaff; font: inherit; }
+/* Reference artwork: matching blue discs, cyan rims and static retry arrows. */
+.answer-check-button, .mic-button--retry {
+  position: relative; width: 88px; height: 88px; padding: 0;
+  border: 2px solid #57c9ff; border-radius: 50%;
+  background: radial-gradient(circle at 36% 22%, #0758a8, #06346c 55%, #06264d);
+  box-shadow: 0 0 0 7px rgba(13, 78, 154, .32), 0 0 26px rgba(25, 130, 246, .26), inset 0 0 12px rgba(63, 177, 255, .15);
+}
+.answer-check-button { color: #53ffd0; }
+.answer-check-button > .icon { width: 42px; height: 42px; filter: drop-shadow(0 0 5px rgba(58, 255, 203, .4)); stroke-width: 2.8; }
+.mic-button--retry { color: #85dcff; }
+.android-answer .mic-button--retry { width: 88px; height: 88px; }
+.mic-retry-ring { inset: 11px; color: #66d1ff; }
+.mic-button--retry > .icon { width: 23px; height: 23px; }
+.answer-actions { gap: 2rem; margin: 1.2rem 0; }
+.transcription-assistance { width: 100%; padding: .8rem; border: 1px solid var(--line); border-radius: 12px; background: #07162a; color: #b8d5f4; font-size: .8rem; }
+.transcription-assistance > div { display: flex; gap: .7rem; align-items: center; justify-content: space-between; margin-block: .5rem; }
+.transcription-assistance button { background: #103966; color: #dceaff; border: 1px solid #3987bc; border-radius: 9px; padding: .5rem .65rem; font: inherit; }
+.transcription-assistance button:disabled { opacity: .45; }
+.transcription-assistance p { margin: .4rem 0; }
+.assistance-settings { margin-block: 1rem; padding: 1.25rem; }
+.assistance-settings label { display: flex; align-items: center; gap: .6rem; }
+.assistance-settings input { accent-color: var(--cyan); width: 20px; height: 20px; flex: 0 0 auto; }
+.assistance-settings p, .assistance-settings small { color: #9ab2d2; line-height: 1.5; }
+.assisted-answer-label { color: #85dcff; }

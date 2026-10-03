@@ -91,6 +91,17 @@ class AttemptRequest(Base):
     response_json: Mapped[dict[str, Any] | None] = mapped_column(JSON)
 
 
+class TranscriptionReceipt(Base):
+    __tablename__ = "transcription_receipts"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    exercise_id: Mapped[str] = mapped_column(ForeignKey("exercises.id", ondelete="CASCADE"), index=True)
+    raw_text: Mapped[str] = mapped_column(Text)
+    changes_json: Mapped[list[dict[str, Any]]] = mapped_column(JSON)
+    policy_version: Mapped[str] = mapped_column(String(40))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
 class Skill(Base):
     __tablename__ = "skills"
 

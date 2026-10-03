@@ -6,6 +6,8 @@ from app.repositories import ExerciseRepository
 from app.schemas import TranscriptionResponse
 from app.services.transcription_adapter import TranscriptionProvider, TranscriptionServiceError
 from app.services.serbian_text import has_unexpected_letter_script, serbian_latin
+from app.services.transcription_assistance import POLICY_VERSION, apply_changes, propose
+from app.repositories.transcriptions import TranscriptionReceiptRepository
 
 ALLOWED_AUDIO_TYPES = {
     "audio/webm": ".webm",
@@ -38,9 +40,12 @@ class TranscriptionService:
         self.exercises = ExerciseRepository(db, user_id)
         self.provider = provider
         self.settings = settings
+        self.db = db
+        self.receipts = TranscriptionReceiptRepository(db, user_id)
 
-    def transcribe(self, *, exercise_id: str, audio: UploadFile) -> TranscriptionResponse:
-        if self.exercises.get_owned(exercise_id) is None:
+    def transcribe(self, *, exercise_id: str, audio: UploadFile, assistance_enabled: bool = False) -> TranscriptionResponse:
+        exercise = self.exercises.get_owned(exercise_id)
+        if exercise is None:
             raise TranscriptionExerciseNotFoundError(exercise_id)
         if not self.provider.is_available:
             raise TranscriptionServiceError("OpenAI transcription is not configured")
@@ -64,7 +69,19 @@ class TranscriptionService:
         )
         if has_unexpected_letter_script(result.text):
             raise TranscriptionServiceError("Unexpected transcription script")
-        return TranscriptionResponse(text=serbian_latin(result.text))
+        raw = serbian_latin(result.text)
+        if not assistance_enabled:
+            return TranscriptionResponse(text=raw)
+        variants = list(exercise.target_hints_json.get("intended_sr_variants", []))
+        canonical = exercise.target_hints_json.get("canonical_sr")
+        if canonical:
+            variants.append(str(canonical))
+        changes = propose(raw, [serbian_latin(v) for v in variants])
+        receipt = self.receipts.add(exercise_id, raw, [c.model_dump() for c in changes], POLICY_VERSION)
+        response = TranscriptionResponse(text=apply_changes(raw, changes, {i for i, c in enumerate(changes) if c.action == "applied"}),
+            raw_text=raw, transcription_id=receipt.id, policy_version=POLICY_VERSION, changes=changes)
+        self.db.commit()
+        return response
 
 
 def serbian_cyrillic_to_latin(text: str) -> str:

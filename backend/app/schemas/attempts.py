@@ -56,6 +56,8 @@ class CreateAttemptRequest(BaseModel):
     pause_count: int | None = Field(default=None, ge=0, le=1000)
     timings: dict[str, JsonValue] = Field(default_factory=dict)
     hinted_words: list[str] = Field(default_factory=list, max_length=30)
+    transcription_id: UUID | None = None
+    accepted_transcription_changes: list[int] = Field(default_factory=list, max_length=3)
 
 
 class AttemptResponse(BaseModel):
@@ -68,6 +70,7 @@ class AttemptResponse(BaseModel):
     base_score: float = Field(ge=0, le=1)
     hint_penalty: float = Field(ge=0, le=1)
     daily_usage: DailyUsageResponse | None = None
+    transcription_assisted: bool = False
 
 
 class LearnerSkillUpdate(BaseModel):

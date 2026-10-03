@@ -24,17 +24,18 @@ from app.models import User
 router = APIRouter(prefix="/transcriptions", tags=["transcriptions"])
 
 
-@router.post("", response_model=TranscriptionResponse)
+@router.post("", response_model=TranscriptionResponse, response_model_exclude_unset=True)
 def create_transcription(
     exercise_id: Annotated[str, Form(min_length=1, max_length=36)],
     audio: Annotated[UploadFile, File()],
+    assistance_enabled: Annotated[bool, Form()] = False,
     db: Session = Depends(get_db),
     provider: TranscriptionProvider = Depends(get_transcription_provider),
     settings: Settings = Depends(get_settings),
     user: User = Depends(get_current_user),
 ) -> TranscriptionResponse:
     try:
-        return TranscriptionService(db, provider, settings, user.id).transcribe(exercise_id=exercise_id, audio=audio)
+        return TranscriptionService(db, provider, settings, user.id).transcribe(exercise_id=exercise_id, audio=audio, assistance_enabled=assistance_enabled)
     except TranscriptionExerciseNotFoundError as exc:
         raise HTTPException(status_code=404, detail="Exercise not found") from exc
     except (UnsupportedAudioTypeError, EmptyAudioError) as exc:
