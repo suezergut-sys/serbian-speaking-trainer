@@ -289,6 +289,6 @@
 ## 03.10.2026 — мягкие подсказки и оформление кнопок
 
 - [x] Web/backend реализация и автоматические проверки завершены; [доказательства](soft-assistance-checkpoint.md).
-- [ ] Публикация frontend/backend, проверка PostgreSQL RLS.
+- [x] [PR #61](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/61) merged; frontend/backend READY на `4b2de1776b73d71639d6ceaa9a29b192e604033e`, PostgreSQL migration/RLS/grants и production smoke подтверждены; [доказательства](soft-assistance-checkpoint.md).
 - [ ] Android перенос/сборка/публикация после согласования следующей версии.
 - [ ] Физическая приёмка, настоящая речь и OAuth; ADB/AVD остаются остановленными.
