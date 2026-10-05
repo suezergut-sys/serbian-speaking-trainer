@@ -64,6 +64,48 @@ async function mockApp(page, submitted) {
 
 const measuredSamples = Number(process.env.E2E_SAMPLES_PER_SCRIPT ?? 1);
 for (const native of [false, true]) {
+  test(`${native ? "Android layout" : "web"} dynamic transcription analysis and unavailable fallback`, async ({ page }) => {
+    await page.setViewportSize({ width: 393, height: 851 });
+    if (native) await page.addInitScript(() => { window.CapacitorCustomPlatform = { name: "android" }; });
+    await mockApp(page, []);
+    await page.evaluate(() => localStorage.setItem("serbotalk.soft-assistance.user-1", "true"));
+    let recordings = 0;
+    await page.route("**/api/transcriptions", route => {
+      const body = ++recordings === 1 ? {
+        text: "🙂 Zelim platitti racun i secer.", raw_text: "🙂 Zelim platitti racun i secer.",
+        transcription_id: "receipt-dynamic", assistance_status: "analyzed", changes: [
+          [2, 7, "Zelim", "Želim"], [8, 16, "platitti", "platiti"],
+          [17, 22, "racun", "račun"], [25, 30, "secer", "šećer"],
+        ].map(([start, end, original, replacement]) => ({ start, end, original, replacement,
+          kind: "phonetic_ambiguity", action: "suggested", reason_code: "confirm_ambiguous_sound",
+          explanation_ru: "Возможно искажение близких звуков или написания при распознавании.",
+        })),
+      } : { text: "Moj odgovor.", raw_text: "Moj odgovor.", assistance_status: "unavailable" };
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
+    });
+    await page.goto("/");
+    await page.getByRole("heading", { name: "Я хочу открыть счёт." }).waitFor();
+    await page.getByRole("button", { name: "Ответить голосом" }).click();
+    await page.getByRole("button", { name: "Завершить запись" }).click();
+    await expect(page.getByRole("button", { name: "Принять подсказку" })).toHaveCount(4);
+    const section = page.getByRole("region", { name: "Мягкие подсказки" });
+    const style = await section.evaluate(el => ({ background: getComputedStyle(el).backgroundColor, color: getComputedStyle(el).color }));
+    expect(style.background).toBe("rgb(7, 22, 42)");
+    expect(style.color).toBe("rgb(184, 213, 244)");
+    const box = await section.boundingBox();
+    expect(box.x + box.width).toBeLessThanOrEqual(394);
+    await page.getByRole("button", { name: "Принять подсказку" }).last().click();
+    await expect(page.getByLabel("Ваш ответ")).toHaveValue("🙂 Zelim platitti racun i šećer.");
+    await page.getByRole("button", { name: "Отменить" }).click();
+    await expect(page.getByLabel("Ваш ответ")).toHaveValue("🙂 Zelim platitti racun i secer.");
+    await page.getByRole("button", { name: "Записать заново" }).click();
+    await page.getByRole("button", { name: "Завершить запись" }).click();
+    await expect(page.getByText(/Мягкие подсказки временно недоступны/)).toBeVisible();
+    await expect(page.getByLabel("Ваш ответ")).toHaveValue("Moj odgovor.");
+    await expect(page.getByRole("button", { name: native ? "Проверить" : "Проверить ответ", exact: true })).toBeEnabled();
+  });
+}
+for (const native of [false, true]) {
   test(`${native ? "Android" : "web"} opt-in assistance and artwork`, async ({ page }) => {
     await page.setViewportSize({ width: 393, height: 851 });
     if (native) await page.addInitScript(() => { window.CapacitorCustomPlatform = { name: "android" }; });

@@ -7,7 +7,8 @@ async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   const onAbort = () => controller.abort();
   init?.signal?.addEventListener("abort", onAbort, { once: true });
   if (init?.signal?.aborted) controller.abort();
-  const timeout = window.setTimeout(() => controller.abort(), url === "/api/transcriptions" ? 45_000 : 30_000);
+  let timedOut = false;
+  const timeout = window.setTimeout(() => { timedOut = true; controller.abort(); }, url === "/api/transcriptions" ? 45_000 : 30_000);
   try {
     const response = await authenticatedFetch(apiUrl(url), { ...init, signal: controller.signal });
     if (!response.ok) {
@@ -16,6 +17,9 @@ async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
       throw new BackendError(response.status, detail);
     }
     return await response.json() as T;
+  } catch (error) {
+    if (timedOut && !init?.signal?.aborted) throw new DOMException("Request timed out", "TimeoutError");
+    throw error;
   } finally {
     window.clearTimeout(timeout);
     init?.signal?.removeEventListener("abort", onAbort);

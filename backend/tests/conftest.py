@@ -12,7 +12,8 @@ from app.api.dependencies import get_current_user
 from app.services.auth_service import LEGACY_USER_ID
 from app.services.ai_adapter import get_ai_provider
 from app.services.transcription_adapter import get_transcription_provider
-from tests.fakes import FakeAIProvider, FakeTranscriptionProvider
+from app.services.transcription_assistance_adapter import get_transcription_assistance_provider
+from tests.fakes import FakeAIProvider, FakeTranscriptionProvider, FakeTranscriptionAssistanceProvider
 
 
 @pytest.fixture
@@ -47,6 +48,7 @@ def api_client(db_session: Session) -> TestClient:
     app.dependency_overrides[get_db] = override_db
     app.dependency_overrides[get_ai_provider] = lambda: offline_ai
     app.dependency_overrides[get_transcription_provider] = lambda: FakeTranscriptionProvider(available=False)
+    app.dependency_overrides[get_transcription_assistance_provider] = lambda: FakeTranscriptionAssistanceProvider()
     app.dependency_overrides[get_current_user] = lambda: user
     with TestClient(app) as client:
         yield client

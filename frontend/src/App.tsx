@@ -12,6 +12,7 @@ import { initializeAuth, isAuthConfigured, onAuthStateChange, signInWithGoogle, 
 import type { CurrentUser } from "./types/auth";
 import { LegalPage } from "./LegalPage";
 import { readAssistance, saveAssistance, assistedText } from "./transcriptionAssistance";
+import { transcriptionErrorMessage } from "./transcriptionError";
 import { TranscriptionAssistanceView, type AssistanceDraft } from "./TranscriptionAssistanceView";
 import { SettingsView } from "./SettingsView";
 import { displaySerbian, displaySerbianInRussianText, readSerbianAlphabet, saveSerbianAlphabet, toSerbianLatin, type SerbianAlphabet } from "./serbianScript";
@@ -513,13 +514,13 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
         voiceTimingRef.current = recording.timing;
         setAnswer(displaySerbian(transcript.text, alphabetRef.current));
         setHasTranscript(true);
-        setAssistanceDraft(transcript.transcription_id ? { response: transcript, selected: (transcript.changes ?? []).flatMap((c, i) => c.action === "applied" ? [i] : []), edited: false } : undefined);
+        setAssistanceDraft(transcript.transcription_id || transcript.assistance_status ? { response: transcript, selected: (transcript.changes ?? []).flatMap((c, i) => c.action === "applied" ? [i] : []), edited: false } : undefined);
       }
       setVoiceState("idle");
-    } catch {
+    } catch (error) {
       if (voiceEpochRef.current !== epoch) return;
       recorder.stop(); voiceRef.current = undefined; voiceTimingRef.current = undefined;
-      setVoiceState("error"); setError("Не удалось расшифровать речь. Попробуйте записать короткую фразу ещё раз.");
+      setVoiceState("error"); setError(transcriptionErrorMessage(error));
     } finally {
       if (voiceEpochRef.current === epoch) voiceControllerRef.current = undefined;
     }

@@ -817,12 +817,53 @@ describe("App", () => {
     expect((await recordAnswer())).toHaveValue("Желим да отворим рачун.");
   });
 
+  it("shows and applies the reviewed Allergičen suggestion when soft assistance is enabled", async () => {
+    voiceMock.available = true;
+    localStorage.setItem("serbotalk.soft-assistance.user-1", "true");
+    const baseFetch = mockApi();
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+      input.toString() === "/api/transcriptions"
+        ? Promise.resolve({ ok: true, status: 200, json: async () => ({
+          text: "Allergičen sam na neke antibiotike.", raw_text: "Allergičen sam na neke antibiotike.",
+          transcription_id: "receipt", changes: [{ start: 0, end: 10, original: "Allergičen", replacement: "Alergičan", kind: "ending_ambiguity", action: "suggested", reason_code: "confirm_ambiguous_sound" }],
+        }) }) : baseFetch(input, init));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    const answer = await recordAnswer();
+    expect(answer).toHaveValue("Allergičen sam na neke antibiotike.");
+    const call = fetchMock.mock.calls.find(([url]) => url.toString() === "/api/transcriptions");
+    expect((call?.[1]?.body as FormData).get("assistance_enabled")).toBe("true");
+    fireEvent.click(screen.getByRole("button", { name: "Принять подсказку" }));
+    expect(answer).toHaveValue("Alergičan sam na neke antibiotike.");
+    fireEvent.click(screen.getByRole("button", { name: "Отменить" }));
+    expect(answer).toHaveValue("Allergičen sam na neke antibiotike.");
+  });
+
+  it("keeps a usable answer and displays unavailable assistance when the extra analysis fails", async () => {
+    voiceMock.available = true;
+    localStorage.setItem("serbotalk.soft-assistance.user-1", "true");
+    const baseFetch = mockApi();
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => input.toString() === "/api/transcriptions"
+      ? Promise.resolve({ ok: true, status: 200, json: async () => ({ text: "Moj odgovor.", raw_text: "Moj odgovor.", assistance_status: "unavailable" }) })
+      : baseFetch(input, init));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    expect(await recordAnswer()).toHaveValue("Moj odgovor.");
+    expect(screen.getByText(/Мягкие подсказки временно недоступны/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
+    await screen.findByText("Ответ естественный и точный.");
+    const call = fetchMock.mock.calls.find(([url]) => url.toString() === "/api/attempts");
+    expect(JSON.parse(call?.[1]?.body as string)).not.toHaveProperty("transcription_id");
+  });
+
   it("offers manual entry after failed transcription without losing the current phrase", async () => {
     voiceMock.available = true;
     const baseFetch = mockApi();
     const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
       input.toString() === "/api/transcriptions"
-        ? Promise.resolve({ ok: false, status: 503, json: async () => ({ detail: "offline" }) })
+        ? Promise.resolve({ ok: false, status: 503, json: async () => ({ detail: { code: "transcription_empty" } }) })
         : baseFetch(input, init));
     vi.stubGlobal("fetch", fetchMock);
     render(<App />);
@@ -831,6 +872,7 @@ describe("App", () => {
     fireEvent.click(await screen.findByRole("button", { name: /Ответить голосом|Записать заново/ }));
     fireEvent.click(await screen.findByRole("button", { name: "Завершить запись" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Не удалось расшифровать речь");
+    expect(screen.getByRole("alert")).toHaveTextContent("Модель вернула пустую расшифровку");
     expect(screen.getByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Ответить голосом|Записать заново/ })).toBeEnabled();
 

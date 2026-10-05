@@ -293,3 +293,23 @@
 - [x] Владелец подтвердил1.21/code31; весь клиент перенесён и собран, signature/metadata/API/7 assets проверены; [checkpoint1.21](android-1.21-release.md).
 - [x] [PR #63](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/63) merged; v1.21 APK опубликован, серверный digest/size подтверждены; frontend READY на release SHA, 7 публичных assets совпали с APK; [доказательства](android-1.21-release.md).
 - [ ] Физическая приёмка, настоящая речь и OAuth; ADB/AVD остаются остановленными.
+
+## 05.10.2026 — диагностика STT и регрессия мягких подсказок
+
+- [x] Web/backend: безопасные причины ошибок вместо общего сообщения; подтверждаемая замена `Allergičen / Alergičen → Alergičan`, независимо от формулировки эталонного перевода; отмена и ограничения mastery сохранены.
+- [x] Backend/scripts 197 passed / 8 skipped, Node guards 5 passed; frontend 135 passed; lint/typecheck/production build и browser network recovery 1 passed. [Доказательства](transcription-errors-checkpoint.md).
+- [ ] Публикация PR/production и ручная проверка реальной речи.
+- [ ] Перенос клиента в Android, сборка и физическая приёмка после отдельной команды владельца. Эти изменения не закрывают весь P0/P1/P2.
+
+## 05.10.2026 — замена словаря подсказок анализом
+
+- [x] По уточнённому поручению владельца `local-v2` заменена `analysis-v3`: анализ каждого enabled STT по источнику/канону/вариантам, все расхождения, проверка близости и правдоподобия STT; словари замен удалены. Все новые предложения требуют подтверждения, лимит трёх правок удалён.
+- [x] Серверная валидация, safe fallback, объяснения/status и защита освоения реализованы. Полный gate: 213 backend/scripts passed / 8 skipped; Node guards 5, frontend 139, lint/typecheck/build; Chrome web/Android-layout 2 passed. [Доказательства](transcription-analysis-checkpoint.md).
+- [ ] Публикация PR/production и ручная оценка качества гипотез на реальной речи/env-модели.
+- [ ] Android sync/сборка/номер версии и физическая приёмка после отдельной команды. P0/P1/P2 целиком не закрыты.
+
+## 05.10.2026 — подготовка Android 1.22
+
+- [x] Владелец поручил production и APK, отдельно подтвердил 1.22/code32. Весь накопленный клиент перенесён; android:cloud-apk, metadata 2/2, production API, подпись и 7 packaged assets проверены. [Release checkpoint](android-1.22-release.md).
+- [ ] GitHub release и production READY/smoke.
+- [ ] Физическая приёмка реальной речи/OAuth; ADB/AVD остаются остановленными.

@@ -9,6 +9,7 @@ from openai import OpenAI
 
 from app.config import Settings, get_settings
 from app.schemas import AnswerAnalysis, ExerciseGenerationResult, PhrasePreparation, TopicContext
+from app.schemas.transcriptions import TranscriptionAssistanceAnalysis
 from app.request_metrics import measure_ai_call
 
 PROMPTS_DIR = Path(__file__).resolve().parents[1] / "prompts"
@@ -138,7 +139,7 @@ class OpenAIStructuredProvider:
         *,
         prompt_name: str,
         payload: dict[str, object],
-        schema: type[TopicContext] | type[ExerciseGenerationResult] | type[AnswerAnalysis] | type[PhrasePreparation],
+        schema: type[TopicContext] | type[ExerciseGenerationResult] | type[AnswerAnalysis] | type[PhrasePreparation] | type[TranscriptionAssistanceAnalysis],
     ):
         try:
             with measure_ai_call():

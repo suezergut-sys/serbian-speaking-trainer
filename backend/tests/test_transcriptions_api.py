@@ -71,7 +71,7 @@ def test_transcription_rejects_non_serbian_letter_scripts(api_client: TestClient
     )
 
     assert response.status_code == 503
-    assert response.json() == {"detail": "Voice transcription is temporarily unavailable"}
+    assert response.json() == {"detail": {"code": "transcription_unexpected_script"}}
 
 
 def test_rejects_unsupported_audio_before_provider_call(api_client: TestClient) -> None:
@@ -119,7 +119,7 @@ def test_reports_unavailable_transcription(api_client: TestClient) -> None:
     )
 
     assert response.status_code == 503
-    assert response.json() == {"detail": "Voice transcription is temporarily unavailable"}
+    assert response.json() == {"detail": {"code": "transcription_not_configured"}}
 
 
 def test_rejects_oversized_request_before_multipart_can_spool(api_client: TestClient) -> None:
