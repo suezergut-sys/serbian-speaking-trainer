@@ -18,4 +18,3 @@
 Автотесты доказывают границы обработки, но не полноту/точность гипотез реальной модели. Качество аудио не измеряется; сравнение выполняется по тексту. Дополнительный AI-вызов добавляет время и расход API. Предупреждение build о главном chunk >500 kB остаётся, сборка успешна. Схемы БД не менялись; дополнительные данные помещаются в существующие JSON receipts. Исторические проверки `local-v2`: [checkpoint ошибок](transcription-errors-checkpoint.md).
 
 Контракт сверён через [OpenAI Docs: Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs?api-mode=responses) и [Speech to text](https://developers.openai.com/api/docs/guides/speech-to-text). Подробный текущий дизайн: [spec](transcription-assistance-design.md).
-
