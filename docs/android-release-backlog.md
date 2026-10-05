@@ -209,18 +209,26 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 
 - [x] Web/backend: закрытые коды STT errors и русская причина; проверенное предложение окончания `Allergičen / Alergičen → Alergičan` с подтверждением и отменой, без роста mastery.
 - [x] Backend/scripts 197 passed / 8 skipped, Node guards 5 passed; frontend 135 passed; lint/typecheck/production build и browser recovery 1 passed. [Доказательства](transcription-errors-checkpoint.md).
-- [ ] Опубликовать web/backend, затем перенести обновлённые сообщения клиента в следующий явно запрошенный Android-релиз.
-- [ ] Android sync/APK/номер версии и физическая проверка реальной речи — отдельно; в этом срезе не выполнялись.
+- [x] Web/backend опубликованы; сообщения включены в явно запрошенный 1.22.
+- [x] Android sync/APK/номер выполнены позже по отдельной команде — 1.22/code32.
+- [ ] Физическая проверка реальной речи.
 
 ## Накоплено 05.10.2026 — анализ мягких подсказок без словаря
 
 - [x] Предыдущая локальная словарная правка заменена `analysis-v3`: AI-анализ каждой enabled расшифровки по канону/вариантам, проверка близости и возможных искажений STT. Все новые предложения с объяснением подтверждаются; лимита трёх нет. Диагностика STT errors сохранена.
 - [x] Web/backend gate: 213 backend/scripts passed / 8 skipped, Node guards 5, frontend 139, lint/typecheck/production build; Chrome на телефонной ширине — web/Android-layout 2 passed. [Доказательства](transcription-analysis-checkpoint.md).
-- [ ] Опубликовать web/backend и перенести весь накопленный клиент (причины STT, анализ/status/объяснения) в следующий явно запрошенный Android-релиз.
-- [ ] Согласование версии, Android sync/APK и проверка на настоящей речи/физическом устройстве — отдельно. В этом срезе не выполнялись.
+- [x] Web/backend опубликованы; весь накопленный клиент включён в явно запрошенный Android 1.22.
+- [x] Согласование версии, Android sync/APK выполнены позже по отдельной команде — 1.22/code32.
+- [ ] Настоящая речь/физическое устройство.
 
 ## 05.10.2026 — Android 1.22
 
 - [x] Отдельная команда на APK и версия 1.22/code32 согласованы. Весь накопленный клиент включён; sync/build, metadata, API, подпись и assets прошли. [Доказательства](android-1.22-release.md).
-- [ ] GitHub asset и production-публикация.
+- [x] GitHub asset и production опубликованы; [доказательства](android-1.22-release.md).
 - [ ] Физическая ручная приёмка и качество настоящей речи.
+
+## 05.10.2026 — опубликован релиз 1.22
+
+- [x] [PR #65](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/65) merged; production web/backend READY на `24034d1115bdd9640e0baa122d192b20fb177614`. Авторизованный smoke, API/health/защита доступа, console/runtime logs и JS/CSS assets проверены.
+- [x] [APK v1.22](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.22) опубликован; versionCode 32, подпись/API/package assets, GitHub digest/size и копия Downloads подтверждены. Накопленные причины STT и analysis-v3 перенесены полностью. [Доказательства](android-1.22-release.md).
+- [ ] Настоящая речь, акустическая точность гипотез, физическая OAuth/STT-приёмка остаются открытыми. Телефонные/ADB/AVD тесты не возобновлялись. Предыдущие записи о pending publication/sync относятся к состоянию до этого выпуска; эта задача не закрывает весь P0/P1/P2.

@@ -298,18 +298,28 @@
 
 - [x] Web/backend: безопасные причины ошибок вместо общего сообщения; подтверждаемая замена `Allergičen / Alergičen → Alergičan`, независимо от формулировки эталонного перевода; отмена и ограничения mastery сохранены.
 - [x] Backend/scripts 197 passed / 8 skipped, Node guards 5 passed; frontend 135 passed; lint/typecheck/production build и browser network recovery 1 passed. [Доказательства](transcription-errors-checkpoint.md).
-- [ ] Публикация PR/production и ручная проверка реальной речи.
-- [ ] Перенос клиента в Android, сборка и физическая приёмка после отдельной команды владельца. Эти изменения не закрывают весь P0/P1/P2.
+- [x] Публикация PR/production завершена в составе analysis-v3/1.22; [доказательства](android-1.22-release.md).
+- [ ] Ручная проверка реальной речи.
+- [x] Перенос клиента и сборка выполнены по команде владельца в 1.22.
+- [ ] Физическая приёмка. Эти изменения не закрывают весь P0/P1/P2.
 
 ## 05.10.2026 — замена словаря подсказок анализом
 
 - [x] По уточнённому поручению владельца `local-v2` заменена `analysis-v3`: анализ каждого enabled STT по источнику/канону/вариантам, все расхождения, проверка близости и правдоподобия STT; словари замен удалены. Все новые предложения требуют подтверждения, лимит трёх правок удалён.
 - [x] Серверная валидация, safe fallback, объяснения/status и защита освоения реализованы. Полный gate: 213 backend/scripts passed / 8 skipped; Node guards 5, frontend 139, lint/typecheck/build; Chrome web/Android-layout 2 passed. [Доказательства](transcription-analysis-checkpoint.md).
-- [ ] Публикация PR/production и ручная оценка качества гипотез на реальной речи/env-модели.
-- [ ] Android sync/сборка/номер версии и физическая приёмка после отдельной команды. P0/P1/P2 целиком не закрыты.
+- [x] PR/production опубликованы; [релиз 1.22](android-1.22-release.md).
+- [ ] Ручная оценка качества гипотез на реальной речи/env-модели.
+- [x] Android sync/сборка/номер 1.22 отдельно согласованы и выполнены.
+- [ ] Физическая приёмка. P0/P1/P2 целиком не закрыты.
 
 ## 05.10.2026 — подготовка Android 1.22
 
 - [x] Владелец поручил production и APK, отдельно подтвердил 1.22/code32. Весь накопленный клиент перенесён; android:cloud-apk, metadata 2/2, production API, подпись и 7 packaged assets проверены. [Release checkpoint](android-1.22-release.md).
-- [ ] GitHub release и production READY/smoke.
+- [x] GitHub release и production READY/smoke завершены; [доказательства](android-1.22-release.md).
 - [ ] Физическая приёмка реальной речи/OAuth; ADB/AVD остаются остановленными.
+
+## 05.10.2026 — опубликован релиз 1.22
+
+- [x] [PR #65](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/65) merged; production web/backend READY на `24034d1115bdd9640e0baa122d192b20fb177614`. Авторизованный smoke, API/health/защита доступа, console/runtime logs и JS/CSS assets проверены.
+- [x] [APK v1.22](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.22) опубликован; versionCode 32, подпись/API/package assets, GitHub digest/size и копия Downloads подтверждены. Накопленные причины STT и analysis-v3 перенесены полностью. [Доказательства](android-1.22-release.md).
+- [ ] Настоящая речь, акустическая точность гипотез, физическая OAuth/STT-приёмка остаются открытыми. Телефонные/ADB/AVD тесты не возобновлялись. Предыдущие записи о pending publication/sync относятся к состоянию до этого выпуска; эта задача не закрывает весь P0/P1/P2.
