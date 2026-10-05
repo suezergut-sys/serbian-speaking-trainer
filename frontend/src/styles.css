@@ -698,6 +698,7 @@ button { cursor: pointer; background: var(--panel); }
 .transcription-assistance button { background: #103966; color: #dceaff; border: 1px solid #3987bc; border-radius: 9px; padding: .5rem .65rem; font: inherit; }
 .transcription-assistance button:disabled { opacity: .45; }
 .transcription-assistance p { margin: .4rem 0; }
+.transcription-assistance__copy { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .assistance-settings { margin-block: 1rem; padding: 1.25rem; }
 .assistance-settings label { display: flex; align-items: center; gap: .6rem; }
 .assistance-settings input { accent-color: var(--cyan); width: 20px; height: 20px; flex: 0 0 auto; }

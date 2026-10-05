@@ -1,6 +1,7 @@
 from collections.abc import Callable
 
 from app.schemas import AnswerAnalysis, ExerciseGenerationResult, PhrasePreparation, TopicContext, TranscriptionResponse
+from app.schemas.transcriptions import TranscriptionAssistanceAnalysis
 
 
 class FakeAIProvider:
@@ -61,3 +62,18 @@ class FakeTranscriptionProvider:
     def transcribe(self, *, audio: bytes, filename: str, content_type: str) -> TranscriptionResponse:
         self.calls.append({"audio": audio, "filename": filename, "content_type": content_type})
         return TranscriptionResponse(text=self.text)
+
+
+class FakeTranscriptionAssistanceProvider:
+    def __init__(self, *, available: bool = True, result: TranscriptionAssistanceAnalysis | None = None,
+                 error: Exception | None = None) -> None:
+        self.is_available = available
+        self.result = result or TranscriptionAssistanceAnalysis(acceptable_variant=False, candidates=[])
+        self.error = error
+        self.calls: list[dict] = []
+
+    def analyze(self, **kwargs) -> TranscriptionAssistanceAnalysis:
+        self.calls.append(kwargs)
+        if self.error:
+            raise self.error
+        return self.result

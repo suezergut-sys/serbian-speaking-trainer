@@ -57,7 +57,7 @@ class CreateAttemptRequest(BaseModel):
     timings: dict[str, JsonValue] = Field(default_factory=dict)
     hinted_words: list[str] = Field(default_factory=list, max_length=30)
     transcription_id: UUID | None = None
-    accepted_transcription_changes: list[int] = Field(default_factory=list, max_length=3)
+    accepted_transcription_changes: list[int] = Field(default_factory=list, max_length=1200)
 
 
 class AttemptResponse(BaseModel):

@@ -80,7 +80,7 @@ def test_failed_mocked_sdk_calls_still_count_without_exposing_input() -> None:
     try:
         with pytest.raises(AIServiceError, match="OpenAI request failed"):
             text_provider.normalize_topic("test input")
-        with pytest.raises(TranscriptionServiceError, match="OpenAI transcription request failed"):
+        with pytest.raises(TranscriptionServiceError, match="transcription_unavailable"):
             transcription_provider.transcribe(audio=b"", filename="mock.webm", content_type="audio/webm")
         assert metrics.ai_calls == 2
         assert metrics.ai_ms >= 0

@@ -134,5 +134,6 @@ export type TranscriptionResponse = {
   raw_text?: string | null;
   transcription_id?: string | null;
   policy_version?: string | null;
-  changes?: Array<{ start: number; end: number; original: string; replacement: string; kind: string; action: "applied" | "suggested"; reason_code: string }>;
+  changes?: Array<{ start: number; end: number; original: string; replacement: string; kind: string; action: "applied" | "suggested"; reason_code: string; explanation_ru?: string | null; similarity?: number | null }>;
+  assistance_status?: "analyzed" | "unavailable" | null;
 };

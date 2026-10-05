@@ -36,6 +36,8 @@ class Settings(BaseSettings):
     openai_transcribe_model: str | None = None
     openai_timeout_seconds: float = Field(default=20, gt=0, le=120)
     openai_max_retries: int = Field(default=2, ge=0, le=5)
+    openai_assistance_timeout_seconds: float = Field(default=6, gt=0, le=12)
+    openai_assistance_max_retries: int = Field(default=0, ge=0, le=1)
     max_audio_bytes: int = Field(default=1_000_000, ge=10_000, le=1_000_000)
 
     mastery_consolidating_threshold: float = Field(default=0.65, ge=0, le=1)

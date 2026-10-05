@@ -19,7 +19,7 @@ export function SettingsView({ alphabet, onAlphabetChange, account, onSignOut, a
     </fieldset>
     <section className="assistance-settings panel">
       <label><input type="checkbox" role="switch" checked={assistanceEnabled} onChange={event => onAssistanceChange?.(event.target.checked)} /> Мягкие подсказки при распознавании</label>
-      <p>Уточнять явные ошибки написания и предлагать варианты спорных букв и окончаний. Спорные варианты применяются только после вашего подтверждения.</p>
+      <p>Сравнивать каждую расшифровку с эталоном и допустимыми переводами, предлагая близкие варианты возможных искажений распознавания. Все изменения применяются только после вашего подтверждения.</p>
       <small>По умолчанию выключено. Выбор сохраняется для этого аккаунта на этом устройстве и применяется к следующей записи.</small>
     </section>
     {account && <section className="settings-profile panel" aria-label="Профиль">

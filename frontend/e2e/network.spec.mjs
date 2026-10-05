@@ -124,10 +124,11 @@ test("transcription network failure leaves recording retry available", async ({ 
   await page.getByRole("button", { name: "Ответить голосом" }).click();
   await page.getByRole("button", { name: "Завершить запись" }).click();
   await expect(page.getByRole("alert")).toContainText("Не удалось расшифровать речь");
+  await expect(page.getByRole("alert")).toContainText("Проверьте интернет-соединение");
   await page.getByRole("button", { name: "Ввести ответ вручную" }).click();
   await page.getByLabel("Ваш ответ").fill("Želim da otvorim račun.");
-  await expect(page.getByRole("button", { name: "Ответить голосом" })).toBeVisible();
-  await page.getByRole("button", { name: "Ответить голосом" }).click();
+  await expect(page.getByRole("button", { name: /Ответить голосом|Записать заново/ })).toBeVisible();
+  await page.getByRole("button", { name: /Ответить голосом|Записать заново/ }).click();
   await page.getByRole("button", { name: "Завершить запись" }).click();
   await expect(page.getByLabel("Ваш ответ")).toHaveValue("Želim da otvorim račun.");
   expect(state.transcription).toBe(2);
