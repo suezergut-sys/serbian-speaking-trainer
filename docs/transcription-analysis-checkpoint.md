@@ -9,7 +9,7 @@
 - [x] Короткий отдельный timeout/retry, `store=False`, safe fallback с явным статусом. STT остаётся доступен при сбое дополнительного анализа; аудио освобождается до его запуска.
 - [x] Полный `scripts/check.ps1`: 213 backend/scripts passed / 8 skipped; Node guards 5 passed; frontend 139 passed; lint, `tsc -b` и production build passed.
 - [x] Chrome Playwright: 2 passed для web/Android-layout на 393×851. Четыре динамические подсказки, объяснения, Unicode offsets, принятие/отмена, тёмная палитра, границы карточки и fallback с доступной проверкой ответа.
-- [ ] Публикация PR/production: не выполнялась.
+- [x] [PR #65](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/65) merged; web/backend READY и production smoke, APK v1.22 опубликован. [Release evidence](android-1.22-release.md).
 - [x] По отдельной команде владельца собран Android 1.22/code32; metadata/API/signature/assets проверены. [Release checkpoint](android-1.22-release.md).
 - [ ] Ручная оценка качества на настоящей речи и выбранной env-модели; физическая Android-приёмка. ADB/AVD не запускались.
 

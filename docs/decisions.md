@@ -413,3 +413,5 @@ Adapter преобразует ошибки SDK в закрытые безопа
 ## 05.10.2026 — выпуск 1.22/code32
 
 Номер отдельно подтверждён владельцем; весь накопленный клиент включён в production APK. Native build, metadata/signature/API/assets и metadata tests 2/2 прошли. Для обоих Vercel-проектов установлен CLI workflow без Git integration; deploy выполняется из чистого снимка release commit. Публикация и физическая приёмка отмечаются отдельно в [release checkpoint](android-1.22-release.md).
+
+05.10.2026: [PR #65](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/65) merged, web/backend READY на release SHA, [APK v1.22](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.22) опубликован. Production UI/API/assets и digest/size проверены; физическая приёмка остаётся отдельной. [Release evidence](android-1.22-release.md).
