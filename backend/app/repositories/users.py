@@ -11,6 +11,9 @@ class UserRepository(Repository[User]):
     def __init__(self, session: Session) -> None:
         super().__init__(session, User)
 
+    def set_assistance(self, user_id: str, enabled: bool) -> None:
+        self.session.execute(update(User).where(User.id == user_id).values(assistance_enabled=enabled))
+
     def get_by_email(self, email: str) -> User | None:
         return self.session.scalar(select(User).where(func.lower(User.email) == email.casefold()))
 

@@ -3,6 +3,8 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
+from app.schemas.statistics import PhraseStatisticsTopic
+
 from app.repositories import AttemptRepository, ReviewPhraseRepository
 from app.schemas import (
     DailyPhraseCount,
@@ -72,13 +74,17 @@ class StatisticsService:
             days=days,
         )
 
-    def phrases(self, *, page: int, page_size: str) -> PhraseStatisticsResponse:
-        total = self.review_phrases.count_for_statistics()
+    def phrase_topics(self) -> list[PhraseStatisticsTopic]:
+        return [PhraseStatisticsTopic(topic_id=topic_id, topic_title=title, phrase_count=count)
+                for topic_id, title, count in self.review_phrases.statistics_topics()]
+
+    def phrases(self, *, page: int, page_size: str, topic_id: str | None = None) -> PhraseStatisticsResponse:
+        total = self.review_phrases.count_for_statistics(topic_id)
         numeric_page_size = None if page_size == "all" else int(page_size)
         total_pages = 1 if numeric_page_size is None else max(1, (total + numeric_page_size - 1) // numeric_page_size)
         normalized_page = min(page, total_pages)
         offset = 0 if numeric_page_size is None else (normalized_page - 1) * numeric_page_size
-        rows = self.review_phrases.list_for_statistics(limit=numeric_page_size, offset=offset)
+        rows = self.review_phrases.list_for_statistics(limit=numeric_page_size, offset=offset, topic_id=topic_id)
 
         groups: list[PhraseStatisticsGroup] = []
         group_by_key: dict[tuple[str | None, str], PhraseStatisticsGroup] = {}

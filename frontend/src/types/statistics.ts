@@ -37,3 +37,5 @@ export type PhraseStatistics = {
     phrases: PhraseStatisticsItem[];
   }>;
 };
+
+export type PhraseStatisticsTopic = { topic_id: string | null; topic_title: string; phrase_count: number };

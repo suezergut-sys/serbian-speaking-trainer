@@ -222,3 +222,31 @@ def test_phrase_statistics_hides_foreign_topic_title_for_stale_reference(
     assert groups[foreign_topic.id]["topic_title"] == "Свои фразы"
     assert groups[foreign_topic.id]["phrases"][0]["source_ru"] == "Устаревшая связь"
     assert groups[own_topic.id]["topic_title"] == "Моя тема"
+    topic_response = api_client.get("/api/statistics/phrase-topics")
+    assert topic_response.status_code == 200
+    assert "Секретное название" not in topic_response.text
+    assert sum(topic["phrase_count"] for topic in topic_response.json()) == 2
+
+
+def test_phrase_topic_filter_paginates_before_grouping_and_isolates_accounts(api_client, db_session):
+    for index in range(11):
+        db_session.add(ReviewPhrase(source_ru=f"Банк {index}", source_normalized=f"банк {index}", topic_id="bank", attempts=index))
+    db_session.add(ReviewPhrase(source_ru="Кафе", source_normalized="кафе тест", topic_id="cafe", attempts=3))
+    db_session.add(ReviewPhrase(source_ru="Без темы", source_normalized="без темы"))
+    other = User(id="22222222-2222-2222-2222-222222222222", email="foreign-topic-filter@example.com")
+    db_session.add(other)
+    db_session.flush()
+    db_session.add(ReviewPhrase(user_id=other.id, source_ru="Чужая фраза", source_normalized="чужая фраза", topic_id="bank"))
+    db_session.commit()
+    topics = api_client.get("/api/statistics/phrase-topics").json()
+    assert {topic["topic_id"]: topic["phrase_count"] for topic in topics} == {"bank": 11, "cafe": 1, None: 1}
+    response = api_client.get("/api/statistics/phrases", params={"topic_id": "bank", "page": 2, "page_size": "10"})
+    payload = response.json()
+    assert payload["total"] == 11 and payload["total_pages"] == 2
+    assert len(payload["groups"]) == 1 and len(payload["groups"][0]["phrases"]) == 1
+    assert payload["groups"][0]["topic_id"] == "bank"
+    assert "Чужая фраза" not in response.text
+    unassigned = api_client.get("/api/statistics/phrases", params={"topic_id": "unassigned"}).json()
+    assert unassigned["total"] == 1 and unassigned["groups"][0]["topic_id"] is None
+    empty = api_client.get("/api/statistics/phrases", params={"topic_id": other.id, "page": 5}).json()
+    assert empty["total"] == 0 and empty["page"] == 1 and empty["groups"] == []

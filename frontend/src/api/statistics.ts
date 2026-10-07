@@ -17,9 +17,17 @@ export async function fetchPhraseStatistics(
   page: number,
   pageSize: "10" | "50" | "all",
   signal?: AbortSignal,
+  topicId?: string,
 ): Promise<PhraseStatistics> {
   const query = new URLSearchParams({ page: String(page), page_size: pageSize });
+  if (topicId) query.set("topic_id", topicId);
   const response = await authenticatedFetch(apiUrl(`/api/statistics/phrases?${query}`), { signal });
   if (!response.ok) throw new Error(`Backend returned ${response.status}`);
   return response.json() as Promise<PhraseStatistics>;
+}
+
+export async function fetchPhraseTopics(signal?: AbortSignal): Promise<import("../types/statistics").PhraseStatisticsTopic[]> {
+  const response = await authenticatedFetch(apiUrl("/api/statistics/phrase-topics"), { signal });
+  if (!response.ok) throw new Error(`Backend returned ${response.status}`);
+  return response.json();
 }

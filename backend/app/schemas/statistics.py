@@ -44,3 +44,9 @@ class PhraseStatisticsResponse(BaseModel):
     page_size: Literal["10", "50", "all"]
     total_pages: int = Field(ge=1)
     groups: list[PhraseStatisticsGroup]
+
+
+class PhraseStatisticsTopic(BaseModel):
+    topic_id: str | None = None
+    topic_title: str
+    phrase_count: int = Field(ge=0)

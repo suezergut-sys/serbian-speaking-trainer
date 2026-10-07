@@ -1,8 +1,10 @@
 import type { CurrentUser } from "./types/auth";
 import type { SerbianAlphabet } from "./serbianScript";
 
-export function SettingsView({ alphabet, onAlphabetChange, account, onSignOut, assistanceEnabled = false, onAssistanceChange }: {
+export function SettingsView({ alphabet, onAlphabetChange, account, onSignOut, assistanceEnabled = false, assistanceSaving = false, assistanceError, onAssistanceChange }: {
   assistanceEnabled?: boolean;
+  assistanceSaving?: boolean;
+  assistanceError?: string;
   onAssistanceChange?: (enabled: boolean) => void;
   account?: CurrentUser;
   onSignOut?: () => void;
@@ -18,9 +20,11 @@ export function SettingsView({ alphabet, onAlphabetChange, account, onSignOut, a
       <label><input type="radio" name="serbian-alphabet" value="cyrillic" checked={alphabet === "cyrillic"} onChange={() => onAlphabetChange("cyrillic")} /> Кириллица <span>Желим да отворим рачун.</span></label>
     </fieldset>
     <section className="assistance-settings panel">
-      <label><input type="checkbox" role="switch" checked={assistanceEnabled} onChange={event => onAssistanceChange?.(event.target.checked)} /> Мягкие подсказки при распознавании</label>
+      <label><input type="checkbox" role="switch" disabled={assistanceSaving} checked={assistanceEnabled} onChange={event => onAssistanceChange?.(event.target.checked)} /> Мягкие подсказки при распознавании</label>
       <p>Сравнивать каждую расшифровку с эталоном и допустимыми переводами, предлагая близкие варианты возможных искажений распознавания. Все изменения применяются только после вашего подтверждения.</p>
-      <small>По умолчанию выключено. Выбор сохраняется для этого аккаунта на этом устройстве и применяется к следующей записи.</small>
+      <small>По умолчанию выключено. Выбор сохраняется в профиле и синхронизируется между веб-версией и Android. Настройка применяется к следующей записи.</small>
+      {assistanceSaving && <p role="status">Сохраняем настройку…</p>}
+      {assistanceError && <p role="alert">{assistanceError}</p>}
     </section>
     {account && <section className="settings-profile panel" aria-label="Профиль">
       <div className="profile"><span className="avatar">{account.display_name?.slice(0, 1).toLocaleUpperCase() || "A"}</span>

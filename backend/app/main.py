@@ -26,7 +26,7 @@ app.add_middleware(
     allow_origins=["http://localhost", "https://localhost", "capacitor://localhost"],
     allow_origin_regex=settings.cors_allowed_origin_regex,
     allow_credentials=False,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"],
     expose_headers=["Server-Timing"],
 )

@@ -329,6 +329,8 @@ def bootstrap_testlab_database(engine: Engine) -> None:
     del _entities
     current = _metadata_shape(Base.metadata)
     predecessor = {name: set(columns) for name, columns in current.items()}
+    predecessor["users"].discard("assistance_enabled")
+    pre_preference = {name: frozenset(columns) for name, columns in predecessor.items()}
     predecessor.pop("transcription_receipts", None)
     pre_receipt = {name: frozenset(columns) for name, columns in predecessor.items()}
     attempt_request_columns = predecessor.get("attempt_requests")
@@ -350,6 +352,14 @@ def bootstrap_testlab_database(engine: Engine) -> None:
             _alembic(engine, "stamp", head)
         elif stamped_revision != head:
             raise RuntimeError("Refusing current-shaped testlab database with an unexpected Alembic revision")
+        return
+
+    if shape == pre_preference:
+        if stamped_revision is None:
+            _alembic(engine, "stamp", "f31a7b901c22")
+        elif stamped_revision != "f31a7b901c22":
+            raise RuntimeError("Refusing pre-preference schema with unexpected Alembic revision")
+        _alembic(engine, "upgrade", "head")
         return
 
     if shape == pre_receipt:
