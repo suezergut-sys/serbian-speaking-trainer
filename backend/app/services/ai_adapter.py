@@ -10,6 +10,7 @@ from openai import OpenAI
 from app.config import Settings, get_settings
 from app.schemas import AnswerAnalysis, ExerciseGenerationResult, PhrasePreparation, TopicContext
 from app.schemas.transcriptions import TranscriptionAssistanceAnalysis
+from app.schemas.attempts import ExplainedAnswerAnalysis
 from app.request_metrics import measure_ai_call
 
 PROMPTS_DIR = Path(__file__).resolve().parents[1] / "prompts"
@@ -122,9 +123,9 @@ class OpenAIStructuredProvider:
             "target_level": "A2",
         }
         return self._parse(
-            prompt_name="answer_analyzer.md",
+            prompt_name="answer_analyzer_v2.md",
             payload=payload,
-            schema=AnswerAnalysis,
+            schema=ExplainedAnswerAnalysis,
         )
 
     def prepare_phrase(self, *, source_ru: str, canonical_sr: str | None = None) -> PhrasePreparation:
@@ -139,7 +140,7 @@ class OpenAIStructuredProvider:
         *,
         prompt_name: str,
         payload: dict[str, object],
-        schema: type[TopicContext] | type[ExerciseGenerationResult] | type[AnswerAnalysis] | type[PhrasePreparation] | type[TranscriptionAssistanceAnalysis],
+        schema: type[TopicContext] | type[ExerciseGenerationResult] | type[AnswerAnalysis] | type[ExplainedAnswerAnalysis] | type[PhrasePreparation] | type[TranscriptionAssistanceAnalysis],
     ):
         try:
             with measure_ai_call():

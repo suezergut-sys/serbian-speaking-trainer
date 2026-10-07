@@ -57,7 +57,8 @@ def test_submit_incorrect_attempt_creates_error_event(api_client: TestClient, db
         naturalness_score=0.2, fluency_score=1, corrected_sr="Ne znam.",
         short_feedback_ru="Попробуйте ещё раз.", detailed_feedback_ru="Нужно передать исходный смысл.",
         issues=[AnswerIssue(type="meaning", skill_key=skill_key, severity=0.8, confidence=0.9,
-                            evidence="Ne znam.", correction="Исправленный вариант")],
+                            evidence="Ne znam.", correction="Исправленный вариант",
+                            explanation_ru="Ответ означает «не знаю» и не выражает просьбу из задания.")],
     ))
 
     response = api_client.post(
@@ -69,6 +70,11 @@ def test_submit_incorrect_attempt_creates_error_event(api_client: TestClient, db
     payload = response.json()
     assert payload["analysis"]["verdict"] == "needs_work"
     assert payload["analysis"]["issues"]
+    reason = "Ответ означает «не знаю» и не выражает просьбу из задания."
+    assert payload["analysis"]["issues"][0]["explanation_ru"] == reason
+    db_session.expire_all()
+    stored_attempt = db_session.get(Attempt, payload["id"])
+    assert stored_attempt.analysis_json["issues"][0]["explanation_ru"] == reason
     assert db_session.scalar(select(func.count()).select_from(ErrorEvent)) == 1
     assert db_session.scalar(select(func.count()).select_from(LearnerSkill)) == len(payload["learner_updates"])
 

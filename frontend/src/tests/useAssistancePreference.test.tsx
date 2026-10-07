@@ -16,6 +16,26 @@ function Client() {
 afterEach(() => { cleanup(); vi.resetAllMocks(); vi.useRealTimers(); });
 
 describe("shared assistance preference", () => {
+  it.each([true, false])("restores saved %s after a client restart without writing a default", async enabled => {
+    let server = !enabled;
+    vi.mocked(fetchPreferences).mockImplementation(async () => ({ assistance_enabled: server }));
+    vi.mocked(updatePreferences).mockImplementation(async value => { server = value; return { assistance_enabled: server }; });
+    const firstClient = render(<Client />);
+    await waitFor(() => expect(fetchPreferences).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByRole("switch")).toHaveProperty("checked", !enabled));
+    fireEvent.click(screen.getByRole("switch"));
+    await waitFor(() => expect(screen.getByRole("switch")).toHaveProperty("checked", enabled));
+    firstClient.unmount();
+    vi.mocked(updatePreferences).mockClear();
+    // Old device storage (or a client's default) cannot reset the confirmed DB value.
+    localStorage.setItem("serbotalk.soft-assistance.persisted-user", String(!enabled));
+    render(<Client />);
+    await waitFor(() => expect(fetchPreferences).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(screen.getByRole("switch")).toHaveProperty("checked", enabled));
+    expect(updatePreferences).not.toHaveBeenCalled();
+    localStorage.removeItem("serbotalk.soft-assistance.persisted-user");
+  });
+
   it("loads the server choice and confirms both on and off writes", async () => {
     vi.mocked(fetchPreferences).mockResolvedValue({ assistance_enabled: true });
     vi.mocked(updatePreferences).mockImplementation(async value => ({ assistance_enabled: value }));

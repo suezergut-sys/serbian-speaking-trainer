@@ -795,7 +795,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       {attempt.transcription_assisted && <p className="assisted-answer-label">С подсказкой — освоение не повышено</p>}
       {attempt.hint_penalty > 0 && <div className="hint-penalty"><Icon name="bulb" /><span>Подсказки: −{Math.round(attempt.hint_penalty * 100)} баллов</span></div>}
       <p>{displaySerbianInRussianText(attempt.analysis.short_feedback_ru, alphabet)}</p>
-      <details><summary>Разбор</summary><p>{displaySerbianInRussianText(attempt.analysis.detailed_feedback_ru, alphabet)}</p>{attempt.analysis.issues.map((issue, index) => <p className="issue" key={`${issue.skill_key}-${issue.type}-${index}`}>{displaySerbianInRussianText(issue.evidence, alphabet)}{issue.correction ? ` → ${displaySerbianInRussianText(issue.correction, alphabet)}` : ""}</p>)}</details>
+      <details><summary>Разбор</summary><p>{displaySerbianInRussianText(attempt.analysis.detailed_feedback_ru, alphabet)}</p>{attempt.analysis.issues.map((issue, index) => <p className="issue" key={`${issue.skill_key}-${issue.type}-${index}`}>{displaySerbianInRussianText(issue.evidence, alphabet)}{issue.correction ? ` → ${displaySerbianInRussianText(issue.correction, alphabet)}` : ""}{issue.explanation_ru && <span className="issue-explanation">{displaySerbianInRussianText(issue.explanation_ru, alphabet)}</span>}</p>)}</details>
       <button className={native ? "android-primary" : "answer-submit"} type="button" disabled={advancing} onClick={() => void nextExercise()}>{advancing ? "Готовим…" : done ? "Завершить тренировку" : native ? "Следующая" : "Следующая фраза"}{!native && <Icon name="arrow" />}</button>
     </div>;
   }

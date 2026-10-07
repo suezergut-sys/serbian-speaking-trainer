@@ -8,11 +8,11 @@ export function TranscriptionAssistanceView({ draft, alphabet, disabled, onToggl
 }) {
   if (!draft) return null;
   const changes = draft.response.changes ?? [];
-  if (!changes.length && !draft.response.assistance_status) return null;
+  if (!changes.length && draft.response.assistance_status !== "unavailable") return null;
   const applied = changes.filter((c, i) => c.action === "applied" && draft.selected.includes(i)).length;
   return <section className="transcription-assistance" aria-label="Мягкие подсказки">
     {draft.response.assistance_status === "unavailable" && <p role="status">Мягкие подсказки временно недоступны. Показана исходная расшифровка; можно проверить ответ или повторить запись.</p>}
-    {draft.response.assistance_status === "analyzed" && <p>{changes.length ? "Найдены возможные искажения распознавания. Подтвердите подходящие варианты." : "Текст сравнен с эталоном и допустимыми вариантами. Подходящих мягких подсказок не найдено."}</p>}
+    {!draft.edited && draft.response.assistance_status === "analyzed" && changes.length > 0 && <p>Найдены возможные искажения распознавания. Подтвердите подходящие варианты.</p>}
     {applied > 0 && <p>Уточнено написание: {applied} слов</p>}
     {!draft.edited && changes.map((change, index) => <div key={index}>
       <div className="transcription-assistance__copy"><span>{displaySerbian(change.original, alphabet)} → {displaySerbian(change.replacement, alphabet)}</span>
@@ -23,7 +23,6 @@ export function TranscriptionAssistanceView({ draft, alphabet, disabled, onToggl
       </button>
     </div>)}
     {draft.selected.some(i => changes[i].action === "suggested") && <p>С подсказкой — без повышения освоения. Повторите самостоятельно, чтобы закрепить фразу.</p>}
-    {draft.edited && <p>Текст исправлен вручную. Подсказки больше не меняют этот ответ.</p>}
     {changes.length > 0 && <details><summary>Исходная расшифровка</summary><p>{displaySerbian(draft.response.raw_text ?? draft.response.text, alphabet)}</p></details>}
   </section>;
 }

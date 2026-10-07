@@ -9,8 +9,8 @@ android {
         applicationId "com.serbiantalk.trainer"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 33
-        versionName "1.23"
+        versionCode 34
+        versionName "1.24"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -63,7 +63,7 @@ tasks.configureEach { task ->
 
 android.applicationVariants.all { variant ->
     variant.outputs.all {
-        outputFileName = "SerboTalk-andorid16-1.23.apk"
+        outputFileName = "SerboTalk-andorid16-1.24.apk"
     }
 }
 

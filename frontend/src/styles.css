@@ -219,6 +219,7 @@ button { cursor: pointer; background: var(--panel); }
 .feedback details { color: #8da8cb; font-size: .72rem; }
 .feedback summary { cursor: pointer; color: #5eb7ff; font-size: 1.15rem; font-weight: 700; }
 .issue { padding-top: .55rem; border-top: 1px solid rgba(255,255,255,.08); }
+.issue-explanation { display: block; margin-top: .35rem; color: var(--muted); line-height: 1.5; }
 .submitted-answer { display: grid; gap: .6rem; padding: 1.1rem .15rem .25rem; }
 .submitted-answer small { color: #6d8cb5; font-size: .62rem; text-transform: uppercase; }
 .submitted-answer p { margin: 0; padding: .9rem 1rem; border: 1px solid rgba(72, 148, 220, .35); border-radius: 10px; background: rgba(4, 16, 34, .55); color: #dceaff; line-height: 1.55; }

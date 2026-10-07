@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, JsonValue
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, StringConstraints
 
 from app.schemas.auth import DailyUsageResponse
 
@@ -16,6 +16,7 @@ class AnswerIssue(BaseModel):
     confidence: float = Field(ge=0, le=1)
     evidence: str = Field(min_length=1, max_length=500)
     correction: str | None = Field(default=None, max_length=500)
+    explanation_ru: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=800)] | None = None
 
 
 class DemonstratedSkill(BaseModel):
@@ -42,6 +43,15 @@ class AnswerAnalysis(BaseModel):
     accepted_alternatives: list[str] = Field(default_factory=list, max_length=8)
     issues: list[AnswerIssue] = Field(default_factory=list, max_length=12)
     demonstrated_skills: list[DemonstratedSkill] = Field(default_factory=list, max_length=12)
+
+
+class ExplainedAnswerIssue(AnswerIssue):
+    explanation_ru: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=800)]
+
+
+class ExplainedAnswerAnalysis(AnswerAnalysis):
+    # New AI responses require a reason for every issue; stored older attempts remain readable.
+    issues: list[ExplainedAnswerIssue] = Field(default_factory=list, max_length=12)
 
 
 class CreateAttemptRequest(BaseModel):
