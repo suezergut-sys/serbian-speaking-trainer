@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, Float, ForeignKey, Index, Integer, JSON, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, CheckConstraint, DateTime, Float, ForeignKey, Index, Integer, JSON, String, Text, UniqueConstraint, false
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -257,6 +257,7 @@ class User(Base):
     avatar_url: Mapped[str | None] = mapped_column(Text)
     role: Mapped[str] = mapped_column(String(20), default="user", index=True)
     access_tier: Mapped[str] = mapped_column(String(40), default="free", index=True)
+    assistance_enabled: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     registered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     last_active_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, index=True)
 

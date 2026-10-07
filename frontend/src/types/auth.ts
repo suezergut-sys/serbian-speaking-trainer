@@ -5,7 +5,12 @@ export interface DailyUsage {
   resets_at: string;
 }
 
+export interface UserPreferences {
+  assistance_enabled: boolean;
+}
+
 export interface CurrentUser {
+  assistance_enabled?: boolean;
   id: string;
   email: string;
   display_name: string | null;

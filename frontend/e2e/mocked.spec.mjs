@@ -23,6 +23,7 @@ const account = {
 };
 
 async function mockApp(page, submitted) {
+  let assistanceEnabled = false;
   await installSyntheticMicrophone(page);
   await page.route("**/api/**", async (route) => {
     const request = route.request();
@@ -31,6 +32,10 @@ async function mockApp(page, submitted) {
     const method = request.method();
     let body;
     if (path === "/api/auth/me" && method === "GET") body = account;
+    else if (path === "/api/auth/me/preferences") {
+      if (method === "PATCH") assistanceEnabled = request.postDataJSON().assistance_enabled;
+      body = { assistance_enabled: assistanceEnabled };
+    }
     else if (path === "/api/topics" && method === "GET") body = [topic];
     else if (path === "/api/review-phrases/summary" && method === "GET") body = { phrase_count: 0 };
     else if (path === "/api/sessions/start" && method === "POST") body = { session, exercise: exercise("exercise-1", "Я хочу открыть счёт.") };
@@ -68,7 +73,7 @@ for (const native of [false, true]) {
     await page.setViewportSize({ width: 393, height: 851 });
     if (native) await page.addInitScript(() => { window.CapacitorCustomPlatform = { name: "android" }; });
     await mockApp(page, []);
-    await page.evaluate(() => localStorage.setItem("serbotalk.soft-assistance.user-1", "true"));
+    await page.route("**/api/auth/me/preferences", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ assistance_enabled: true }) }));
     let recordings = 0;
     await page.route("**/api/transcriptions", route => {
       const body = ++recordings === 1 ? {
@@ -118,7 +123,8 @@ for (const native of [false, true]) {
     await page.getByRole("button", {name:"Настройки",exact:true}).click();
     const toggle = page.getByRole("switch");
     await expect(toggle).not.toBeChecked();
-    await toggle.check();
+    await toggle.click();
+    await expect(toggle).toBeChecked();
     await page.getByRole("button", {name:native ? "Тренировка" : "Практика",exact:true}).click();
     await page.getByRole("button", {name:"Ответить голосом"}).click();
     await page.getByRole("button", {name:"Завершить запись"}).click();
@@ -210,4 +216,84 @@ test(`${native ? "Android layout" : "web"} dark error recovery and transcript ac
   expect(submitted).toHaveLength(1);
 });
 
+}
+
+
+for (const { native, width } of [{ native: false, width: 1280 }, { native: false, width: 393 }, { native: true, width: 393 }]) {
+  test(`statistics redesign ${native ? "Android layout" : "web"} ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 1000 });
+    if (native) await page.addInitScript(() => { window.CapacitorCustomPlatform = { name: "android" }; });
+    await mockApp(page, []);
+    let phraseRequests = 0;
+    await page.route("**/api/statistics/**", async route => {
+      const url = new URL(route.request().url());
+      let body;
+      if (url.pathname.endsWith("/monthly")) {
+        const month = url.searchParams.get("month");
+        const now = new Date();
+        const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
+        const key = `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, "0")}-${String(monday.getDate()).padStart(2, "0")}`;
+        body = { month, active_days: 1, total_phrases: 12, total_translations: 12, correct_translations: 8, mastered_phrases: 2,
+          days: key.startsWith(month) ? [{ date: key, phrase_count: 12, translation_count: 12, correct_translation_count: 8, mastered_phrase_count: 2 }] : [] };
+      } else if (url.pathname.endsWith("/phrase-topics")) {
+        phraseRequests++;
+        body = [{ topic_id: "bank", topic_title: "В банке", phrase_count: 1 }, { topic_id: "cafe", topic_title: "Кафе", phrase_count: 1 }];
+      } else if (url.pathname.endsWith("/phrases")) {
+        phraseRequests++;
+        const id = url.searchParams.get("topic_id");
+        expect(["bank", "cafe"]).toContain(id);
+        body = { total: 1, page: 1, page_size: "10", total_pages: 1, groups: [{ topic_id: id, topic_title: id === "bank" ? "В банке" : "Кафе", phrases: [{
+          id: `phrase-${id}`, source_ru: id === "bank" ? "Фраза банка" : "Фраза кафе", target_sr: "Čaj i kafa.", attempts: 4, status: "mastered", difficulty: "easy", next_review_at: "2026-10-20T00:00:00Z",
+        }] }] };
+      } else throw new Error(`Unexpected statistics endpoint ${url.pathname}`);
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
+    });
+    await page.goto("/");
+    await page.getByRole("heading", { name: "Я хочу открыть счёт." }).waitFor();
+    await page.getByRole("button", { name: "Статистика", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Календарь занятий" })).toBeVisible();
+    expect(phraseRequests).toBe(0);
+    await expect(page.getByText("от 1 попытки")).toBeVisible();
+    await expect(page.getByText("от 10 попыток")).toBeVisible();
+    const cells = await page.locator(".calendar-day").evaluateAll(elements => elements.map(element => {
+      const box = element.getBoundingClientRect(); return { x: box.x, right: box.right, width: box.width };
+    }));
+    for (let index = 1; index < cells.length; index++) {
+      expect(cells[index].x).toBeGreaterThan(cells[index - 1].right);
+      expect(Math.abs(cells[index].width - cells[0].width)).toBeLessThanOrEqual(.02);
+    }
+    expect(cells.at(-1).right).toBeLessThanOrEqual(width);
+    const calendar = page.locator(".calendar-day").first();
+    await expect(calendar.locator(".calendar-count")).toHaveText("12");
+    const date = await calendar.locator(".calendar-date").boundingBox();
+    const count = await calendar.locator(".calendar-count").boundingBox();
+    expect(date.y + date.height).toBeLessThan(count.y);
+    const dimensions = await page.locator(".daily-chart__column").first().evaluate(column => {
+      const names = [".daily-chart__segment--correct", ".daily-chart__segment--other", ".daily-chart__mastered"];
+      return names.map(name => { const box = column.querySelector(name).getBoundingClientRect(); return { x: box.x, width: box.width }; });
+    });
+    for (const box of dimensions) {
+      expect(Math.abs(box.width - dimensions[0].width)).toBeLessThanOrEqual(.01);
+      expect(Math.abs(box.x - dimensions[0].x)).toBeLessThanOrEqual(.01);
+    }
+    await page.screenshot({ path: `../artifacts/statistics-redesign-${native ? "android" : "web"}-${width}.png`, fullPage: true });
+    await page.getByRole("button", { name: "Фразы по темам →" }).click();
+    await expect(page.getByRole("heading", { name: "Фразы по темам" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Календарь занятий" })).toHaveCount(0);
+    await expect(page.getByText("Фраза банка", { exact: true })).toBeVisible();
+    await page.getByLabel("Тема", { exact: true }).selectOption("cafe");
+    await expect(page.getByText("Фраза кафе", { exact: true })).toBeVisible();
+    await expect(page.getByText("Фраза банка", { exact: true })).toHaveCount(0);
+    await expect(page.getByText("выучена", { exact: true })).toBeVisible();
+    await expect(page.getByText("20.10.2026", { exact: true })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+    const selectStyle = await page.getByLabel("Тема", { exact: true }).evaluate(element => {
+      const style = getComputedStyle(element); return { background: style.backgroundColor, color: style.color };
+    });
+    expect(selectStyle.background).not.toBe("rgb(255, 255, 255)");
+    expect(selectStyle.color).toBe("rgb(234, 242, 255)");
+    await page.screenshot({ path: `../artifacts/statistics-phrases-${native ? "android" : "web"}-${width}.png`, fullPage: true });
+    await page.getByRole("button", { name: "← К статистике" }).click();
+    await expect(page.getByRole("heading", { name: "Календарь занятий" })).toBeVisible();
+  });
 }

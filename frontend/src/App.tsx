@@ -11,9 +11,10 @@ import { fetchCurrentUser } from "./api/users";
 import { initializeAuth, isAuthConfigured, onAuthStateChange, signInWithGoogle, signOut } from "./auth";
 import type { CurrentUser } from "./types/auth";
 import { LegalPage } from "./LegalPage";
-import { readAssistance, saveAssistance, assistedText } from "./transcriptionAssistance";
+import { assistedText } from "./transcriptionAssistance";
 import { transcriptionErrorMessage } from "./transcriptionError";
 import { TranscriptionAssistanceView, type AssistanceDraft } from "./TranscriptionAssistanceView";
+import { useAssistancePreference } from "./useAssistancePreference";
 import { SettingsView } from "./SettingsView";
 import { displaySerbian, displaySerbianInRussianText, readSerbianAlphabet, saveSerbianAlphabet, toSerbianLatin, type SerbianAlphabet } from "./serbianScript";
 import { AnswerResult } from "./AnswerResult";
@@ -172,10 +173,9 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const [phraseTopicId, setPhraseTopicId] = useState("");
   const [session, setSession] = useState<TrainingSession>();
   const [exercise, setExercise] = useState<Exercise>();
-  const [exerciseNumber, setExerciseNumber] = useState(1);
   const [answer, setAnswer] = useState("");
   const [hasTranscript, setHasTranscript] = useState(false);
-  const [assistanceEnabled, setAssistanceEnabled] = useState(() => readAssistance(account.id));
+  const { enabled: assistanceEnabled, saving: assistanceSaving, error: assistanceError, change: changeAssistance, refresh: refreshAssistance } = useAssistancePreference(account.assistance_enabled ?? false);
   const [assistanceDraft, setAssistanceDraft] = useState<AssistanceDraft>();
   const [alphabet, setAlphabet] = useState<SerbianAlphabet>(() => readSerbianAlphabet(account.id));
   const alphabetRef = useRef(alphabet);
@@ -216,6 +216,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const presentedExerciseRef = useRef<string | undefined>(undefined);
   const initialExerciseTimingPendingRef = useRef(false);
   const [androidPanel, setAndroidPanel] = useState(0);
+  const [statisticsPage, setStatisticsPage] = useState<"activity" | "phrases">("activity");
   const androidBackHandlerRef = useRef<() => void>(() => undefined);
   const voiceSupported = supportsVoiceRecording();
   const isNative = Capacitor.isNativePlatform();
@@ -341,7 +342,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
           started = await startTrainingSession({ topic_id: firstTopic!.id }, controller.signal);
         }
         if (controller.signal.aborted || catalogEpochRef.current !== epoch) return;
-        setSession(started.session); setExercise(started.exercise); setExerciseNumber(1);
+        setSession(started.session); setExercise(started.exercise);
         setCompletedCount(started.session.completed_count ?? 0);
         if (Capacitor.isNativePlatform()) initialExerciseTimingPendingRef.current = true;
         setStartupState("ready");
@@ -443,7 +444,9 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
   useEffect(() => {
     androidBackHandlerRef.current = () => {
-      if (androidPanel !== 0) {
+      if (androidPanel === 2 && statisticsPage === "phrases") {
+        setStatisticsPage("activity");
+      } else if (androidPanel !== 0) {
         showAndroidPanel(session && androidPanel > 1 ? 1 : 0);
       } else {
         interruptVoice();
@@ -478,6 +481,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     if (isNative) {
       void CapacitorApp.addListener("appStateChange", ({ isActive }) => {
         if (active && !isActive) interruptVoice();
+        if (active && isActive) void refreshAssistance();
       }).then((listener) => {
         if (active) nativeListener = listener;
         else void listener.remove().catch(() => undefined);
@@ -488,7 +492,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       document.removeEventListener("visibilitychange", onVisibilityChange);
       if (nativeListener) void nativeListener.remove().catch(() => undefined);
     };
-  }, [interruptVoice, isNative]);
+  }, [interruptVoice, isNative, refreshAssistance]);
 
   function showView(next: AppView) {
     if (next !== "practice") interruptVoice();
@@ -555,7 +559,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     try {
       const started = await startTrainingSession({ topic_id: topicId }, controller.signal);
       if (flowEpochRef.current !== epoch) return;
-      setSession(started.session); setExercise(started.exercise); setExerciseNumber(1);
+      setSession(started.session); setExercise(started.exercise);
       setCompletedCount(started.session.completed_count ?? 0);
       setStartupState("ready");
     } catch (requestError) {
@@ -584,7 +588,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     try {
       const started = await startTrainingSession({ review_mode: true }, controller.signal);
       if (flowEpochRef.current !== epoch) return;
-      setSession(started.session); setExercise(started.exercise); setExerciseNumber(1);
+      setSession(started.session); setExercise(started.exercise);
       setAnswer(""); setAssistanceDraft(undefined); setHasTranscript(false); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
       setStartupState("ready");
     } catch (requestError) {
@@ -614,7 +618,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       const next = await (request?.promise ?? fetchNextExercise(session.id, id, controller.signal));
       if (flowEpochRef.current !== epoch) return;
       nextExerciseRef.current = undefined; nextRequestIdRef.current = undefined;
-      setExercise(next); setExerciseNumber((current) => isReviewMode ? current + 1 : Math.min(current + 1, session.requested_length));
+      setExercise(next);
       wordHintsRef.current = {}; savedHintsRef.current.clear();
       setAnswer(""); setAssistanceDraft(undefined); setHasTranscript(false); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
     }
@@ -699,7 +703,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
   function resetTraining() {
     invalidateFlow();
-    stopVoice(); setView("practice"); setSession(undefined); setExercise(undefined); setExerciseNumber(1);
+    stopVoice(); setView("practice"); setSession(undefined); setExercise(undefined);
     setAnswer(""); setAssistanceDraft(undefined); setHasTranscript(false); setAttempt(undefined); setError(undefined); setWordHints({}); setActiveHint(undefined); setCompletedCount(0); setSessionComplete(false); setTopicExhausted(false);
   }
 
@@ -791,7 +795,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       {attempt.transcription_assisted && <p className="assisted-answer-label">С подсказкой — освоение не повышено</p>}
       {attempt.hint_penalty > 0 && <div className="hint-penalty"><Icon name="bulb" /><span>Подсказки: −{Math.round(attempt.hint_penalty * 100)} баллов</span></div>}
       <p>{displaySerbianInRussianText(attempt.analysis.short_feedback_ru, alphabet)}</p>
-      <details><summary>Разбор</summary><p>{displaySerbianInRussianText(attempt.analysis.detailed_feedback_ru, alphabet)}</p><div className="score-grid"><span>Смысл <b>{Math.round(attempt.analysis.semantic_score * 100)}</b></span><span>Грамматика <b>{Math.round(attempt.analysis.grammar_score * 100)}</b></span><span>Лексика <b>{Math.round(attempt.analysis.lexical_score * 100)}</b></span><span>Естественность <b>{Math.round(attempt.analysis.naturalness_score * 100)}</b></span></div>{attempt.analysis.issues.map((issue, index) => <p className="issue" key={`${issue.skill_key}-${issue.type}-${index}`}>{displaySerbianInRussianText(issue.evidence, alphabet)}{issue.correction ? ` → ${displaySerbianInRussianText(issue.correction, alphabet)}` : ""}</p>)}</details>
+      <details><summary>Разбор</summary><p>{displaySerbianInRussianText(attempt.analysis.detailed_feedback_ru, alphabet)}</p>{attempt.analysis.issues.map((issue, index) => <p className="issue" key={`${issue.skill_key}-${issue.type}-${index}`}>{displaySerbianInRussianText(issue.evidence, alphabet)}{issue.correction ? ` → ${displaySerbianInRussianText(issue.correction, alphabet)}` : ""}</p>)}</details>
       <button className={native ? "android-primary" : "answer-submit"} type="button" disabled={advancing} onClick={() => void nextExercise()}>{advancing ? "Готовим…" : done ? "Завершить тренировку" : native ? "Следующая" : "Следующая фраза"}{!native && <Icon name="arrow" />}</button>
     </div>;
   }
@@ -878,7 +882,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
               </div>
             ) : (
               <div className="android-training-content practice-card">
-                <div className="android-training-meta"><span>{currentTopic?.title_ru}</span><small>{exerciseNumber}/{session.requested_length}</small></div>
+                <div className="android-training-meta"><span>{currentTopic?.title_ru}</span></div>
                 {!attempt && renderPhrase()}
 
                 {!attempt ? <form className="android-answer" onSubmit={checkAnswer}>
@@ -896,11 +900,11 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
           </section>
 
           <section className="android-page android-statistics-page" aria-label="Статистика">
-            {androidPanel === 2 && <DeferredPanel load={loadStatistics} panelProps={{ alphabet }} label="статистику" />}
+            {androidPanel === 2 && <DeferredPanel load={loadStatistics} panelProps={{ alphabet, page: statisticsPage, onPageChange: setStatisticsPage }} label="статистику" />}
 
           </section>
           <section className="android-page android-settings-page" aria-label="Настройки приложения">
-            <SettingsView alphabet={alphabet} onAlphabetChange={changeAlphabet} account={account} onSignOut={onSignOut} assistanceEnabled={assistanceEnabled} onAssistanceChange={enabled => { interruptVoice(); saveAssistance(account.id, enabled); setAssistanceEnabled(enabled); }} />
+            <SettingsView alphabet={alphabet} onAlphabetChange={changeAlphabet} account={account} onSignOut={onSignOut} assistanceEnabled={assistanceEnabled} assistanceSaving={assistanceSaving} assistanceError={assistanceError} onAssistanceChange={enabled => { interruptVoice(); void changeAssistance(enabled); }} />
           </section>
         </div>
       </div>
@@ -928,7 +932,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
 
 
-      {view === "admin" ? <DeferredPanel key="admin" load={loadAdminUsers} panelProps={{}} label="пользователей" /> : view === "statistics" ? <DeferredPanel key="statistics" load={loadStatistics} panelProps={{ alphabet }} label="статистику" /> : view === "settings" ? <SettingsView alphabet={alphabet} onAlphabetChange={changeAlphabet} account={account} onSignOut={onSignOut} assistanceEnabled={assistanceEnabled} onAssistanceChange={enabled => { interruptVoice(); saveAssistance(account.id, enabled); setAssistanceEnabled(enabled); }} /> : (
+      {view === "admin" ? <DeferredPanel key="admin" load={loadAdminUsers} panelProps={{}} label="пользователей" /> : view === "statistics" ? <DeferredPanel key="statistics" load={loadStatistics} panelProps={{ alphabet, page: statisticsPage, onPageChange: setStatisticsPage }} label="статистику" /> : view === "settings" ? <SettingsView alphabet={alphabet} onAlphabetChange={changeAlphabet} account={account} onSignOut={onSignOut} assistanceEnabled={assistanceEnabled} assistanceSaving={assistanceSaving} assistanceError={assistanceError} onAssistanceChange={enabled => { interruptVoice(); void changeAssistance(enabled); }} /> : (
         <main className="workspace">
           <aside className="topics-panel panel">
             <div className="panel-heading"><h2>Темы для практики</h2><p>Выберите ситуацию и начните разговор на сербском языке</p></div>
@@ -980,8 +984,8 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
             ) : (
               <>
                 <div className="practice-card panel">
-                  <div className="card-title"><span><Icon name="message" /></span><h2>{isReviewMode ? "Карусель повторения" : "Основная фраза"}</h2><small>{isReviewMode ? `Фраза ${exerciseNumber}` : `${exerciseNumber} / ${session.requested_length}`}</small></div>
-                  {!attempt && <div className="phrase-card__content"><span className="phrase-number">{String(exerciseNumber).padStart(2, "0")}</span><div><p className="kicker">Скажите по-сербски · нажмите на незнакомое слово</p>{renderPhrase()}</div></div>}
+                  <div className="card-title"><span><Icon name="message" /></span><h2>{isReviewMode ? "Карусель повторения" : "Основная фраза"}</h2></div>
+                  {!attempt && <div className="phrase-card__content"><div><p className="kicker">Скажите по-сербски · нажмите на незнакомое слово</p>{renderPhrase()}</div></div>}
                   {!attempt ? (
                     <form onSubmit={checkAnswer}>
                       <div className="answer-input">

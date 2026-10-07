@@ -29,7 +29,14 @@ class DailyUsageResponse(BaseModel):
     resets_at: datetime
 
 
+class UserPreferences(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    assistance_enabled: bool = Field(strict=True)
+
+
 class CurrentUserResponse(BaseModel):
+    assistance_enabled: bool = False
     id: str
     email: str
     display_name: str | None

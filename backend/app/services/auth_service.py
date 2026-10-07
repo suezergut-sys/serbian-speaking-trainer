@@ -206,9 +206,14 @@ class UserService:
             resets_at=end,
         )
 
+    def update_preferences(self, user: User, enabled: bool) -> None:
+        self.users.set_assistance(user.id, enabled)
+        self.db.commit()
+
     def current_response(self, user: User) -> CurrentUserResponse:
         return CurrentUserResponse(
             id=user.id, email=user.email, display_name=user.display_name, avatar_url=user.avatar_url,
+            assistance_enabled=user.assistance_enabled,
             role=user.role, access_tier=user.access_tier, registered_at=user.registered_at,
             last_active_at=user.last_active_at, daily_usage=self.usage(user),
         )

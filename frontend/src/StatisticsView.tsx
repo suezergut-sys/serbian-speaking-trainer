@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
-import { fetchMonthlyStatistics, fetchPhraseStatistics } from "./api/statistics";
-import type { MonthlyStatistics, PhraseStatistics } from "./types/statistics";
+import { fetchMonthlyStatistics, fetchPhraseStatistics, fetchPhraseTopics } from "./api/statistics";
+import type { MonthlyStatistics, PhraseStatistics, PhraseStatisticsTopic } from "./types/statistics";
 import { displaySerbian, type SerbianAlphabet } from "./serbianScript";
 
 const weekDays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
@@ -26,7 +26,7 @@ function formatReviewDate(value: string | null): string {
   return new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(value));
 }
 
-function PhrasesTab({ alphabet }: { alphabet: SerbianAlphabet }) {
+function PhraseList({ alphabet, topicId }: { alphabet: SerbianAlphabet; topicId: string }) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<PageSize>("10");
   const [statistics, setStatistics] = useState<PhraseStatistics>();
@@ -36,7 +36,7 @@ function PhrasesTab({ alphabet }: { alphabet: SerbianAlphabet }) {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetchPhraseStatistics(page, pageSize, controller.signal)
+    fetchPhraseStatistics(page, pageSize, controller.signal, topicId)
       .then((result) => { if (!controller.signal.aborted) setStatistics(result); })
       .catch((requestError: unknown) => {
         if (controller.signal.aborted || requestError instanceof DOMException && requestError.name === "AbortError") return;
@@ -44,7 +44,7 @@ function PhrasesTab({ alphabet }: { alphabet: SerbianAlphabet }) {
       })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [page, pageSize, retry]);
+  }, [page, pageSize, retry, topicId]);
 
   function changePage(nextPage: number) {
     setLoading(true); setError(false); setPage(nextPage);
@@ -73,9 +73,9 @@ function PhrasesTab({ alphabet }: { alphabet: SerbianAlphabet }) {
           <div className="phrase-table-wrap"><table className="phrase-table">
             <thead><tr><th>Фраза на русском</th><th>Фраза на сербском</th><th>Попытки</th><th>Статус</th><th>Следующий повтор</th></tr></thead>
             <tbody>{group.phrases.map((phrase) => <tr key={phrase.id}>
-              <td>{phrase.source_ru}</td><td lang={alphabet === "cyrillic" ? "sr-Cyrl" : "sr-Latn"}>{displaySerbian(phrase.target_sr, alphabet)}</td><td>{phrase.attempts}</td>
-              <td><span className={`phrase-status phrase-status--${phrase.status}`}>{phrase.status === "mastered" ? "выучена" : "в изучении"}</span></td>
-              <td>{phrase.status === "mastered" ? formatReviewDate(phrase.next_review_at) : "—"}</td>
+              <td><span className="phrase-cell-label">Фраза на русском</span><span>{phrase.source_ru}</span></td><td lang={alphabet === "cyrillic" ? "sr-Cyrl" : "sr-Latn"}><span className="phrase-cell-label">Фраза на сербском</span><span>{displaySerbian(phrase.target_sr, alphabet)}</span></td><td><span className="phrase-cell-label">Попытки</span><span>{phrase.attempts}</span></td>
+              <td><span className="phrase-cell-label">Статус</span><span className={`phrase-status phrase-status--${phrase.status}`}>{phrase.status === "mastered" ? "выучена" : "в изучении"}</span></td>
+              <td><span className="phrase-cell-label">Следующий повтор</span><span>{phrase.status === "mastered" ? formatReviewDate(phrase.next_review_at) : "—"}</span></td>
             </tr>)}</tbody>
           </table></div>
         </section>)}
@@ -87,6 +87,34 @@ function PhrasesTab({ alphabet }: { alphabet: SerbianAlphabet }) {
       </nav>
     </>}
   </section>;
+}
+
+function PhrasesPage({ alphabet }: { alphabet: SerbianAlphabet }) {
+  const [topics, setTopics] = useState<PhraseStatisticsTopic[]>();
+  const [selectedTopic, setSelectedTopic] = useState("");
+  const [error, setError] = useState(false);
+  const [retry, setRetry] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchPhraseTopics(controller.signal).then(result => {
+      if (controller.signal.aborted) return;
+      setTopics(result);
+      setSelectedTopic(result[0] ? result[0].topic_id ?? "unassigned" : "");
+    }).catch(() => { if (!controller.signal.aborted) setError(true); });
+    return () => controller.abort();
+  }, [retry]);
+
+  if (error) return <div className="statistics-state panel" role="alert">Не удалось загрузить темы. <button type="button" onClick={() => { setError(false); setRetry(value => value + 1); }}>Повторить загрузку тем</button></div>;
+  if (!topics) return <div className="statistics-state panel" role="status">Загружаем темы…</div>;
+  if (!topics.length) return <div className="statistics-state panel">Фразы появятся после первой проверенной попытки.</div>;
+  return <>
+    <label className="phrase-topic-control panel">Тема
+      <select aria-label="Тема" value={selectedTopic} onChange={event => setSelectedTopic(event.target.value)}>
+        {topics.map(topic => <option key={topic.topic_id ?? "unassigned"} value={topic.topic_id ?? "unassigned"}>{topic.topic_title} · {topic.phrase_count}</option>)}
+      </select>
+    </label>
+    <PhraseList key={selectedTopic} alphabet={alphabet} topicId={selectedTopic} />
+  </>;
 }
 
 function ActivityTab() {
@@ -138,8 +166,15 @@ function ActivityTab() {
     {toolbar}
     <section className="statistics-summary" aria-label="Итоги недели"><div className="panel"><span>{activeDays}</span><small>Дней</small></div><div className="panel"><span>{total}</span><small>Повторений</small></div><div className="panel"><span>{mastered}</span><small>Выучено</small></div></section>
     <section className="statistics-card panel" aria-labelledby="calendar-title">
-      <div className="statistics-card__heading"><div><p className="kicker">Регулярность</p><h2 id="calendar-title">Календарь занятий</h2></div><span className="calendar-legend"><span><i /> от 1 перевода</span><span><i className="is-intensive" /> от 10 попыток</span></span></div>
-      <div className="practice-calendar">{weekDays.map((day) => <span className="calendar-weekday" key={day}>{day}</span>)}{days.map((day) => { const dayNumber = Number(day.date.slice(-2)); const className = ["calendar-day", day.translation_count > 0 && "is-active", day.translation_count >= 10 && "is-intensive"].filter(Boolean).join(" "); return <div className={className} key={day.date} aria-label={`${dayNumber}: ${day.translation_count} фраз`}><span>{dayNumber}</span>{day.translation_count > 0 && <small>{day.translation_count}</small>}</div>; })}</div>
+      <div className="statistics-card__heading"><div><p className="kicker">Регулярность</p><h2 id="calendar-title">Календарь занятий</h2></div><span className="calendar-legend"><span><i /> от 1 попытки</span><span><i className="is-intensive" /> от 10 попыток</span></span></div>
+      <div className="practice-calendar">{days.map((day, index) => {
+        const dayNumber = Number(day.date.slice(-2));
+        const className = ["calendar-day", day.translation_count > 0 && "is-active", day.translation_count >= 10 && "is-intensive"].filter(Boolean).join(" ");
+        return <div className={className} key={day.date} aria-label={`${weekDays[index]} ${dayNumber}: ${day.translation_count} попыток`}>
+          <small className="calendar-date">{weekDays[index]} {dayNumber}</small>
+          <strong className="calendar-count">{day.translation_count}</strong>
+        </div>;
+      })}</div>
     </section>
     <section className="statistics-card panel" aria-labelledby="daily-chart-title">
       <div className="statistics-card__heading"><div><p className="kicker">Объём практики</p><h2 id="daily-chart-title">Фразы по дням</h2></div><span>Всего: {total}</span></div>
@@ -149,9 +184,19 @@ function ActivityTab() {
   </>;
 }
 
-export function StatisticsView({ alphabet = "latin" }: { alphabet?: SerbianAlphabet }) {
-  return <main className="statistics-page">
+export function StatisticsView({ alphabet = "latin", page, onPageChange }: {
+  alphabet?: SerbianAlphabet;
+  page?: "activity" | "phrases";
+  onPageChange?: (page: "activity" | "phrases") => void;
+}) {
+  const [localPage, setLocalPage] = useState<"activity" | "phrases">("activity");
+  const currentPage = page ?? localPage;
+  const changePage = (next: "activity" | "phrases") => { setLocalPage(next); onPageChange?.(next); };
+  return currentPage === "phrases" ? <main className="statistics-page phrase-statistics-page">
+    <header className="phrase-page-heading"><button type="button" onClick={() => changePage("activity")}>← К статистике</button><h1>Фразы по темам</h1></header>
+    <PhrasesPage alphabet={alphabet} />
+  </main> : <main className="statistics-page">
     <ActivityTab />
-    <PhrasesTab alphabet={alphabet} />
+    <button className="statistics-phrases-link" type="button" onClick={() => changePage("phrases")}>Фразы по темам →</button>
   </main>;
 }

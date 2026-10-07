@@ -213,9 +213,24 @@ class ReviewPhraseRepository(Repository[ReviewPhrase]):
             self.session.flush()
         return due
 
-    def count_for_statistics(self) -> int:
+    def statistics_topics(self) -> list[tuple[str | None, str, int]]:
+        from app.models import TopicPreset
+        title = func.coalesce(TopicPreset.title_ru, "Свои фразы")
+        statement = (select(ReviewPhrase.topic_id, title, func.count())
+            .outerjoin(TopicPreset, and_(TopicPreset.id == ReviewPhrase.topic_id,
+                or_(TopicPreset.owner_user_id.is_(None), TopicPreset.owner_user_id == self.user_id)))
+            .where(ReviewPhrase.user_id == self.user_id)
+            .group_by(ReviewPhrase.topic_id, title).order_by(title, ReviewPhrase.topic_id))
+        return [(topic_id, str(topic_title), int(count)) for topic_id, topic_title, count in self.session.execute(statement)]
+
+    def _statistics_filter(self, topic_id: str | None):
+        if topic_id == "unassigned":
+            return ReviewPhrase.topic_id.is_(None)
+        return ReviewPhrase.topic_id == topic_id if topic_id is not None else True
+
+    def count_for_statistics(self, topic_id: str | None = None) -> int:
         return int(self.session.scalar(
-            select(func.count()).select_from(ReviewPhrase).where(ReviewPhrase.user_id == self.user_id)
+            select(func.count()).select_from(ReviewPhrase).where(ReviewPhrase.user_id == self.user_id, self._statistics_filter(topic_id))
         ) or 0)
 
     def list_for_statistics(
@@ -223,6 +238,7 @@ class ReviewPhraseRepository(Repository[ReviewPhrase]):
         *,
         limit: int | None,
         offset: int,
+        topic_id: str | None = None,
     ) -> list[tuple[ReviewPhrase, str]]:
         from app.models import TopicPreset
 
@@ -234,6 +250,7 @@ class ReviewPhraseRepository(Repository[ReviewPhrase]):
                 or_(TopicPreset.owner_user_id.is_(None), TopicPreset.owner_user_id == self.user_id),
             ))
             .where(ReviewPhrase.user_id == self.user_id)
+            .where(self._statistics_filter(topic_id))
             .order_by(topic_title, ReviewPhrase.created_at, ReviewPhrase.id)
             .offset(offset)
         )

@@ -110,7 +110,7 @@ describe("App", () => {
     expect(screen.getByRole("link", { name: /Вернуться в SerboTalk/ })).toHaveAttribute("href", "/");
   });
 
-  function mockApi(omitLearnerUpdates = false, initialReviewPhrases: Array<Record<string, unknown>> = [], role = "user") {
+  function mockApi(omitLearnerUpdates = false, initialReviewPhrases: Array<Record<string, unknown>> = [], role = "user", assistanceEnabled = false) {
     let reviewCount = initialReviewPhrases.length;
     return vi.fn().mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
       const rawUrl = input.toString();
@@ -120,11 +120,13 @@ describe("App", () => {
       let body: unknown;
       if (url === "/api/health") body = { status: "ok", service: "serbian-speaking-trainer" };
       else if (url === "/api/auth/me") body = {
+        assistance_enabled: assistanceEnabled,
         id: "user-1", email: "learner@example.com", display_name: "Ученик", avatar_url: null,
         role, access_tier: "free", registered_at: "2026-09-01T10:00:00Z",
         last_active_at: "2026-09-22T10:00:00Z",
         daily_usage: { used: 2, limit: 10, remaining: 8, resets_at: "2026-09-23T00:00:00Z" },
       };
+      else if (url === "/api/auth/me/preferences") body = { assistance_enabled: assistanceEnabled };
       else if (url === "/api/transcriptions") body = { text: "Želim da otvorim račun." };
       else if (url === "/api/admin/users") body = [{
         id: "user-1", email: "learner@example.com", display_name: "Ученик", role: "admin",
@@ -169,6 +171,7 @@ describe("App", () => {
           }),
         };
       }
+      else if (url === "/api/statistics/phrase-topics") body = [{ topic_id: "bank", topic_title: "В банке", phrase_count: 1 }];
       else if (url.startsWith("/api/statistics/phrases?")) body = {
         total: 1, page: 1, page_size: "10", total_pages: 1,
         groups: [{ topic_id: "bank", topic_title: "В банке", phrases: [{
@@ -228,10 +231,51 @@ describe("App", () => {
     return screen.findByLabelText("Ваш ответ");
   }
 
+  it.each([false, true])("uses the remotely synced %s preference for native STT after resume", async (initial) => {
+    vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(true);
+    voiceMock.available = true;
+    let server = initial;
+    const base = mockApi();
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (input.toString().endsWith("/api/auth/me/preferences")) return { ok: true, json: async () => ({ assistance_enabled: server }) };
+      if (input.toString().endsWith("/api/auth/me")) {
+        const result = await base(input, init);
+        return { ok: true, json: async () => ({ ...await result.json(), assistance_enabled: initial }) };
+      }
+      return base(input, init);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    await screen.findByRole("heading", { name: "Я хочу открыть счёт." });
+    fireEvent.click(screen.getByRole("button", { name: "Настройки" }));
+    await waitFor(() => expect(screen.getByRole("switch")).toHaveProperty("checked", initial));
+    server = !initial;
+    await act(async () => { nativeAppEvents.listener?.({ isActive: true }); });
+    await waitFor(() => expect(screen.getByRole("switch")).toHaveProperty("checked", !initial));
+    fireEvent.click(screen.getByRole("button", { name: "Тренировка" }));
+    await recordAnswer();
+    const request = fetchMock.mock.calls.find(([url]) => url.toString().endsWith("/api/transcriptions"))!;
+    expect((request[1]?.body as FormData).get("assistance_enabled")).toBe(String(!initial));
+  });
+
+  it.each([
+    { native: false, review: false }, { native: false, review: true },
+    { native: true, review: false }, { native: true, review: true },
+  ])("shows phrases without numbering (native=$native, review=$review)", async ({ native, review }) => {
+    vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(native);
+    vi.stubGlobal("fetch", mockApi(false, review ? [{ id: "review-1" }] : []));
+    const { container } = render(<App />);
+    expect(await screen.findByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
+    expect(container.querySelector(".phrase-number")).toBeNull();
+    expect(container.querySelector(".card-title small, .android-training-meta small")).toBeNull();
+    expect(screen.queryByText(/^Фраза \d+$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^\d+\s*\/\s*\d+$/)).not.toBeInTheDocument();
+    if (!native) expect(screen.getByRole("heading", { name: review ? "Карусель повторения" : "Основная фраза" })).toBeInTheDocument();
+  });
+
   it("applies only accepted assistance and keeps its evidence through manual edits", async () => {
     voiceMock.available = true;
-    window.localStorage.setItem("serbotalk.soft-assistance.user-1", "true");
-    const baseFetch = mockApi();
+    const baseFetch = mockApi(false, [], "user", true);
     const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => input.toString() === "/api/transcriptions"
       ? Promise.resolve({ ok: true, json: async () => ({ text: "Cemu?", raw_text: "Cemu?", transcription_id: "receipt-1", changes: [
         { start: 0, end: 4, original: "Cemu", replacement: "Čemu", action: "suggested", kind: "phonetic_ambiguity", reason_code: "confirm_ambiguous_sound" },
@@ -741,6 +785,20 @@ describe("App", () => {
     expect(screen.queryByText("Не удалось получить следующую фразу.")).not.toBeInTheDocument();
   });
 
+  it("returns native Back from the phrase page to statistics before practice", async () => {
+    vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(true);
+    vi.stubGlobal("fetch", mockApi());
+    render(<App />);
+    await screen.findByRole("heading", { name: "Я хочу открыть счёт." });
+    fireEvent.click(screen.getByRole("button", { name: "Статистика" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Фразы по темам →" }));
+    await screen.findByRole("combobox", { name: "Тема" });
+    await act(async () => nativeBackEvents.listener?.());
+    await screen.findByLabelText("Итоги недели");
+    expect(screen.getByRole("button", { name: "Статистика" })).toHaveAttribute("aria-current", "page");
+    expect(screen.queryByRole("combobox", { name: "Тема" })).not.toBeInTheDocument();
+  });
+
   it("uses the selected alphabet for hints, transcription, feedback and statistics", async () => {
     voiceMock.available = true;
     const fetchMock = mockApi();
@@ -766,6 +824,7 @@ describe("App", () => {
     expect((await screen.findAllByText("Желим да отворим рачун.")).length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole("button", { name: "Статистика" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Фразы по темам →" }));
     expect(await screen.findByText("Желим да отворим рачун.")).toBeInTheDocument();
   });
 
@@ -819,8 +878,7 @@ describe("App", () => {
 
   it("shows and applies the reviewed Allergičen suggestion when soft assistance is enabled", async () => {
     voiceMock.available = true;
-    localStorage.setItem("serbotalk.soft-assistance.user-1", "true");
-    const baseFetch = mockApi();
+    const baseFetch = mockApi(false, [], "user", true);
     const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
       input.toString() === "/api/transcriptions"
         ? Promise.resolve({ ok: true, status: 200, json: async () => ({
@@ -842,8 +900,7 @@ describe("App", () => {
 
   it("keeps a usable answer and displays unavailable assistance when the extra analysis fails", async () => {
     voiceMock.available = true;
-    localStorage.setItem("serbotalk.soft-assistance.user-1", "true");
-    const baseFetch = mockApi();
+    const baseFetch = mockApi(false, [], "user", true);
     const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => input.toString() === "/api/transcriptions"
       ? Promise.resolve({ ok: true, status: 200, json: async () => ({ text: "Moj odgovor.", raw_text: "Moj odgovor.", assistance_status: "unavailable" }) })
       : baseFetch(input, init));
@@ -1132,6 +1189,35 @@ describe("App", () => {
     expect(await screen.findByRole("button", { name: /Поговорить с арендодателем/ })).toBeInTheDocument();
   });
 
+  it.each([false, true])("keeps only explanation and corrections inside analysis (native=%s)", async (native) => {
+    vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(native);
+    voiceMock.available = true;
+    const base = mockApi();
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const response = await base(input, init);
+      if (!input.toString().endsWith("/api/attempts")) return response;
+      const attempt = await response.json();
+      return { ok: true, json: async () => ({ ...attempt, analysis: {
+        ...attempt.analysis, verdict: "needs_work",
+        detailed_feedback_ru: "Для этого обращения нужна форма popravi. Произнесите окончание -i.",
+        issues: [{ type: "grammar", skill_key: "modal_verbs", severity: .5, confidence: 1, evidence: "poprave", correction: "popravi" }],
+      } }) };
+    }));
+    const { container } = render(<App />);
+    await screen.findByRole("heading", { name: "Я хочу открыть счёт." });
+    await recordAnswer();
+    fireEvent.click(screen.getByRole("button", { name: native ? "Проверить" : "Проверить ответ" }));
+    fireEvent.click(await screen.findByText("Разбор"));
+    const analysis = screen.getByText("Разбор").closest("details")!;
+    expect(analysis).toHaveTextContent("Для этого обращения нужна форма popravi. Произнесите окончание -i.");
+    expect(analysis).toHaveTextContent("poprave → popravi");
+    expect(container.querySelector(".score-grid")).toBeNull();
+    expect(analysis.querySelector("b, progress, meter")).toBeNull();
+    for (const category of ["Смысл", "Грамматика", "Лексика", "Естественность"]) {
+      expect(analysis).not.toHaveTextContent(category);
+    }
+  });
+
   it("submits a Serbian answer and shows concise and expandable feedback", async () => {
     voiceMock.available = true;
     vi.stubGlobal("fetch", mockApi());
@@ -1199,6 +1285,7 @@ describe("App", () => {
     expect(screen.getByRole("img", { name: /График фраз по дням/ }).querySelector('[title*="всего 10"]')).toHaveAttribute("title", expect.stringContaining("правильно 7, неправильно 3, выучено 1"));
     expect(screen.queryByRole("button", { name: /Прогресс/ })).not.toBeInTheDocument();
 
+    fireEvent.click(screen.getByRole("button", { name: "Фразы по темам →" }));
     expect(await screen.findByRole("heading", { name: "В банке" })).toBeInTheDocument();
     expect(screen.getByText("Želim da otvorim račun.")).toBeInTheDocument();
     expect(screen.getByText("выучена")).toBeInTheDocument();

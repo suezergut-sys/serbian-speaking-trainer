@@ -15,3 +15,16 @@ export function fetchCurrentUser(signal?: AbortSignal): Promise<CurrentUser> {
 export function fetchAdminUsers(signal?: AbortSignal): Promise<AdminUser[]> {
   return getJson<AdminUser[]>("/api/admin/users", signal);
 }
+
+export async function fetchPreferences(signal: AbortSignal): Promise<import("../types/auth").UserPreferences> {
+  return getJson("/api/auth/me/preferences", signal);
+}
+
+export async function updatePreferences(enabled: boolean, signal: AbortSignal): Promise<import("../types/auth").UserPreferences> {
+  const response = await authenticatedFetch(apiUrl("/api/auth/me/preferences"), {
+    method: "PATCH", signal, headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ assistance_enabled: enabled }),
+  });
+  if (!response.ok) throw new Error(`Backend returned ${response.status}`);
+  return response.json();
+}

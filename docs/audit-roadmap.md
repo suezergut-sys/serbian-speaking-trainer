@@ -323,3 +323,47 @@
 - [x] [PR #65](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/65) merged; production web/backend READY на `24034d1115bdd9640e0baa122d192b20fb177614`. Авторизованный smoke, API/health/защита доступа, console/runtime logs и JS/CSS assets проверены.
 - [x] [APK v1.22](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.22) опубликован; versionCode 32, подпись/API/package assets, GitHub digest/size и копия Downloads подтверждены. Накопленные причины STT и analysis-v3 перенесены полностью. [Доказательства](android-1.22-release.md).
 - [ ] Настоящая речь, акустическая точность гипотез, физическая OAuth/STT-приёмка остаются открытыми. Телефонные/ADB/AVD тесты не возобновлялись. Предыдущие записи о pending publication/sync относятся к состоянию до этого выпуска; эта задача не закрывает весь P0/P1/P2.
+
+
+## 07.10.2026 — синхронизация настройки мягких подсказок
+
+- [x] Backend и общий web/Android-клиент: настройка в профиле, сохранение и синхронизация в обе стороны; [доказательства](assistance-sync-checkpoint.md).
+- [x] Автоматические проверки API/изоляции, миграции с сохранением истории, двух клиентов, native resume и применения флага к STT; [результаты](assistance-sync-checkpoint.md).
+- [ ] Публикация backend/web и применение production-миграции.
+- [ ] Перенос в Android и APK по отдельной явной команде; текущие 1.22/code32/package version не менялись.
+- [ ] Физическая приёмка Android ↔ web под одним аккаунтом. P0/P1/P2 целиком не закрыты.
+
+
+## 07.10.2026 — убрать нумерацию фраз
+
+- [x] Общий web/Android-интерфейс: убраны порядковые номера в обычной практике и карусели повторения; [доказательства](phrase-numbering-checkpoint.md).
+- [x] 149 frontend tests, lint, typecheck и production build прошли; [результаты](phrase-numbering-checkpoint.md).
+- [ ] Публикация web.
+- [ ] Android sync/APK по отдельной команде, версия 1.22/code32 не менялась.
+- [ ] Ручная приёмка опубликованного web и физического Android. P0/P1/P2 целиком не закрыты.
+
+
+## 07.10.2026 — текстовый разбор без баллов по категориям
+
+- [x] Общий web/Android-интерфейс: удалены карточки баллов из «Разбора», сохранены объяснение и исправления; [доказательства](text-analysis-checkpoint.md).
+- [x] 151 frontend tests, lint, typecheck и production build прошли; [результаты](text-analysis-checkpoint.md).
+- [ ] Публикация web.
+- [ ] Android sync/APK по отдельной команде; 1.22/code32 не менялись.
+- [ ] Ручная приёмка production web/физического Android. P0/P1/P2 целиком не закрыты.
+
+
+## 07.10.2026 — календарь и отдельная страница фраз
+
+- [x] Общий web/Android-интерфейс: даты сверху, крупное число попыток, легенда 1/10, единая ширина сегментов графика, отдельная страница с селектором темы и native Back.
+- [x] Backend: темы текущего аккаунта и фильтрация фраз с пагинацией по теме; прежний API сохранён.
+- [x] Backend/scripts pytest, frontend 156 tests, lint/typecheck/build и Chrome 3 сценария web/Android-layout прошли; одинаковые X/width цветных сегментов подтверждены с допуском 0.01 CSS px. Снимки проверены; [доказательства](statistics-redesign-checkpoint.md).
+- [ ] Публикация backend/web.
+- [ ] Android sync/сборка/APK по отдельной команде; версия 1.22/code32 не менялась.
+- [ ] Ручная приёмка production web/физического Android. P0/P1/P2 целиком не закрыты.
+
+
+## 07.10.2026 — выпуск 1.23
+
+- [x] Владелец поручил production web/backend и новый APK, отдельно подтвердил 1.23/code33. Metadata согласована, 17 tests прошли.
+- [ ] Production/миграция и APK-публикация; [доказательства](android-1.23-release.md).
+- [ ] Физическая приёмка Android ↔ web и настоящая речь остаются открытыми.

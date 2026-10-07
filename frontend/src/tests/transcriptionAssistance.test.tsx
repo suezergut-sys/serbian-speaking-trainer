@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import { assistedText, readAssistance, saveAssistance } from "../transcriptionAssistance";
+import { assistedText } from "../transcriptionAssistance";
 import { SettingsView } from "../SettingsView";
 import { TranscriptionAssistanceView } from "../TranscriptionAssistanceView";
 import type { TranscriptionResponse } from "../types/training";
@@ -10,14 +10,6 @@ const response: TranscriptionResponse = { text: "🙂 Cemu?", raw_text: "🙂 Ce
   { start: 2, end: 6, original: "Cemu", replacement: "Čemu", kind: "phonetic_ambiguity", action: "suggested", reason_code: "confirm_ambiguous_sound" },
 ] };
 
-it("defaults off and isolates preference by account", () => {
-  expect(readAssistance("new")).toBe(false);
-  saveAssistance("one", true);
-  expect(readAssistance("one")).toBe(true);
-  expect(readAssistance("two")).toBe(false);
-  saveAssistance("one", false);
-  expect(readAssistance("one")).toBe(false);
-});
 it("uses Unicode code point offsets without splitting emoji", () => {
   expect(assistedText(response, [])).toBe("🙂 Cemu?");
   expect(assistedText(response, [0])).toBe("🙂 Čemu?");
