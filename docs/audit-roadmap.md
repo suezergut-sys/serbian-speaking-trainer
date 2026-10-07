@@ -329,8 +329,8 @@
 
 - [x] Backend и общий web/Android-клиент: настройка в профиле, сохранение и синхронизация в обе стороны; [доказательства](assistance-sync-checkpoint.md).
 - [x] Автоматические проверки API/изоляции, миграции с сохранением истории, двух клиентов, native resume и применения флага к STT; [результаты](assistance-sync-checkpoint.md).
-- [ ] Публикация backend/web и применение production-миграции.
-- [ ] Перенос в Android и APK по отдельной явной команде; текущие 1.22/code32/package version не менялись.
+- [x] Backend/web и production-миграция опубликованы в 1.23; [доказательства](android-1.23-release.md).
+- [x] Включено в согласованный Android 1.23/code33; сборка, metadata/API/подпись/assets и публикация проверены; [доказательства](android-1.23-release.md).
 - [ ] Физическая приёмка Android ↔ web под одним аккаунтом. P0/P1/P2 целиком не закрыты.
 
 
@@ -338,18 +338,20 @@
 
 - [x] Общий web/Android-интерфейс: убраны порядковые номера в обычной практике и карусели повторения; [доказательства](phrase-numbering-checkpoint.md).
 - [x] 149 frontend tests, lint, typecheck и production build прошли; [результаты](phrase-numbering-checkpoint.md).
-- [ ] Публикация web.
-- [ ] Android sync/APK по отдельной команде, версия 1.22/code32 не менялась.
-- [ ] Ручная приёмка опубликованного web и физического Android. P0/P1/P2 целиком не закрыты.
+- [x] Web опубликован в 1.23; [доказательства](android-1.23-release.md).
+- [x] Включено в согласованный Android 1.23/code33; сборка, metadata/API/подпись/assets и публикация проверены; [доказательства](android-1.23-release.md).
+- [x] Авторизованный production web smoke выполнен; [доказательства](android-1.23-release.md).
+- [ ] Физическая приёмка Android; P0/P1/P2 целиком не закрыты.
 
 
 ## 07.10.2026 — текстовый разбор без баллов по категориям
 
 - [x] Общий web/Android-интерфейс: удалены карточки баллов из «Разбора», сохранены объяснение и исправления; [доказательства](text-analysis-checkpoint.md).
 - [x] 151 frontend tests, lint, typecheck и production build прошли; [результаты](text-analysis-checkpoint.md).
-- [ ] Публикация web.
-- [ ] Android sync/APK по отдельной команде; 1.22/code32 не менялись.
-- [ ] Ручная приёмка production web/физического Android. P0/P1/P2 целиком не закрыты.
+- [x] Web опубликован в 1.23; [доказательства](android-1.23-release.md).
+- [x] Включено в согласованный Android 1.23/code33; сборка, metadata/API/подпись/assets и публикация проверены; [доказательства](android-1.23-release.md).
+- [x] Авторизованный production web smoke выполнен; [доказательства](android-1.23-release.md).
+- [ ] Физическая приёмка Android; P0/P1/P2 целиком не закрыты.
 
 
 ## 07.10.2026 — календарь и отдельная страница фраз
@@ -357,13 +359,14 @@
 - [x] Общий web/Android-интерфейс: даты сверху, крупное число попыток, легенда 1/10, единая ширина сегментов графика, отдельная страница с селектором темы и native Back.
 - [x] Backend: темы текущего аккаунта и фильтрация фраз с пагинацией по теме; прежний API сохранён.
 - [x] Backend/scripts pytest, frontend 156 tests, lint/typecheck/build и Chrome 3 сценария web/Android-layout прошли; одинаковые X/width цветных сегментов подтверждены с допуском 0.01 CSS px. Снимки проверены; [доказательства](statistics-redesign-checkpoint.md).
-- [ ] Публикация backend/web.
-- [ ] Android sync/сборка/APK по отдельной команде; версия 1.22/code32 не менялась.
-- [ ] Ручная приёмка production web/физического Android. P0/P1/P2 целиком не закрыты.
+- [x] Backend/web опубликованы в 1.23; [доказательства](android-1.23-release.md).
+- [x] Включено в согласованный Android 1.23/code33; сборка, metadata/API/подпись/assets и публикация проверены; [доказательства](android-1.23-release.md).
+- [x] Авторизованный production web smoke выполнен; [доказательства](android-1.23-release.md).
+- [ ] Физическая приёмка Android; P0/P1/P2 целиком не закрыты.
 
 
 ## 07.10.2026 — выпуск 1.23
 
 - [x] Владелец поручил production web/backend и новый APK, отдельно подтвердил 1.23/code33. Metadata согласована, 17 tests прошли.
-- [ ] Production/миграция и APK-публикация; [доказательства](android-1.23-release.md).
+- [x] Production/миграция и APK-публикация подтверждены; [доказательства](android-1.23-release.md).
 - [ ] Физическая приёмка Android ↔ web и настоящая речь остаются открытыми.

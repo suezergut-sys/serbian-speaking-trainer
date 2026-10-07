@@ -14,8 +14,11 @@ API: GET/PATCH /api/auth/me/preferences, boolean assistance_enabled; автор�
 
 ## Границы
 
-- [ ] Публикация и production-миграция не выполнялись.
-- [ ] Android sync/build не выполнялись; APK 1.22 не поддерживает новую синхронизацию. Изменения включены в backlog следующего явно запрошенного релиза.
+- [x] Публикация web/backend и production-миграция выполнены в 1.23; [доказательства](android-1.23-release.md).
+- [x] Android sync/build и APK 1.23/code33 выполнены по отдельной команде и согласованию владельца; [доказательства](android-1.23-release.md).
 - [ ] Ручная физическая приёмка Android ↔ web не выполнялась.
 
 Аудио/AI-политика/модели не менялись. Автотесты используют mocks без обращений к OpenAI. Номер Android и package.json сохранены.
+
+
+07.10.2026: накопленные изменения опубликованы через [PR #67](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/67) и включены в APK 1.23; прежние записи о неизменённой версии относятся к состоянию до команды на выпуск. Production web smoke выполнен; физическая Android-приёмка остаётся открытой. [Релиз](android-1.23-release.md).

@@ -448,5 +448,7 @@ StatisticsView содержит два отдельных экрана: акти
 ## 07.10.2026 — выпуск 1.23
 
 - [x] Владелец поручил production web/backend и новый APK, отдельно подтвердил 1.23/code33. Metadata согласована, 17 tests прошли.
-- [ ] Production/миграция и APK-публикация; [доказательства](android-1.23-release.md).
+- [x] Production/миграция и APK-публикация подтверждены; [доказательства](android-1.23-release.md).
 - [ ] Физическая приёмка Android ↔ web и настоящая речь остаются открытыми.
+
+Релиз 1.23 опубликован через PR #67 на bcbce3058583d5bc7a2af201623a426a764b6305. Прежняя подпись Android сохранена; web/backend выпущены штатным CLI workflow. Подробные доказательства — [android-1.23-release.md](android-1.23-release.md).
