@@ -279,3 +279,11 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 - [x] Владелец поручил production web/backend и новый APK, отдельно подтвердил 1.23/code33. Metadata согласована, 17 tests прошли.
 - [x] Production/миграция и APK-публикация подтверждены; [доказательства](android-1.23-release.md).
 - [ ] Физическая приёмка Android ↔ web и настоящая речь остаются открытыми.
+
+## Накоплено 07.10.2026 — пояснения разбора
+
+- [x] Общий UI убирает сообщения об отсутствии подсказок и ручной правке, показывает explanation_ru под каждым исправлением. Backend требует содержательное объяснение для новых AI-разборов; старые ответы совместимы. [Доказательства](explained-feedback-checkpoint.md).
+- [x] Backend/UI tests, lint/typecheck/production build прошли.
+- [ ] Публикация web/backend.
+- [ ] Android sync/APK по отдельной команде; 1.23/code33/package version не менялись.
+- [ ] Физическая приёмка и качество реальных AI-объяснений.

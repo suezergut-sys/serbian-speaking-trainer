@@ -49,6 +49,7 @@ export type AnswerIssue = {
   confidence: number;
   evidence: string;
   correction: string | null;
+  explanation_ru?: string | null;
 };
 
 export type AnswerAnalysis = {

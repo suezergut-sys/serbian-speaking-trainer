@@ -370,3 +370,18 @@
 - [x] Владелец поручил production web/backend и новый APK, отдельно подтвердил 1.23/code33. Metadata согласована, 17 tests прошли.
 - [x] Production/миграция и APK-публикация подтверждены; [доказательства](android-1.23-release.md).
 - [ ] Физическая приёмка Android ↔ web и настоящая речь остаются открытыми.
+
+## 07.10.2026 — сохранение настройки при обновлении клиента
+
+- [x] Причина подтверждена владельцем: потеря старого localStorage выбора на переходе 1.22 → 1.23; production DB column и runtime путь сохранения/чтения проверены.
+- [x] Регрессии real API/auth sync → DB connection restart → repeated migration/seed → другой клиент и UI remount для true/false: 8 backend и 7 frontend tests прошли; lint/typecheck/build. [Доказательства](preference-persistence-checkpoint.md).
+- [x] Runtime не изменён; повторная production-публикация и APK не требуются.
+- [ ] Физический Android restart после сохранения в 1.23. Весь P0/P1/P2 не закрыт.
+
+## 07.10.2026 — тихие подсказки и объяснение ошибок
+
+- [x] Убраны два сообщения и пустая analyzed секция; общий UI показывает пояснение каждой ошибки.
+- [x] Versioned prompt и строгий AI-контракт explanation_ru, совместимость старых разборов; mock backend/UI regression tests, lint/typecheck/build прошли. [Доказательства](explained-feedback-checkpoint.md).
+- [ ] Публикация backend/web.
+- [ ] Android sync/сборка по отдельной команде; 1.23/code33 не менялись.
+- [ ] Ручная оценка реальных AI-объяснений и физическая Android-приёмка; P0/P1/P2 целиком не закрыты.

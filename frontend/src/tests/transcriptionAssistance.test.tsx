@@ -30,11 +30,12 @@ it("suggests explicitly, shows raw text and locks edited drafts", () => {
   expect(screen.queryByRole("button")).not.toBeInTheDocument();
   expect(screen.getByText(/С подсказкой/)).toBeInTheDocument();
   expect(screen.getByText("🙂 Cemu?")).toBeInTheDocument();
+  expect(screen.queryByText(/Текст исправлен вручную/)).not.toBeInTheDocument();
 });
 
-it("shows analysis completion even when no hypotheses are appropriate", () => {
-  render(<TranscriptionAssistanceView draft={{ response: { text: "Moj odgovor.", assistance_status: "analyzed", changes: [] }, selected: [], edited: false }} alphabet="latin" disabled={false} onToggle={() => {}} />);
-  expect(screen.getByText(/Текст сравнен с эталоном/)).toBeInTheDocument();
+it("leaves no assistance panel when there are no suggestions", () => {
+  const { container } = render(<TranscriptionAssistanceView draft={{ response: { text: "Moj odgovor.", assistance_status: "analyzed", changes: [] }, selected: [], edited: false }} alphabet="latin" disabled={false} onToggle={() => {}} />);
+  expect(container).toBeEmptyDOMElement();
   expect(screen.queryByRole("button")).not.toBeInTheDocument();
 });
 

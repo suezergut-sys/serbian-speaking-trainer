@@ -1200,7 +1200,7 @@ describe("App", () => {
       return { ok: true, json: async () => ({ ...attempt, analysis: {
         ...attempt.analysis, verdict: "needs_work",
         detailed_feedback_ru: "Для этого обращения нужна форма popravi. Произнесите окончание -i.",
-        issues: [{ type: "grammar", skill_key: "modal_verbs", severity: .5, confidence: 1, evidence: "poprave", correction: "popravi" }],
+        issues: [{ type: "grammar", skill_key: "modal_verbs", severity: .5, confidence: 1, evidence: "poprave", correction: "popravi", explanation_ru: "При обращении к одному человеку нужна форма повелительного наклонения." }],
       } }) };
     }));
     const { container } = render(<App />);
@@ -1211,6 +1211,7 @@ describe("App", () => {
     const analysis = screen.getByText("Разбор").closest("details")!;
     expect(analysis).toHaveTextContent("Для этого обращения нужна форма popravi. Произнесите окончание -i.");
     expect(analysis).toHaveTextContent("poprave → popravi");
+    expect(analysis).toHaveTextContent("При обращении к одному человеку нужна форма повелительного наклонения.");
     expect(container.querySelector(".score-grid")).toBeNull();
     expect(analysis.querySelector("b, progress, meter")).toBeNull();
     for (const category of ["Смысл", "Грамматика", "Лексика", "Естественность"]) {
