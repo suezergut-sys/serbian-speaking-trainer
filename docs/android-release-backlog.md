@@ -284,6 +284,6 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 
 - [x] Общий UI убирает сообщения об отсутствии подсказок и ручной правке, показывает explanation_ru под каждым исправлением. Backend требует содержательное объяснение для новых AI-разборов; старые ответы совместимы. [Доказательства](explained-feedback-checkpoint.md).
 - [x] Backend/UI tests, lint/typecheck/production build прошли.
-- [ ] Публикация web/backend.
-- [ ] Android sync/APK по отдельной команде; 1.23/code33/package version не менялись.
+- [x] Web/backend опубликованы через PR #69, deployment READY; [доказательства](android-1.24-release.md).
+- [x] Android sync/APK выполнены по явной команде, версия 1.24/code34 согласована отдельно; metadata/API/подпись/assets и GitHub digest проверены. [Доказательства](android-1.24-release.md).
 - [ ] Физическая приёмка и качество реальных AI-объяснений.

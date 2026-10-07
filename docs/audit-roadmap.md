@@ -382,6 +382,6 @@
 
 - [x] Убраны два сообщения и пустая analyzed секция; общий UI показывает пояснение каждой ошибки.
 - [x] Versioned prompt и строгий AI-контракт explanation_ru, совместимость старых разборов; mock backend/UI regression tests, lint/typecheck/build прошли. [Доказательства](explained-feedback-checkpoint.md).
-- [ ] Публикация backend/web.
-- [ ] Android sync/сборка по отдельной команде; 1.23/code33 не менялись.
+- [x] Backend/web опубликованы через PR #69, оба deployment READY; [доказательства](android-1.24-release.md).
+- [x] Android sync/сборка выполнены по явной команде, версия 1.24/code34 согласована отдельно; metadata/API/подпись/assets и GitHub digest проверены. [Доказательства](android-1.24-release.md).
 - [ ] Ручная оценка реальных AI-объяснений и физическая Android-приёмка; P0/P1/P2 целиком не закрыты.
