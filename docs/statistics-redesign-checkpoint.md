@@ -25,8 +25,12 @@ API: GET /api/statistics/phrase-topics, GET /api/statistics/phrases?topic_id=...
 
 ## Выпуск
 
-- [ ] Публикация backend/web.
-- [ ] Android sync/build/APK: не выполнялись, требуется отдельная команда владельца.
-- [ ] Физическая ручная приёмка Android и production web.
+- [x] Публикация web/backend и production-миграция выполнены в 1.23; [доказательства](android-1.23-release.md).
+- [x] Android sync/build и APK 1.23/code33 выполнены по отдельной команде и согласованию владельца; [доказательства](android-1.23-release.md).
+- [x] Авторизованный production web smoke выполнен; [доказательства](android-1.23-release.md).
+- [ ] Физическая приёмка Android; P0/P1/P2 целиком не закрыты.
 
 Предыдущие локальные правки подсказок, номеров фраз и текстового разбора сохранены. VersionName/versionCode/package.json не менялись. AI API в автоматических проверках не используется.
+
+
+07.10.2026: накопленные изменения опубликованы через [PR #67](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/67) и включены в APK 1.23; прежние записи о неизменённой версии относятся к состоянию до команды на выпуск. Production web smoke выполнен; физическая Android-приёмка остаётся открытой. [Релиз](android-1.23-release.md).
