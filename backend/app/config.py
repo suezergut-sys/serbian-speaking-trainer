@@ -1,5 +1,6 @@
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -35,6 +36,7 @@ class Settings(BaseSettings):
     openai_realtime_model: str | None = None
     openai_text_model: str | None = None
     openai_transcribe_model: str | None = None
+    openai_transcribe_language_parameter: Literal["languages", "language"] = "languages"
     openai_timeout_seconds: float = Field(default=20, gt=0, le=120)
     openai_max_retries: int = Field(default=2, ge=0, le=5)
     openai_assistance_timeout_seconds: float = Field(default=6, gt=0, le=12)

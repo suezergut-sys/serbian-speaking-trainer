@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { displaySerbian, displaySerbianInRussianText, toSerbianCyrillic, toSerbianLatin } from "../serbianScript";
+import { hasUnexpectedLetterScript, displaySerbian, displaySerbianInRussianText, toSerbianCyrillic, toSerbianLatin } from "../serbianScript";
 
 describe("Serbian alphabet conversion", () => {
   it("converts Serbian letters and digraphs in both directions", () => {
@@ -37,5 +37,14 @@ describe("Serbian alphabet conversion", () => {
     expect(toSerbianLatin("Alllergičan kartićom")).toBe("Alllergičan kartićom");
     expect(toSerbianLatin("kartiћom")).toBe("kartićom");
     expect(displaySerbian("QX račun", "cyrillic")).toBe("QX рачун");
+  });
+});
+
+describe("transcription alphabet guard", () => {
+  it.each(["Платячу банковном картицом.", "Platιću", "中文", "Желим ы"])("keeps foreign letters blocked: %s", text => {
+    expect(hasUnexpectedLetterScript(text)).toBe(true);
+  });
+  it.each(["Платићу bankovnom karticom.", "Želim čaj, ćevape, džem i đumbir.", "Platic\u0301u."])("accepts supported spelling: %s", text => {
+    expect(hasUnexpectedLetterScript(text)).toBe(false);
   });
 });

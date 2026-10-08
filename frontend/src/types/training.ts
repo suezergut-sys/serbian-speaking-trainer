@@ -131,6 +131,7 @@ export type AttemptTimings = {
 };
 
 export type TranscriptionResponse = {
+  review_required?: boolean;
   text: string;
   raw_text?: string | null;
   transcription_id?: string | null;

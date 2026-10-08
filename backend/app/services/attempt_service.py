@@ -16,6 +16,7 @@ from app.repositories import (
 from app.schemas import AttemptResponse, CreateAttemptRequest
 from app.services.ai_adapter import StructuredAIProvider
 from app.services.answer_analyzer import AnswerAnalyzer
+from app.services.serbian_text import has_unexpected_letter_script
 from app.services.session_service import SessionCompletedError, SessionUnavailableError
 from app.services.learner_model import LearnerModelService
 from app.services.review_service import ReviewService, normalize_ru
@@ -23,6 +24,10 @@ from app.services.auth_service import UserService
 from app.models import User
 from app.repositories.transcriptions import TranscriptionReceiptRepository
 from app.schemas.transcriptions import TranscriptionChange
+
+
+class UnexpectedTranscriptScriptError(ValueError):
+    pass
 
 
 class InvalidTranscriptionReceiptError(ValueError):
@@ -73,6 +78,8 @@ class AttemptService:
         self.review = ReviewService(db, ai, user.id)
 
     def create(self, request: CreateAttemptRequest) -> AttemptResponse:
+        if has_unexpected_letter_script(request.transcript_sr):
+            raise UnexpectedTranscriptScriptError()
         assistance = self._transcription_evidence(request)
         reserved = self._reserve(request)
         if isinstance(reserved, AttemptResponse):

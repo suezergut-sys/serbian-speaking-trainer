@@ -23,6 +23,7 @@ test("Android layout waits for the default review exercise before showing topics
     const path = new URL(route.request().url()).pathname;
     let body;
     if (path === "/api/auth/me") body = account;
+    else if (path === "/api/auth/me/preferences") body = { assistance_enabled: false };
     else if (path === "/api/topics") {
       await topicsGate;
       body = [

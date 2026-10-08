@@ -431,3 +431,25 @@
 
 - [x] Отказ доступа к новым debug tables проверен непосредственно SQL для anon/authenticated (4/4 insufficient_privilege); [доказательства](android-1.25-release.md).
 - [ ] REST Data API probe вернул 503/PGRST002 вместо permission denied; отдельно проверить schema cache сервиса. Этот путь не используется приложением для debug/учебных данных; production backend health и сценарии проверены.
+
+## 08.10.2026 — диагностика последнего отказа STT
+
+- [x] Production-логи двух последних STT-вызовов прочитаны: HTTP 200, одинаковый transcript с несербской `я`; bounded retry выполнен, assistance не достигнут. Mock-воспроизведение и 17 adapter tests прошли; [доказательства](transcription-script-diagnosis-2026-10-08.md).
+- [x] В последующей задаче реализован восстановимый результат с редактированием и регрессиями API/UI; [checkpoint](transcription-script-recovery-checkpoint.md).
+- [ ] Публикация и реальная речь. В рамках исходной диагностики runtime и Android не менялись.
+
+## 08.10.2026 — восстановление сомнительной расшифровки
+
+- [x] Языковой параметр через env, prompts v2, ограниченный повтор и review_required с исходным текстом; блокировка оценки в общем UI и backend до исправления букв. [Доказательства](transcription-script-recovery-checkpoint.md).
+- [x] Backend/scripts 253 passed / 8 skips, targeted adapter/API 29 passed, Node guards 5 passed; Chrome recovery regression 1 passed и читаемость 1280/390/320 px.
+- [x] Финальный frontend suite: 180 passed / 14 suites; lint/typecheck/production build и diff check прошли. [Доказательства](transcription-script-recovery-checkpoint.md).
+- [ ] Публикация backend/web и реальная речь.
+- [ ] Android sync/APK и физическая приёмка ожидают отдельной команды; версия 1.25/code35 сохранена. P0/P1/P2 целиком не закрыты.
+
+
+## 08.10.2026 — мобильный layout web
+
+- [x] Отдельные панели тем/тренировки/статистики/настроек на ширине до 780px, компактная шапка, сохранение черновика и двухколоночного desktop; [доказательства](mobile-web-layout-checkpoint.md).
+- [x] Component suite 182 passed / 15 suites, lint и production build (включая typecheck); Chrome 320×568, 390×700, 740×360 без прокрутки страницы, сохранение ответа и переход к следующей фразе. visualViewport/cleanup проверены unit-тестом; Chrome network 8 passed, native startup/pager 1 passed после обновления API-мока.
+- [ ] Публикация web и ручная приёмка на физическом телефоне с адресной строкой/экранной клавиатурой.
+- [ ] Android sync/APK только по отдельной команде; версия 1.25/code35 сохранена. P0/P1/P2 целиком не закрыты.
