@@ -1,20 +1,30 @@
 # План улучшений по аудиту SerboTalk
 
+## 08.10.2026 — выпуск Android и web 1.27
+
+- [x] Владелец подтвердил 1.27/code37; весь текущий backlog перенесён, cloud APK собран. 18 metadata/environment/settings tests, предыдущий frontend suite 186 passed, lint/typecheck/build; [доказательства](android-1.27-release.md).
+- [x] PR #81 merged, production web READY на release SHA; alias, API smoke, авторизованные настройки и 4 production-asset Chrome mock e2e прошли.
+- [x] APK API/signature/metadata, 7 dist/6 production assets и Downloads проверены; GitHub release v1.27, tag/target, server digest/size подтверждены.
+- [ ] Физическая Android-приёмка, обновление установленного APK и реальная речь. P0/P1/P2 целиком не закрыты.
+
 ## 08.10.2026 — подсказки у края экрана и подписи тренировки
 
 - [x] Portal, viewport margin 12 px, увеличенный шрифт и перенос длинных переводов; счётчик текущей фразы убран, штраф подписан в %. [Доказательства и PR #81](word-hints-layout-checkpoint.md).
 - [x] 186 tests / 17 files passed, lint/typecheck/build; 4 Chrome mock e2e web/Android layout 320/390 px и визуальная проверка web 320.
-- [ ] Production web публикация и ручная приёмка на телефоне.
-- [ ] Android sync/APK и физическая приёмка по отдельной команде; версия 1.26/code36 сохранена.
+- [x] Production web 1.27 READY, опубликованные assets/версия и mock e2e проверены; [доказательства](android-1.27-release.md).
+- [ ] Ручная приёмка на физическом телефоне.
+- [x] По команде владельца выпущен APK 1.27/code37; API/signature/assets и GitHub digest/size проверены. [Доказательства](android-1.27-release.md).
+- [ ] Физическая Android-приёмка.
 
 ## 08.10.2026 — версия приложения в настройках
 
-- [x] Добавлен номер из package metadata в формате Android `major.minor`, сейчас 1.26; component regression и 184 frontend tests прошли. [Доказательства](settings-version-checkpoint.md).
+- [x] Добавлен номер из package metadata в формате Android `major.minor`, первоначально 1.26 (после выпуска — 1.27); component regression и 184 frontend tests прошли. [Доказательства](settings-version-checkpoint.md).
 - [x] Lint, typecheck и production build прошли; [результаты](settings-version-checkpoint.md).
-- [ ] Production web публикация и ручная визуальная приёмка.
-- [ ] Android sync/APK и физическая приёмка по отдельной команде; версии не повышались.
+- [x] Web 1.27 READY, авторизованный Chrome показывает версию 1.27; [доказательства](android-1.27-release.md).
+- [x] Android sync/APK 1.27/code37 по отдельной команде; build/signature/API и GitHub asset проверены. [Доказательства](android-1.27-release.md).
+- [ ] Физическая Android-приёмка.
 
-Актуальное состояние: 1 октября 2026 года. Текущий контрольный APK — Android 1.17/code 27. Часть P1 опубликована; P1/P2 полностью открыты из-за production-проверок, physical phone/manual acceptance и незавершённых требований разделов. Веб-срезы продолжаются без ожидания ручных телефонных проверок; физические Android-тесты остановлены владельцем, см. [checkpoint](p1-physical-android-checkpoint.md).
+Актуальное состояние: 8 октября 2026 года. Текущий контрольный APK — Android 1.27/code 37. Часть P1 опубликована; P1/P2 полностью открыты из-за production-проверок, physical phone/manual acceptance и незавершённых требований разделов. Веб-срезы продолжаются без ожидания ручных телефонных проверок; физические Android-тесты остановлены владельцем, см. [checkpoint](p1-physical-android-checkpoint.md).
 
 Цель: приложение быстро открывает фразу, принимает ответ и показывает понятный результат. Пользователь сосредоточен на изучении фраз, а не на настройках, переходах и технических ошибках.
 

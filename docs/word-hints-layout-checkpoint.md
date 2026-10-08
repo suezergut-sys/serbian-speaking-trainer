@@ -6,7 +6,9 @@
 - [x] `pnpm lint`, повторный lint изменённых TS/TSX, TypeScript и production build прошли. Vite предупреждает о chunk >500 kB. `git diff --check` прошёл.
 - [x] Chrome mock e2e: 4 passed — mobile web и Android layout на 320/390 px; короткие/длинные переводы у разных слов, границы popup, перенос, увеличенный шрифт, отсутствие счётчика и закрытие при навигации. Локальные screenshots `artifacts/word-hint-{web,android}-{320,390}.png`; web 320 визуально просмотрен.
 - [x] Изменение подготовлено для [PR #81](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/81), вместе с номером версии в настройках.
-- [ ] Публикация в production web и ручная приёмка на телефоне.
-- [ ] Android sync/APK и физическая приёмка по отдельной команде. Metadata/package versions не менялись.
+- [x] Production web 1.27 READY; повторные Chrome mock e2e на опубликованных assets: 4 passed. [Доказательства](android-1.27-release.md).
+- [ ] Ручная приёмка на физическом телефоне.
+- [x] По отдельной команде изменение вошло в APK 1.27/code37; API/signature/assets и GitHub release подтверждены. [Доказательства](android-1.27-release.md).
+- [ ] Физическая Android-приёмка.
 
 API в тестах замокан, OpenAI не вызывался. Секреты и аудио не сохранялись.
