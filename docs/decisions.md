@@ -521,3 +521,8 @@ TranscriptionAssistanceView переиспользуется desktop/mobile web 
 По запросу владельца убраны ветки, пропускавшие LearnerModel update и обновление ReviewPhrase при accepted_transcription_changes. Флаг transcription_assisted и receipt сохраняются как аудит, API обратно совместим. Используется общий анализ исправленного transcript, общий mastery/streak/review interval и idempotent replay; нет автоматического присвоения 100% при наличии других ошибок. Существующие попытки/прогресс задним числом не пересчитываются; схемы/миграции не менялись. Подсказки перевода слов и их штраф остаются прежними.
 
 Список STT-кандидатов уже поддерживал несколько изменений. Проверены независимое принятие/отмена в произвольном порядке, изменение длины слов и повторяющиеся слова. Явная CSS-строка transcription-assistance__change располагается под предыдущей, содержит собственную кнопку справа. [Проверки](assistance-mastery-checkpoint.md).
+
+
+## 08.10.2026 — публикация правил мягкой помощи
+
+PR #77 опубликован в web/backend, оба deployments READY на 1229383. Авторизованный UI, API health/auth/runtime logs и четыре изолированных production-asset mock-сценария проверены. Android source/assets синхронизированы; номер нового APK согласуется отдельно по AGENTS.md. [Доказательства](assistance-publication-2026-10-08.md).
