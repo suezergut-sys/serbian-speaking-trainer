@@ -10,11 +10,11 @@
 - [x] Testlab умеет обновлять предыдущую схему без debug tables; прежние schema guards и отказ неизвестным формам сохранены.
 - [x] Backend/scripts suite: 248 passed, 8 штатных внешних skips; targeted adapter/debug checks 37 passed. Frontend 171 tests / 14 suites, включая 7 debug UI tests; lint/typecheck/production build, Node Android guards 5 и diff check прошли. AI/HTTP вызовы mock. Окружение Python 3.13 / SQLAlchemy 2.0.54 / OpenAI SDK 2.54.0; известная SQLAlchemy 2.1/Alembic Windows проблема отдельно отмечена в STT checkpoint.
 - [x] Локальный Chrome mock preview: переключатель включается, web и Android-layout 390×844 читаемы на тёмном фоне. Снимки artifacts/debug-preview/web.png и android-layout.png; preview не обращался к реальным аккаунтам/БД. Это не физическая Android-приёмка.
-- [ ] Публикация backend/web и проверка production migration/RLS/permission denied для public roles на PostgreSQL.
-- [ ] Android sync/APK по отдельной команде; 1.24/code34 не менялись.
+- [x] Web/backend опубликованы; production migration/RLS/grants проверены. SELECT под SET LOCAL ROLE anon/authenticated для обеих таблиц возвращает insufficient_privilege; [выпуск 1.25](android-1.25-release.md).
+- [x] Android 1.25/code35 собран и опубликован; [выпуск 1.25](android-1.25-release.md).
 - [ ] Реальные AI/Android smoke и ручная приёмка. Весь P0/P1/P2 не закрыт.
 
 Логи просматриваются непосредственно в model_debug_logs в БД; отдельный экран просмотра не добавлен. Выключение удаляет строки текущей БД, но не меняет внешние резервные копии. Логи других пользователей не создаются. Сохранённые попытки, прогресс и настройки мягких подсказок не удаляются.
 
 
-08.10.2026: [x] Web/backend опубликованы; [публикация 08.10.2026](latest-web-release-2026-10-08.md). [ ] APK ожидает отдельно согласованного номера; физическая приёмка открыта.
+08.10.2026: [x] Web/backend опубликованы; [публикация 08.10.2026](latest-web-release-2026-10-08.md). [x] APK 1.25/code35 собран и опубликован, [выпуск 1.25](android-1.25-release.md). [ ] Физическая приёмка открыта.

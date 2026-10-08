@@ -293,7 +293,7 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 - [x] Общий UI web/Android скрывает «Разбор» при отображаемых 100%, сохраняет его ниже 100%.
 - [x] App 89 tests, включая web/native и границу округления; lint/typecheck/production build и diff check прошли. [Доказательства](perfect-answer-feedback-checkpoint.md).
 - [x] Web опубликован, READY; [публикация 08.10.2026](latest-web-release-2026-10-08.md).
-- [ ] Android sync/сборка по отдельной команде; 1.24/code34 не менялись.
+- [x] Android 1.25/code35 согласован, cloud build/API/metadata/подпись/assets и GitHub digest проверены; [выпуск 1.25](android-1.25-release.md).
 - [ ] Ручная production/физическая Android-приёмка; P0/P1/P2 целиком не закрыты.
 
 ## 07.10.2026 — ошибка неподдерживаемого алфавита STT
@@ -309,7 +309,7 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 - [x] Общий web/Android переключатель только для серверно разрешённого администратора; состояние в БД, requests/responses/time/duration без аудио и ключей.
 - [x] Atomic disable/delete и fencing поздних ответов, migration/downgrade; backend/scripts 248 tests, frontend 171 tests, lint/typecheck/build, local web/Android-layout preview и diff check. [Доказательства](model-debug-checkpoint.md).
 - [x] Backend/web READY, PostgreSQL migration/RLS/grants подтверждены; [публикация 08.10.2026](latest-web-release-2026-10-08.md).
-- [ ] Android sync/APK по отдельной команде; 1.24/code34 не менялись.
+- [x] Android 1.25/code35 согласован, cloud build/API/metadata/подпись/assets и GitHub digest проверены; [выпуск 1.25](android-1.25-release.md).
 - [ ] Ручная production/физическая Android-приёмка; P0/P1/P2 целиком не закрыты.
 
 ## 08.10.2026 — блок аккаунта в одну строку
@@ -317,5 +317,12 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 - [x] Общий web/Android CSS: профиль слева, выход справа, центры совпадают; Chrome web/Android-layout 320/390 px без переполнения.
 - [x] Settings component 7 tests, lint/typecheck/build и diff check прошли. [Доказательства](account-layout-checkpoint.md).
 - [x] Web опубликован, READY; [публикация 08.10.2026](latest-web-release-2026-10-08.md).
-- [ ] Android sync/APK по отдельной команде; 1.24/code34 не менялись.
+- [x] Android 1.25/code35 согласован, cloud build/API/metadata/подпись/assets и GitHub digest проверены; [выпуск 1.25](android-1.25-release.md).
 - [ ] Production/физическая Android-приёмка; P0/P1/P2 целиком не закрыты.
+
+
+## 08.10.2026 — выпуск Android 1.25
+
+- [x] Версия 1.25/code35 отдельно подтверждена владельцем; весь накопленный набор включён в APK.
+- [x] Cloud build, 17 metadata/environment tests, подпись/API/assets, GitHub digest/size и копия Downloads подтверждены; [выпуск 1.25](android-1.25-release.md).
+- [ ] Физическая Android-приёмка и реальная речь; весь P0/P1/P2 не закрыт.
