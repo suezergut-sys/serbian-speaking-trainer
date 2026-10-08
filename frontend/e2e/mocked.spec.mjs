@@ -57,14 +57,14 @@ async function mockApp(page, submitted) {
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
   });
   await page.goto("/privacy");
-  await page.evaluate(() => {
-    localStorage.setItem("sb-e2e-auth-auth-token", JSON.stringify({
+  await page.evaluate(storageKey => {
+    localStorage.setItem(storageKey, JSON.stringify({
       access_token: "e2e-local-only", refresh_token: "e2e-local-only", token_type: "bearer",
       expires_in: 60 * 60 * 24 * 365, expires_at: 4102444800,
       user: { id: "user-1", aud: "authenticated", role: "authenticated", email: "learner@example.invalid",
         app_metadata: {}, user_metadata: {}, created_at: "2026-09-01T10:00:00Z" },
     }));
-  });
+  }, process.env.E2E_AUTH_STORAGE_KEY ?? "sb-e2e-auth-auth-token");
 }
 
 const measuredSamples = Number(process.env.E2E_SAMPLES_PER_SCRIPT ?? 1);
@@ -296,4 +296,42 @@ for (const { native, width } of [{ native: false, width: 1280 }, { native: false
     await page.getByRole("button", { name: "← К статистике" }).click();
     await expect(page.getByRole("heading", { name: "Календарь занятий" })).toBeVisible();
   });
+}
+
+for (const native of [false, true]) {
+  for (const width of [320, 390]) {
+    test(`word hint viewport bounds ${native ? "android" : "web"} ${width}`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 740 });
+      if (native) await page.addInitScript(() => { window.CapacitorCustomPlatform = { name: "android" }; });
+      await mockApp(page, []);
+      const words = ["Уберите", "пожалуйста", "грязную", "чашку", "стола"];
+      await page.route("**/api/sessions/start", route => route.fulfill({ json: { session, exercise: {
+        ...exercise("edge-1", "Уберите, пожалуйста, грязную чашку со стола."),
+        word_hints: words.map(word_ru => ({ word_ru, translation_sr: word_ru === "грязную" ? "prljavu" : "Veoma dug prevod sa nekoliko reči koji mora da se prenese u više redova" })),
+      } } }));
+      await page.route("**/word-hints", route => route.fulfill({ json: {
+        word_ru: route.request().postDataJSON().word,
+        translation_sr: route.request().postDataJSON().word === "грязную" ? "prljavu" : "Veoma dug prevod sa nekoliko reči koji mora da se prenese u više redova", is_learning: true,
+      } }));
+      await page.goto("/");
+      if (native) await page.getByRole("button", { name: /В банке/ }).click();
+      await expect(page.getByRole("heading", { name: "Уберите, пожалуйста, грязную чашку со стола." })).toBeVisible();
+      await expect(page.locator(".android-training-meta")).not.toContainText("1 / 10");
+      for (const word of words) {
+        await page.getByRole("button", { name: word, exact: true }).click();
+        const popup = page.locator(".word-tooltip");
+        await expect(popup).toBeVisible();
+        const bounds = await popup.boundingBox();
+        expect(bounds.x).toBeGreaterThanOrEqual(11.5);
+        expect(bounds.x + bounds.width).toBeLessThanOrEqual(width - 11.5);
+        expect(bounds.y).toBeGreaterThanOrEqual(11.5);
+        if (word !== "грязную") expect(bounds.height).toBeGreaterThan(50);
+        expect(await popup.evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(14);
+      }
+      await page.screenshot({ path: `../artifacts/word-hint-${native ? "android" : "web"}-${width}.png` });
+      await page.getByRole("button", { name: "Настройки", exact: true }).click();
+      await expect(page.locator(".word-tooltip")).toHaveCount(0);
+      await expect(page.getByText("Версия приложения: 1.27", { exact: true })).toBeVisible();
+    });
+  }
 }

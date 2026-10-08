@@ -17,6 +17,7 @@ import { TranscriptionAssistanceView, type AssistanceDraft } from "./Transcripti
 import { useAssistancePreference } from "./useAssistancePreference";
 import { useMobileLayout } from "./useMobileLayout";
 import { SettingsView } from "./SettingsView";
+import { WordHintToken } from "./WordHintToken";
 import { hasUnexpectedLetterScript, displaySerbian, displaySerbianInRussianText, readSerbianAlphabet, saveSerbianAlphabet, toSerbianLatin, type SerbianAlphabet } from "./serbianScript";
 import { AnswerResult } from "./AnswerResult";
 import { finishUiTimingWhenVisible, startUiTiming } from "./performance";
@@ -793,7 +794,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
   function renderPhrase() {
     // eslint-disable-next-line react-hooks/refs -- showWordHint reads refs only when the click handler runs.
-    return <h2 id="exercise-title" className="interactive-phrase" aria-label={exercise?.source_ru ?? "Готовим фразу…"}>{exercise ? exercise.source_ru.split(/([А-Яа-яЁё]+)/g).filter(Boolean).map((part, index) => /^[А-Яа-яЁё]+$/.test(part) ? <span className="word-wrap" key={`${part}-${index}`}><button className={wordHints[part.toLocaleLowerCase("ru-RU")] ? "word-token is-used" : "word-token"} type="button" disabled={checking} onClick={() => void showWordHint(part)}>{part}</button>{activeHint === part.toLocaleLowerCase("ru-RU") && <span className="word-tooltip" role="status">{wordHints[part.toLocaleLowerCase("ru-RU")] ? displaySerbian(wordHints[part.toLocaleLowerCase("ru-RU")].translation_sr, alphabet) : "Загружаем…"}</span>}</span> : <span key={`${part}-${index}`}>{part}</span>) : "Готовим фразу…"}</h2>;
+    return <h2 id="exercise-title" className="interactive-phrase" aria-label={exercise?.source_ru ?? "Готовим фразу…"}>{exercise ? exercise.source_ru.split(/([А-Яа-яЁё]+)/g).filter(Boolean).map((part, index) => /^[А-Яа-яЁё]+$/.test(part) ? <WordHintToken key={`${part}-${index}`} word={part} used={Boolean(wordHints[part.toLocaleLowerCase("ru-RU")])} disabled={checking} active={activeHint === part.toLocaleLowerCase("ru-RU") && (mobileLayout ? visiblePanel === 1 : view === "practice")} translation={wordHints[part.toLocaleLowerCase("ru-RU")] ? displaySerbian(wordHints[part.toLocaleLowerCase("ru-RU")].translation_sr, alphabet) : "Загружаем…"} onClick={() => void showWordHint(part)} /> : <span key={`${part}-${index}`}>{part}</span>) : "Готовим фразу…"}</h2>;
   }
 
   function renderFeedback(native: boolean) {
@@ -803,7 +804,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     return <div className={`feedback ${native ? "android-feedback" : ""} feedback--${attempt.analysis.verdict}`}>
       <AnswerResult source={exercise?.source_ru ?? ""} answer={attempt.transcript_sr} attempt={attempt} alphabet={alphabet} />
       <div className="feedback__score"><span>{scorePercent}%</span><strong>{attempt.analysis.verdict === "correct" ? "Верно" : attempt.analysis.verdict === "mostly_correct" ? "Почти верно" : "Нужно доработать"}</strong></div>
-      {attempt.hint_penalty > 0 && <div className="hint-penalty"><Icon name="bulb" /><span>Подсказки: −{Math.round(attempt.hint_penalty * 100)} баллов</span></div>}
+      {attempt.hint_penalty > 0 && <div className="hint-penalty"><Icon name="bulb" /><span>Подсказки: −{Math.round(attempt.hint_penalty * 100)}%</span></div>}
       <p>{displaySerbianInRussianText(attempt.analysis.short_feedback_ru, alphabet)}</p>
       {scorePercent < 100 && <details><summary>Разбор</summary><p>{displaySerbianInRussianText(attempt.analysis.detailed_feedback_ru, alphabet)}</p>{attempt.analysis.issues.map((issue, index) => <p className="issue" key={`${issue.skill_key}-${issue.type}-${index}`}>{displaySerbianInRussianText(issue.evidence, alphabet)}{issue.correction ? ` → ${displaySerbianInRussianText(issue.correction, alphabet)}` : ""}{issue.explanation_ru && <span className="issue-explanation">{displaySerbianInRussianText(issue.explanation_ru, alphabet)}</span>}</p>)}</details>}
       <button className={native ? "android-primary" : "answer-submit"} type="button" disabled={advancing} onClick={() => void nextExercise()}>{advancing ? "Готовим…" : done ? "Завершить тренировку" : native ? "Следующая" : "Следующая фраза"}{!native && <Icon name="arrow" />}</button>
@@ -895,7 +896,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
               </div>
             ) : (
               <div className="android-training-content practice-card">
-                <div className="android-training-meta">{isNative ? <span>{currentTopic?.title_ru}</span> : <><button className="mobile-topic-switch" type="button" onClick={() => showAndroidPanel(0)}>{currentTopic?.title_ru} · сменить</button><span>{Math.min(completedCount + 1, session.requested_length)} / {session.requested_length}</span></>}</div>
+                <div className="android-training-meta">{isNative ? <span>{currentTopic?.title_ru}</span> : <button className="mobile-topic-switch" type="button" onClick={() => showAndroidPanel(0)}>{currentTopic?.title_ru} · сменить</button>}</div>
                 {!attempt && renderPhrase()}
 
                 {!attempt ? <form className="android-answer" onSubmit={checkAnswer}>

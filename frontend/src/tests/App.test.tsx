@@ -930,6 +930,7 @@ describe("App", () => {
       await screen.findByRole("heading", { name: "Я хочу открыть счёт." });
       expect(screen.getByRole("button", { name: "Тренировка" })).toHaveAttribute("aria-current", "page");
       expect(document.querySelector(".android-topics-page")).not.toBeVisible();
+      expect(document.querySelector(".android-training-meta")).not.toHaveTextContent("1 / 10");
       const answer = await recordAnswer();
       fireEvent.change(answer, { target: { value: "Sačuvaj odgovor." } });
       fireEvent.click(screen.getByRole("button", { name: "Темы" }));
@@ -1394,6 +1395,9 @@ describe("App", () => {
           finishHintRequest = () => resolve({ ok: true, status: 200, json: async () => ({ word_ru: "хочу", translation_sr: "želim", is_learning: true }) });
         });
       }
+      if (input.toString() === "/api/attempts") return baseFetch(input, init).then(async (response: Response) => ({
+        ...response, json: async () => ({ ...(await response.json()), hint_penalty: 0.3 }),
+      }));
       return baseFetch(input, init);
     });
     vi.stubGlobal("fetch", fetchMock);
@@ -1411,6 +1415,8 @@ describe("App", () => {
       expect(JSON.parse(attemptCall?.[1]?.body as string).hinted_words).toEqual(["хочу"]);
     });
     expect(fetchMock.mock.calls.some(([url]) => url.toString().endsWith("/word-hints"))).toBe(true);
+    expect(await screen.findByText("Подсказки: −30%")).toBeInTheDocument();
+    expect(screen.queryByText(/баллов/)).not.toBeInTheDocument();
     finishHintRequest?.();
   });
 
