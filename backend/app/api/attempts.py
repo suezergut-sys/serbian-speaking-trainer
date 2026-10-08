@@ -6,7 +6,7 @@ from app.schemas import AttemptResponse, CreateAttemptRequest
 from app.services.ai_adapter import StructuredAIProvider, get_ai_provider
 from app.services.attempt_service import AttemptInProgressError, AttemptRequestConflictError, AttemptService, ExerciseNotFoundError
 from app.services.attempt_service import DailyLimitExceededError
-from app.services.attempt_service import InvalidTranscriptionReceiptError
+from app.services.attempt_service import InvalidTranscriptionReceiptError, UnexpectedTranscriptScriptError
 from app.services.answer_analyzer import AnalysisUnavailableError
 from app.services.session_service import SessionCompletedError, SessionUnavailableError
 from app.api.dependencies import get_current_user
@@ -26,6 +26,8 @@ def create_attempt(
         return AttemptService(db, ai, user).create(request)
     except ExerciseNotFoundError as exc:
         raise HTTPException(status_code=404, detail="Exercise not found") from exc
+    except UnexpectedTranscriptScriptError as exc:
+        raise HTTPException(status_code=422, detail={"code": "transcript_unexpected_script"}) from exc
     except InvalidTranscriptionReceiptError as exc:
         raise HTTPException(status_code=422, detail="Invalid transcription assistance receipt") from exc
     except DailyLimitExceededError as exc:

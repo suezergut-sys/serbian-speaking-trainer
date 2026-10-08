@@ -37,6 +37,7 @@ async function installApp(page, overrides = {}) {
     const request = route.request();
     const path = new URL(request.url()).pathname;
     const method = request.method();
+    if (path === "/api/auth/me/preferences" && method === "GET") return json(route, { assistance_enabled: false });
     if (path === "/api/auth/me" && method === "GET") return json(route, account);
     if (path === "/api/topics" && method === "GET") {
       state.topics += 1;
@@ -52,7 +53,7 @@ async function installApp(page, overrides = {}) {
     if (path === "/api/transcriptions" && method === "POST") {
       state.transcription += 1;
       if (state.failTranscription && state.transcription === 1) return route.abort("failed");
-      return json(route, { text: "Želim da otvorim račun." });
+      return json(route, state.reviewTranscript ? { text: state.reviewTranscript, review_required: true } : { text: "Želim da otvorim račun." });
     }
     if (path === "/api/attempts" && method === "POST") {
       const body = request.postDataJSON();
@@ -180,3 +181,74 @@ test("late next-phrase response after leaving the session is ignored", async ({ 
 async function json(route, value) {
   await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(value) });
 }
+
+
+test("foreign STT letters remain editable and block grading", async ({ page }) => {
+  const state = await installApp(page, { reviewTranscript: "Платячу банковном картицом." });
+  await startPractice(page);
+  await page.getByRole("button", { name: "Ответить голосом" }).click();
+  await page.getByRole("button", { name: "Завершить запись" }).click();
+  await expect(page.getByLabel("Ваш ответ")).toHaveValue(state.reviewTranscript);
+  await expect(page.getByRole("alert")).toContainText("Исправьте текст перед проверкой");
+  await expect(page.getByRole("button", { name: "Проверить ответ" })).toBeDisabled();
+  expect(state.attempts).toHaveLength(0);
+  for (const width of [1280, 390, 320]) {
+    await page.setViewportSize({ width, height: 844 });
+    const warning = page.locator(".transcription-script-warning");
+    await expect(warning).toBeVisible();
+    const style = await warning.evaluate(el => {
+      const css = getComputedStyle(el);
+      return { color: css.color, background: css.backgroundColor, overflow: el.scrollWidth > el.clientWidth };
+    });
+    expect(style.color).toBe("rgb(234, 242, 255)");
+    expect(style.background).not.toBe("rgb(255, 255, 255)");
+    expect(style.overflow).toBe(false);
+    await page.screenshot({ path: `../artifacts/stt-review-${width}.png`, fullPage: true });
+  }
+  await page.getByLabel("Ваш ответ").fill("Platiću bankovnom karticom.");
+  await submit(page);
+  await expect(page.locator(".feedback:visible")).toBeVisible();
+  expect(state.attempts).toHaveLength(1);
+  expect(state.attempts[0].transcript_sr).toBe("Platiću bankovnom karticom.");
+});
+
+
+test("mobile panels fit the viewport and preserve the answer across navigation", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 700 });
+  const state = await installApp(page);
+  const shell = page.locator(".mobile-web-shell");
+  await expect(shell).toBeVisible();
+  expect(await shell.evaluate(el => getComputedStyle(el).fontFamily)).toContain("system-ui");
+  await expect(page.locator(".interactive-phrase:visible")).toHaveAttribute("aria-label", "Я хочу открыть счёт.");
+  async function fits() {
+    const dimensions = await page.evaluate(() => ({ width: innerWidth, height: innerHeight,
+      scrollWidth: document.documentElement.scrollWidth, scrollHeight: document.documentElement.scrollHeight }));
+    expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.width);
+    expect(dimensions.scrollHeight).toBeLessThanOrEqual(dimensions.height);
+    const microphone = await page.getByRole("button", { name: /Ответить голосом|Записать заново/ }).boundingBox();
+    expect(microphone.y + microphone.height).toBeLessThanOrEqual(dimensions.height);
+  }
+  await fits();
+  await page.getByRole("button", { name: "Темы", exact: true }).click();
+  await expect(page.locator(".android-training-page")).toBeHidden();
+  await page.getByRole("button", { name: /В банке/ }).click();
+  await transcribeSyntheticAnswer(page);
+  await page.getByRole("button", { name: "Настройки", exact: true }).click();
+  await page.getByRole("button", { name: "Тренировка", exact: true }).click();
+  await expect(page.getByLabel("Ваш ответ")).toHaveValue("Želim da otvorim račun.");
+  for (const size of [{ width: 320, height: 568 }, { width: 740, height: 360 }, { width: 390, height: 700 }]) {
+    await page.setViewportSize(size);
+    await fits();
+    await page.screenshot({ path: `../artifacts/mobile-layout-${size.width}.png`, fullPage: true });
+  }
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await expect(page.getByRole("button", { name: "Практика", exact: true })).toBeVisible();
+  await expect(page.getByLabel("Ваш ответ")).toHaveValue("Želim da otvorim račun.");
+  await page.setViewportSize({ width: 390, height: 700 });
+  await submit(page);
+  await expect(page.locator(".feedback:visible")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Следующая", exact: true })).toBeInViewport();
+  await page.getByRole("button", { name: "Следующая", exact: true }).click();
+  await expect(page.locator(".interactive-phrase:visible")).toHaveAttribute("aria-label", "Мы можем поговорить завтра.");
+  expect(state.start).toBe(1);
+});

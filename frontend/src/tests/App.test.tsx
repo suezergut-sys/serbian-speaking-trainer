@@ -915,6 +915,71 @@ describe("App", () => {
     expect(JSON.parse(call?.[1]?.body as string)).not.toHaveProperty("transcription_id");
   });
 
+  it("uses separate mobile web panels and preserves the draft across navigation and resize", async () => {
+    let matches = true;
+    const listeners = new Set<() => void>();
+    vi.stubGlobal("matchMedia", () => ({ get matches() { return matches; },
+      addEventListener: (_: string, listener: () => void) => listeners.add(listener),
+      removeEventListener: (_: string, listener: () => void) => listeners.delete(listener),
+    }));
+    voiceMock.available = true;
+    const fetchMock = mockApi(false, [], "admin");
+    vi.stubGlobal("fetch", fetchMock);
+    const rendered = render(<App />);
+    try {
+      await screen.findByRole("heading", { name: "Я хочу открыть счёт." });
+      expect(screen.getByRole("button", { name: "Тренировка" })).toHaveAttribute("aria-current", "page");
+      expect(document.querySelector(".android-topics-page")).not.toBeVisible();
+      const answer = await recordAnswer();
+      fireEvent.change(answer, { target: { value: "Sačuvaj odgovor." } });
+      fireEvent.click(screen.getByRole("button", { name: "Темы" }));
+      expect(screen.getByLabelText("Ваш ответ")).not.toBeVisible();
+      fireEvent.click(screen.getByRole("button", { name: /В банке/ }));
+      expect(screen.getByLabelText("Ваш ответ")).toHaveValue("Sačuvaj odgovor.");
+      fireEvent.click(screen.getByRole("button", { name: "Настройки" }));
+      fireEvent.click(screen.getByRole("button", { name: "Пользователи" }));
+      await screen.findByRole("heading", { name: "Пользователи" });
+      fireEvent.click(screen.getByRole("button", { name: "Тренировка" }));
+      expect(screen.getByLabelText("Ваш ответ")).toHaveValue("Sačuvaj odgovor.");
+      act(() => { matches = false; listeners.forEach(listener => listener()); });
+      expect(screen.getByRole("button", { name: "Практика" })).toBeInTheDocument();
+      expect(screen.getByLabelText("Ваш ответ")).toHaveValue("Sačuvaj odgovor.");
+      act(() => { matches = true; listeners.forEach(listener => listener()); });
+      expect(screen.getByLabelText("Ваш ответ")).toHaveValue("Sačuvaj odgovor.");
+      expect(fetchMock.mock.calls.filter(([url]) => String(url).endsWith("/api/sessions/start"))).toHaveLength(1);
+    } finally {
+      rendered.unmount();
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it.each([false, true])("requires correcting a recovered transcript before grading (native=%s)", async (native) => {
+    voiceMock.available = true;
+    vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(native);
+    const baseFetch = mockApi();
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => input.toString().endsWith("/api/transcriptions")
+      ? Promise.resolve({ ok: true, status: 200, json: async () => ({ text: "Платячу банковном картицом.", review_required: true }) })
+      : baseFetch(input, init));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    const answer = await recordAnswer();
+    expect(answer).toHaveValue("Платячу банковном картицом.");
+    expect(screen.getByRole("alert")).toHaveTextContent("Исправьте текст перед проверкой");
+    const check = screen.getByRole("button", { name: native ? "Проверить" : "Проверить ответ" });
+    expect(check).toBeDisabled();
+    fireEvent.submit(answer.closest("form")!);
+    expect(fetchMock.mock.calls.some(([url]) => url.toString().endsWith("/api/attempts"))).toBe(false);
+    fireEvent.change(answer, { target: { value: "Platiću bankovnom karticom." } });
+    expect(check).toBeEnabled();
+    expect(screen.queryByText(/Исправьте текст перед проверкой/)).not.toBeInTheDocument();
+    fireEvent.click(check);
+    await waitFor(() => {
+      const call = fetchMock.mock.calls.find(([url]) => url.toString().endsWith("/api/attempts"));
+      expect(JSON.parse(call?.[1]?.body as string).transcript_sr).toBe("Platiću bankovnom karticom.");
+    });
+  });
+
   it("offers manual entry after failed transcription without losing the current phrase", async () => {
     voiceMock.available = true;
     const baseFetch = mockApi();

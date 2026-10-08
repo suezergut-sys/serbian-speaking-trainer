@@ -39,6 +39,7 @@ class TranscriptionResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     text: str = Field(min_length=1, max_length=1200)
+    review_required: bool = False
     raw_text: str | None = None
     transcription_id: str | None = None
     policy_version: str | None = None

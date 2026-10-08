@@ -57,11 +57,13 @@ class OpenAITranscriptionProvider:
 
     def transcribe(self, *, audio: bytes, filename: str, content_type: str) -> TranscriptionResponse:
         try:
+            language_options = ({"languages": ["sr"]} if self.settings.openai_transcribe_language_parameter == "languages"
+                                else {"language": "sr"})
             for retry in range(2):
-                prompt = load_prompt("speech_transcription_v1.md" if retry == 0 else "speech_transcription_script_retry_v1.md")
+                prompt = load_prompt("speech_transcription_v2.md" if retry == 0 else "speech_transcription_script_retry_v2.md")
                 with capture_model_call("audio.transcriptions" if retry == 0 else "audio.transcriptions.script_retry",
                     self.settings.openai_transcribe_model or "", {
-                        "model": self.settings.openai_transcribe_model, "language": "sr", "prompt": prompt,
+                        "model": self.settings.openai_transcribe_model, **language_options, "prompt": prompt,
                         "response_format": "json", "content_type": content_type, "audio_bytes": len(audio),
                     }, self.settings.openai_api_key) as debug, measure_ai_call():
                     create = (self.client.audio.transcriptions.with_raw_response.create
@@ -69,7 +71,7 @@ class OpenAITranscriptionProvider:
                     response = create(
                         file=(filename, audio, content_type),
                         model=self.settings.openai_transcribe_model,
-                        language="sr",
+                        **language_options,
                         prompt=prompt,
                         response_format="json",
                     )
@@ -83,7 +85,7 @@ class OpenAITranscriptionProvider:
                 transcript = TranscriptionResponse(text=response.text.strip())
                 if not has_unexpected_letter_script(transcript.text):
                     return transcript
-            raise TranscriptionServiceError("transcription_unexpected_script")
+            return TranscriptionResponse(text=transcript.text, review_required=True)
         except TranscriptionServiceError:
             raise
         except APITimeoutError as exc:

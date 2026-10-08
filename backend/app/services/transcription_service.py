@@ -75,8 +75,9 @@ class TranscriptionService:
         finally:
             del payload
             audio.file.close()
-        if has_unexpected_letter_script(result.text):
-            raise TranscriptionServiceError("transcription_unexpected_script")
+        if has_unexpected_letter_script(result.text) or result.review_required:
+            # Preserve the original spelling for manual review; never run assistance or scoring.
+            return TranscriptionResponse(text=result.text, review_required=True)
         raw = serbian_latin(result.text)
         if not assistance_enabled:
             return TranscriptionResponse(text=raw)

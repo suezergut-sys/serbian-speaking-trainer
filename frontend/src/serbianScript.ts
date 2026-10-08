@@ -70,3 +70,10 @@ export function saveSerbianAlphabet(userId: string, alphabet: SerbianAlphabet): 
     // The choice remains active for this session when storage is unavailable.
   }
 }
+
+// Match the backend alphabet guard; never discard or guess unfamiliar letters.
+export function hasUnexpectedLetterScript(text: string): boolean {
+  return Array.from(text.normalize("NFC")).some(letter => /\p{L}/u.test(letter)
+    && !/\p{Script=Latin}/u.test(letter)
+    && !Object.hasOwn(cyrillicToLatin, letter.toLocaleLowerCase("sr")));
+}

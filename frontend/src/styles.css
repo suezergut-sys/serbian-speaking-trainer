@@ -1,5 +1,6 @@
 :root {
-  color: #eaf2ff;
+  --text: #eaf2ff;
+  color: var(--text);
   background: #020914;
   font-family: system-ui, "Segoe UI", Roboto, Arial, sans-serif;
   font-synthesis: none;
@@ -743,3 +744,50 @@ button { cursor: pointer; background: var(--panel); }
   .phrase-statistics-page .phrase-table td { padding: .35rem 0; border: 0; text-align: left; overflow-wrap: anywhere; }
   .phrase-statistics-page .phrase-cell-label { display: block; margin-bottom: .18rem; color: var(--muted); font-size: .65rem; }
 }
+
+.transcription-script-warning { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 12px; padding: .8rem; font: inherit; line-height: 1.5; overflow-wrap: anywhere; }
+
+/* Mobile browser: one visible panel, sized to the viewport above the keyboard. */
+.mobile-web-shell { position: fixed; inset: var(--mobile-top, 0px) 0 auto; width: 100%; height: var(--mobile-height, 100dvh); }
+.mobile-web-shell [hidden] { display: none !important; }
+.mobile-web-shell .android-header { height: 58px; padding: 0 .5rem 0 1rem; background: #030d1c; }
+.mobile-web-shell .android-header nav { gap: 0; }
+.mobile-web-shell .android-header nav button { width: 44px; height: 44px; }
+.mobile-web-shell .android-pager { display: block; height: calc(100% - 58px); overflow: hidden; }
+.mobile-web-shell .android-page { padding: .75rem 1rem max(.75rem, env(safe-area-inset-bottom)); overscroll-behavior: contain; }
+.mobile-web-shell .android-topics-page { display: flex; flex-direction: column; gap: .5rem; }
+.mobile-web-shell .android-topic-list { flex: 1; min-height: 0; align-content: start; overflow-y: auto; padding: 1px; }
+.mobile-web-shell .android-topic { min-height: 92px; }
+.mobile-web-shell .android-topic strong { font-size: .9rem; }
+.mobile-web-shell .android-topic > small { font-size: 1rem; }
+.mobile-web-shell .android-topic > small span { font-size: .65rem; }
+.mobile-web-shell .android-action-card { flex-shrink: 0; margin: 0; }
+.mobile-web-shell .android-action-card summary { min-height: 44px; font-size: .85rem; }
+.mobile-web-shell input, .mobile-web-shell select, .mobile-web-shell textarea { min-width: 0; font-size: 16px; }
+.mobile-web-shell .android-training-content { height: 100%; min-height: 0; overflow-y: auto; }
+.mobile-web-shell .android-training-content.practice-card { padding: 0; }
+.mobile-web-shell .android-training-meta { flex-shrink: 0; min-height: 32px; gap: .5rem; font-size: .8rem; }
+.mobile-topic-switch { min-height: 44px; max-width: 75%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0; border: 0; background: transparent; color: var(--muted); font: inherit; text-align: left; }
+.mobile-web-shell .android-training-content > .interactive-phrase { flex: 1 1 auto; min-height: 80px; margin: .75rem 0; font-size: clamp(1.55rem, 6.5vw, 2rem); line-height: 1.4; overflow-wrap: anywhere; }
+.mobile-web-shell .word-wrap { max-width: 100%; }
+.mobile-web-shell .word-token { overflow-wrap: anywhere; min-width: 0; }
+.mobile-web-shell .android-answer { flex-shrink: 0; gap: .5rem; margin: 0; padding-bottom: .25rem; }
+.mobile-web-shell .android-answer textarea { height: 88px; min-height: 88px; text-align: left; }
+.mobile-web-shell .android-answer .voice-prompt { min-height: 80px; padding: .75rem; font-size: .95rem; }
+.mobile-web-shell .answer-actions { position: sticky; bottom: 0; z-index: 2; padding: .5rem 0; background: #020914; }
+.mobile-web-shell .android-voice-state, .mobile-web-shell .android-error { font-size: .85rem; }
+.mobile-web-shell .android-feedback { flex: 1; min-height: 0; margin: 0; padding: .75rem 0 0; align-content: start; }
+.mobile-web-shell .android-feedback > .android-primary { position: sticky; bottom: 0; margin-top: auto; background: #12345e; }
+.mobile-web-shell .android-primary, .mobile-web-shell .android-action-card button { min-height: 44px; }
+.mobile-admin-link { width: 100%; min-height: 44px; margin: .5rem 0; padding: .6rem; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); font: inherit; }
+.mobile-web-shell .admin-page { max-width: 100%; padding: 0; }
+.mobile-web-shell .admin-page .phrase-table-wrap { overflow: visible; }
+.mobile-web-shell .admin-page .phrase-table, .mobile-web-shell .admin-page tbody,
+.mobile-web-shell .admin-page tr, .mobile-web-shell .admin-page td { display: block; width: 100%; overflow-wrap: anywhere; }
+.mobile-web-shell .admin-page thead { display: none; }
+.mobile-web-shell .admin-page tr { padding: .5rem; border-bottom: 1px solid var(--line); }
+.mobile-web-shell--short .android-page { padding-block: .25rem; }
+.mobile-web-shell--short .android-training-content > .interactive-phrase { min-height: 48px; margin: .25rem 0; font-size: 1.25rem; }
+.mobile-web-shell--short .android-answer textarea, .mobile-web-shell--short .android-answer .voice-prompt { min-height: 60px; height: 60px; }
+.mobile-web-shell--short .android-answer .mic-button, .mobile-web-shell--short .answer-check-button { width: 52px; height: 52px; }
+.mobile-web-shell--short .android-answer { gap: .25rem; }

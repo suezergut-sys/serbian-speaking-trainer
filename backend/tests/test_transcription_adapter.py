@@ -60,18 +60,20 @@ def test_unexpected_script_retries_once_using_same_memory_buffer(valid):
     first, second = [call.kwargs for call in create.call_args_list]
     assert first["file"][1] is audio and second["file"][1] is audio
     assert first["model"] == second["model"] == "env-model"
-    assert first["language"] == second["language"] == "sr"
+    assert first["languages"] == second["languages"] == ["sr"]
+    assert "language" not in first and "language" not in second
     assert first["prompt"] != second["prompt"]
     assert "Ne prevodi" in second["prompt"]
 
 
-def test_unexpected_script_retry_is_bounded_and_keeps_safe_error():
+@pytest.mark.parametrize("text", ["Θέλω καφέ", "Платячу банковном картицом."])
+def test_unexpected_script_retry_is_bounded_and_returns_reviewable_text(text):
     provider = OpenAITranscriptionProvider(Settings(openai_api_key="secret", openai_transcribe_model="env-model"))
-    create = Mock(return_value=SimpleNamespace(text="Θέλω καφέ"))
+    create = Mock(return_value=SimpleNamespace(text=text))
     provider._client = SimpleNamespace(audio=SimpleNamespace(transcriptions=SimpleNamespace(create=create)))
-    with pytest.raises(TranscriptionServiceError) as caught:
-        provider.transcribe(audio=b"synthetic", filename="speech.webm", content_type="audio/webm")
-    assert caught.value.code == "transcription_unexpected_script"
+    result = provider.transcribe(audio=b"synthetic", filename="speech.webm", content_type="audio/webm")
+    assert result.text == text
+    assert result.review_required is True
     assert create.call_count == 2
 
 
@@ -91,3 +93,14 @@ def test_timeout_during_script_retry_keeps_safe_timeout_error():
         provider.transcribe(audio=b"synthetic", filename="speech.webm", content_type="audio/webm")
     assert caught.value.code == "transcription_timeout"
     assert create.call_count == 2
+
+
+def test_legacy_language_parameter_is_explicitly_configurable():
+    provider = OpenAITranscriptionProvider(Settings(openai_api_key="secret", openai_transcribe_model="env-model",
+        openai_transcribe_language_parameter="language"))
+    create = Mock(return_value=SimpleNamespace(text="Moj odgovor."))
+    provider._client = SimpleNamespace(audio=SimpleNamespace(transcriptions=SimpleNamespace(create=create)))
+    provider.transcribe(audio=b"synthetic", filename="speech.webm", content_type="audio/webm")
+    assert create.call_args.kwargs["language"] == "sr"
+    assert "languages" not in create.call_args.kwargs
+    assert "a b c č ć d đ" in create.call_args.kwargs["prompt"]

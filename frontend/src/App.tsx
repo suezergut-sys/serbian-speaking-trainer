@@ -15,8 +15,9 @@ import { assistedText } from "./transcriptionAssistance";
 import { transcriptionErrorMessage } from "./transcriptionError";
 import { TranscriptionAssistanceView, type AssistanceDraft } from "./TranscriptionAssistanceView";
 import { useAssistancePreference } from "./useAssistancePreference";
+import { useMobileLayout } from "./useMobileLayout";
 import { SettingsView } from "./SettingsView";
-import { displaySerbian, displaySerbianInRussianText, readSerbianAlphabet, saveSerbianAlphabet, toSerbianLatin, type SerbianAlphabet } from "./serbianScript";
+import { hasUnexpectedLetterScript, displaySerbian, displaySerbianInRussianText, readSerbianAlphabet, saveSerbianAlphabet, toSerbianLatin, type SerbianAlphabet } from "./serbianScript";
 import { AnswerResult } from "./AnswerResult";
 import { finishUiTimingWhenVisible, startUiTiming } from "./performance";
 import appLogo from "./assets/app-logo.png?inline";
@@ -40,7 +41,7 @@ function AnswerActions({ answer, loading, native, voiceState, voiceSupported, st
 }) {
   const busy = voiceState === "connecting" || voiceState === "recording" || voiceState === "transcribing";
   return <div className="answer-actions">
-    {answer.trim() && <button className="answer-check-button" type="submit" aria-label={loading ? "Проверяем…" : native ? "Проверить" : "Проверить ответ"} disabled={loading || busy}><Icon name="tick" size={40} /></button>}
+    {answer.trim() && <button className="answer-check-button" type="submit" aria-label={loading ? "Проверяем…" : native ? "Проверить" : "Проверить ответ"} disabled={loading || busy || hasUnexpectedLetterScript(answer)}><Icon name="tick" size={40} /></button>}
     <button className={`mic-button${busy ? " is-active" : ""}${answer.trim() && !busy ? " mic-button--retry" : ""}`} type="button"
       aria-label={busy ? voiceState === "recording" ? "Завершить запись" : "Остановить запись" : answer.trim() ? "Записать заново" : "Ответить голосом"}
       disabled={loading || !voiceSupported || voiceState === "transcribing"}
@@ -215,30 +216,33 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const androidPagerRef = useRef<HTMLDivElement | null>(null);
   const presentedExerciseRef = useRef<string | undefined>(undefined);
   const initialExerciseTimingPendingRef = useRef(false);
-  const [androidPanel, setAndroidPanel] = useState(0);
+  const [androidPanel, setAndroidPanel] = useState(() => Capacitor.isNativePlatform() ? 0 : 1);
   const [statisticsPage, setStatisticsPage] = useState<"activity" | "phrases">("activity");
   const androidBackHandlerRef = useRef<() => void>(() => undefined);
   const voiceSupported = supportsVoiceRecording();
   const isNative = Capacitor.isNativePlatform();
+  const { compact, shell: mobileShellRef } = useMobileLayout(startupState !== "loading" && !isNative);
+  const mobileLayout = isNative || compact;
+  const visiblePanel = !isNative && view !== "practice" ? view === "statistics" ? 2 : 3 : androidPanel;
 
   useEffect(() => { startUiTiming("topics"); }, []);
   useEffect(() => {
-    if (startupState !== "loading" && topics.length) finishUiTimingWhenVisible("topics", isNative ? ".android-topic-list .android-topic" : ".topics .topic");
-  }, [topics, isNative, startupState]);
+    if (startupState !== "loading" && topics.length) finishUiTimingWhenVisible("topics", mobileLayout ? ".android-topic-list .android-topic" : ".topics .topic");
+  }, [topics, mobileLayout, startupState]);
   useEffect(() => {
     if (exercise && !attempt) {
-      const selector = isNative ? ".android-page .interactive-phrase" : ".practice-stage .interactive-phrase";
-      if (presentedExerciseRef.current !== exercise.id && (isNative ? androidPanel === 1 : view === "practice")) {
+      const selector = mobileLayout ? ".android-page .interactive-phrase" : ".practice-stage .interactive-phrase";
+      if (presentedExerciseRef.current !== exercise.id && (mobileLayout ? visiblePanel === 1 : view === "practice")) {
         document.querySelector<HTMLElement>(selector)?.scrollIntoView?.({ block: "nearest", behavior: "instant" });
         presentedExerciseRef.current = exercise.id;
       }
       finishUiTimingWhenVisible("first_phrase", selector);
       finishUiTimingWhenVisible("next_phrase", selector);
     }
-  }, [exercise, attempt, isNative, androidPanel, view]);
+  }, [exercise, attempt, mobileLayout, visiblePanel, view]);
   useEffect(() => {
-    if (hasTranscript) finishUiTimingWhenVisible("transcription", isNative ? "#android-serbian-answer" : "#serbian-answer");
-  }, [hasTranscript, isNative]);
+    if (hasTranscript) finishUiTimingWhenVisible("transcription", mobileLayout ? "#android-serbian-answer" : "#serbian-answer");
+  }, [hasTranscript, mobileLayout]);
   useEffect(() => {
     if (attempt) finishUiTimingWhenVisible("check", ".feedback");
   }, [attempt]);
@@ -436,6 +440,10 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     }
     if (panel !== 1) interruptVoice();
     setAndroidPanel(panel);
+    if (!isNative) {
+      setView(panel === 2 ? "statistics" : panel === 3 ? "settings" : "practice");
+      return;
+    }
     if (!pager) return;
     const left = panel * pager.clientWidth;
     if (typeof pager.scrollTo === "function") pager.scrollTo({ left, behavior: "auto" });
@@ -497,6 +505,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   function showView(next: AppView) {
     if (next !== "practice") interruptVoice();
     setView(next);
+    if (!isNative) setAndroidPanel(next === "statistics" ? 2 : next === "settings" || next === "admin" ? 3 : 1);
   }
 
   async function finishVoice() {
@@ -516,7 +525,8 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       if (voiceEpochRef.current !== epoch) return;
       if (answerEditEpochRef.current === voiceStartEditEpochRef.current) {
         voiceTimingRef.current = recording.timing;
-        setAnswer(displaySerbian(transcript.text, alphabetRef.current));
+        setAnswer(transcript.review_required ? transcript.text : displaySerbian(transcript.text, alphabetRef.current));
+        if (transcript.review_required) voiceTimingRef.current = undefined;
         setHasTranscript(true);
         setAssistanceDraft(transcript.transcription_id || transcript.assistance_status ? { response: transcript, selected: (transcript.changes ?? []).flatMap((c, i) => c.action === "applied" ? [i] : []), edited: false } : undefined);
       }
@@ -649,7 +659,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
   async function checkAnswer(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!exercise || !session || !hasTranscript || !answer.trim() || checkingRef.current || voiceBusy) return;
+    if (!exercise || !session || !hasTranscript || !answer.trim() || checkingRef.current || voiceBusy || hasUnexpectedLetterScript(answer)) return;
     startUiTiming("check");
     const transcript = toSerbianLatin(answer.trim());
     const timing = voiceTimingRef.current;
@@ -803,23 +813,25 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
   if (startupState === "loading") return <main className="auth-page auth-page--loading"><PhraseLoading /></main>;
 
-  if (isNative) {
+  if (mobileLayout) {
     return (
-      <div className="android-shell">
+      <div ref={isNative ? undefined : mobileShellRef} className={`android-shell${isNative ? "" : " mobile-web-shell"}`}>
         <header className="android-header">
           <strong>Serbo<span>Talk</span></strong>
           <nav aria-label="Панели приложения">
-            <button type="button" aria-label="Темы" aria-current={androidPanel === 0 ? "page" : undefined} onClick={() => showAndroidPanel(0)}><Icon name="home" /></button>
-            <button type="button" aria-label="Тренировка" aria-current={androidPanel === 1 ? "page" : undefined} onClick={() => showAndroidPanel(1)}><Icon name="mic" /></button>
-            <button type="button" aria-label="Статистика" aria-current={androidPanel === 2 ? "page" : undefined} onClick={() => showAndroidPanel(2)}><Icon name="chart" /></button>
-            <button type="button" aria-label="Настройки" aria-current={androidPanel === 3 ? "page" : undefined} onClick={() => showAndroidPanel(3)}><Icon name="settings" /></button>
+            <button type="button" aria-label="Темы" aria-current={visiblePanel === 0 ? "page" : undefined} onClick={() => showAndroidPanel(0)}><Icon name="home" /></button>
+            <button type="button" aria-label="Тренировка" aria-current={visiblePanel === 1 ? "page" : undefined} onClick={() => showAndroidPanel(1)}><Icon name="mic" /></button>
+            <button type="button" aria-label="Статистика" aria-current={visiblePanel === 2 ? "page" : undefined} onClick={() => showAndroidPanel(2)}><Icon name="chart" /></button>
+            <button type="button" aria-label="Настройки" aria-current={visiblePanel === 3 ? "page" : undefined} onClick={() => showAndroidPanel(3)}><Icon name="settings" /></button>
           </nav>
         </header>
 
         <div
           className="android-pager"
+          aria-label="Содержимое панели"
           ref={androidPagerRef}
           onScroll={(event) => {
+            if (!isNative) return;
             const width = event.currentTarget.clientWidth;
             if (width) {
               const panel = Math.round(event.currentTarget.scrollLeft / width);
@@ -832,7 +844,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
             }
           }}
         >
-          <section className="android-page android-topics-page" aria-label="Выбор темы">
+          <section className="android-page android-topics-page" hidden={!isNative && visiblePanel !== 0} aria-label="Выбор темы">
             <div className="android-topic-list" aria-label="Темы тренировки">
               <button className={isReviewMode ? "android-topic is-selected" : "android-topic"} type="button" disabled={reviewPhraseCount === 0} onClick={() => { showAndroidPanel(1); void startReviewTraining(); }}>
                 <span className="topic__icon"><Icon name="repeat" /></span>
@@ -872,23 +884,25 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
             {(startupState === "fallback" || backendState === "offline") && <div className="android-error" role="alert">{startupState === "fallback" ? error : "Нет подключения к сервису."} <button type="button" onClick={retryCatalog}>Повторить загрузку</button></div>}
           </section>
 
-          <section className="android-page android-training-page" aria-label="Тренировка">
+          <section className="android-page android-training-page" hidden={!isNative && visiblePanel !== 1} aria-label="Тренировка">
             {preparingPhrase && !session ? <PhraseLoading /> : sessionComplete ? (
-              <div className="practice-done"><h1>{topicExhausted ? "Все фразы темы пройдены" : "Тренировка завершена"}</h1><p>{topicExhausted ? `${completedCount} фраз проверено. В этой теме пока нет следующих фраз.` : `${completedCount} из ${session?.requested_length ?? 10} фраз проверено.`}</p><button className="android-primary" type="button" onClick={resetTraining}>Выбрать новую тему</button></div>
+              <div className="practice-done"><h1>{topicExhausted ? "Все фразы темы пройдены" : "Тренировка завершена"}</h1><p>{topicExhausted ? `${completedCount} фраз проверено. В этой теме пока нет следующих фраз.` : `${completedCount} из ${session?.requested_length ?? 10} фраз проверено.`}</p><button className="android-primary" type="button" onClick={() => { resetTraining(); if (mobileLayout) showAndroidPanel(0); }}>Выбрать новую тему</button></div>
             ) : !session ? (
               <div className="android-training-start">
                 <span className="topic__icon"><Icon name={topicIcons[currentTopic?.id ?? ""] ?? "message"} size={26} /></span>
                 <h1>{customTopic.trim() || currentTopic?.title_ru || "Выберите тему"}</h1>
+                {!isNative && <button className="android-primary" type="button" onClick={() => showAndroidPanel(0)}>Выбрать тему</button>}
                 {error && <p className="android-error" role="alert">{error}</p>}
               </div>
             ) : (
               <div className="android-training-content practice-card">
-                <div className="android-training-meta"><span>{currentTopic?.title_ru}</span></div>
+                <div className="android-training-meta">{isNative ? <span>{currentTopic?.title_ru}</span> : <><button className="mobile-topic-switch" type="button" onClick={() => showAndroidPanel(0)}>{currentTopic?.title_ru} · сменить</button><span>{Math.min(completedCount + 1, session.requested_length)} / {session.requested_length}</span></>}</div>
                 {!attempt && renderPhrase()}
 
                 {!attempt ? <form className="android-answer" onSubmit={checkAnswer}>
                   {hasTranscript ? <><label className="sr-only" htmlFor="android-serbian-answer">Ваш ответ</label>
                     <textarea id="android-serbian-answer" value={answer} readOnly={checking} onChange={(event) => { answerEditEpochRef.current += 1; voiceTimingRef.current = undefined; setAssistanceDraft(current => current ? { ...current, edited: true } : undefined); setAnswer(event.target.value); }} placeholder="Введите ответ на сербском языке" rows={3} /></> : <p className="voice-prompt">Произнесите ответ в микрофон</p>}
+                  {hasUnexpectedLetterScript(answer) && <p className="transcription-script-warning" role="alert">В расшифровке есть буквы вне сербского алфавита. Исправьте текст перед проверкой или запишите ответ заново.</p>}
                   <TranscriptionAssistanceView draft={assistanceDraft} alphabet={alphabet} disabled={checking || voiceBusy} onToggle={toggleTranscriptionChange} />
                   <AnswerActions answer={answer} loading={checking} native={isNative} voiceState={voiceState} voiceSupported={voiceSupported} startVoice={() => void startVoice()} finishVoice={() => void finishVoice()} stopVoice={stopVoice} />
                   {(!voiceSupported || voiceState !== "idle") && <p className="android-voice-state" role="status">{!voiceSupported ? "Микрофон недоступен. Разрешите доступ в настройках устройства." : voiceState === "connecting" ? "Подключаем микрофон…" : voiceState === "recording" ? "Запись" : voiceState === "transcribing" ? "Распознаём…" : "Повторите запись"}</p>}
@@ -900,12 +914,16 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
             )}
           </section>
 
-          <section className="android-page android-statistics-page" aria-label="Статистика">
-            {androidPanel === 2 && <DeferredPanel load={loadStatistics} panelProps={{ alphabet, page: statisticsPage, onPageChange: setStatisticsPage }} label="статистику" />}
+          <section className="android-page android-statistics-page" hidden={!isNative && visiblePanel !== 2} aria-label="Статистика">
+            {visiblePanel === 2 && <DeferredPanel load={loadStatistics} panelProps={{ alphabet, page: statisticsPage, onPageChange: setStatisticsPage }} label="статистику" />}
 
           </section>
-          <section className="android-page android-settings-page" aria-label="Настройки приложения">
+          <section className="android-page android-settings-page" hidden={!isNative && visiblePanel !== 3} aria-label="Настройки приложения">
+            {!isNative && view === "admin" ? <><button className="mobile-admin-link" type="button" onClick={() => showAndroidPanel(3)}>← Настройки</button><DeferredPanel load={loadAdminUsers} panelProps={{}} label="пользователей" /></> : <>
             <SettingsView alphabet={alphabet} onAlphabetChange={changeAlphabet} account={account} onSignOut={onSignOut} assistanceEnabled={assistanceEnabled} assistanceSaving={assistanceSaving} assistanceError={assistanceError} onAssistanceChange={enabled => { interruptVoice(); void changeAssistance(enabled); }} />
+            {!isNative && account.role === "admin" && <button className="mobile-admin-link" type="button" onClick={() => setView("admin")}>Пользователи</button>}
+            </>}
+
           </section>
         </div>
       </div>
@@ -972,7 +990,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
           <section className="practice-stage" aria-label="Практика">
             {preparingPhrase && !session ? <PhraseLoading /> : sessionComplete ? (
-              <div className="practice-done panel"><h1>{topicExhausted ? "Все фразы темы пройдены" : "Тренировка завершена"}</h1><p>{topicExhausted ? `${completedCount} фраз проверено. В этой теме пока нет следующих фраз.` : `${completedCount} из ${session?.requested_length ?? 10} фраз проверено.`}</p><button className="answer-submit" type="button" onClick={resetTraining}>Выбрать новую тему</button></div>
+              <div className="practice-done panel"><h1>{topicExhausted ? "Все фразы темы пройдены" : "Тренировка завершена"}</h1><p>{topicExhausted ? `${completedCount} фраз проверено. В этой теме пока нет следующих фраз.` : `${completedCount} из ${session?.requested_length ?? 10} фраз проверено.`}</p><button className="answer-submit" type="button" onClick={() => { resetTraining(); if (mobileLayout) showAndroidPanel(0); }}>Выбрать новую тему</button></div>
             ) : !session ? (
               <div className="welcome-card panel">
                 <div className="welcome-card__glow"/><span className="welcome-card__icon"><Icon name={topicIcons[currentTopic?.id ?? ""] ?? "message"} size={32} /></span>
@@ -992,6 +1010,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                       <div className="answer-input">
                         {hasTranscript ? <><label className="sr-only" htmlFor="serbian-answer">Ваш ответ</label><textarea id="serbian-answer" value={answer} readOnly={checking} onChange={(event) => { answerEditEpochRef.current += 1; voiceTimingRef.current = undefined; setAssistanceDraft(current => current ? { ...current, edited: true } : undefined); setAnswer(event.target.value); }} placeholder="Введите ответ на сербском языке" rows={4} /></> : <p className="voice-prompt">Произнесите ответ в микрофон. После распознавания текст можно исправить.</p>}
                       </div>
+                      {hasUnexpectedLetterScript(answer) && <p className="transcription-script-warning" role="alert">В расшифровке есть буквы вне сербского алфавита. Исправьте текст перед проверкой или запишите ответ заново.</p>}
                       <TranscriptionAssistanceView draft={assistanceDraft} alphabet={alphabet} disabled={checking || voiceBusy} onToggle={toggleTranscriptionChange} />
                   <AnswerActions answer={answer} loading={checking} native={isNative} voiceState={voiceState} voiceSupported={voiceSupported} startVoice={() => void startVoice()} finishVoice={() => void finishVoice()} stopVoice={stopVoice} />
                       <div className="voice-status">{!voiceSupported ? "Микрофон недоступен. Разрешите доступ к нему в браузере или устройстве." : voiceState === "recording" ? "Идёт запись. Аудио не сохраняется" : voiceState === "transcribing" ? "Расшифровываем фразу…" : voiceState === "error" ? "Не удалось распознать ответ. Повторите запись." : hasTranscript ? "Введите ответ или исправьте распознанный текст." : "Нажмите на микрофон, чтобы ответить."}</div>
