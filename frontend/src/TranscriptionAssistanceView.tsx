@@ -8,21 +8,16 @@ export function TranscriptionAssistanceView({ draft, alphabet, disabled, onToggl
 }) {
   if (!draft) return null;
   const changes = draft.response.changes ?? [];
-  if (!changes.length && draft.response.assistance_status !== "unavailable") return null;
-  const applied = changes.filter((c, i) => c.action === "applied" && draft.selected.includes(i)).length;
+  if ((draft.edited || !changes.length) && draft.response.assistance_status !== "unavailable") return null;
   return <section className="transcription-assistance" aria-label="Мягкие подсказки">
     {draft.response.assistance_status === "unavailable" && <p role="status">Мягкие подсказки временно недоступны. Показана исходная расшифровка; можно проверить ответ или повторить запись.</p>}
-    {!draft.edited && draft.response.assistance_status === "analyzed" && changes.length > 0 && <p>Найдены возможные искажения распознавания. Подтвердите подходящие варианты.</p>}
-    {applied > 0 && <p>Уточнено написание: {applied} слов</p>}
-    {!draft.edited && changes.map((change, index) => <div key={index}>
+    {!draft.edited && changes.length > 0 && <p>Возможное искажение распознавания.</p>}
+    {!draft.edited && changes.map((change, index) => <div className="transcription-assistance__change" key={index}>
       <div className="transcription-assistance__copy"><span>{displaySerbian(change.original, alphabet)} → {displaySerbian(change.replacement, alphabet)}</span>
-        {change.explanation_ru && <p>{change.explanation_ru}</p>}
       </div>
       <button type="button" disabled={disabled} onClick={() => onToggle(index)}>
-        {draft.selected.includes(index) ? "Отменить" : change.action === "applied" ? "Уточнить написание" : "Принять подсказку"}
+        {draft.selected.includes(index) ? "Отменить" : "Принять подсказку"}
       </button>
     </div>)}
-    {draft.selected.some(i => changes[i].action === "suggested") && <p>С подсказкой — без повышения освоения. Повторите самостоятельно, чтобы закрепить фразу.</p>}
-    {changes.length > 0 && <details><summary>Исходная расшифровка</summary><p>{displaySerbian(draft.response.raw_text ?? draft.response.text, alphabet)}</p></details>}
   </section>;
 }

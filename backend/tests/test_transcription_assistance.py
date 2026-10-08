@@ -105,10 +105,10 @@ def test_opt_in_and_server_validated_scoring(api_client, db_session, raw, canoni
     response = api_client.post("/api/attempts", json=request)
     assert response.status_code == 201, response.text
     assert response.json()["transcription_assisted"] is True
-    assert response.json()["learner_updates"] == []
-    assert list(db_session.scalars(select(LearnerSkill))) == []
+    assert response.json()["learner_updates"]
+    assert all(skill.successes == 1 for skill in db_session.scalars(select(LearnerSkill)))
     phrase = db_session.scalar(select(ReviewPhrase))
-    assert phrase.perfect_streak == 0 and phrase.mastery_count == 0 and phrase.learning_errors == 0
+    assert phrase.perfect_streak == 1 and phrase.mastery_count == 0 and phrase.learning_errors == 0
     assert api_client.post("/api/attempts", json=request).json() == response.json()
     invalid = {**request, "client_request_id": str(uuid4()), "accepted_transcription_changes": [8]}
     assert api_client.post("/api/attempts", json=invalid).status_code == 422
@@ -157,20 +157,77 @@ def test_every_enabled_transcription_is_analyzed_even_exact_and_alternate_answer
     assert len(provider.calls) == 2
 
 
-def test_more_than_three_suggestions_can_be_confirmed_and_never_raise_mastery(api_client, db_session):
+@pytest.mark.parametrize("count", [2, 5])
+@pytest.mark.parametrize("assisted", [False, True])
+def test_multiple_suggestions_earn_normal_mastery_and_review_interval(api_client, db_session, count, assisted):
+    canonical = " ".join(["račun"] * count)
+    raw = " ".join(["racun"] * count)
+    source = "Проверка нескольких искажений распознавания."
+    app.dependency_overrides[get_transcription_provider] = lambda: FakeTranscriptionProvider(text=raw)
+    app.dependency_overrides[get_transcription_assistance_provider] = lambda: FakeTranscriptionAssistanceProvider(
+        result=analysis(*(candidate("racun", "račun", occurrence_index=i) for i in range(count))))
+    target_meta = None
+    for streak in range(1, 4):
+        exercise_id = _create_exercise(api_client)
+        exercise = db_session.get(Exercise, exercise_id)
+        exercise.source_ru = source
+        exercise.target_hints_json = {"canonical_sr": canonical, "intended_sr_variants": []}
+        if target_meta is None:
+            target_meta = exercise.generation_meta_json
+        exercise.generation_meta_json = target_meta
+        db_session.commit()
+        request = {"exercise_id": exercise_id, "transcript_sr": canonical, "client_request_id": str(uuid4())}
+        if assisted:
+            result = api_client.post("/api/transcriptions", data={"exercise_id": exercise_id, "assistance_enabled": "true"},
+                files={"audio": ("speech.webm", b"synthetic", "audio/webm")}).json()
+            assert len(result["changes"]) == count
+            request.update(transcription_id=result["transcription_id"], accepted_transcription_changes=list(range(count)))
+        response = api_client.post("/api/attempts", json=request)
+        assert response.status_code == 201, response.text
+        body = response.json()
+        assert body["transcription_assisted"] is assisted
+        assert body["overall_score"] == 1.0 and body["hint_penalty"] == 0
+        assert body["learner_updates"]
+        phrase = db_session.scalar(select(ReviewPhrase).where(ReviewPhrase.source_ru == source))
+        assert phrase.perfect_streak == streak and phrase.attempts == streak
+        assert phrase.learning_errors == 0 and phrase.best_score == 1.0
+        assert api_client.post("/api/attempts", json=request).json() == body
+        assert phrase.attempts == streak
+    assert phrase.status == "mastered" and phrase.mastery_count == 1
+    assert phrase.interval_days == 3 and phrase.next_review_at is not None
+    skills = list(db_session.scalars(select(LearnerSkill)))
+    assert skills and all(s.successes == 3 and s.streak == 3 and s.mastery > 0 for s in skills)
+
+
+def test_accepting_stt_suggestion_does_not_hide_an_unrelated_answer_error(api_client, db_session):
+    from app.schemas import AnswerAnalysis
+    from app.services.ai_adapter import get_ai_provider
+    from tests.fakes import FakeAIProvider
+
     exercise_id = _create_exercise(api_client)
     exercise = db_session.get(Exercise, exercise_id)
-    exercise.target_hints_json = {"canonical_sr": "račun račun račun račun račun", "intended_sr_variants": []}
+    exercise.target_hints_json = {"canonical_sr": "Čemu danas?", "intended_sr_variants": []}
+    key = exercise.generation_meta_json["targeted_skill_keys"][0]
     db_session.commit()
-    app.dependency_overrides[get_transcription_provider] = lambda: FakeTranscriptionProvider(text="racun racun racun racun racun")
+    app.dependency_overrides[get_transcription_provider] = lambda: FakeTranscriptionProvider(text="Cemu sutra?")
     app.dependency_overrides[get_transcription_assistance_provider] = lambda: FakeTranscriptionAssistanceProvider(
-        result=analysis(*(candidate("racun", "račun", occurrence_index=i) for i in range(5))))
+        result=analysis(candidate("Cemu", "Čemu")))
+    ai = FakeAIProvider(available=True, analysis_result=AnswerAnalysis(
+        verdict="needs_work", semantic_score=0.3, grammar_score=0.5, lexical_score=0.3,
+        naturalness_score=0.5, fluency_score=1, corrected_sr="Čemu danas?",
+        short_feedback_ru="Изменён смысл.", detailed_feedback_ru="Сказано завтра вместо сегодня.",
+        issues=[{"type": "meaning", "skill_key": key, "severity": 0.8, "confidence": 1,
+                 "evidence": "sutra", "correction": "danas"}],
+        demonstrated_skills=[{"skill_key": key, "result": "failed", "confidence": 1}],
+    ))
+    app.dependency_overrides[get_ai_provider] = lambda: ai
     result = api_client.post("/api/transcriptions", data={"exercise_id": exercise_id, "assistance_enabled": "true"},
         files={"audio": ("speech.webm", b"synthetic", "audio/webm")}).json()
-    assert len(result["changes"]) == 5
-    response = api_client.post("/api/attempts", json={"exercise_id": exercise_id,
-        "transcript_sr": "račun račun račun račun račun", "transcription_id": result["transcription_id"],
-        "accepted_transcription_changes": list(range(5)), "client_request_id": str(uuid4())})
-    assert response.status_code == 201
+    response = api_client.post("/api/attempts", json={"exercise_id": exercise_id, "transcript_sr": "Čemu sutra?",
+        "transcription_id": result["transcription_id"], "accepted_transcription_changes": [0]})
+    assert response.status_code == 201, response.text
     assert response.json()["transcription_assisted"] is True
-    assert response.json()["learner_updates"] == []
+    assert response.json()["overall_score"] < 0.95
+    phrase = db_session.scalar(select(ReviewPhrase))
+    assert phrase.learning_errors == 1 and phrase.perfect_streak == 0
+    assert ai.analysis_calls == 1

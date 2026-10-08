@@ -22,7 +22,7 @@ const account = {
 };
 const attempt = (requestBody) => ({
   id: "attempt-1", exercise_id: requestBody.exercise_id, transcript_sr: requestBody.transcript_sr,
-  overall_score: 0.96, base_score: 0.96, hint_penalty: 0, daily_usage: account.daily_usage,
+  overall_score: 0.96, base_score: 0.96, hint_penalty: 0, transcription_assisted: Boolean(requestBody.accepted_transcription_changes?.length), daily_usage: account.daily_usage,
   analysis: { verdict: "correct", semantic_score: 0.96, grammar_score: 0.96,
     lexical_score: 0.96, naturalness_score: 0.96, pronunciation_score: null,
     fluency_score: 1, corrected_sr: requestBody.transcript_sr,
@@ -53,7 +53,7 @@ async function installApp(page, overrides = {}) {
     if (path === "/api/transcriptions" && method === "POST") {
       state.transcription += 1;
       if (state.failTranscription && state.transcription === 1) return route.abort("failed");
-      return json(route, state.reviewTranscript ? { text: state.reviewTranscript, review_required: true } : { text: "Želim da otvorim račun." });
+      return json(route, state.transcriptionResponse ?? (state.reviewTranscript ? { text: state.reviewTranscript, review_required: true } : { text: "Želim da otvorim račun." }));
     }
     if (path === "/api/attempts" && method === "POST") {
       const body = request.postDataJSON();
@@ -252,3 +252,61 @@ test("mobile panels fit the viewport and preserve the answer across navigation",
   await expect(page.locator(".interactive-phrase:visible")).toHaveAttribute("aria-label", "Мы можем поговорить завтра.");
   expect(state.start).toBe(1);
 });
+
+
+for (const variant of [
+  { name: "desktop", width: 1280, height: 800 },
+  { name: "mobile", width: 390, height: 700 },
+  { name: "narrow", width: 320, height: 568 },
+  { name: "native", width: 390, height: 700, native: true },
+]) {
+  test(`compact assistance shows only the replacement and action (${variant.name})`, async ({ page }) => {
+    await page.setViewportSize({ width: variant.width, height: variant.height });
+    if (variant.native) await page.addInitScript(() => { window.CapacitorCustomPlatform = { name: "android" }; });
+    const raw = "Malo čemo kasniti. Imam racun i neznam.";
+    await installApp(page, { transcriptionResponse: {
+      text: raw, raw_text: raw, assistance_status: "analyzed", transcription_id: "receipt",
+      changes: [["čemo", "ćemo"], ["racun", "račun"], ["neznam", "ne znam"]].map(([original, replacement]) => ({
+        start: raw.indexOf(original), end: raw.indexOf(original) + original.length, original, replacement,
+        kind: "phonetic_ambiguity", action: "suggested", reason_code: "confirm_ambiguous_sound", explanation_ru: "Длинное пояснение, которое не должно отображаться.",
+      })),
+    } });
+    if (variant.native) await page.getByRole("button", { name: "Тренировка", exact: true }).click();
+    else if (variant.width > 780) await startPractice(page);
+    await page.getByRole("button", { name: "Ответить голосом" }).click();
+    await page.getByRole("button", { name: "Завершить запись" }).click();
+    const panel = page.getByRole("region", { name: "Мягкие подсказки" });
+    await expect(panel).toBeVisible();
+    await expect(panel.locator("p")).toHaveCount(1);
+    await expect(panel.locator("p")).toHaveText("Возможное искажение распознавания.");
+    await expect(panel.getByText("čemo → ćemo", { exact: true })).toBeVisible();
+    await expect(panel.locator("details")).toHaveCount(0);
+    const rows = panel.locator(".transcription-assistance__change");
+    await expect(rows).toHaveCount(3);
+    let previousBottom = 0;
+    for (let index = 0; index < 3; index++) {
+      const row = rows.nth(index);
+      const rowBox = await row.boundingBox();
+      const textBox = await row.locator(".transcription-assistance__copy").boundingBox();
+      const buttonBox = await row.getByRole("button").boundingBox();
+      expect(rowBox.y).toBeGreaterThanOrEqual(previousBottom);
+      previousBottom = rowBox.y + rowBox.height;
+      expect(buttonBox.x).toBeGreaterThanOrEqual(textBox.x + textBox.width);
+    }
+    expect(await panel.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+    await rows.nth(2).getByRole("button").click();
+    await expect(page.getByLabel("Ваш ответ")).toHaveValue("Malo čemo kasniti. Imam racun i ne znam.");
+    await rows.nth(0).getByRole("button").click();
+    await rows.nth(1).getByRole("button").click();
+    await expect(page.getByLabel("Ваш ответ")).toHaveValue("Malo ćemo kasniti. Imam račun i ne znam.");
+    await rows.nth(2).getByRole("button", { name: "Отменить" }).click();
+    await expect(page.getByLabel("Ваш ответ")).toHaveValue("Malo ćemo kasniti. Imam račun i neznam.");
+    await rows.nth(2).getByRole("button").click();
+    await expect(panel.locator("p")).toHaveCount(1);
+    await expect(panel.getByRole("button", { name: "Отменить" })).toHaveCount(3);
+    await page.screenshot({ path: `../artifacts/compact-assistance-${variant.name}.png`, fullPage: true });
+    await page.getByRole("button", { name: variant.native ? "Проверить" : "Проверить ответ", exact: true }).click();
+    await expect(page.locator(".feedback:visible")).toBeVisible();
+    await expect(page.getByText("С подсказкой — освоение не повышено")).toHaveCount(0);
+  });
+}
