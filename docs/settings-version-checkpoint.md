@@ -6,8 +6,9 @@
 - [x] Полный frontend suite: 184 tests / 16 files passed, внешние AI-вызовы не выполнялись.
 - [x] `pnpm lint`, TypeScript (`tsc -b`) и `pnpm build` прошли. Vite сообщает предупреждение о размере основного chunk >500 kB.
 - [x] `git diff --check` прошёл.
-- [ ] Публикация в production web.
-- [ ] Ручная визуальная приёмка web.
-- [ ] Перенос в следующий APK и физическая Android-приёмка по отдельной команде.
+- [x] Опубликовано в production web 1.27; [READY/SHA/alias и авторизованный UI](android-1.27-release.md).
+- [x] Авторизованный Chrome: настройки показывают 1.27, оформление просмотрено.
+- [x] Перенесено в APK 1.27/code37 по отдельной команде; [доказательства](android-1.27-release.md).
+- [ ] Физическая Android-приёмка.
 
-Android sync и сборка APK не выполнялись; package/Android metadata не менялись.
+На этапе исходной доработки Android sync/APK не выполнялись. Затем владелец явно подтвердил и выпущена 1.27/code37; текущий статус выше.

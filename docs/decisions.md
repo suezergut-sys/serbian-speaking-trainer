@@ -1,5 +1,9 @@
 # Архитектурные решения
 
+## 08.10.2026 — публикация 1.27 подтверждена
+
+PR #81 merged на 0544ce7, web deployment READY на том же SHA с production alias. Авторизованный Chrome показывает 1.27; 4 Chrome mock e2e на опубликованных assets прошли. Все 6 JS/CSS совпали с APK. GitHub release v1.27, tag/target, server digest/size и Downloads совпали. Backend не менялся. Физическая приёмка остаётся отдельно открытой; [доказательства](android-1.27-release.md).
+
 ## 08.10.2026 — согласованный выпуск 1.27/code37
 
 Владелец явно подтвердил версию 1.27 и поручил публикацию web и APK. Package version 1.27.0 и Android versionName 1.27/versionCode 37 обновляются вместе; настройки показывают 1.27. Production APK собирается штатным cloud-apk с абсолютным API; весь накопленный клиентский backlog входит в выпуск. [Результаты и отдельные статусы приёмки](android-1.27-release.md).
