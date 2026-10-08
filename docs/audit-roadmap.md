@@ -463,3 +463,19 @@
 - [x] Авторизованный Chrome production smoke 390/320px: панели/навигация/микрофон без переполнения; API health/auth/OpenAPI, console/runtime error logs проверены.
 - [ ] Реальная речь и экранная клавиатура физического телефона.
 - [ ] Android sync/APK/физическая приёмка по отдельной команде; 1.25/code35 сохранены, P0/P1/P2 целиком не закрыты.
+
+
+## 08.10.2026 — компактная мягкая подсказка
+
+- [x] Общий компонент desktop/mobile web и Android сокращён до заголовка, пары распознано/замена и кнопки справа; принятие/отмена сохранены, пояснения/raw details удалены. [Доказательства](compact-assistance-checkpoint.md).
+- [x] Component, lint/typecheck/build и 4 Chrome-сценария desktop/mobile/320px/native layout проверены; результаты в checkpoint.
+- [ ] Публикация web и ручная приёмка на физическом телефоне.
+- [ ] Android sync/APK по отдельной команде; 1.25/code35 сохранены, P0/P1/P2 целиком не закрыты.
+
+
+## 08.10.2026 — прогресс после мягкой подсказки и несколько замен
+
+- [x] Убрана блокировка Learner Model/mastery/streak/review interval при подтверждении STT-подсказки; итоговый текст оценивается как обычный ввод, metadata/receipts/replay сохранены. [Доказательства](assistance-mastery-checkpoint.md).
+- [x] API: 2/5 подсказок и три правильных повтора дают освоение/интервал; оставшаяся ошибка не скрывается. UI: 3 независимые строки/кнопки и принятие/отмена в desktop/mobile/native layout (Chrome 4 passed). Backend/scripts 256 passed / 8 skips, assistance 34 passed, frontend 183 passed; lint/typecheck/build/diff check прошли.
+- [ ] Публикация backend/web, реальная речь и физическая приёмка.
+- [ ] Android sync/APK по отдельной команде; версия 1.25/code35 сохранена. P0/P1/P2 целиком не закрыты.

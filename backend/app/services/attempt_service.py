@@ -262,7 +262,7 @@ class AttemptService:
                     evidence_json={"evidence": issue.evidence, "correction": issue.correction},
                 )
             )
-        learner_updates = [] if assistance.get("assisted") else self.learner_model.update_from_analysis(
+        learner_updates = self.learner_model.update_from_analysis(
             analysis,
             context_novelty=1.0 if exercise.generation_meta_json.get("novelty_signature") else 0.7,
         )
@@ -276,7 +276,6 @@ class AttemptService:
             review_phrase_id=exercise.generation_meta_json.get("review_phrase_id"),
             topic_id=exercise.generation_meta_json.get("topic_id"),
             topic_phrase_id=exercise.generation_meta_json.get("topic_phrase_id"),
-            transcription_assisted=bool(assistance.get("assisted")),
         )
         if not is_carousel and self.attempts.count_checked_exercises(training_session.id) >= requested_length:
             training_session.status = "completed"
