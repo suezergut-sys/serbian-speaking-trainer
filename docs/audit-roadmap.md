@@ -1,5 +1,12 @@
 # План улучшений по аудиту SerboTalk
 
+## 08.10.2026 — подсказки у края экрана и подписи тренировки
+
+- [x] Portal, viewport margin 12 px, увеличенный шрифт и перенос длинных переводов; счётчик текущей фразы убран, штраф подписан в %. [Доказательства и PR #81](word-hints-layout-checkpoint.md).
+- [x] 186 tests / 17 files passed, lint/typecheck/build; 4 Chrome mock e2e web/Android layout 320/390 px и визуальная проверка web 320.
+- [ ] Production web публикация и ручная приёмка на телефоне.
+- [ ] Android sync/APK и физическая приёмка по отдельной команде; версия 1.26/code36 сохранена.
+
 ## 08.10.2026 — версия приложения в настройках
 
 - [x] Добавлен номер из package metadata в формате Android `major.minor`, сейчас 1.26; component regression и 184 frontend tests прошли. [Доказательства](settings-version-checkpoint.md).

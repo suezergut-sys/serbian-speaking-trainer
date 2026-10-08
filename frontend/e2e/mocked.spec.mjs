@@ -297,3 +297,40 @@ for (const { native, width } of [{ native: false, width: 1280 }, { native: false
     await expect(page.getByRole("heading", { name: "Календарь занятий" })).toBeVisible();
   });
 }
+
+for (const native of [false, true]) {
+  for (const width of [320, 390]) {
+    test(`word hint viewport bounds ${native ? "android" : "web"} ${width}`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 740 });
+      if (native) await page.addInitScript(() => { window.CapacitorCustomPlatform = { name: "android" }; });
+      await mockApp(page, []);
+      const words = ["Уберите", "пожалуйста", "грязную", "чашку", "стола"];
+      await page.route("**/api/sessions/start", route => route.fulfill({ json: { session, exercise: {
+        ...exercise("edge-1", "Уберите, пожалуйста, грязную чашку со стола."),
+        word_hints: words.map(word_ru => ({ word_ru, translation_sr: word_ru === "грязную" ? "prljavu" : "Veoma dug prevod sa nekoliko reči koji mora da se prenese u više redova" })),
+      } } }));
+      await page.route("**/word-hints", route => route.fulfill({ json: {
+        word_ru: route.request().postDataJSON().word,
+        translation_sr: route.request().postDataJSON().word === "грязную" ? "prljavu" : "Veoma dug prevod sa nekoliko reči koji mora da se prenese u više redova", is_learning: true,
+      } }));
+      await page.goto("/");
+      if (native) await page.getByRole("button", { name: /В банке/ }).click();
+      await expect(page.getByRole("heading", { name: "Уберите, пожалуйста, грязную чашку со стола." })).toBeVisible();
+      await expect(page.locator(".android-training-meta")).not.toContainText("1 / 10");
+      for (const word of words) {
+        await page.getByRole("button", { name: word, exact: true }).click();
+        const popup = page.locator(".word-tooltip");
+        await expect(popup).toBeVisible();
+        const bounds = await popup.boundingBox();
+        expect(bounds.x).toBeGreaterThanOrEqual(11.5);
+        expect(bounds.x + bounds.width).toBeLessThanOrEqual(width - 11.5);
+        expect(bounds.y).toBeGreaterThanOrEqual(11.5);
+        if (word !== "грязную") expect(bounds.height).toBeGreaterThan(50);
+        expect(await popup.evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(14);
+      }
+      await page.screenshot({ path: `../artifacts/word-hint-${native ? "android" : "web"}-${width}.png` });
+      await page.getByRole("button", { name: "Настройки", exact: true }).click();
+      await expect(page.locator(".word-tooltip")).toHaveCount(0);
+    });
+  }
+}

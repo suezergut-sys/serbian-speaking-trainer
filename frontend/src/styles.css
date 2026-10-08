@@ -170,8 +170,7 @@ button { cursor: pointer; background: var(--panel); }
 .word-token { margin: 0; padding: .04rem .08rem; border: 0; border-bottom: 1px dashed rgba(105, 185, 255, .45); border-radius: 3px; background: transparent; font: inherit; color: inherit; line-height: inherit; }
 .word-token:hover, .word-token:focus-visible { background: rgba(64, 164, 255, .14); color: #8dcfff; outline: none; }
 .word-token.is-used { border-bottom-color: #f4bc61; color: #f0c878; }
-.word-tooltip { position: absolute; z-index: 8; bottom: calc(100% + 9px); left: 50%; display: grid; min-width: 180px; padding: .65rem .75rem; border: 1px solid rgba(71, 170, 255, .65); border-radius: 9px; background: #071a34; box-shadow: 0 12px 30px rgba(0,0,0,.38), 0 0 18px rgba(45, 145, 243, .18); color: #dbeeff; font-size: .74rem; line-height: 1.35; transform: translateX(-50%); white-space: nowrap; }
-.word-tooltip::after { position: absolute; top: 100%; left: 50%; border: 6px solid transparent; border-top-color: rgba(71, 170, 255, .65); content: ""; transform: translateX(-50%); }
+.word-tooltip { position: fixed; z-index: 100; display: grid; width: max-content; max-width: calc(100vw - 24px); padding: .7rem .85rem; border: 1px solid rgba(71, 170, 255, .65); border-radius: 9px; background: #071a34; box-shadow: 0 12px 30px rgba(0,0,0,.38), 0 0 18px rgba(45, 145, 243, .18); color: #dbeeff; font-family: inherit; font-size: .9rem; font-weight: 500; line-height: 1.45; white-space: normal; overflow-wrap: anywhere; pointer-events: none; }
 .word-tooltip small { margin-top: .25rem; color: #d9a95e; font-size: .54rem; font-weight: 500; }
 .skills { display: flex; flex-wrap: wrap; gap: .45rem; padding: 0 .5rem; }
 .skills span, .vocabulary span { padding: .35rem .55rem; border: 1px solid rgba(67, 153, 234, .28); border-radius: 999px; background: rgba(34, 104, 177, .1); color: #8fc5f4; font-size: .62rem; }
@@ -606,7 +605,6 @@ button { cursor: pointer; background: var(--panel); }
   line-height: 1.5;
   letter-spacing: -.04em;
 }
-.android-training-content .word-tooltip { min-width: 130px; max-width: 75vw; white-space: normal; }
 .android-answer { display: grid; justify-items: center; gap: .8rem; margin-top: auto; }
 .android-answer textarea { min-height: 92px; resize: none; text-align: center; }
 .android-answer .voice-prompt { width: 100%; min-height: 92px; }

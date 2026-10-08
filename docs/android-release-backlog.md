@@ -1,5 +1,10 @@
 # Android-релизы и проверки
 
+## 08.10.2026 — словарные подсказки и подписи тренировки
+
+- [x] Общий клиент: popup вне обрезающих контейнеров, 12 px от края, .9rem и перенос; счётчик текущей фразы отсутствует, штраф за подсказки обозначен в %. 186 component tests и 4 Chrome mock e2e web/native layout прошли. [Доказательства](word-hints-layout-checkpoint.md).
+- [ ] Перенести в следующий согласованный APK, проверить подсказки и проценты на физическом устройстве. Sync/APK не выполнялись; metadata 1.26/code36 сохранены.
+
 ## 08.10.2026 — номер версии в настройках
 
 - [x] В общем SettingsView добавлена строка версии приложения из package metadata в формате Android `major.minor`; component regression и 184 frontend tests прошли. [Доказательства](settings-version-checkpoint.md).
