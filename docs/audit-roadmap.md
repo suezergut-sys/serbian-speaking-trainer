@@ -469,7 +469,8 @@
 
 - [x] Общий компонент desktop/mobile web и Android сокращён до заголовка, пары распознано/замена и кнопки справа; принятие/отмена сохранены, пояснения/raw details удалены. [Доказательства](compact-assistance-checkpoint.md).
 - [x] Component, lint/typecheck/build и 4 Chrome-сценария desktop/mobile/320px/native layout проверены; результаты в checkpoint.
-- [ ] Публикация web и ручная приёмка на физическом телефоне.
+- [x] Web опубликован; [доказательства](assistance-publication-2026-10-08.md).
+- [ ] Ручная приёмка на физическом телефоне.
 - [ ] Android sync/APK по отдельной команде; 1.25/code35 сохранены, P0/P1/P2 целиком не закрыты.
 
 
@@ -477,5 +478,15 @@
 
 - [x] Убрана блокировка Learner Model/mastery/streak/review interval при подтверждении STT-подсказки; итоговый текст оценивается как обычный ввод, metadata/receipts/replay сохранены. [Доказательства](assistance-mastery-checkpoint.md).
 - [x] API: 2/5 подсказок и три правильных повтора дают освоение/интервал; оставшаяся ошибка не скрывается. UI: 3 независимые строки/кнопки и принятие/отмена в desktop/mobile/native layout (Chrome 4 passed). Backend/scripts 256 passed / 8 skips, assistance 34 passed, frontend 183 passed; lint/typecheck/build/diff check прошли.
-- [ ] Публикация backend/web, реальная речь и физическая приёмка.
+- [x] Backend/web опубликованы; [доказательства](assistance-publication-2026-10-08.md).
+- [ ] Реальная речь и физическая приёмка.
 - [ ] Android sync/APK по отдельной команде; версия 1.25/code35 сохранена. P0/P1/P2 целиком не закрыты.
+
+
+## 08.10.2026 — публикация компактных подсказок и обычного прогресса
+
+- [x] PR #77 merged; web/backend READY, SHA/aliases, health/auth, runtime logs и авторизованный smoke проверены; [доказательства](assistance-publication-2026-10-08.md).
+- [x] Production assets: 4 Chrome mock-сценария нескольких независимых подсказок прошли.
+- [x] Android sync, 17 metadata/env tests и native startup/pager проверены.
+- [ ] Номер нового APK согласовать отдельно (предложен 1.26/code36), затем собрать/проверить/выдать.
+- [ ] Реальная речь и физическая приёмка; P0/P1/P2 не закрыты.

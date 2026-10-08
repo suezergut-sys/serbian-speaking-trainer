@@ -15,7 +15,10 @@
 - [x] Chrome: 4 passed (desktop 1280, mobile 390, narrow 320, native layout 390). Проверены три строки друг под другом, отдельные кнопки справа, промежуточные тексты, отмена одной замены, отсутствие переполнения и старой подписи в feedback. Скриншот 320px просмотрен: `artifacts/compact-assistance-narrow.png`.
 - [x] lint/typecheck/production build прошли; существующее bundle warning >500kB остаётся.
 - [x] Полный backend/scripts: 256 passed / 8 штатных external skips; полный frontend: 183 passed / 15 suites. Дополнительный тест оставшейся ошибки добавлен после старта полного backend-прогона и проверен в итоговом targeted assistance suite (34 passed). Diff check прошёл.
-- [ ] Публикация backend/web, реальная речь и физический телефон.
+- [x] Backend/web опубликованы; [доказательства](assistance-publication-2026-10-08.md).
+- [ ] Реальная речь и физический телефон.
 - [ ] Android sync/APK по отдельной команде; 1.25/code35 сохранены.
 
 Старые попытки и ранее заработанный прогресс не пересчитываются. Локальные логи: `artifacts/assistance-mastery-backend.log`, `artifacts/assistance-mastery-frontend.log`; screenshots/логи не входят в Git.
+
+Android sync и проверки конфигурации/навигации выполнены; номер и сборка нового APK ожидают отдельного согласования. [Состояние выпуска](assistance-publication-2026-10-08.md).

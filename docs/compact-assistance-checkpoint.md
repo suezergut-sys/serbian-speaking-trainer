@@ -7,7 +7,10 @@
 - [x] `pnpm lint` и `pnpm build` (включая tsc -b) прошли; существующее предупреждение главного bundle >500 kB осталось.
 - [x] Chrome 4 passed: desktop 1280×800, mobile 390×700, narrow 320×568, native layout 390×700. Одна подпись, отсутствие details, кнопка справа, отсутствие переполнения блока и применение замены подтверждены. Скриншоты 320px и native layout визуально просмотрены.
 - [x] Локальные доказательства: `artifacts/compact-assistance-tests.log`, `artifacts/compact-assistance-{desktop,mobile,narrow,native}.png`; артефакты не включаются в Git.
-- [ ] Публикация web и физическая приёмка.
+- [x] Web опубликован; [доказательства](assistance-publication-2026-10-08.md).
+- [ ] Физическая приёмка.
 - [ ] Android sync/APK по отдельной команде; версии 1.25.0 / 1.25 / code35 не менялись.
 
 Последующая проверка нескольких независимых подсказок и отмена ограничения прогресса: [checkpoint](assistance-mastery-checkpoint.md), frontend 183 passed.
+
+Android sync и проверки конфигурации/навигации выполнены; номер и сборка нового APK ожидают отдельного согласования. [Состояние выпуска](assistance-publication-2026-10-08.md).
