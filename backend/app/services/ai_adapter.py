@@ -12,6 +12,7 @@ from app.schemas import AnswerAnalysis, ExerciseGenerationResult, PhrasePreparat
 from app.schemas.transcriptions import TranscriptionAssistanceAnalysis
 from app.schemas.attempts import ExplainedAnswerAnalysis
 from app.request_metrics import measure_ai_call
+from app.services.model_debug import capture_model_call
 
 PROMPTS_DIR = Path(__file__).resolve().parents[1] / "prompts"
 
@@ -143,14 +144,26 @@ class OpenAIStructuredProvider:
         schema: type[TopicContext] | type[ExerciseGenerationResult] | type[AnswerAnalysis] | type[ExplainedAnswerAnalysis] | type[PhrasePreparation] | type[TranscriptionAssistanceAnalysis],
     ):
         try:
-            with measure_ai_call():
-                response = self.client.responses.parse(
+            instructions = load_prompt(prompt_name)
+            input_json = json.dumps(payload, ensure_ascii=False)
+            with capture_model_call(prompt_name, self.settings.openai_text_model or "", {
+                "model": self.settings.openai_text_model, "instructions": instructions,
+                "input": input_json, "text_format": schema.model_json_schema(), "store": False,
+            }, self.settings.openai_api_key) as debug, measure_ai_call():
+                parse = (self.client.responses.with_raw_response.parse
+                         if debug.enabled and isinstance(self.client, OpenAI) else self.client.responses.parse)
+                response = parse(
                     model=self.settings.openai_text_model,
-                    instructions=load_prompt(prompt_name),
-                    input=json.dumps(payload, ensure_ascii=False),
+                    instructions=instructions,
+                    input=input_json,
                     text_format=schema,
                     store=False,
                 )
+                if debug.enabled and isinstance(self.client, OpenAI):
+                    debug.raw_received(response, text_request=True)
+                    response = response.parse()
+                else:
+                    debug.received(response)
             parsed = response.output_parsed
             if parsed is None:
                 raise AIServiceError("OpenAI returned no structured output")

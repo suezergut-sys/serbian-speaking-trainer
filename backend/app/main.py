@@ -1,7 +1,9 @@
 import logging
 from time import perf_counter
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
+from app.api.dependencies import model_debug_context
+from app.api.model_debug import router as model_debug_router
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.audio_upload_middleware import AudioUploadBodyLimitMiddleware
@@ -63,9 +65,10 @@ async def record_request_timing(request: Request, call_next):
 
 app.include_router(health_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
-app.include_router(transcriptions_router, prefix="/api")
-app.include_router(attempts_router, prefix="/api")
-app.include_router(topics_router, prefix="/api")
-app.include_router(sessions_router, prefix="/api")
-app.include_router(review_router, prefix="/api")
+app.include_router(model_debug_router, prefix="/api")
+app.include_router(transcriptions_router, prefix="/api", dependencies=[Depends(model_debug_context)])
+app.include_router(attempts_router, prefix="/api", dependencies=[Depends(model_debug_context)])
+app.include_router(topics_router, prefix="/api", dependencies=[Depends(model_debug_context)])
+app.include_router(sessions_router, prefix="/api", dependencies=[Depends(model_debug_context)])
+app.include_router(review_router, prefix="/api", dependencies=[Depends(model_debug_context)])
 app.include_router(statistics_router, prefix="/api")

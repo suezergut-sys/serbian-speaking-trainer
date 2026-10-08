@@ -668,10 +668,11 @@ button { cursor: pointer; background: var(--panel); }
 .mic-button--retry > .icon { width: 25px; height: 25px; }
 
 .statistics-summary > div { min-width: 0; padding-inline: .65rem; }
-.settings-profile { padding: 1.25rem; }
-.settings-profile .profile { justify-content: flex-start; margin-bottom: 1.25rem; }
+.settings-profile { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.25rem; }
+.settings-profile .profile { justify-content: flex-start; justify-self: auto; min-width: 0; gap: .7rem; margin-bottom: 0; }
 .settings-profile .profile__copy { display: grid; min-width: 0; overflow-wrap: anywhere; }
-.settings-profile .sign-out-button { display: inline-flex; padding: .7rem 1rem; border: 1px solid var(--line); border-radius: 10px; background: #07162a; color: #eaf2ff; }
+.settings-profile .sign-out-button { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; padding: .7rem 1rem; border: 1px solid var(--line); border-radius: 10px; background: #07162a; color: #eaf2ff; }
+.settings-profile .avatar { flex-shrink: 0; }
 .android-answer > button[type="button"], .practice-card form > button[type="button"] { padding: .75rem 1rem; border: 1px solid var(--line); border-radius: 12px; background: #07162a; color: #dceaff; font: inherit; }
 /* Reference artwork: matching blue discs, cyan rims and static retry arrows. */
 .answer-check-button, .mic-button--retry {
@@ -701,6 +702,9 @@ button { cursor: pointer; background: var(--panel); }
 
 .assistance-settings input:disabled { color: var(--muted); background: var(--panel); opacity: .65; cursor: wait; }
 .assistance-settings p[role="alert"] { color: var(--blue-bright); }
+.debug-retry-button { padding: .7rem 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--cyan); font: inherit; cursor: pointer; }
+.debug-retry-button:hover, .debug-retry-button:focus-visible { border-color: var(--cyan); background: #07162a; color: var(--cyan); }
+.debug-retry-button:disabled { background: var(--panel); color: var(--muted); cursor: wait; opacity: .65; }
 
 .statistics-phrases-link, .phrase-page-heading button, .statistics-state button {
   padding: .8rem 1rem; border: 1px solid var(--line); border-radius: 10px;

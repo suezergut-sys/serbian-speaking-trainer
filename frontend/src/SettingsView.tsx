@@ -1,5 +1,6 @@
 import type { CurrentUser } from "./types/auth";
 import type { SerbianAlphabet } from "./serbianScript";
+import { ModelDebugSettings } from "./ModelDebugSettings";
 
 export function SettingsView({ alphabet, onAlphabetChange, account, onSignOut, assistanceEnabled = false, assistanceSaving = false, assistanceError, onAssistanceChange }: {
   assistanceEnabled?: boolean;
@@ -26,6 +27,7 @@ export function SettingsView({ alphabet, onAlphabetChange, account, onSignOut, a
       {assistanceSaving && <p role="status">Сохраняем настройку…</p>}
       {assistanceError && <p role="alert">{assistanceError}</p>}
     </section>
+    {account?.role === "admin" && account.can_debug_models && <ModelDebugSettings key={account.id} />}
     {account && <section className="settings-profile panel" aria-label="Профиль">
       <div className="profile"><span className="avatar">{account.display_name?.slice(0, 1).toLocaleUpperCase() || "A"}</span>
         <span className="profile__copy"><strong>{account.display_name || account.email}</strong><small>{account.daily_usage.limit === null ? `${account.daily_usage.used} фраз · без лимита` : `${account.daily_usage.remaining} из ${account.daily_usage.limit} фраз осталось`}</small></span>

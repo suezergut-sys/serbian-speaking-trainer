@@ -385,3 +385,36 @@
 - [x] Backend/web опубликованы через PR #69, оба deployment READY; [доказательства](android-1.24-release.md).
 - [x] Android sync/сборка выполнены по явной команде, версия 1.24/code34 согласована отдельно; metadata/API/подпись/assets и GitHub digest проверены. [Доказательства](android-1.24-release.md).
 - [ ] Ручная оценка реальных AI-объяснений и физическая Android-приёмка; P0/P1/P2 целиком не закрыты.
+
+## 07.10.2026 — ответы на 100% без разбора
+
+- [x] Общий UI web/Android скрывает «Разбор» при отображаемых 100%, сохраняет его ниже 100%.
+- [x] App 89 tests, включая web/native и границу округления; lint/typecheck/production build и diff check прошли. [Доказательства](perfect-answer-feedback-checkpoint.md).
+- [ ] Публикация web.
+- [ ] Android sync/сборка по отдельной команде; 1.24/code34 не менялись.
+- [ ] Ручная production/физическая Android-приёмка; P0/P1/P2 целиком не закрыты.
+
+## 07.10.2026 — ошибка неподдерживаемого алфавита STT
+
+- [x] Один повтор распознавания с явным сербским алфавитом; без удаления чужих букв, подгонки к канону или сохранения аудио. [Доказательства](transcription-script-retry-checkpoint.md).
+- [x] Adapter/API/assistance 54 mock tests прошли.
+- [x] Полный backend/scripts suite: 232 passed, 8 штатных skips на SQLAlchemy 2.0.54; [доказательства](transcription-script-retry-checkpoint.md).
+- [ ] Отдельная совместимость SQLAlchemy 2.1 / Alembic URL на Windows: ошибка воспроизведена на неизменённом HEAD; [доказательства](transcription-script-retry-checkpoint.md).
+- [ ] Публикация backend; общий API применит восстановление к web и Android без пересборки APK. 1.24/code34 не менялись.
+- [ ] Ручная проверка реальной записи; P0/P1/P2 целиком не закрыты.
+
+## 07.10.2026 — персональная отладка моделей Максима Сумина
+
+- [x] Общий web/Android переключатель только для серверно разрешённого администратора; состояние в БД, requests/responses/time/duration без аудио и ключей.
+- [x] Atomic disable/delete и fencing поздних ответов, migration/downgrade; backend/scripts 248 tests, frontend 171 tests, lint/typecheck/build, local web/Android-layout preview и diff check. [Доказательства](model-debug-checkpoint.md).
+- [ ] Публикация backend/web и проверка production PostgreSQL migration/RLS/grants.
+- [ ] Android sync/APK по отдельной команде; 1.24/code34 не менялись.
+- [ ] Ручная production/физическая Android-приёмка; P0/P1/P2 целиком не закрыты.
+
+## 08.10.2026 — блок аккаунта в одну строку
+
+- [x] Общий web/Android CSS: профиль слева, выход справа, центры совпадают; Chrome web/Android-layout 320/390 px без переполнения.
+- [x] Settings component 7 tests, lint/typecheck/build и diff check прошли. [Доказательства](account-layout-checkpoint.md).
+- [ ] Публикация web.
+- [ ] Android sync/APK по отдельной команде; 1.24/code34 не менялись.
+- [ ] Production/физическая Android-приёмка; P0/P1/P2 целиком не закрыты.

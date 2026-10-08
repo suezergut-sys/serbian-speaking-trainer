@@ -1,4 +1,6 @@
 from .entities import (
+    ModelDebugLog,
+    ModelDebugSetting,
     Attempt,
     AttemptRequest,
     TranscriptionReceipt,
@@ -15,6 +17,8 @@ from .entities import (
 )
 
 __all__ = [
+    "ModelDebugLog",
+    "ModelDebugSetting",
     "Attempt",
     "AttemptRequest",
     "TranscriptionReceipt",
