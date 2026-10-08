@@ -1,0 +1,12 @@
+# Публикация последних изменений — 08.10.2026
+
+- [x] [PR #71](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/71) merged, runtime SHA `144f6564c8ccfe181ba0dd085b36fd4293b652b3`. GitHub checks не назначены, mergeability CLEAN.
+- [x] Backend/scripts: 248 passed, 8 штатных внешних skips; frontend 171 passed / 14 suites, lint/typecheck/production build. AI calls mock. SQLAlchemy 2.0.54; отдельная Windows-совместимость 2.1 остаётся в аудите.
+- [x] Backend `dpl_6yMJaPWagrRFnnxMRpCMhALZ2SaJ` и frontend `dpl_CAY47EH1R9MexUXr32DxhmKp1cc2`: READY, production, metadata gitCommitSha совпадает с runtime, production aliases подтверждены.
+- [x] [Web](https://serbian-speaking-trainer.vercel.app) и [API](https://serbian-speaking-trainer-api.vercel.app) опубликованы. Health ok, новый `/api/admin/model-debug` присутствует в OpenAPI, без авторизации возвращает 401. Runtime error logs обоих deployments пусты за последние 15 минут проверки.
+- [x] PostgreSQL Alembic `f53c9d123e44`, seed 0 вставок. Обе новые таблицы имеют RLS; SELECT/INSERT/UPDATE/DELETE для anon/authenticated false, разрешающих policies нет. Сразу после миграции settings/logs пусты. Учебные данные и настройка подсказок не очищались.
+- [x] Авторизованный Chrome smoke: Backend готов, практика и настройки загружаются, переключатель отладки доступен аккаунту администратора и выключен по умолчанию, мягкие подсказки включены. Профиль слева, выход справа; разница вертикальных центров 0 CSS px, горизонтального переполнения нет. Console errors отсутствовали. Снимок: `artifacts/release-latest/production-settings.png`.
+- [ ] Новый APK: команда на выпуск получена, отдельный номер версии ожидает ответа владельца. Android 1.24/code34 пока не менялись; sync/build не запускались.
+- [ ] Реальная речь, качество AI и физическая Android-приёмка. ADB/AVD не запускались; P0/P1/P2 целиком не закрыты.
+
+Состав: [100% без разбора](perfect-answer-feedback-checkpoint.md), [один STT retry при неподдерживаемом алфавите](transcription-script-retry-checkpoint.md), [персональная отладка моделей](model-debug-checkpoint.md), [выравнивание аккаунта](account-layout-checkpoint.md). Внутренние HTTP retries SDK отражаются числом в одной прикладной записи; промежуточные HTTP ответы отдельно не сохраняются. Аудио и ключи не логируются. Ошибка диагностики не мешает обучению, но может привести к отсутствующей записи. Production AI-вызовы при smoke не выполнялись.
