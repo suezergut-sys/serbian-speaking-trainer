@@ -8,8 +8,9 @@
 - [x] На реальном production URL четыре изолированных Chrome-сценария с mock API и синтетическим микрофоном проверили опубликованные assets: desktop/mobile/320px/native layout; три строки подсказок, отдельные кнопки, независимое принятие/отмена, отсутствие сырого текста/пояснений/прежней подписи. Первый запуск остановлен из-за жёстко заданного ключа тестового Auth storage; helper поддерживает E2E_AUTH_STORAGE_KEY, повтор 4 passed. Mock API перехватывает запросы: настоящие аудио, AI, попытки и прогресс в production не записывались.
 - [x] Backend/scripts 256 passed / 8 skips, итоговый targeted assistance 34 passed, frontend 183 passed, lint/typecheck/build; [проверки прогресса](assistance-mastery-checkpoint.md), [компактный UI](compact-assistance-checkpoint.md).
 - [x] Android backlog перенесён в production Android assets через `pnpm android:sync`; 17 metadata/environment tests и native startup/pager browser 1 passed. Номер версии пока не менялся.
-- [ ] Отдельное согласование номера нового APK по AGENTS.md; предложено 1.26/code36.
-- [ ] Production APK build, metadata/API/signature/assets verification, выдача артефакта после согласования номера.
+- [x] Владелец отдельно подтвердил 1.26/code36.
+- [x] Production APK 1.26 собран; metadata/API/signature/assets и Downloads проверены. [Доказательства](android-1.26-release.md).
+- [ ] Публикация APK в GitHub release.
 - [ ] Реальная речь, физическая клавиатура/телефон и Android-приёмка; P0/P1/P2 целиком не закрыты.
 
-Артефакты проверок локальны: `artifacts/assistance-release-*.log`, metadata JSON и error JSONL; не входят в Git. Последующие изменения только документации/e2e helper не меняют опубликованный runtime. Последний выпущенный APK остаётся 1.25/code35 до нового согласованного выпуска.
+Артефакты проверок локальны: `artifacts/assistance-release-*.log`, metadata JSON и error JSONL; не входят в Git. Последующие изменения только документации/e2e helper не меняют опубликованный runtime. Собран согласованный APK 1.26/code36; публикация отмечается отдельно.
