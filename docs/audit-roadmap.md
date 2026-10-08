@@ -490,3 +490,11 @@
 - [x] Android sync, 17 metadata/env tests и native startup/pager проверены.
 - [ ] Номер нового APK согласовать отдельно (предложен 1.26/code36), затем собрать/проверить/выдать.
 - [ ] Реальная речь и физическая приёмка; P0/P1/P2 не закрыты.
+
+
+## 08.10.2026 — Android 1.26
+
+- [x] Версия 1.26/code36 отдельно подтверждена; весь накопленный набор перенесён, cloud APK собран.
+- [x] 17 metadata/environment tests, production API, подпись, 7 dist/6 production assets и копия Downloads проверены; [доказательства](android-1.26-release.md).
+- [ ] GitHub release/asset digest.
+- [ ] Физическая Android-приёмка и реальная речь; P0/P1/P2 целиком не закрыты.

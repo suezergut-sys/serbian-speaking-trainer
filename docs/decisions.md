@@ -526,3 +526,8 @@ TranscriptionAssistanceView переиспользуется desktop/mobile web 
 ## 08.10.2026 — публикация правил мягкой помощи
 
 PR #77 опубликован в web/backend, оба deployments READY на 1229383. Авторизованный UI, API health/auth/runtime logs и четыре изолированных production-asset mock-сценария проверены. Android source/assets синхронизированы; номер нового APK согласуется отдельно по AGENTS.md. [Доказательства](assistance-publication-2026-10-08.md).
+
+
+## 08.10.2026 — Android 1.26/code36
+
+После отдельного подтверждения владельца весь накопленный клиентский набор включён в cloud APK 1.26. Сохранены application ID и сертификат предыдущего выпуска; packaged API абсолютный production HTTPS. Все JS/CSS совпали с production web. Метаданные APK не меняют runtime web/backend; повторный deploy не требуется. Публикация и ручная приёмка учитываются отдельно: [доказательства](android-1.26-release.md).
