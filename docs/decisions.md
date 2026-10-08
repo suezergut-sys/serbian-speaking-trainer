@@ -531,3 +531,6 @@ PR #77 опубликован в web/backend, оба deployments READY на 1229
 ## 08.10.2026 — Android 1.26/code36
 
 После отдельного подтверждения владельца весь накопленный клиентский набор включён в cloud APK 1.26. Сохранены application ID и сертификат предыдущего выпуска; packaged API абсолютный production HTTPS. Все JS/CSS совпали с production web. Метаданные APK не меняют runtime web/backend; повторный deploy не требуется. Публикация и ручная приёмка учитываются отдельно: [доказательства](android-1.26-release.md).
+
+
+08.10.2026: Android 1.26 опубликован через PR #79 и GitHub release v1.26. Tag/target SHA, server asset digest/size и локальная копия Downloads совпали; [итоговые доказательства](android-1.26-release.md). Физическая приёмка остаётся открытой.
