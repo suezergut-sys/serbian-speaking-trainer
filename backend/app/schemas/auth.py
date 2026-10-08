@@ -36,6 +36,7 @@ class UserPreferences(BaseModel):
 
 
 class CurrentUserResponse(BaseModel):
+    can_debug_models: bool = False
     assistance_enabled: bool = False
     id: str
     email: str

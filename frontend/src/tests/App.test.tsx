@@ -1219,6 +1219,31 @@ describe("App", () => {
     }
   });
 
+  it.each([false, true].flatMap((native) => [1, .999, .99].map((score) => ({ native, score }))))("shows analysis only below displayed 100% (native=$native, score=$score)", async ({ native, score }) => {
+    vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(native);
+    voiceMock.available = true;
+    const base = mockApi();
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const response = await base(input, init);
+      if (!input.toString().endsWith("/api/attempts")) return response;
+      const attempt = await response.json();
+      return { ok: true, json: async () => ({ ...attempt, overall_score: score }) };
+    }));
+    render(<App />);
+    await screen.findByRole("heading", { name: "Я хочу открыть счёт." });
+    await recordAnswer();
+    fireEvent.click(screen.getByRole("button", { name: native ? "Проверить" : "Проверить ответ" }));
+    expect(await screen.findByText(`${Math.round(score * 100)}%`)).toBeInTheDocument();
+    if (score >= .995) {
+      expect(screen.queryByText("Разбор")).not.toBeInTheDocument();
+      expect(screen.queryByText("Смысл и конструкция переданы правильно.")).not.toBeInTheDocument();
+    } else {
+      expect(screen.getByText("Разбор")).toBeInTheDocument();
+    }
+    expect(screen.getByText("Ответ естественный и точный.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: native ? "Следующая" : /Следующая фраза/ })).toBeEnabled();
+  });
+
   it("submits a Serbian answer and shows concise and expandable feedback", async () => {
     voiceMock.available = true;
     vi.stubGlobal("fetch", mockApi());

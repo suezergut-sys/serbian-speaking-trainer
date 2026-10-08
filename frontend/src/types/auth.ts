@@ -10,6 +10,7 @@ export interface UserPreferences {
 }
 
 export interface CurrentUser {
+  can_debug_models?: boolean;
   assistance_enabled?: boolean;
   id: string;
   email: string;

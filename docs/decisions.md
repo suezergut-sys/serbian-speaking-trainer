@@ -464,3 +464,19 @@ StatisticsView содержит два отдельных экрана: акти
 ## 07.10.2026 — выпуск 1.24
 
 По явной команде владельца опубликованы web/backend и APK; номер 1.24/code34 отдельно подтверждён. PR #69 merged на `00ad59e80cc7370244a724c9671db865155e00a9`, оба production deployment READY. Прежний сертификат Android, production API, packaged assets и GitHub digest проверены; включённая настройка сохранилась после reload production. Физическая OAuth/STT-приёмка и качество реальных AI-объяснений остаются открытыми. [Доказательства](android-1.24-release.md).
+
+## 07.10.2026 — скрыть разбор для 100%
+
+Общий renderFeedback web/native использует единый округлённый scorePercent для отображения процента и условия показа разбора. Это исключает «Разбор» при видимых 100%, включая округление 0.999. Краткий feedback, варианты ответа, отметки помощи и следующая фраза сохранены. Scoring/API/БД не менялись. [Доказательства](perfect-answer-feedback-checkpoint.md).
+
+## 07.10.2026 — ограниченное восстановление алфавита STT
+
+Проверка неподдерживаемого алфавита добавлена в OpenAI STT adapter до возврата результата; service guard сохранён для остальных провайдеров. Один semantic retry по прежнему audio buffer использует versioned prompt, без канона и перевода. Ошибка после двух результатов остаётся безопасной; таймаут/SDK retry не менялись. В редком случае выполняется дополнительный оплачиваемый вызов STT. Аудио не сохраняется и освобождается сервисом в finally. [Доказательства](transcription-script-retry-checkpoint.md).
+
+## 07.10.2026 — персональная отладка моделей администратора
+
+Владелец выбрал только обращения Максима Сумина. Server role + DEBUG_ADMIN_EMAIL ограничивают переключатель; debug context устанавливается на аутентифицированном запросе, не на singleton provider. Отдельная DB-транзакция сохраняет исходные model requests/responses до SDK parsing, время UTC и monotonic duration. Generation fence и UPDATE одной строки сериализуют append/disable, исключая восстановление логов поздним ответом. Отключение удаляет все строки его debug logs в той же транзакции; учебные данные сохранены. Аудио, headers и credentials исключены; schema-validated business output остаётся обязательным. Миграция новых private tables включает PostgreSQL RLS и revoke public roles; live PG проверка при публикации остаётся открытой. [Доказательства](model-debug-checkpoint.md).
+
+## 08.10.2026 — выравнивание аккаунта
+
+Контейнер settings-profile использует flex с align-items:center и space-between вместо вертикального размещения с margin-bottom у profile. Специфичный selector сохраняет профиль слева и не меняет header profile. Аватар/выход не сжимаются, имя переносится внутри колонки. Общий CSS применяется в web и Android. [Доказательства](account-layout-checkpoint.md).

@@ -9,6 +9,9 @@ from pydantic import ValidationError
 from app.config import Settings, get_settings
 from app.schemas import TranscriptionResponse
 from app.request_metrics import measure_ai_call
+from app.services.ai_adapter import load_prompt
+from app.services.serbian_text import has_unexpected_letter_script
+from app.services.model_debug import capture_model_call
 
 
 class TranscriptionServiceError(RuntimeError):
@@ -54,20 +57,33 @@ class OpenAITranscriptionProvider:
 
     def transcribe(self, *, audio: bytes, filename: str, content_type: str) -> TranscriptionResponse:
         try:
-            with measure_ai_call():
-                response = self.client.audio.transcriptions.create(
-                    file=(filename, audio, content_type),
-                    model=self.settings.openai_transcribe_model,
-                    language="sr",
-                    prompt=(
-                        "Doslovan prepis govora na srpskom jeziku, latinicom. "
-                        "Ne prevodi, ne ispravljaj i ne preformuliši izgovorene reči."
-                    ),
-                    response_format="json",
-                )
-            if not response.text.strip():
-                raise TranscriptionServiceError("transcription_empty")
-            return TranscriptionResponse(text=response.text.strip())
+            for retry in range(2):
+                prompt = load_prompt("speech_transcription_v1.md" if retry == 0 else "speech_transcription_script_retry_v1.md")
+                with capture_model_call("audio.transcriptions" if retry == 0 else "audio.transcriptions.script_retry",
+                    self.settings.openai_transcribe_model or "", {
+                        "model": self.settings.openai_transcribe_model, "language": "sr", "prompt": prompt,
+                        "response_format": "json", "content_type": content_type, "audio_bytes": len(audio),
+                    }, self.settings.openai_api_key) as debug, measure_ai_call():
+                    create = (self.client.audio.transcriptions.with_raw_response.create
+                              if debug.enabled and isinstance(self.client, OpenAI) else self.client.audio.transcriptions.create)
+                    response = create(
+                        file=(filename, audio, content_type),
+                        model=self.settings.openai_transcribe_model,
+                        language="sr",
+                        prompt=prompt,
+                        response_format="json",
+                    )
+                    if debug.enabled and isinstance(self.client, OpenAI):
+                        debug.raw_received(response)
+                        response = response.parse()
+                    else:
+                        debug.received(response)
+                if not response.text.strip():
+                    raise TranscriptionServiceError("transcription_empty")
+                transcript = TranscriptionResponse(text=response.text.strip())
+                if not has_unexpected_letter_script(transcript.text):
+                    return transcript
+            raise TranscriptionServiceError("transcription_unexpected_script")
         except TranscriptionServiceError:
             raise
         except APITimeoutError as exc:

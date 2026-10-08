@@ -38,3 +38,20 @@ def require_admin(user: User = Depends(get_current_user)) -> User:
     if user.role != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Administrator access required")
     return user
+
+
+def require_debug_admin(user: User = Depends(get_current_user), settings: Settings = Depends(get_settings)) -> User:
+    from app.services.model_debug import can_debug
+    if not can_debug(user, settings):
+        raise HTTPException(status_code=403, detail="Debug administrator access required")
+    return user
+
+
+async def model_debug_context(user: User = Depends(get_current_user), db: Session = Depends(get_db),
+                              settings: Settings = Depends(get_settings)):
+    from app.services.model_debug import DebugContext, can_debug, debug_context
+    token = debug_context.set(DebugContext(user.id, db.get_bind()) if can_debug(user, settings) else None)
+    try:
+        yield
+    finally:
+        debug_context.reset(token)

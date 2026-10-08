@@ -46,3 +46,48 @@ def test_invalid_or_empty_model_response(response, code):
     with pytest.raises(TranscriptionServiceError) as caught:
         provider.transcribe(audio=b"synthetic", filename="speech.webm", content_type="audio/webm")
     assert caught.value.code == code
+
+
+@pytest.mark.parametrize("valid", ["Želeo bih jaku kafu.", "Желео бих јаку кафу."])
+def test_unexpected_script_retries_once_using_same_memory_buffer(valid):
+    provider = OpenAITranscriptionProvider(Settings(openai_api_key="secret", openai_transcribe_model="env-model"))
+    create = Mock(side_effect=[SimpleNamespace(text="Θέλω καφέ"), SimpleNamespace(text=valid)])
+    provider._client = SimpleNamespace(audio=SimpleNamespace(transcriptions=SimpleNamespace(create=create)))
+    audio = b"synthetic"
+    result = provider.transcribe(audio=audio, filename="speech.webm", content_type="audio/webm")
+    assert result.text == valid
+    assert create.call_count == 2
+    first, second = [call.kwargs for call in create.call_args_list]
+    assert first["file"][1] is audio and second["file"][1] is audio
+    assert first["model"] == second["model"] == "env-model"
+    assert first["language"] == second["language"] == "sr"
+    assert first["prompt"] != second["prompt"]
+    assert "Ne prevodi" in second["prompt"]
+
+
+def test_unexpected_script_retry_is_bounded_and_keeps_safe_error():
+    provider = OpenAITranscriptionProvider(Settings(openai_api_key="secret", openai_transcribe_model="env-model"))
+    create = Mock(return_value=SimpleNamespace(text="Θέλω καφέ"))
+    provider._client = SimpleNamespace(audio=SimpleNamespace(transcriptions=SimpleNamespace(create=create)))
+    with pytest.raises(TranscriptionServiceError) as caught:
+        provider.transcribe(audio=b"synthetic", filename="speech.webm", content_type="audio/webm")
+    assert caught.value.code == "transcription_unexpected_script"
+    assert create.call_count == 2
+
+
+def test_valid_transcription_does_not_retry_or_correct_spoken_errors():
+    provider = OpenAITranscriptionProvider(Settings(openai_api_key="secret", openai_transcribe_model="env-model"))
+    create = Mock(return_value=SimpleNamespace(text="Potreben nam je pisani ugovor."))
+    provider._client = SimpleNamespace(audio=SimpleNamespace(transcriptions=SimpleNamespace(create=create)))
+    assert provider.transcribe(audio=b"synthetic", filename="speech.webm", content_type="audio/webm").text == "Potreben nam je pisani ugovor."
+    create.assert_called_once()
+
+
+def test_timeout_during_script_retry_keeps_safe_timeout_error():
+    provider = OpenAITranscriptionProvider(Settings(openai_api_key="secret", openai_transcribe_model="env-model"))
+    create = Mock(side_effect=[SimpleNamespace(text="Θέλω καφέ"), APITimeoutError(request=httpx.Request("POST", "https://example.invalid"))])
+    provider._client = SimpleNamespace(audio=SimpleNamespace(transcriptions=SimpleNamespace(create=create)))
+    with pytest.raises(TranscriptionServiceError) as caught:
+        provider.transcribe(audio=b"synthetic", filename="speech.webm", content_type="audio/webm")
+    assert caught.value.code == "transcription_timeout"
+    assert create.call_count == 2
