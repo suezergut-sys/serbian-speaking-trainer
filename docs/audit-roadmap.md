@@ -443,7 +443,8 @@
 - [x] Языковой параметр через env, prompts v2, ограниченный повтор и review_required с исходным текстом; блокировка оценки в общем UI и backend до исправления букв. [Доказательства](transcription-script-recovery-checkpoint.md).
 - [x] Backend/scripts 253 passed / 8 skips, targeted adapter/API 29 passed, Node guards 5 passed; Chrome recovery regression 1 passed и читаемость 1280/390/320 px.
 - [x] Финальный frontend suite: 180 passed / 14 suites; lint/typecheck/production build и diff check прошли. [Доказательства](transcription-script-recovery-checkpoint.md).
-- [ ] Публикация backend/web и реальная речь.
+- [x] Публикация backend/web; [доказательства](mobile-web-publication-2026-10-08.md).
+- [ ] Реальная речь.
 - [ ] Android sync/APK и физическая приёмка ожидают отдельной команды; версия 1.25/code35 сохранена. P0/P1/P2 целиком не закрыты.
 
 
@@ -451,5 +452,14 @@
 
 - [x] Отдельные панели тем/тренировки/статистики/настроек на ширине до 780px, компактная шапка, сохранение черновика и двухколоночного desktop; [доказательства](mobile-web-layout-checkpoint.md).
 - [x] Component suite 182 passed / 15 suites, lint и production build (включая typecheck); Chrome 320×568, 390×700, 740×360 без прокрутки страницы, сохранение ответа и переход к следующей фразе. visualViewport/cleanup проверены unit-тестом; Chrome network 8 passed, native startup/pager 1 passed после обновления API-мока.
-- [ ] Публикация web и ручная приёмка на физическом телефоне с адресной строкой/экранной клавиатурой.
+- [x] Web опубликован; [production-проверки](mobile-web-publication-2026-10-08.md).
+- [ ] Ручная приёмка на физическом телефоне с адресной строкой/экранной клавиатурой.
 - [ ] Android sync/APK только по отдельной команде; версия 1.25/code35 сохранена. P0/P1/P2 целиком не закрыты.
+
+
+## 08.10.2026 — публикация mobile web и восстановления STT
+
+- [x] PR #75 merged, web/backend READY, runtime SHA и production aliases подтверждены; [доказательства](mobile-web-publication-2026-10-08.md).
+- [x] Авторизованный Chrome production smoke 390/320px: панели/навигация/микрофон без переполнения; API health/auth/OpenAPI, console/runtime error logs проверены.
+- [ ] Реальная речь и экранная клавиатура физического телефона.
+- [ ] Android sync/APK/физическая приёмка по отдельной команде; 1.25/code35 сохранены, P0/P1/P2 целиком не закрыты.
