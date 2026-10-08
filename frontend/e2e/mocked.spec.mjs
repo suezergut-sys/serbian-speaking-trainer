@@ -57,14 +57,14 @@ async function mockApp(page, submitted) {
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
   });
   await page.goto("/privacy");
-  await page.evaluate(() => {
-    localStorage.setItem("sb-e2e-auth-auth-token", JSON.stringify({
+  await page.evaluate(storageKey => {
+    localStorage.setItem(storageKey, JSON.stringify({
       access_token: "e2e-local-only", refresh_token: "e2e-local-only", token_type: "bearer",
       expires_in: 60 * 60 * 24 * 365, expires_at: 4102444800,
       user: { id: "user-1", aud: "authenticated", role: "authenticated", email: "learner@example.invalid",
         app_metadata: {}, user_metadata: {}, created_at: "2026-09-01T10:00:00Z" },
     }));
-  });
+  }, process.env.E2E_AUTH_STORAGE_KEY ?? "sb-e2e-auth-auth-token");
 }
 
 const measuredSamples = Number(process.env.E2E_SAMPLES_PER_SCRIPT ?? 1);
@@ -331,6 +331,7 @@ for (const native of [false, true]) {
       await page.screenshot({ path: `../artifacts/word-hint-${native ? "android" : "web"}-${width}.png` });
       await page.getByRole("button", { name: "Настройки", exact: true }).click();
       await expect(page.locator(".word-tooltip")).toHaveCount(0);
+      await expect(page.getByText("Версия приложения: 1.27", { exact: true })).toBeVisible();
     });
   }
 }
