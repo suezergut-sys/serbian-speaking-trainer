@@ -496,5 +496,5 @@
 
 - [x] Версия 1.26/code36 отдельно подтверждена; весь накопленный набор перенесён, cloud APK собран.
 - [x] 17 metadata/environment tests, production API, подпись, 7 dist/6 production assets и копия Downloads проверены; [доказательства](android-1.26-release.md).
-- [ ] GitHub release/asset digest.
+- [x] [GitHub release 1.26](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.26), tag/target SHA и asset digest/size подтверждены; PR #79 merged.
 - [ ] Физическая Android-приёмка и реальная речь; P0/P1/P2 целиком не закрыты.

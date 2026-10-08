@@ -374,4 +374,4 @@ STT использует prompt v2 с сербским латинским алф
 
 ## 08.10.2026 — Android 1.26
 
-Согласована и собрана контрольная версия 1.26/code36 со всем накопленным набором после 1.25. Проверены production API, прежняя подпись и побайтное совпадение assets с опубликованным web; копия находится в Downloads. Публикация и физическая приёмка отмечены отдельно в [результатах выпуска](docs/android-1.26-release.md).
+Опубликована контрольная [версия 1.26/code36](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.26) со всем накопленным набором после 1.25. Проверены production API, прежняя подпись и побайтное совпадение assets с опубликованным web; копия находится в Downloads. GitHub digest/size подтверждены; физическая приёмка остаётся открытой. [Скачать APK](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/download/v1.26/SerboTalk-andorid16-1.26.apk). [Результаты выпуска](docs/android-1.26-release.md).
