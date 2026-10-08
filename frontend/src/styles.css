@@ -182,6 +182,7 @@ button { cursor: pointer; background: var(--panel); }
 .voice-prompt { display: grid; place-items: center; min-height: 106px; margin: 0; padding: 1rem; border: 1px dashed rgba(91, 157, 224, .4); border-radius: 11px; color: #9bb9df; text-align: center; line-height: 1.5; }
 .settings-page { width: min(760px, 100%); margin: 0 auto; padding: 2rem 1rem; }
 .settings-page > h1 { margin: 0 0 1.3rem; }
+.settings-version { margin: 0 0 1.3rem; color: var(--muted); font-size: .8rem; }
 .alphabet-settings { display: grid; gap: .8rem; padding: 1.3rem; border: 1px solid rgba(76, 158, 232, .28); border-radius: 16px; }
 .alphabet-settings legend { padding: 0 .4rem; color: #dceaff; font-weight: 700; }
 .alphabet-settings > p { margin: 0 0 .3rem; color: #9bb9df; font-size: .8rem; }

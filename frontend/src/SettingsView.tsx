@@ -1,6 +1,7 @@
 import type { CurrentUser } from "./types/auth";
 import type { SerbianAlphabet } from "./serbianScript";
 import { ModelDebugSettings } from "./ModelDebugSettings";
+import { version } from "../package.json";
 
 export function SettingsView({ alphabet, onAlphabetChange, account, onSignOut, assistanceEnabled = false, assistanceSaving = false, assistanceError, onAssistanceChange }: {
   assistanceEnabled?: boolean;
@@ -14,6 +15,7 @@ export function SettingsView({ alphabet, onAlphabetChange, account, onSignOut, a
 }) {
   return <main className="settings-page">
     <h1>Настройки</h1>
+    <p className="settings-version">Версия приложения: {version.split(".").slice(0, 2).join(".")}</p>
     <fieldset className="alphabet-settings panel">
       <legend>Алфавит сербского языка</legend>
       <p>Выберите, как показывать сербские фразы, переводы слов и результаты проверки.</p>
