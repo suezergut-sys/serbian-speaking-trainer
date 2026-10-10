@@ -4,7 +4,7 @@
 
 - [x] Реализованы предупреждение после 3 записей с несербскими буквами подряд, карточки добавления темы/фразы в общей мобильной сетке, disabled тема с премиум-короной, звезда от 20 попыток и версия справа от заголовка. [Доказательства](mobile-premium-stt-checkpoint-2026-10-10.md).
 - [x] Targeted component suite 109 passed; Chrome mobile web 320/390px и native layout 393px — 3 passed. Полный scripts/check.ps1: backend/scripts 257 passed / 8 skips, Node guards 5 passed, frontend 192 passed / 17 suites, lint/typecheck/production build и diff check прошли. [Доказательства](mobile-premium-stt-checkpoint-2026-10-10.md).
-- [ ] Публикация web.
+- [x] Web опубликован через PR #83: Vercel READY на beb5018, production alias/SHA и авторизованный smoke 390/320px подтверждены; [доказательства](mobile-premium-web-publication-2026-10-10.md).
 - [ ] Android sync/APK и следующая версия по отдельной команде; 1.27/code37 сохранены.
 - [ ] Реальная речь и физическая приёмка. P0/P1/P2 целиком не закрыты.
 
