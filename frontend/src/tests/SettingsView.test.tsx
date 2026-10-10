@@ -11,5 +11,7 @@ it("shows the current Android release number in settings", () => {
   const androidBuild = readFileSync(resolve(process.cwd(), "android/app/build.gradle"), "utf-8");
   const androidVersion = androidBuild.match(/versionName "([^"]+)"/)?.[1];
   expect(androidVersion).toBeDefined();
-  expect(screen.getByText(`Версия приложения: ${androidVersion}`)).toBeInTheDocument();
+  const versionLabel = screen.getByLabelText("Версия приложения");
+  expect(versionLabel).toHaveTextContent(`v.${androidVersion}`);
+  expect(versionLabel.parentElement).toBe(screen.getByRole("heading", { name: "Настройки" }).parentElement);
 });

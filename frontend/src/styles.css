@@ -11,6 +11,7 @@
   --muted: #88a6d2;
   --line: rgba(61, 143, 221, .3);
   --panel: rgba(5, 18, 37, .84);
+  --gold: #f2bd5a;
 }
 
 * { box-sizing: border-box; }
@@ -180,8 +181,9 @@ button { cursor: pointer; background: var(--panel); }
 .answer-input textarea::placeholder { color: #647fa8; }
 .voice-prompt { display: grid; place-items: center; min-height: 106px; margin: 0; padding: 1rem; border: 1px dashed rgba(91, 157, 224, .4); border-radius: 11px; color: #9bb9df; text-align: center; line-height: 1.5; }
 .settings-page { width: min(760px, 100%); margin: 0 auto; padding: 2rem 1rem; }
-.settings-page > h1 { margin: 0 0 1.3rem; }
-.settings-version { margin: 0 0 1.3rem; color: var(--muted); font-size: .8rem; }
+.settings-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.3rem; }
+.settings-heading h1 { margin: 0; }
+.settings-version { color: var(--muted); font-size: .8rem; white-space: nowrap; }
 .alphabet-settings { display: grid; gap: .8rem; padding: 1.3rem; border: 1px solid rgba(76, 158, 232, .28); border-radius: 16px; }
 .alphabet-settings legend { padding: 0 .4rem; color: #dceaff; font-weight: 700; }
 .alphabet-settings > p { margin: 0 0 .3rem; color: #9bb9df; font-size: .8rem; }
@@ -288,6 +290,9 @@ button { cursor: pointer; background: var(--panel); }
 .calendar-day { position: relative; display: grid; place-items: center; aspect-ratio: 1.25; min-height: 74px; border: 1px solid rgba(66, 133, 199, .16); border-radius: 9px; background: rgba(4, 16, 33, .5); color: #7995bc; font-size: .72rem; }
 .calendar-day.is-active { border-color: rgba(58, 216, 158, .58); background: linear-gradient(145deg, rgba(34, 173, 121, .32), rgba(14, 91, 74, .42)); box-shadow: inset 0 1px rgba(255,255,255,.05), 0 0 16px rgba(42, 199, 142, .1); color: #d5ffef; font-weight: 800; }
 .calendar-day.is-intensive { border-color: #f2bd5a; box-shadow: inset 0 0 0 1px rgba(255, 216, 126, .45), 0 0 14px rgba(242, 189, 90, .22); }
+.gold-star { display: block; flex: 0 0 auto; color: var(--gold); }
+.calendar-day { padding-bottom: 16px; }
+.calendar-day__star { position: absolute; bottom: 4px; left: calc(50% - 7px); }
 .calendar-date { position: absolute; top: 8px; left: 0; width: 100%; color: var(--muted); font-size: .65rem; text-align: center; }
 .calendar-count { font-size: clamp(1.2rem, 2.8vw, 2rem); line-height: 1; margin-top: .7rem; }
 .chart-legend { display: flex; flex-wrap: wrap; gap: .6rem 1rem; margin: -.35rem 0 .8rem; color: #7897c5; font-size: .6rem; }
@@ -545,17 +550,23 @@ button { cursor: pointer; background: var(--panel); }
   text-align: left;
 }
 .android-topic:disabled { opacity: .42; }
+.android-topic { color: var(--text); }
+.android-topic--premium:disabled { opacity: 1; cursor: default; background: var(--panel); border-color: var(--line); }
+.android-topic--premium > .topic__icon, .android-topic--premium > strong { opacity: .42; }
+.premium-badge { display: block; flex: 0 0 auto; color: var(--gold); }
+.android-topic > .premium-badge { position: absolute; top: .55rem; right: .7rem; }
+.android-topic--add:hover { border-color: var(--blue-bright); }
+.android-topic--add:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; }
 .android-topic.is-selected { border-color: #47a9ff; box-shadow: inset 0 0 24px rgba(45, 143, 234, .11); }
 .android-topic .topic__icon { width: 32px; height: 32px; }
 .android-topic strong { align-self: end; width: 100%; margin-top: .3rem; overflow: hidden; font-size: .78rem; text-overflow: ellipsis; white-space: nowrap; }
+.android-topic--premium > strong, .android-topic--add > strong { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.25; }
 .android-topic > small { position: absolute; top: .65rem; right: .7rem; color: #91caff; font-size: 1.1rem; font-weight: 800; text-align: right; }
 .android-topic > small span { display: block; color: #8aa9cf; font-size: .56rem; font-weight: 600; }
 .android-feedback .result-phrase__text { font-size: 1.25rem; }
 
 .android-action-card { margin-top: .55rem; border: 1px solid rgba(61, 143, 221, .22); border-radius: 13px; background: rgba(7, 24, 47, .75); }
-.android-action-card summary { display: flex; gap: .6rem; align-items: center; padding: .68rem .9rem; color: #a8c8eb; font-size: .76rem; font-weight: 700; list-style: none; }
-.android-action-card summary::-webkit-details-marker { display: none; }
-.android-action-card form { display: grid; gap: .55rem; padding: 0 .8rem .8rem; }
+.android-action-card form { display: grid; gap: .55rem; padding: .8rem; }
 .android-action-card input, .android-action-card select, .android-answer textarea {
   width: 100%;
   padding: .78rem .85rem;
@@ -649,7 +660,7 @@ button { cursor: pointer; background: var(--panel); }
 .android-service-bar small { color: #7897c5; font-size: .64rem; }
 .android-admin-settings { margin-bottom: .5rem; }
 .android-settings-page .settings-page { padding: .2rem 0; }
-.android-settings-page .settings-page > h1 { font-size: 1.55rem; }
+.android-settings-page .settings-heading h1 { font-size: 1.55rem; }
 .android-settings-page .alphabet-settings { padding: 1rem; }
 .android-settings-page .alphabet-settings label span { flex-basis: 100%; margin-left: 1.5rem; }
 
@@ -759,8 +770,7 @@ button { cursor: pointer; background: var(--panel); }
 .mobile-web-shell .android-topic strong { font-size: .9rem; }
 .mobile-web-shell .android-topic > small { font-size: 1rem; }
 .mobile-web-shell .android-topic > small span { font-size: .65rem; }
-.mobile-web-shell .android-action-card { flex-shrink: 0; margin: 0; }
-.mobile-web-shell .android-action-card summary { min-height: 44px; font-size: .85rem; }
+.mobile-web-shell .android-action-card { flex-shrink: 0; margin: 0; max-height: 55%; overflow-y: auto; }
 .mobile-web-shell input, .mobile-web-shell select, .mobile-web-shell textarea { min-width: 0; font-size: 16px; }
 .mobile-web-shell .android-training-content { height: 100%; min-height: 0; overflow-y: auto; }
 .mobile-web-shell .android-training-content.practice-card { padding: 0; }

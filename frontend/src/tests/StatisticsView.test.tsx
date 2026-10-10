@@ -147,6 +147,25 @@ it('shows dated calendar cells with large attempt counts including zero and inte
   } finally { vi.useRealTimers(); }
 });
 
+it('adds a gold star from exactly twenty attempts while preserving the intensive border', async () => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(2026, 9, 7, 12));
+  vi.mocked(fetchMonthlyStatistics).mockResolvedValue({ month: '2026-10', active_days: 3,
+    total_phrases: 60, total_translations: 60, correct_translations: 0, mastered_phrases: 0,
+    days: [19, 20, 21].map((count, index) => ({ date: `2026-10-0${5 + index}`, phrase_count: 1, translation_count: count, correct_translation_count: 0, mastered_phrase_count: 0 })) });
+  try {
+    render(<StatisticsView />);
+    const below = await screen.findByLabelText('Пн 5: 19 попыток');
+    const threshold = screen.getByLabelText('Вт 6: 20 попыток');
+    const above = screen.getByLabelText('Ср 7: 21 попыток');
+    expect(below.querySelector('.calendar-day__star')).not.toBeInTheDocument();
+    expect(threshold.querySelector('.calendar-day__star')).toBeInTheDocument();
+    expect(above.querySelector('.calendar-day__star')).toBeInTheDocument();
+    expect(threshold).toHaveClass('is-intensive');
+    expect(screen.getByText('от 20 попыток')).toBeInTheDocument();
+  } finally { vi.useRealTimers(); }
+});
+
 
 it('retries topic loading and handles an account with no phrases', async () => {
   vi.mocked(fetchPhraseTopics).mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce([]);

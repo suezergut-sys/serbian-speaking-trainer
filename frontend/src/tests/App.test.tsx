@@ -75,6 +75,7 @@ describe("App", () => {
     nativeAppEvents.removals = 0;
     nativeBackEvents.listener = undefined; nativeBackEvents.exits = 0; nativeBackEvents.removals = 0;
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it("routes native Back from settings to practice, then topics, before exiting", async () => {
@@ -230,6 +231,78 @@ describe("App", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Завершить запись" }));
     return screen.findByLabelText("Ваш ответ");
   }
+
+  it.each([false, true])("warns after three consecutive recordings with non-Serbian letters and resets after success (native=%s)", async (native) => {
+    vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(native);
+    voiceMock.available = true;
+    const base = mockApi();
+    let recordings = 0;
+    const texts = ["Донесите посебный рачун.", "Донесіце асабны рачун.", "Платячу картицом.", "Moj odgovor.", "Донесите посебный рачун."];
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => input.toString().endsWith("/api/transcriptions")
+      ? Promise.resolve({ ok: true, status: 200, json: async () => ({ text: texts[recordings++], review_required: recordings !== 4 }) })
+      : base(input, init));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    const warning = "Проблемы с работой внешней моделью. Сделайте перерыв и вернитесь к обучению позже";
+    for (let index = 0; index < texts.length; index++) {
+      await recordAnswer();
+      await waitFor(() => expect(screen.getByLabelText("Ваш ответ")).toHaveValue(texts[index]));
+      await screen.findByRole("button", { name: "Записать заново" });
+      if (index === 2) expect(screen.getByText(warning)).toHaveAttribute("role", "alert");
+      else expect(screen.queryByText(warning)).not.toBeInTheDocument();
+    }
+    expect(recordings).toBe(5);
+    expect(fetchMock.mock.calls.some(([url]) => url.toString().endsWith("/api/attempts"))).toBe(false);
+  });
+
+  it("breaks the non-Serbian failure streak on an unrelated provider error", async () => {
+    voiceMock.available = true;
+    const base = mockApi();
+    let recordings = 0;
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (!input.toString().endsWith("/api/transcriptions")) return base(input, init);
+      recordings++;
+      return Promise.resolve(recordings === 3
+        ? { ok: false, status: 503, json: async () => ({ detail: { code: "transcription_timeout" } }) }
+        : { ok: true, status: 200, json: async () => ({ text: "Донесіце асабны рачун.", review_required: true }) });
+    }));
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    for (let index = 0; index < 5; index++) {
+      await recordAnswer();
+      await screen.findByRole("button", { name: "Записать заново" });
+      expect(screen.queryByText(/Проблемы с работой внешней моделью/)).not.toBeInTheDocument();
+    }
+  });
+
+  it.each([false, true])("places disabled premium topic and working phrase cards inside the mobile topic grid (native=%s)", async (native) => {
+    vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(native);
+    if (!native) vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
+    const fetchMock = mockApi();
+    vi.stubGlobal("fetch", fetchMock);
+    const { container } = render(<App />);
+    await screen.findByRole("button", { name: /В банке/ });
+    if (!native) fireEvent.click(screen.getByRole("button", { name: "Темы" }));
+    const addTopic = screen.getByRole("button", { name: /добавить тему/ });
+    const addPhrase = screen.getByRole("button", { name: /добавить фразу/ });
+    expect(addTopic).toBeDisabled();
+    expect(addTopic.querySelector('[aria-label="Премиум"]')).toBeInTheDocument();
+    expect(addTopic.parentElement).toBe(addPhrase.parentElement);
+    expect(addTopic.parentElement).toHaveClass("android-topic-list");
+    expect(container.querySelector(".android-topics-page details")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Своя тема")).not.toBeInTheDocument();
+    fireEvent.click(addTopic);
+    expect(fetchMock.mock.calls.some(([url, init]) => url.toString().endsWith("/api/topics") && init?.method === "POST")).toBe(false);
+    fireEvent.click(addPhrase);
+    const input = screen.getByLabelText("Новая фраза для повторения");
+    fireEvent.change(input, { target: { value: "Я хочу открыть счёт." } });
+    fireEvent.click(screen.getByRole("button", { name: "Перевести" }));
+    await screen.findByLabelText("Канонический перевод");
+    expect(screen.getByRole("combobox", { name: "Тема для новой фразы" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Сохранить" }));
+    await waitFor(() => expect(input).toHaveValue(""));
+  });
 
   it.each([false, true])("uses the remotely synced %s preference for native STT after resume", async (initial) => {
     vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(true);
