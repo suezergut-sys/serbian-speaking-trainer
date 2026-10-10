@@ -10,6 +10,6 @@
 - [x] Полный backend/scripts suite — 257 passed / 8 штатных external skips; Android Node guards — 5 passed; полный frontend suite — 192 passed / 17 suites. Лог ignored `artifacts/mobile-premium-quality.log`.
 - [x] Полный scripts/check.ps1 завершился с exit 0: финальные ESLint, TypeScript и production build прошли; git diff --check без ошибок. Единственное предупреждение сборки — прежний main chunk >500 kB.
 - [x] README/decisions/audit roadmap/Android backlog обновлены. Backend API/БД/env/модели STT не изменены. Предыдущая диагностика логов сохранена отдельным документом.
-- [ ] Публикация web.
+- [x] Web опубликован через PR #83, READY/SHA/production alias и авторизованный Chrome smoke подтверждены; [доказательства](mobile-premium-web-publication-2026-10-10.md).
 - [ ] Android sync/APK/версия только по отдельной команде; 1.27/code37 и package version не менялись.
 - [ ] Реальная речь и физическая приёмка.
