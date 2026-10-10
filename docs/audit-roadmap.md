@@ -1,5 +1,20 @@
 # План улучшений по аудиту SerboTalk
 
+## 10.10.2026 — предупреждение STT и мобильные карточки
+
+- [x] Реализованы предупреждение после 3 записей с несербскими буквами подряд, карточки добавления темы/фразы в общей мобильной сетке, disabled тема с премиум-короной, звезда от 20 попыток и версия справа от заголовка. [Доказательства](mobile-premium-stt-checkpoint-2026-10-10.md).
+- [x] Targeted component suite 109 passed; Chrome mobile web 320/390px и native layout 393px — 3 passed. Полный scripts/check.ps1: backend/scripts 257 passed / 8 skips, Node guards 5 passed, frontend 192 passed / 17 suites, lint/typecheck/production build и diff check прошли. [Доказательства](mobile-premium-stt-checkpoint-2026-10-10.md).
+- [ ] Публикация web.
+- [ ] Android sync/APK и следующая версия по отдельной команде; 1.27/code37 сохранены.
+- [ ] Реальная речь и физическая приёмка. P0/P1/P2 целиком не закрыты.
+
+## 10.10.2026 — повторная диагностика языка/алфавита STT
+
+- [x] Read-only production-логи: два распознавания и два повтора возвращают смешанную кириллицу несмотря на `languages=["sr"]` и prompts v2. HTTP 200, метка ответа `sr`; [время, ID и доказательства](transcription-script-diagnosis-2026-10-10.md).
+- [x] Mock-воспроизведение обеих пар: два вызова, исходный второй текст и `review_required=true`. Adapter/API suite 29 passed, внешних AI-вызовов нет; README/decisions проверены.
+- [ ] Улучшение качества STT и проверка новых реальных записей; текущая ручная проверка не решает качество распознавания.
+- [ ] Ручная production-приёмка голосового сценария. Изменений runtime/публикации/Android-сборки в диагностике нет; контрольный APK 1.27/code37 сохранён.
+
 ## 08.10.2026 — выпуск Android и web 1.27
 
 - [x] Владелец подтвердил 1.27/code37; весь текущий backlog перенесён, cloud APK собран. 18 metadata/environment/settings tests, предыдущий frontend suite 186 passed, lint/typecheck/build; [доказательства](android-1.27-release.md).

@@ -17,6 +17,7 @@ import { TranscriptionAssistanceView, type AssistanceDraft } from "./Transcripti
 import { useAssistancePreference } from "./useAssistancePreference";
 import { useMobileLayout } from "./useMobileLayout";
 import { SettingsView } from "./SettingsView";
+import { PremiumBadge } from "./PremiumBadge";
 import { WordHintToken } from "./WordHintToken";
 import { hasUnexpectedLetterScript, displaySerbian, displaySerbianInRussianText, readSerbianAlphabet, saveSerbianAlphabet, toSerbianLatin, type SerbianAlphabet } from "./serbianScript";
 import { AnswerResult } from "./AnswerResult";
@@ -28,6 +29,7 @@ type BackendState = "checking" | "online" | "offline";
 type VoiceState = "idle" | "connecting" | "recording" | "transcribing" | "error";
 type AppView = "practice" | "statistics" | "settings" | "admin";
 type StartupState = "loading" | "ready" | "fallback";
+const transcriptionBreakMessage = "Проблемы с работой внешней моделью. Сделайте перерыв и вернитесь к обучению позже";
 
 const loadStatistics = (retryUrl?: string) => (retryUrl
   ? import(/* @vite-ignore */ retryUrl) as Promise<typeof import("./StatisticsView")>
@@ -171,6 +173,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const [customTopic, setCustomTopic] = useState("");
   const [reviewPhraseCount, setReviewPhraseCount] = useState(0);
   const [newPhrase, setNewPhrase] = useState("");
+  const [phraseFormOpen, setPhraseFormOpen] = useState(false);
   const [preparedPhrase, setPreparedPhrase] = useState<PreparedReviewPhrase>();
   const [phraseTopicId, setPhraseTopicId] = useState("");
   const [session, setSession] = useState<TrainingSession>();
@@ -191,6 +194,8 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const [preparingPhrase, setPreparingPhrase] = useState(false);
   const [error, setError] = useState<string>();
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
+  const unexpectedScriptStreakRef = useRef(0);
+  const [transcriptionBreakRecommended, setTranscriptionBreakRecommended] = useState(false);
   const [wordHints, setWordHints] = useState<Record<string, WordHint>>({});
   const [activeHint, setActiveHint] = useState<string>();
   const wordHintsRef = useRef<Record<string, WordHint>>({});
@@ -524,6 +529,9 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       startUiTiming("transcription");
       const transcript = await transcribeAudio(exerciseId, recording.audio, controller.signal, assistanceEnabled);
       if (voiceEpochRef.current !== epoch) return;
+      const unexpectedScript = hasUnexpectedLetterScript(transcript.text);
+      unexpectedScriptStreakRef.current = unexpectedScript ? unexpectedScriptStreakRef.current + 1 : 0;
+      setTranscriptionBreakRecommended(unexpectedScriptStreakRef.current >= 3);
       if (answerEditEpochRef.current === voiceStartEditEpochRef.current) {
         voiceTimingRef.current = recording.timing;
         setAnswer(transcript.review_required ? transcript.text : displaySerbian(transcript.text, alphabetRef.current));
@@ -534,6 +542,8 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       setVoiceState("idle");
     } catch (error) {
       if (voiceEpochRef.current !== epoch) return;
+      unexpectedScriptStreakRef.current = error instanceof BackendError && error.code === "transcription_unexpected_script" ? unexpectedScriptStreakRef.current + 1 : 0;
+      setTranscriptionBreakRecommended(unexpectedScriptStreakRef.current >= 3);
       recorder.stop(); voiceRef.current = undefined; voiceTimingRef.current = undefined;
       setVoiceState("error"); setError(transcriptionErrorMessage(error));
     } finally {
@@ -858,17 +868,17 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                   <small>{topic.phrase_count}<span> неизученных</span></small>
                 </button>
               ))}
+              <button className="android-topic android-topic--premium" type="button" disabled>
+                <span className="topic__icon"><Icon name="plus" /></span>
+                <strong>+ добавить тему</strong><PremiumBadge />
+              </button>
+              <button className="android-topic android-topic--add" type="button" aria-expanded={phraseFormOpen} aria-controls="mobile-add-phrase" onClick={() => setPhraseFormOpen(open => !open)}>
+                <span className="topic__icon"><Icon name="plus" /></span>
+                <strong>+ добавить фразу</strong>
+              </button>
             </div>
 
-            <details className="android-action-card">
-              <summary><Icon name="plus" /> Своя тема</summary>
-              <form onSubmit={saveCustomTopic}>
-                <input value={customTopic} onChange={(event) => setCustomTopic(event.target.value)} placeholder="Название темы" aria-label="Своя тема" />
-                <button type="submit" disabled={loading || customTopic.trim().length < 2}>Создать</button>
-              </form>
-            </details>
-            <details className="android-action-card">
-              <summary><Icon name="plus" /> Добавить фразу</summary>
+            {phraseFormOpen && <section className="android-action-card" id="mobile-add-phrase" aria-label="Новая фраза">
               <form onSubmit={saveReviewPhrase}>
                 <input value={newPhrase} onChange={(event) => { setNewPhrase(event.target.value); setPreparedPhrase(undefined); }} placeholder="Фраза на русском" aria-label="Новая фраза для повторения" />
                 {preparedPhrase && <div className="android-prepared-phrase" aria-label="Канонический перевод">
@@ -880,7 +890,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                 </div>}
                 <button type="submit" disabled={loading || newPhrase.trim().length < 3 || Boolean(preparedPhrase && !phraseTopicId)}>{preparedPhrase ? "Сохранить" : "Перевести"}</button>
               </form>
-            </details>
+            </section>}
             {(startupState === "fallback" || backendState === "offline") && <div className="android-error" role="alert">{startupState === "fallback" ? error : "Нет подключения к сервису."} <button type="button" onClick={retryCatalog}>Повторить загрузку</button></div>}
           </section>
 
@@ -903,6 +913,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                   {hasTranscript ? <><label className="sr-only" htmlFor="android-serbian-answer">Ваш ответ</label>
                     <textarea id="android-serbian-answer" value={answer} readOnly={checking} onChange={(event) => { answerEditEpochRef.current += 1; voiceTimingRef.current = undefined; setAssistanceDraft(current => current ? { ...current, edited: true } : undefined); setAnswer(event.target.value); }} placeholder="Введите ответ на сербском языке" rows={3} /></> : <p className="voice-prompt">Произнесите ответ в микрофон</p>}
                   {hasUnexpectedLetterScript(answer) && <p className="transcription-script-warning" role="alert">В расшифровке есть буквы вне сербского алфавита. Исправьте текст перед проверкой или запишите ответ заново.</p>}
+                  {transcriptionBreakRecommended && <p className="transcription-script-warning" role="alert">{transcriptionBreakMessage}</p>}
                   <TranscriptionAssistanceView draft={assistanceDraft} alphabet={alphabet} disabled={checking || voiceBusy} onToggle={toggleTranscriptionChange} />
                   <AnswerActions answer={answer} loading={checking} native={isNative} voiceState={voiceState} voiceSupported={voiceSupported} startVoice={() => void startVoice()} finishVoice={() => void finishVoice()} stopVoice={stopVoice} />
                   {(!voiceSupported || voiceState !== "idle") && <p className="android-voice-state" role="status">{!voiceSupported ? "Микрофон недоступен. Разрешите доступ в настройках устройства." : voiceState === "connecting" ? "Подключаем микрофон…" : voiceState === "recording" ? "Запись" : voiceState === "transcribing" ? "Распознаём…" : "Повторите запись"}</p>}
@@ -1011,6 +1022,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                         {hasTranscript ? <><label className="sr-only" htmlFor="serbian-answer">Ваш ответ</label><textarea id="serbian-answer" value={answer} readOnly={checking} onChange={(event) => { answerEditEpochRef.current += 1; voiceTimingRef.current = undefined; setAssistanceDraft(current => current ? { ...current, edited: true } : undefined); setAnswer(event.target.value); }} placeholder="Введите ответ на сербском языке" rows={4} /></> : <p className="voice-prompt">Произнесите ответ в микрофон. После распознавания текст можно исправить.</p>}
                       </div>
                       {hasUnexpectedLetterScript(answer) && <p className="transcription-script-warning" role="alert">В расшифровке есть буквы вне сербского алфавита. Исправьте текст перед проверкой или запишите ответ заново.</p>}
+                      {transcriptionBreakRecommended && <p className="transcription-script-warning" role="alert">{transcriptionBreakMessage}</p>}
                       <TranscriptionAssistanceView draft={assistanceDraft} alphabet={alphabet} disabled={checking || voiceBusy} onToggle={toggleTranscriptionChange} />
                   <AnswerActions answer={answer} loading={checking} native={isNative} voiceState={voiceState} voiceSupported={voiceSupported} startVoice={() => void startVoice()} finishVoice={() => void finishVoice()} stopVoice={stopVoice} />
                       <div className="voice-status">{!voiceSupported ? "Микрофон недоступен. Разрешите доступ к нему в браузере или устройстве." : voiceState === "recording" ? "Идёт запись. Аудио не сохраняется" : voiceState === "transcribing" ? "Расшифровываем фразу…" : voiceState === "error" ? "Не удалось распознать ответ. Повторите запись." : hasTranscript ? "Введите ответ или исправьте распознанный текст." : "Нажмите на микрофон, чтобы ответить."}</div>

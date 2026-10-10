@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { fetchMonthlyStatistics, fetchPhraseStatistics, fetchPhraseTopics } from "./api/statistics";
 import type { MonthlyStatistics, PhraseStatistics, PhraseStatisticsTopic } from "./types/statistics";
 import { displaySerbian, type SerbianAlphabet } from "./serbianScript";
+import { GoldStar } from "./GoldStar";
 
 const weekDays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 type PageSize = "10" | "50";
@@ -166,13 +167,14 @@ function ActivityTab() {
     {toolbar}
     <section className="statistics-summary" aria-label="Итоги недели"><div className="panel"><span>{activeDays}</span><small>Дней</small></div><div className="panel"><span>{total}</span><small>Повторений</small></div><div className="panel"><span>{mastered}</span><small>Выучено</small></div></section>
     <section className="statistics-card panel" aria-labelledby="calendar-title">
-      <div className="statistics-card__heading"><div><p className="kicker">Регулярность</p><h2 id="calendar-title">Календарь занятий</h2></div><span className="calendar-legend"><span><i /> от 1 попытки</span><span><i className="is-intensive" /> от 10 попыток</span></span></div>
+      <div className="statistics-card__heading"><div><p className="kicker">Регулярность</p><h2 id="calendar-title">Календарь занятий</h2></div><span className="calendar-legend"><span><i /> от 1 попытки</span><span><i className="is-intensive" /> от 10 попыток</span><span><GoldStar /> от 20 попыток</span></span></div>
       <div className="practice-calendar">{days.map((day, index) => {
         const dayNumber = Number(day.date.slice(-2));
         const className = ["calendar-day", day.translation_count > 0 && "is-active", day.translation_count >= 10 && "is-intensive"].filter(Boolean).join(" ");
         return <div className={className} key={day.date} aria-label={`${weekDays[index]} ${dayNumber}: ${day.translation_count} попыток`}>
           <small className="calendar-date">{weekDays[index]} {dayNumber}</small>
           <strong className="calendar-count">{day.translation_count}</strong>
+          {day.translation_count >= 20 && <GoldStar className="calendar-day__star" />}
         </div>;
       })}</div>
     </section>

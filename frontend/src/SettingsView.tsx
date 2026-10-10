@@ -14,8 +14,7 @@ export function SettingsView({ alphabet, onAlphabetChange, account, onSignOut, a
   onAlphabetChange: (alphabet: SerbianAlphabet) => void;
 }) {
   return <main className="settings-page">
-    <h1>Настройки</h1>
-    <p className="settings-version">Версия приложения: {version.split(".").slice(0, 2).join(".")}</p>
+    <header className="settings-heading"><h1>Настройки</h1><span className="settings-version" aria-label="Версия приложения">v.{version.split(".").slice(0, 2).join(".")}</span></header>
     <fieldset className="alphabet-settings panel">
       <legend>Алфавит сербского языка</legend>
       <p>Выберите, как показывать сербские фразы, переводы слов и результаты проверки.</p>
