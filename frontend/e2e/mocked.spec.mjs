@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
+import { readFileSync } from "node:fs";
 import { captureMetrics } from "./metrics.mjs";
 import { installSyntheticMicrophone, runPracticeFlow } from "./flow.mjs";
+const releaseVersion = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version.split('.').slice(0, 2).join('.');
 
 const topic = {
   id: "bank", title_ru: "В банке", description_ru: "Счёт и платежи",
@@ -331,7 +333,7 @@ for (const native of [false, true]) {
       await page.screenshot({ path: `../artifacts/word-hint-${native ? "android" : "web"}-${width}.png` });
       await page.getByRole("button", { name: "Настройки", exact: true }).click();
       await expect(page.locator(".word-tooltip")).toHaveCount(0);
-      await expect(page.getByText("Версия приложения: 1.27", { exact: true })).toBeVisible();
+      await expect(page.getByLabel("Версия приложения", { exact: true })).toHaveText(`v.${releaseVersion}`);
     });
   }
 }

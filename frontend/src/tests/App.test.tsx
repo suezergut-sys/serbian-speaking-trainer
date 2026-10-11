@@ -276,7 +276,7 @@ describe("App", () => {
     }
   });
 
-  it.each([false, true])("places disabled premium topic and working phrase cards inside the mobile topic grid (native=%s)", async (native) => {
+  it.each([false, true])("places disabled premium topic and phrase cards inside the mobile topic grid (native=%s)", async (native) => {
     vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(native);
     if (!native) vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
     const fetchMock = mockApi();
@@ -287,7 +287,9 @@ describe("App", () => {
     const addTopic = screen.getByRole("button", { name: /добавить тему/ });
     const addPhrase = screen.getByRole("button", { name: /добавить фразу/ });
     expect(addTopic).toBeDisabled();
+    expect(addPhrase).toBeDisabled();
     expect(addTopic.querySelector('[aria-label="Премиум"]')).toBeInTheDocument();
+    expect(addPhrase.querySelector('[aria-label="Премиум"]')).toBeInTheDocument();
     expect(addTopic.parentElement).toBe(addPhrase.parentElement);
     expect(addTopic.parentElement).toHaveClass("android-topic-list");
     expect(container.querySelector(".android-topics-page details")).not.toBeInTheDocument();
@@ -295,13 +297,8 @@ describe("App", () => {
     fireEvent.click(addTopic);
     expect(fetchMock.mock.calls.some(([url, init]) => url.toString().endsWith("/api/topics") && init?.method === "POST")).toBe(false);
     fireEvent.click(addPhrase);
-    const input = screen.getByLabelText("Новая фраза для повторения");
-    fireEvent.change(input, { target: { value: "Я хочу открыть счёт." } });
-    fireEvent.click(screen.getByRole("button", { name: "Перевести" }));
-    await screen.findByLabelText("Канонический перевод");
-    expect(screen.getByRole("combobox", { name: "Тема для новой фразы" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Сохранить" }));
-    await waitFor(() => expect(input).toHaveValue(""));
+    expect(screen.queryByLabelText("Новая фраза для повторения")).not.toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([url, init]) => url.toString().includes("/api/review-phrases") && init?.method === "POST")).toBe(false);
   });
 
   it.each([false, true])("uses the remotely synced %s preference for native STT after resume", async (initial) => {

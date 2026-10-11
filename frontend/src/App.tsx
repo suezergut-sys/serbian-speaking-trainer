@@ -173,7 +173,6 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const [customTopic, setCustomTopic] = useState("");
   const [reviewPhraseCount, setReviewPhraseCount] = useState(0);
   const [newPhrase, setNewPhrase] = useState("");
-  const [phraseFormOpen, setPhraseFormOpen] = useState(false);
   const [preparedPhrase, setPreparedPhrase] = useState<PreparedReviewPhrase>();
   const [phraseTopicId, setPhraseTopicId] = useState("");
   const [session, setSession] = useState<TrainingSession>();
@@ -872,25 +871,12 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                 <span className="topic__icon"><Icon name="plus" /></span>
                 <strong>+ добавить тему</strong><PremiumBadge />
               </button>
-              <button className="android-topic android-topic--add" type="button" aria-expanded={phraseFormOpen} aria-controls="mobile-add-phrase" onClick={() => setPhraseFormOpen(open => !open)}>
+              <button className="android-topic android-topic--premium" type="button" disabled>
                 <span className="topic__icon"><Icon name="plus" /></span>
-                <strong>+ добавить фразу</strong>
+                <strong>+ добавить фразу</strong><PremiumBadge />
               </button>
             </div>
 
-            {phraseFormOpen && <section className="android-action-card" id="mobile-add-phrase" aria-label="Новая фраза">
-              <form onSubmit={saveReviewPhrase}>
-                <input value={newPhrase} onChange={(event) => { setNewPhrase(event.target.value); setPreparedPhrase(undefined); }} placeholder="Фраза на русском" aria-label="Новая фраза для повторения" />
-                {preparedPhrase && <div className="android-prepared-phrase" aria-label="Канонический перевод">
-                  <strong lang={alphabet === "cyrillic" ? "sr-Cyrl" : "sr-Latn"}>{displaySerbian(preparedPhrase.canonical_sr, alphabet)}</strong>
-                  <select aria-label="Тема для новой фразы" value={phraseTopicId} onChange={(event) => setPhraseTopicId(event.target.value)}>
-                    <option value="">Выберите тему</option>
-                    {topics.map((topic) => <option value={topic.id} key={topic.id}>{topic.title_ru}</option>)}
-                  </select>
-                </div>}
-                <button type="submit" disabled={loading || newPhrase.trim().length < 3 || Boolean(preparedPhrase && !phraseTopicId)}>{preparedPhrase ? "Сохранить" : "Перевести"}</button>
-              </form>
-            </section>}
             {(startupState === "fallback" || backendState === "offline") && <div className="android-error" role="alert">{startupState === "fallback" ? error : "Нет подключения к сервису."} <button type="button" onClick={retryCatalog}>Повторить загрузку</button></div>}
           </section>
 
