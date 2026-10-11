@@ -3,8 +3,9 @@
 ## 11.10.2026 — неактивная премиум-карточка фразы и выпуск
 
 - [x] Обе мобильные карточки отключены и отмечены PremiumBadge; mobile-форма удалена. Targeted 2 component tests и полный frontend suite 192 tests / 17 suites прошли; 8 Chrome mobile/native-layout сценариев прошли. [Доказательства](premium-phrase-checkpoint-2026-10-11.md).
-- [ ] Публикация web и production smoke.
-- [ ] Завершить Android sync, согласовать следующую версию, собрать/проверить/опубликовать APK со всем backlog после 1.27.
+- [x] Web опубликован через PR #85: Vercel READY на 582bf44; production alias/SHA, HTTP и авторизованный smoke 320/390px подтверждены. [Доказательства](premium-phrase-checkpoint-2026-10-11.md).
+- [x] Production Android assets синхронизированы через pnpm android:sync со всем backlog после 1.27; без APK и изменения metadata.
+- [ ] Согласовать следующую версию, собрать/проверить/опубликовать APK. Ожидается ответ владельца на предложенную 1.28/code38.
 - [ ] Физическая приёмка и реальная речь. P0/P1/P2 целиком не закрыты.
 
 ## 10.10.2026 — предупреждение STT и мобильные карточки
