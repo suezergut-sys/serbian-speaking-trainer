@@ -564,3 +564,5 @@ PR #77 опубликован в web/backend, оба deployments READY на 1229
 
 
 08.10.2026: Android 1.26 опубликован через PR #79 и GitHub release v1.26. Tag/target SHA, server asset digest/size и локальная копия Downloads совпали; [итоговые доказательства](android-1.26-release.md). Физическая приёмка остаётся открытой.
+
+11.10.2026: Android 1.28/code38 отдельно подтверждён владельцем. Релиз использует весь накопленный набор после 1.27 и production cloud build, с отдельной проверкой packaged API URL, metadata и прежнего сертификата подписи. [Доказательства](android-1.28-release.md).
