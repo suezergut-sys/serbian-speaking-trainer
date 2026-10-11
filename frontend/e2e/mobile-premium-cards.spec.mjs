@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
+const releaseVersion = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version.split('.').slice(0, 2).join('.');
 
 for (const [native, width] of [[false, 320], [false, 390], [true, 393]]) {
   test(`topic cards, activity star and settings heading (${native ? 'native layout' : 'mobile web'} ${width})`, async ({ page }) => {
@@ -28,9 +30,11 @@ for (const [native, width] of [[false, 320], [false, 390], [true, 393]]) {
     const topic = page.getByRole('button', { name: /добавить тему/ });
     const phrase = page.getByRole('button', { name: /добавить фразу/ });
     await expect(topic).toBeDisabled();
+    await expect(phrase).toBeDisabled();
     await expect(topic.locator('strong')).toHaveCSS('white-space', 'normal');
     await expect(phrase.locator('strong')).toHaveCSS('white-space', 'normal');
     await expect(topic.getByRole('img', { name: 'Премиум' })).toHaveCSS('color', 'rgb(242, 189, 90)');
+    await expect(phrase.getByRole('img', { name: 'Премиум' })).toHaveCSS('color', 'rgb(242, 189, 90)');
     const boxes = await page.locator('.android-topic-list > button').evaluateAll(elements => elements.map(element => {
       const box = element.getBoundingClientRect(); return { left: box.left, top: box.top, width: box.width, height: box.height };
     }));
@@ -40,9 +44,6 @@ for (const [native, width] of [[false, 320], [false, 390], [true, 393]]) {
     await mkdir('../artifacts/mobile-premium', { recursive: true });
     const prefix = `../artifacts/mobile-premium/${native ? 'native' : 'web'}-${width}`;
     await page.screenshot({ path: `${prefix}-topics.png` });
-    await phrase.click();
-    await expect(page.getByLabel('Новая фраза для повторения')).toBeVisible();
-    await phrase.click();
     await expect(page.getByLabel('Новая фраза для повторения')).toHaveCount(0);
     await page.getByRole('button', { name: 'Статистика', exact: true }).click();
     const day = page.getByLabel('Ср 7: 20 попыток');
@@ -56,7 +57,7 @@ for (const [native, width] of [[false, 320], [false, 390], [true, 393]]) {
     await page.screenshot({ path: `${prefix}-statistics.png` });
     await page.getByRole('button', { name: 'Настройки', exact: true }).click();
     const version = page.getByLabel('Версия приложения');
-    await expect(version).toHaveText('v.1.27');
+    await expect(version).toHaveText(`v.${releaseVersion}`);
     const alignment = await page.locator('.settings-heading').evaluate(element => {
       const row = element.getBoundingClientRect(), title = element.querySelector('h1').getBoundingClientRect(), version = element.querySelector('.settings-version').getBoundingClientRect();
       return { right: Math.abs(row.right - version.right), middle: Math.abs((title.top + title.bottom) / 2 - (version.top + version.bottom) / 2) };
