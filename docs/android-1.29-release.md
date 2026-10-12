@@ -2,6 +2,8 @@
 
 12.10.2026 владелец поручил обновить Android для проверки и скриншотов с телефона, отдельно согласовал `1.29 / versionCode 39`. Включён весь накопленный frontend после 1.28: актуальное пояснение owner-scoped аудио отладки (PR #89), вход ревьюера по email/паролю и инструкция удаления из настроек (PR #91). Backend уже опубликован; новых миграций нет.
 
+Подготовлен [draft PR #92](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/92), исходный commit `58a3fe2`. Публикация выпуска и слияние metadata ожидают телефонной проверки; функциональный web из PR #91 уже опубликован.
+
 - [x] Package 1.29.0, Gradle 1.29/code39, имя `SerboTalk-andorid16-1.29.apk`; 19 targeted metadata/environment/settings tests прошли.
 - [x] `pnpm android:cloud-apk`: BUILD SUCCESSFUL, 109 tasks. APK production flavor `prodDebug`, прежняя подпись для обновления установленного APK. Это сборка для телефонной проверки, не подписанный release AAB для Google Play.
 - [x] Package com.serbiantalk.trainer, minSDK24/targetSDK36, HTTPS WebView; production API https://serbian-speaking-trainer-api.vercel.app внутри APK. Review login и `/delete-account` присутствуют; testlab/local config/mixed content отсутствуют. Все 7 dist files совпали побайтно с packaged assets.
