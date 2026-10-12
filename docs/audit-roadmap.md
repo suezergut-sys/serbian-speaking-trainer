@@ -4,7 +4,7 @@
 
 - [x] Владелец подтвердил web/Android публикацию 1.30/code40. Backend alias без email в bundle, стандартная сессия Supabase и совместимость email-входа реализованы; 15 backend и 8 targeted frontend tests прошли. [Доказательства](android-1.30-release.md).
 - [x] Полный gate: backend/scripts 278 passed / 8 skips, Node guards 5, frontend 200 / 19 suites, lint/typecheck/build. Cloud APK 1.30/code40, API/подпись/metadata/7 assets и Downloads проверены; [доказательства](android-1.30-release.md).
-- [ ] Merge, Vercel production и GitHub release.
+- [x] PR #92 merged на 461c5d5; backend/web READY production/main/SHA/aliases проверены. HTTP smoke и существующая review-сессия (темы, профиль без лимита, v.1.30) прошли. GitHub release v1.30: tag/target, server digest/size и Downloads совпали; [доказательства](android-1.30-release.md).
 - [ ] Реальный alias-вход, физическая приёмка и скриншоты. Google Play и P0/P1/P2 целиком не закрыты.
 
 ## 12.10.2026 — подготовка Google Play
