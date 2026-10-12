@@ -2,6 +2,7 @@ import { App as CapacitorApp } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
 import { Capacitor } from "@capacitor/core";
 import { createClient, type Session, type SupabaseClient } from "@supabase/supabase-js";
+import { apiUrl } from "./api/baseUrl";
 
 const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL ?? "").trim();
 const supabasePublishableKey = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "").trim();
@@ -67,8 +68,23 @@ export async function signOut(): Promise<void> {
   if (error) throw error;
 }
 
-export async function signInReviewAccount(email: string, password: string): Promise<void> {
-  const { error } = await getSupabase().auth.signInWithPassword({ email, password });
+export async function signInReviewAccount(username: string, password: string): Promise<void> {
+  if (username.includes("@")) {
+    const { error } = await getSupabase().auth.signInWithPassword({ email: username, password });
+    if (error) throw new Error("Review sign-in failed");
+    return;
+  }
+  const response = await fetch(apiUrl("/api/auth/review-login"), {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }), cache: "no-store",
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!response.ok) throw new Error("Review sign-in failed");
+  const tokens: unknown = await response.json();
+  if (!tokens || typeof tokens !== "object" || !("access_token" in tokens) || !("refresh_token" in tokens)
+    || typeof tokens.access_token !== "string" || !tokens.access_token
+    || typeof tokens.refresh_token !== "string" || !tokens.refresh_token) throw new Error("Review sign-in failed");
+  const { error } = await getSupabase().auth.setSession({ access_token: tokens.access_token, refresh_token: tokens.refresh_token });
   if (error) throw new Error("Review sign-in failed");
 }
 

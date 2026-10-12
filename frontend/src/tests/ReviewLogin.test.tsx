@@ -9,12 +9,12 @@ it("submits only entered credentials and prevents a duplicate pending request", 
   let resolve!: () => void;
   login.mockReturnValue(new Promise<void>(done => { resolve = done; }));
   render(<ReviewLogin />);
-  fireEvent.change(screen.getByLabelText("Email"), { target: { value: "review@example.com" } });
+  fireEvent.change(screen.getByLabelText("Username or email"), { target: { value: "serbotalkreview" } });
   fireEvent.change(screen.getByLabelText("Password"), { target: { value: "synthetic-password" } });
   fireEvent.submit(screen.getByRole("button", { name: "Sign in" }).closest("form")!);
   expect(screen.getByRole("button", { name: "Signing in…" })).toBeDisabled();
   fireEvent.submit(screen.getByRole("button", { name: "Signing in…" }).closest("form")!);
-  expect(login).toHaveBeenCalledExactlyOnceWith("review@example.com", "synthetic-password");
+  expect(login).toHaveBeenCalledExactlyOnceWith("serbotalkreview", "synthetic-password");
   await act(async () => { resolve(); });
   expect(screen.getByLabelText("Password")).toHaveValue("");
 });
@@ -22,7 +22,7 @@ it("submits only entered credentials and prevents a duplicate pending request", 
 it("clears passwords and hides provider details on failure", async () => {
   login.mockRejectedValue(new Error("private-provider-details"));
   render(<ReviewLogin />);
-  fireEvent.change(screen.getByLabelText("Email"), { target: { value: "review@example.com" } });
+  fireEvent.change(screen.getByLabelText("Username or email"), { target: { value: "serbotalkreview" } });
   fireEvent.change(screen.getByLabelText("Password"), { target: { value: "synthetic-password" } });
   fireEvent.submit(screen.getByRole("button", { name: "Sign in" }).closest("form")!);
   expect(await screen.findByRole("alert")).not.toHaveTextContent("private-provider-details");

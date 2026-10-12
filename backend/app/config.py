@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     auto_next: bool = True
     supabase_url: str | None = None
     supabase_publishable_key: str | None = None
+    review_login_username: str = "serbotalkreview"
+    review_login_email: str | None = None
     admin_emails: str = "suezergut@gmail.com"
     debug_admin_email: str = "suezergut@gmail.com"
     free_daily_phrase_limit: int = Field(default=10, ge=1, le=1000)

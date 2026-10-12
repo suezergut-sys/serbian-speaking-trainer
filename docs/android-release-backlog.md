@@ -1,5 +1,12 @@
 # Android-релизы и проверки
 
+## 12.10.2026 — выпуск 1.30
+
+- [x] Владелец подтвердил 1.30/code40 и публикацию web/Android. Alias-вход и весь frontend после 1.28 включены в исходный код; предыдущая 1.29 была проверочной локальной сборкой. [Доказательства](android-1.30-release.md).
+- [x] Production cloud sync/build и проверки API/metadata/подписи/7 packaged assets; Downloads готов. 278 backend/scripts и 200 frontend tests, Node guards 5, lint/typecheck/build прошли.
+- [ ] Публикация Vercel/GitHub release.
+- [ ] Телефонная приёмка и скриншоты.
+
 ## 12.10.2026 — требования Google Play к доступу и удалению
 
 - [x] В общем frontend подготовлены email/password вход ревьюера через Supabase и ссылка из настроек на публичную инструкцию удаления аккаунта; 196 tests, lint/typecheck/build. [Статус](google-play-setup-2026-10-12.md).

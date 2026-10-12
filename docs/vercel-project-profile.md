@@ -31,3 +31,5 @@
 - Scheduled jobs: нет
 - Required environment variable names: `VITE_API_BASE_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`
 - Post-deploy smoke test: кнопка входа Google открывает Supabase OAuth; после входа загружаются темы и профиль
+
+12.10.2026: для backend alias-входа требуется REVIEW_LOGIN_EMAIL (sensitive production env), REVIEW_LOGIN_USERNAME по умолчанию serbotalkreview. Frontend не получает соответствующий email как build variable.

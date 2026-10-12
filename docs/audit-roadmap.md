@@ -1,5 +1,12 @@
 # План улучшений по аудиту SerboTalk
 
+## 12.10.2026 — логин ревьюера и выпуск 1.30
+
+- [x] Владелец подтвердил web/Android публикацию 1.30/code40. Backend alias без email в bundle, стандартная сессия Supabase и совместимость email-входа реализованы; 15 backend и 8 targeted frontend tests прошли. [Доказательства](android-1.30-release.md).
+- [x] Полный gate: backend/scripts 278 passed / 8 skips, Node guards 5, frontend 200 / 19 suites, lint/typecheck/build. Cloud APK 1.30/code40, API/подпись/metadata/7 assets и Downloads проверены; [доказательства](android-1.30-release.md).
+- [ ] Merge, Vercel production и GitHub release.
+- [ ] Реальный alias-вход, физическая приёмка и скриншоты. Google Play и P0/P1/P2 целиком не закрыты.
+
 ## 12.10.2026 — подготовка Google Play
 
 - [x] В Console сохранены 7 из 11 пунктов настройки, русский текст карточки, иконка 512×512 и баннер 1024×500; [доказательства и ограничения](google-play-setup-2026-10-12.md).
