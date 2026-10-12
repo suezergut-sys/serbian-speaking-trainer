@@ -40,6 +40,28 @@ def alembic_revision(engine) -> str:
         return connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
 
 
+def current_revision() -> str:
+    from alembic.script import ScriptDirectory
+    from app.db.cli import alembic_config
+    return ScriptDirectory.from_config(alembic_config()).get_current_head()
+
+
+def test_pre_audio_schema_upgrades_preserving_debug_history(tmp_path):
+    engine = create_engine(f"sqlite:///{(tmp_path / 'pre-audio.sqlite3').as_posix()}")
+    try:
+        _alembic(engine, "upgrade", "f53c9d123e44")
+        with engine.begin() as connection:
+            connection.execute(text("INSERT INTO model_debug_settings (user_id,enabled,generation) "
+                "VALUES ('00000000-0000-0000-0000-000000000001',1,3)"))
+        bootstrap_testlab_database(engine)
+        assert alembic_revision(engine) == current_revision()
+        with engine.connect() as connection:
+            assert connection.execute(text("SELECT generation FROM model_debug_settings")).scalar_one() == 3
+            assert "audio_payload" in {c["name"] for c in inspect(connection).get_columns("model_debug_logs")}
+    finally:
+        engine.dispose()
+
+
 def test_password_auth_returns_supabase_session_and_refresh_rotates() -> None:
     with TestClient(create_auth_app(credentials())) as client:
         session = client.post("/auth/v1/token?grant_type=password", json={"email": EMAIL, "password": credentials().password})
@@ -120,7 +142,7 @@ def test_fresh_testlab_database_is_initialized_by_alembic(tmp_path) -> None:
             }
         from alembic.script import ScriptDirectory
         from app.db.cli import alembic_config
-        assert alembic_revision(engine) == ScriptDirectory.from_config(alembic_config()).get_current_head()
+        assert alembic_revision(engine) == current_revision()
     finally:
         engine.dispose()
 
@@ -136,7 +158,7 @@ def test_current_unstamped_create_all_shape_is_stamped_without_rebuilding(tmp_pa
                 "VALUES ('history-user', 'history@example.invalid', 'user', 'free', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
             ))
         bootstrap_testlab_database(engine)
-        assert alembic_revision(engine) == "f53c9d123e44"
+        assert alembic_revision(engine) == current_revision()
         with engine.connect() as connection:
             assert connection.execute(text("SELECT email FROM users WHERE id='history-user'")).scalar_one() == "history@example.invalid"
     finally:
@@ -153,7 +175,7 @@ def test_predecessor_testlab_schema_upgrades_and_preserves_history(tmp_path) -> 
                 "VALUES ('00000000-0000-0000-0000-000000000001', 'request-preserved', 'hash-preserved')"
             ))
         bootstrap_testlab_database(engine)
-        assert alembic_revision(engine) == "f53c9d123e44"
+        assert alembic_revision(engine) == current_revision()
         with engine.connect() as connection:
             row = connection.execute(text(
                 "SELECT client_request_id, payload_hash, fencing_token FROM attempt_requests "
@@ -264,7 +286,7 @@ def test_pre_preference_schema_upgrades_preserving_users(tmp_path) -> None:
         with engine.connect() as connection:
             users_before = connection.execute(text("SELECT id, email FROM users")).all()
         bootstrap_testlab_database(engine)
-        assert alembic_revision(engine) == "f53c9d123e44"
+        assert alembic_revision(engine) == current_revision()
         with engine.connect() as connection:
             assert connection.execute(text("SELECT id, email FROM users")).all() == users_before
             assert all(not row[0] for row in connection.execute(text("SELECT assistance_enabled FROM users")))

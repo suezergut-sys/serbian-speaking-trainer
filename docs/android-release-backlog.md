@@ -399,3 +399,9 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 - [x] Android startup/pager, 17 metadata/environment tests, API/signature/dist/production assets и Downloads проверены; [доказательства](android-1.26-release.md). Предшествующие записи «sync/APK не выполнялись» отражают состояние на момент соответствующей доработки; перенос закрыт этим выпуском.
 - [x] [GitHub release 1.26](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.26), tag/target и server digest/size подтверждены.
 - [ ] Физическая приёмка всех перечисленных изменений и реальная речь остаются открытыми.
+
+## 12.10.2026 — уведомление о временном аудио отладки
+
+- [x] Общие настройки/privacy обновлены: разрешённый debug-admin может сохранять собственное аудио; последние 20 записей/7 дней, очистка при обращении/выключении. [Статус](debug-audio-checkpoint-2026-10-12.md).
+- [ ] Перенос текстов в следующий APK после отдельной команды; текущий APK 1.28 не менялся.
+- [ ] Физическая приёмка.

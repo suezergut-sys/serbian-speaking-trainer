@@ -1,5 +1,14 @@
 # План улучшений по аудиту SerboTalk
 
+## 12.10.2026 — аудио отладки
+
+- [x] Сравнены последние три записи; настройки одинаковы, посторонние буквы в первых двух и допустимая сербская кириллица в третьей. Реализовано временное owner-scoped хранение аудио только debug-admin с лимитами, очисткой и generation fence; [доказательства](debug-audio-checkpoint-2026-10-12.md).
+- [x] Backend/scripts 263 passed / 8 skips, Node guards 5 passed, frontend 192 passed / 17 suites; [доказательства](debug-audio-checkpoint-2026-10-12.md).
+- [ ] Lint/typecheck/production build.
+- [ ] Миграция и публикация backend/web.
+- [ ] Android-релиз и физическая/реальная речевая приёмка отдельно.
+
+
 ## 11.10.2026 — неактивная премиум-карточка фразы и выпуск
 
 - [x] Обе мобильные карточки отключены и отмечены PremiumBadge; mobile-форма удалена. Targeted 2 component tests и полный frontend suite 192 tests / 17 suites прошли; 8 Chrome mobile/native-layout сценариев прошли. [Доказательства](premium-phrase-checkpoint-2026-10-11.md).

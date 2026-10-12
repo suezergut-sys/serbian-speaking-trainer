@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from hashlib import sha256
 from typing import Protocol
 
 from openai import OpenAI, APIConnectionError, APITimeoutError, APIStatusError
@@ -65,7 +66,9 @@ class OpenAITranscriptionProvider:
                     self.settings.openai_transcribe_model or "", {
                         "model": self.settings.openai_transcribe_model, **language_options, "prompt": prompt,
                         "response_format": "json", "content_type": content_type, "audio_bytes": len(audio),
+                        "audio_sha256": sha256(audio).hexdigest(),
                     }, self.settings.openai_api_key) as debug, measure_ai_call():
+                    debug.attach_audio(audio, content_type)
                     create = (self.client.audio.transcriptions.with_raw_response.create
                               if debug.enabled and isinstance(self.client, OpenAI) else self.client.audio.transcriptions.create)
                     response = create(

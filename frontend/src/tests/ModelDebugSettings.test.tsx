@@ -23,7 +23,9 @@ describe("administrator model debug settings", () => {
     fireEvent.click(toggle);
     await waitFor(() => expect(toggle).not.toBeChecked());
     expect(updateModelDebug).toHaveBeenLastCalledWith(false, expect.any(AbortSignal));
-    expect(screen.getByText(/При выключении все накопленные логи/)).toBeInTheDocument();
+    expect(screen.getByText(/При выключении все логи и аудио/)).toBeInTheDocument();
+    expect(screen.getByText(/последние 20 аудиозаписей/)).toBeInTheDocument();
+    expect(screen.getByText(/аудио для диагностики распознавания/)).toBeInTheDocument();
   });
 
   it("does not change confirmed state on failed disable and permits retry", async () => {

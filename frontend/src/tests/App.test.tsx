@@ -107,7 +107,8 @@ describe("App", () => {
     render(<App />);
 
     expect(screen.getByRole("heading", { name: "Политика конфиденциальности" })).toBeInTheDocument();
-    expect(screen.getByText(/Записи голоса не сохраняются/)).toBeInTheDocument();
+    expect(screen.getByText(/Обычные записи голоса не сохраняются/)).toBeInTheDocument();
+    expect(screen.getByText(/администратор может включить сохранение собственного аудио/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Вернуться в SerboTalk/ })).toHaveAttribute("href", "/");
   });
 

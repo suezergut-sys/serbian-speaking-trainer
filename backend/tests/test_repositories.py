@@ -71,10 +71,14 @@ def test_training_graph_crud_and_cascade(db_session: Session) -> None:
     assert Repository(db_session, ErrorEvent).get(error.id) is None
 
 
-def test_schema_has_no_audio_storage_columns(db_session: Session) -> None:
+def test_schema_limits_audio_storage_to_private_debug_exception(db_session: Session) -> None:
     forbidden_fragments = {"audio", "blob", "recording", "file_path"}
     inspector = inspect(db_session.bind)
 
     for table_name in inspector.get_table_names():
         column_names = {column["name"].lower() for column in inspector.get_columns(table_name)}
+        if table_name == "model_debug_logs":
+            expected = {"audio_payload", "audio_content_type", "audio_expires_at"}
+            assert expected <= column_names
+            column_names -= expected
         assert all(fragment not in name for name in column_names for fragment in forbidden_fragments)
