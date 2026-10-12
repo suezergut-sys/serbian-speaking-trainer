@@ -10,7 +10,8 @@
 - [x] pnpm android:cloud-apk BUILD SUCCESSFUL / 109 tasks. Package com.serbiantalk.trainer, 1.30/code40, minSDK24/targetSDK36. 7 dist files совпали побайтно с packaged assets; production API https://serbian-speaking-trainer-api.vercel.app, HTTPS WebView, alias endpoint и deletion route присутствуют. Корпоративный email и secret key отсутствуют в bundle.
 - [x] apksigner verify: SHA-256 сертификата 1329c4638a57777b90429bf0eff9df67c2865bf95ebb8b97f45ef4fad77eadd0 совпадает с 1.28/1.29. APK 4 434 718 bytes, SHA-256 553c1291979ec26b5982d11dd92001b76d44467b7b7672b6ea077a8aa786ee93; копии artifacts и Downloads совпадают.
 - [x] GitHub release v1.30 опубликован на том же SHA: имя, server digest SHA-256 и размер asset совпадают с APK; tag/target и Downloads проверены.
-- [ ] Реальный вход по alias с паролем, который вводит владелец; физическая приёмка голоса и страницы удаления.
+- [x] Владелец ввёл прежний пароль только на production-сайте и подтвердил успешный вход по serbotalkreview. После входа браузер загрузил темы/практику и настройки v.1.30, полный пользовательский доступ без лимита и без admin/debug controls.
+- [ ] Физическая приёмка APK: установка поверх предыдущего, alias-вход, голосовой ответ и страница удаления.
 - [ ] Скриншоты телефона и завершение Google Play / release AAB / закрытого теста.
 
 Локальный APK: C:/Users/MSumin/Downloads/SerboTalk-andorid16-1.30.apk. Игнорируемые evidence: artifacts/android-1.30-quality.log, build.log, badging.txt, signature.txt, verification.json. APK в Git не входит.

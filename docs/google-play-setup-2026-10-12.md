@@ -40,3 +40,5 @@
 ## 12.10.2026 — обновление на 1.30
 
 Web и APK 1.30/code40 опубликованы через PR #92, промежуточная 1.29 заменена. Логин для поля Console: serbotalkreview; пароль прежний выделенного аккаунта. Инструкция входа: expand Review access, enter the username and password provided, tap Sign in; Google sign-in is not required. Реальный alias-вход требует ручного ввода пароля владельцем; сохранение новых credentials в Console пока не подтверждено. [Проверки выпуска](android-1.30-release.md).
+
+Реальный production вход по serbotalkreview подтверждён владельцем; темы и настройки v.1.30 проверены после входа. Сохранение новых credentials в Console и физическая приёмка APK пока отдельно открыты.
