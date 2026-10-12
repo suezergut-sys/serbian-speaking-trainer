@@ -34,6 +34,7 @@ export function SettingsView({ alphabet, onAlphabetChange, account, onSignOut, a
         <span className="profile__copy"><strong>{account.display_name || account.email}</strong><small>{account.daily_usage.limit === null ? `${account.daily_usage.used} фраз · без лимита` : `${account.daily_usage.remaining} из ${account.daily_usage.limit} фраз осталось`}</small></span>
       </div>
       <button className="sign-out-button" type="button" onClick={onSignOut}>Выйти</button>
+      <a className="account-deletion-link" href="/delete-account">Запросить удаление аккаунта и данных</a>
     </section>}
 
   </main>;

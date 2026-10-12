@@ -112,6 +112,14 @@ describe("App", () => {
     expect(screen.getByRole("link", { name: /Вернуться в SerboTalk/ })).toHaveAttribute("href", "/");
   });
 
+  it("renders the public deletion request without signing in", () => {
+    window.history.replaceState({}, "", "/delete-account");
+    render(<App />);
+    expect(screen.getByRole("heading", { name: "Удаление аккаунта SerboTalk" })).toBeInTheDocument();
+    expect(screen.getByText(/7 календарных дней/)).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "suezergut@gmail.com" })[0]).toHaveAttribute("href", expect.stringContaining("mailto:suezergut@gmail.com"));
+  });
+
   function mockApi(omitLearnerUpdates = false, initialReviewPhrases: Array<Record<string, unknown>> = [], role = "user", assistanceEnabled = false) {
     let reviewCount = initialReviewPhrases.length;
     return vi.fn().mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
