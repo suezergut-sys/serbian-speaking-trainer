@@ -67,6 +67,11 @@ export async function signOut(): Promise<void> {
   if (error) throw error;
 }
 
+export async function signInReviewAccount(email: string, password: string): Promise<void> {
+  const { error } = await getSupabase().auth.signInWithPassword({ email, password });
+  if (error) throw new Error("Review sign-in failed");
+}
+
 export async function authenticatedFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
   const startedAt = performance.now();
   const { data, error } = await getSupabase().auth.getSession();

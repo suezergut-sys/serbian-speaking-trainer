@@ -18,6 +18,16 @@
 body { margin: 0; min-width: 320px; min-height: 100vh; background: #020914; }
 button, input, textarea, select { color: inherit; font: inherit; }
 button { cursor: pointer; background: var(--panel); }
+.review-login { margin-top: 1rem; text-align: left; color: var(--muted); font-size: .8rem; }
+.review-login summary { cursor: pointer; color: var(--blue-bright); }
+.review-login form, .review-login label { display: grid; gap: .6rem; }
+.review-login form { margin-top: .8rem; }
+.review-login input { min-width: 0; width: 100%; padding: .65rem; background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 8px; }
+.review-login input:focus { outline: 2px solid var(--blue); }
+.review-login button { padding: .65rem; background: var(--panel); color: var(--text); border: 1px solid var(--blue); border-radius: 8px; }
+.review-login input:disabled, .review-login button:disabled { background: var(--panel); color: var(--muted); cursor: wait; opacity: .7; }
+.review-login [role="alert"] { color: #ff9eaa; }
+.account-deletion-link { display: block; margin-top: 1rem; color: var(--blue-bright); font-size: .8rem; }
 .icon { display: block; flex: 0 0 auto; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
@@ -392,7 +402,7 @@ button { cursor: pointer; background: var(--panel); }
   display: grid;
   place-items: center;
   padding: 24px;
-  background: radial-gradient(circle at top, #eef8f2, #f7f9f7 55%);
+  background: radial-gradient(circle at top, #102b4d, #020914 70%);
 }
 
 .auth-card {
@@ -451,6 +461,7 @@ button { cursor: pointer; background: var(--panel); }
 }
 .auth-legal {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   gap: 1rem;
   margin-top: 1.25rem;
@@ -472,7 +483,10 @@ button { cursor: pointer; background: var(--panel); }
 .legal-card h1 { margin: 1.25rem 0 0.25rem; }
 .legal-card h2 { margin: 1.75rem 0 0.5rem; font-size: 1.15rem; }
 .legal-card p { line-height: 1.65; }
-.legal-updated { color: var(--text-muted, #667085); }
+.legal-updated { color: var(--muted); }
+.legal-page { background: #020914; color: var(--text); }
+.legal-card a, .auth-legal a { color: var(--blue-bright); }
+.legal-card li { line-height: 1.65; margin-bottom: .65rem; }
 .legal-back { display: inline-block; }
 
 /* Native Android shell: three horizontal panels with independent vertical scroll. */

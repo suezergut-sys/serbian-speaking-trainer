@@ -11,6 +11,7 @@ import { fetchCurrentUser } from "./api/users";
 import { initializeAuth, isAuthConfigured, onAuthStateChange, signInWithGoogle, signOut } from "./auth";
 import type { CurrentUser } from "./types/auth";
 import { LegalPage } from "./LegalPage";
+import { ReviewLogin } from "./ReviewLogin";
 import { assistedText } from "./transcriptionAssistance";
 import { transcriptionErrorMessage } from "./transcriptionError";
 import { TranscriptionAssistanceView, type AssistanceDraft } from "./TranscriptionAssistanceView";
@@ -112,6 +113,7 @@ function Icon({ name, size = 20 }: { name: string; size?: number }) {
 export default function App() {
   if (window.location.pathname === "/privacy") return <LegalPage kind="privacy" />;
   if (window.location.pathname === "/terms") return <LegalPage kind="terms" />;
+  if (window.location.pathname === "/delete-account") return <LegalPage kind="delete-account" />;
   return <AuthenticatedApp />;
 }
 
@@ -160,7 +162,7 @@ function AuthenticatedApp() {
     <p>Авторизация и загрузка...</p>
   </div></main>;
   if (!isAuthConfigured()) return <main className="auth-page"><div className="auth-card panel"><h1>Нужна настройка входа</h1><p>Добавьте VITE_SUPABASE_URL и VITE_SUPABASE_PUBLISHABLE_KEY в окружение frontend.</p></div></main>;
-  if (!hasSession || !account) return <main className="auth-page"><div className="auth-card panel"><span className="brand__mark"><Icon name="message" size={34}/></span><h1>Добро пожаловать в SerboTalk</h1><p>Войдите или зарегистрируйтесь с Google, чтобы сохранять свой прогресс на всех устройствах.</p><button className="google-sign-in" type="button" onClick={() => void login()}>Войти через Google</button>{authError && <p className="error" role="alert">{authError}</p>}<nav className="auth-legal" aria-label="Правовая информация"><a href="/privacy">Конфиденциальность</a><a href="/terms">Условия</a></nav></div></main>;
+  if (!hasSession || !account) return <main className="auth-page"><div className="auth-card panel"><span className="brand__mark"><Icon name="message" size={34}/></span><h1>Добро пожаловать в SerboTalk</h1><p>Войдите или зарегистрируйтесь с Google, чтобы сохранять свой прогресс на всех устройствах.</p><button className="google-sign-in" type="button" onClick={() => void login()}>Войти через Google</button><ReviewLogin />{authError && <p className="error" role="alert">{authError}</p>}<nav className="auth-legal" aria-label="Правовая информация"><a href="/privacy">Конфиденциальность</a><a href="/terms">Условия</a><a href="/delete-account">Удаление аккаунта</a></nav></div></main>;
   return <TrainerApp key={account.id} account={account} onAccountChange={setAccount} onSignOut={() => void signOut()} />;
 }
 
