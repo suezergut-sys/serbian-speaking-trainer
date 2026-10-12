@@ -1,12 +1,20 @@
 # План улучшений по аудиту SerboTalk
 
+## 12.10.2026 — логин ревьюера и выпуск 1.30
+
+- [x] Владелец подтвердил web/Android публикацию 1.30/code40. Backend alias без email в bundle, стандартная сессия Supabase и совместимость email-входа реализованы; 15 backend и 8 targeted frontend tests прошли. [Доказательства](android-1.30-release.md).
+- [x] Полный gate: backend/scripts 278 passed / 8 skips, Node guards 5, frontend 200 / 19 suites, lint/typecheck/build. Cloud APK 1.30/code40, API/подпись/metadata/7 assets и Downloads проверены; [доказательства](android-1.30-release.md).
+- [ ] Merge, Vercel production и GitHub release.
+- [ ] Реальный alias-вход, физическая приёмка и скриншоты. Google Play и P0/P1/P2 целиком не закрыты.
+
 ## 12.10.2026 — подготовка Google Play
 
 - [x] В Console сохранены 7 из 11 пунктов настройки, русский текст карточки, иконка 512×512 и баннер 1024×500; [доказательства и ограничения](google-play-setup-2026-10-12.md).
 - [x] Реализованы обычный Supabase email/password вход ревьюера, публичная инструкция удаления и ссылка из настроек; frontend 196 tests / 18 suites, lint/typecheck/build и diff check прошли.
-- [ ] Web-публикация и реальный вход отдельного тестового аккаунта с полным пользовательским доступом.
+- [x] PR #91 merged, web dpl_EYLugi2rYY7sZxiNwdy6anmugjh6 Ready / production, main SHA 941bf5b/alias подтверждены. Публичная страница/ссылка из настроек и реальный email/password вход проверены; тестовый аккаунт user/premium без лимита и admin-доступа.
 - [ ] Закончить доступ, аудиторию 18+, Data Safety и карточку со скриншотами; публикация закрытого теста отдельно.
-- [ ] Android sync/сборка и ручная приёмка по отдельной команде; 1.28/code38 не менялись.
+- [x] По отдельному поручению владельца собран Android 1.29/code39; 19 metadata/environment/settings tests, 5 Node guards, APK API/подпись/assets прошли. [Доказательства](android-1.29-release.md).
+- [ ] Публикация Android 1.29, физическая приёмка и скриншоты с телефона; P0/P1/P2 целиком не закрыты.
 
 ## 12.10.2026 — аудио отладки
 

@@ -1,6 +1,16 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, SecretStr
+
+
+class ReviewLoginRequest(BaseModel):
+    username: str
+    password: SecretStr
+
+
+class ReviewLoginResponse(BaseModel):
+    access_token: str = Field(min_length=1)
+    refresh_token: str = Field(min_length=1)
 
 
 class SupabaseUserPayload(BaseModel):

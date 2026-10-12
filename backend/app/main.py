@@ -2,6 +2,9 @@ import logging
 from time import perf_counter
 
 from fastapi import Depends, FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.responses import JSONResponse
 from app.api.dependencies import model_debug_context
 from app.api.model_debug import router as model_debug_router
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,6 +26,15 @@ performance_logger = logging.getLogger("app.performance")
 performance_logger.setLevel(logging.INFO)
 
 app = FastAPI(title="Serbian Speaking Trainer API", version="1.4.0")
+
+
+@app.exception_handler(RequestValidationError)
+async def safe_review_login_validation(request: Request, exc: RequestValidationError):
+    if request.url.path == "/api/auth/review-login":
+        # FastAPI's default validation response includes input values.
+        return JSONResponse({"detail": "Invalid sign-in request"}, status_code=422, headers={"Cache-Control": "no-store"})
+    return await request_validation_exception_handler(request, exc)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost", "https://localhost", "capacitor://localhost"],
