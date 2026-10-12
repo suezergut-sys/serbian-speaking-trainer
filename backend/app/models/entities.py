@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, Float, ForeignKey, Index, Integer, JSON, String, Text, UniqueConstraint, false
+from sqlalchemy import Boolean, CheckConstraint, DateTime, Float, ForeignKey, Index, Integer, JSON, LargeBinary, String, Text, UniqueConstraint, false
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -39,6 +39,9 @@ class ModelDebugLog(Base):
     request_json: Mapped[dict[str, Any]] = mapped_column(JSON)
     response_json: Mapped[dict[str, Any] | None] = mapped_column(JSON)
     error_json: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    audio_payload: Mapped[bytes | None] = mapped_column(LargeBinary, deferred=True)
+    audio_content_type: Mapped[str | None] = mapped_column(String(100))
+    audio_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class TrainingSession(Base):

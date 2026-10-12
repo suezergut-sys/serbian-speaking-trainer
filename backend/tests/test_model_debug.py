@@ -67,7 +67,8 @@ def test_late_response_cannot_restore_logs_after_disable(debug_engine, reenable)
     mode(debug_engine, True)
     token = debug_context.set(DebugContext("maxim", debug_engine))
     try:
-        with capture_model_call("pending", "env-model", {"input": "old"}) as capture:
+        with capture_model_call("audio.transcriptions", "env-model", {"input": "old"}) as capture:
+            capture.attach_audio(b"synthetic", "audio/webm")
             mode(debug_engine, False)
             if reenable:
                 mode(debug_engine, True)
@@ -81,7 +82,7 @@ def test_late_response_cannot_restore_logs_after_disable(debug_engine, reenable)
         debug_context.reset(token)
 
 
-def test_stt_retries_and_error_responses_logged_without_audio(debug_engine):
+def test_stt_retries_store_audio_once_outside_json(debug_engine):
     mode(debug_engine, True)
     token = debug_context.set(DebugContext("maxim", debug_engine))
     provider = OpenAITranscriptionProvider(Settings(openai_api_key="private-key", openai_transcribe_model="env-stt"))
@@ -96,10 +97,16 @@ def test_stt_retries_and_error_responses_logged_without_audio(debug_engine):
         serialized = json.dumps([r.request_json for r in rows])
         assert "never-save-this" not in serialized and "private-key" not in serialized
         assert rows[0].request_json["audio_bytes"] == 15
+        assert rows[0].request_json["audio_sha256"] == rows[1].request_json["audio_sha256"]
+        with Session(debug_engine) as db:
+            assert db.get(ModelDebugLog, rows[0].id).audio_payload == b"never-save-this"
+            assert db.get(ModelDebugLog, rows[1].id).audio_payload is None
         provider._client.audio.transcriptions.create = Mock(side_effect=RuntimeError("private-key unsafe message"))
         with pytest.raises(TranscriptionServiceError):
             provider.transcribe(audio=b"never-save-this", filename="speech.webm", content_type="audio/webm")
         assert logs(debug_engine)[-1].error_json == {"type": "RuntimeError", "status_code": None, "body": None}
+        with Session(debug_engine) as db:
+            assert db.get(ModelDebugLog, logs(debug_engine)[-1].id).audio_payload == b"never-save-this"
     finally:
         debug_context.reset(token)
 
@@ -154,6 +161,10 @@ def test_migration_upgrade_repeat_and_downgrade(tmp_path):
             DebugModeService(db, "maxim").change(True)
         with engine.begin() as connection:
             config.attributes["connection"] = connection
+            command.downgrade(config, "f53c9d123e44")
+            from sqlalchemy import inspect
+            assert "audio_payload" not in {column["name"] for column in inspect(connection).get_columns("model_debug_logs")}
+            command.upgrade(config, "head")
             command.downgrade(config, "f42b8c012d33")
         with Session(engine) as db:
             assert db.get(User, "maxim") is not None
@@ -177,11 +188,16 @@ def test_api_context_captures_only_debug_administrator_and_disable_clears(api_cl
     response = api_client.post("/api/transcriptions", data={"exercise_id": exercise}, files={"audio": ("speech.webm", b"synthetic", "audio/webm")})
     assert response.status_code == 200
     assert len(list(db_session.scalars(select(ModelDebugLog)))) == 1
+    row = db_session.scalar(select(ModelDebugLog))
+    download = api_client.get(f"/api/admin/model-debug/logs/{row.id}/audio")
+    assert download.status_code == 200 and download.content == b"synthetic"
+    assert download.headers["cache-control"] == "no-store"
     assert debug_context.get() is None
     other = User(id="other", email="other@example.com", role="user")
     db_session.add(other)
     db_session.commit()
     app.dependency_overrides[get_current_user] = lambda: other
+    assert api_client.get(f"/api/admin/model-debug/logs/{row.id}/audio").status_code == 403
     other_exercise = _create_exercise(api_client)
     response = api_client.post("/api/transcriptions", data={"exercise_id": other_exercise}, files={"audio": ("speech.webm", b"synthetic", "audio/webm")})
     assert response.status_code == 200
@@ -189,6 +205,7 @@ def test_api_context_captures_only_debug_administrator_and_disable_clears(api_cl
     app.dependency_overrides[get_current_user] = lambda: user
     assert api_client.patch("/api/admin/model-debug", json={"enabled": False}).status_code == 200
     assert list(db_session.scalars(select(ModelDebugLog))) == []
+    assert api_client.get(f"/api/admin/model-debug/logs/{row.id}/audio").status_code == 404
 
 
 def test_no_auth_cannot_read_or_change_mode(api_client):
@@ -197,6 +214,7 @@ def test_no_auth_cannot_read_or_change_mode(api_client):
     app.dependency_overrides.pop(get_current_user)
     assert api_client.get("/api/admin/model-debug").status_code == 401
     assert api_client.patch("/api/admin/model-debug", json={"enabled": True}).status_code == 401
+    assert api_client.get("/api/admin/model-debug/logs/example/audio").status_code == 401
 
 
 def test_repeated_enable_is_idempotent_for_inflight_call(debug_engine):
@@ -207,6 +225,49 @@ def test_repeated_enable_is_idempotent_for_inflight_call(debug_engine):
             mode(debug_engine, True)
             capture.received(SimpleNamespace(text="received"))
         assert len(logs(debug_engine)) == 1
+    finally:
+        debug_context.reset(token)
+
+
+def test_audio_retention_expiry_and_owner_scope(debug_engine):
+    from datetime import datetime, timedelta, timezone
+    from sqlalchemy import update
+    mode(debug_engine, True)
+    token = debug_context.set(DebugContext("maxim", debug_engine))
+    try:
+        for number in range(22):
+            with capture_model_call("audio.transcriptions", "env-model", {}) as capture:
+                capture.attach_audio(bytes([number]), "audio/webm")
+        with Session(debug_engine) as db:
+            rows = list(db.scalars(select(ModelDebugLog).order_by(ModelDebugLog.started_at)))
+            assert sum(row.audio_payload is not None for row in rows) == 20
+            assert rows[0].audio_payload is None
+            latest_id = rows[-1].id
+            assert DebugModeService(db, "another-owner").audio(latest_id) is None
+            assert DebugModeService(db, "maxim").audio(latest_id) == (bytes([21]), "audio/webm")
+            db.execute(update(ModelDebugLog).where(ModelDebugLog.id == latest_id).values(
+                audio_expires_at=datetime.now(timezone.utc) - timedelta(seconds=1)))
+            db.commit()
+            assert DebugModeService(db, "maxim").audio(latest_id) is None
+            db.expire_all()
+            assert db.get(ModelDebugLog, latest_id).audio_payload is None
+        mode(debug_engine, False)
+        assert logs(debug_engine) == []
+    finally:
+        debug_context.reset(token)
+
+
+@pytest.mark.parametrize("enabled,payload,kind", [(False, b"x", "audio/webm"),
+    (True, b"", "audio/webm"), (True, b"x" * 1_000_001, "audio/webm"), (True, b"x", "text/html")],
+    ids=["disabled", "empty", "oversized", "unsupported"])
+def test_audio_capture_rejects_disabled_empty_oversized_or_unsupported(debug_engine, enabled, payload, kind):
+    mode(debug_engine, enabled)
+    token = debug_context.set(DebugContext("maxim", debug_engine))
+    try:
+        with capture_model_call("audio.transcriptions", "env-model", {}) as capture:
+            capture.attach_audio(payload, kind)
+        with Session(debug_engine) as db:
+            assert all(row.audio_payload is None for row in db.scalars(select(ModelDebugLog)))
     finally:
         debug_context.reset(token)
 

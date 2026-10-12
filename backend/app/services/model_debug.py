@@ -1,8 +1,8 @@
-"""Opt-in, request-scoped diagnostics. Never accept an audio payload here."""
+"""Opt-in diagnostics; temporary audio is separate from redacted JSON logs."""
 from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from time import perf_counter
 from sqlalchemy import Engine
 from sqlalchemy.orm import Session
@@ -44,6 +44,8 @@ class DebugCapture:
         self.operation, self.model, self.secret = operation, model, secret
         self.response = None
         self.request = None
+        self.audio = None
+        self.audio_content_type = None
         if self.context:
             try:
                 with Session(self.context.engine) as db:
@@ -60,6 +62,12 @@ class DebugCapture:
     @property
     def enabled(self) -> bool:
         return self.generation is not None
+
+    def attach_audio(self, payload: bytes, content_type: str):
+        # Only the initial STT call stores bytes; retries use the same SHA-256.
+        if self.enabled and self.operation == "audio.transcriptions" and 0 < len(payload) <= 1_000_000:
+            if content_type in {"audio/webm", "audio/ogg", "audio/mp4", "audio/mpeg", "audio/wav", "audio/x-wav"}:
+                self.audio, self.audio_content_type = payload, content_type
 
     def raw_received(self, raw, *, text_request: bool = False):
         """Capture before SDK schema parsing, including invalid model output."""
@@ -113,10 +121,14 @@ class DebugCapture:
                 ModelDebugRepository(db, self.context.user_id).append(self.generation, dict(
                     operation=self.operation, model=self.model, started_at=self.started_at,
                     completed_at=completed_at, duration_ms=duration_ms,
-                    request_json=self.request, response_json=self.response, error_json=error_json))
+                    request_json=self.request, response_json=self.response, error_json=error_json,
+                    audio_payload=self.audio, audio_content_type=self.audio_content_type,
+                    audio_expires_at=completed_at + timedelta(days=7) if self.audio else None))
                 db.commit()
         except Exception:
             pass  # No payload/credentials in application logs even on DB failure.
+        finally:
+            self.audio = None
 
 
 @contextmanager

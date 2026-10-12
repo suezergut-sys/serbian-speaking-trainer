@@ -328,6 +328,9 @@ def bootstrap_testlab_database(engine: Engine) -> None:
 
     del _entities
     current = _metadata_shape(Base.metadata)
+    pre_audio = {name: set(columns) for name, columns in current.items()}
+    pre_audio["model_debug_logs"].difference_update({"audio_payload", "audio_content_type", "audio_expires_at"})
+    pre_audio = {name: frozenset(columns) for name, columns in pre_audio.items()}
     predecessor = {name: set(columns) for name, columns in current.items()}
     predecessor.pop("model_debug_settings", None)
     predecessor.pop("model_debug_logs", None)
@@ -355,6 +358,14 @@ def bootstrap_testlab_database(engine: Engine) -> None:
             _alembic(engine, "stamp", head)
         elif stamped_revision != head:
             raise RuntimeError("Refusing current-shaped testlab database with an unexpected Alembic revision")
+        return
+
+    if shape == pre_audio:
+        if stamped_revision is None:
+            _alembic(engine, "stamp", "f53c9d123e44")
+        elif stamped_revision != "f53c9d123e44":
+            raise RuntimeError("Refusing pre-audio schema with unexpected Alembic revision")
+        _alembic(engine, "upgrade", "head")
         return
 
     if shape == pre_debug:

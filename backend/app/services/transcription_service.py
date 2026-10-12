@@ -67,7 +67,7 @@ class TranscriptionService:
         if len(payload) > self.settings.max_audio_bytes:
             raise AudioTooLargeError()
 
-        # The bytes live only in this request and are never written to app storage.
+        # Normal requests keep bytes in memory; authorized debug capture may retain them temporarily.
         try:
             result = self.provider.transcribe(
                 audio=payload, filename=f"speech{extension}", content_type=content_type,
