@@ -4,7 +4,7 @@
 
 - [x] Сравнены последние три записи; настройки одинаковы, посторонние буквы в первых двух и допустимая сербская кириллица в третьей. Реализовано временное owner-scoped хранение аудио только debug-admin с лимитами, очисткой и generation fence; [доказательства](debug-audio-checkpoint-2026-10-12.md).
 - [x] Backend/scripts 263 passed / 8 skips, Node guards 5 passed, frontend 192 passed / 17 suites; [доказательства](debug-audio-checkpoint-2026-10-12.md).
-- [ ] Lint/typecheck/production build.
+- [x] Lint/typecheck/production build и diff check прошли.
 - [ ] Миграция и публикация backend/web.
 - [ ] Android-релиз и физическая/реальная речевая приёмка отдельно.
 

@@ -15,7 +15,7 @@
 - [x] Авторизованный owner-scoped GET `/api/admin/model-debug/logs/{log_id}/audio`, 404 для отсутствующего/чужого/просроченного ID, no-store/nosniff. Nullable deferred binary поле, Alembic upgrade/downgrade; существующие RLS/revoke наследуются без новых прав. Read-only production проверка: RLS=true, anon/authenticated SELECT=false.
 - [x] Тексты настройки и privacy обновлены; обычные записи не сохраняются. Ключи и аудио не попадают в JSON/консоль/Git; тесты используют только синтетические байты и mock SDK.
 - [x] Backend/scripts 263 passed / 8 штатных skips; Node Android guards 5 passed; frontend 192 passed / 17 suites с --maxWorkers=1, включая 7 debug UI tests. Тесты покрывают opt-in, owner/no-auth, initial/retry/error, off/on fence, 20-record cap, expiry, schema exception и повторный upgrade/downgrade. Фоновое чтение большого синтетического failure-log вызвало перегрузку первого UI запуска; команды чтения остановлены, повтор прошёл.
-- [ ] Lint/typecheck/production build — в работе.
+- [x] Lint/typecheck/production build прошли, frontend gate exit 0; git diff --check прошёл. Локальные логи: artifacts/debug-audio-final-quality.log (263 backend/scripts и 5 guards), artifacts/debug-audio-frontend-verified.log (192 UI tests, lint/build).
 - [ ] Применить миграцию и опубликовать backend/web: текущая production схема и runtime не изменены.
 - [ ] Следующий Android-релиз: перенос обновлённых текстов, отдельная команда/номер/сборка.
 - [ ] Проверить новую реальную запись и сравнить с transcript после публикации. Реальные AI-вызовы в этой задаче не выполнялись.
