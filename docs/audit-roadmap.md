@@ -577,7 +577,8 @@
 
 - [x] Локальная реализация: язык первым пунктом настроек, общие web/Android компоненты и отдельный английский каталог всех 160 готовых фраз с прежними сербскими канонами.
 - [x] Проверки: component tests, backend unit/integration, lint, typecheck, production build и browser smoke для desktop/mobile/Android-layout; [результаты и ограничения](english-localization-checkpoint-2026-10-14.md).
-- [ ] Публикация web/backend и проверка production.
+- [x] Публикация web/backend через PR #94; оба Vercel deployment READY/main на a1552f4, aliases/API/CORS/runtime logs проверены. [Доказательства](android-1.31-release.md).
+- [ ] Авторизованный production ru/en smoke после подтверждения Google владельцем.
 - [x] Android sync/build 1.31/code41 по отдельной команде и согласованию; metadata/API/signature/assets/Downloads проверены. [Доказательства](android-1.31-release.md).
-- [ ] Публикация GitHub APK release.
+- [x] GitHub APK release v1.31, tag/target/digest/size и Downloads проверены.
 - [ ] Приёмка владельцем и проверка на физическом Android-устройстве.

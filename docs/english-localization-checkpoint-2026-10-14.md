@@ -26,10 +26,11 @@
 
 ## Отдельные оставшиеся действия
 
-- [ ] Публикация web/backend и проверка production. PR/commit для этой задачи ещё не создан.
-- [ ] Android cap sync, production APK и выпуск по отдельной команде владельца с согласованием следующего номера. Текущая версия **1.30 / code40** сохранена.
+- [x] Публикация web/backend через PR #94 на runtime SHA a1552f4; Vercel READY/aliases/API/runtime logs проверены.
+- [ ] Авторизованная production-проверка требует подтверждения Google владельцем.
+- [x] По отдельной команде владельца и согласованию номера выпущен production APK **1.31/code41**. Подпись/API/assets/metadata/tag/digest/size проверены; [доказательства](android-1.31-release.md).
 - [ ] Физическая Android-приёмка и приёмка владельцем. Browser-проверка Android-layout не заменяет проверку APK на телефоне.
 
 ## 14.10.2026 — подготовка выпуска 1.31
 
-Владелец поручил публикацию web/backend и новый APK, затем отдельно согласовал 1.31/code41. Production Android build → cap sync → Gradle выполняется; полные web/backend gates прошли. Последующий статус публикации и APK: [android-1.31-release.md](android-1.31-release.md).
+Владелец поручил публикацию web/backend и новый APK, затем отдельно согласовал 1.31/code41. Production Android build → cap sync → Gradle, публикация Vercel и GitHub APK завершены; полные web/backend gates прошли. Последующий статус публикации и APK: [android-1.31-release.md](android-1.31-release.md).
