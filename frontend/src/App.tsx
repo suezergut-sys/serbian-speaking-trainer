@@ -21,6 +21,7 @@ import { useMobileLayout } from "./useMobileLayout";
 import { SettingsView } from "./SettingsView";
 import { PremiumBadge } from "./PremiumBadge";
 import { WordHintToken } from "./WordHintToken";
+import { isSourceWord, splitSourcePhrase } from "./sourceWords";
 import { hasUnexpectedLetterScript, displaySerbian, displaySerbianInRussianText, readSerbianAlphabet, saveSerbianAlphabet, toSerbianLatin, type SerbianAlphabet } from "./serbianScript";
 import { AnswerResult } from "./AnswerResult";
 import { finishUiTimingWhenVisible, startUiTiming } from "./performance";
@@ -753,13 +754,13 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     if (topics.find((topic) => topic.id === topicId)?.phrase_count) void startTraining(topicId);
   }
 
-  async function showWordHint(word: string) {
+  async function showWordHint(word: string, localHint?: Pick<WordHint, "word_ru" | "translation_sr">) {
     if (!exercise || checkingRef.current) return;
     const normalized = word.toLocaleLowerCase("ru-RU");
     setActiveHint(normalized);
     const requestKey = `${hintEpochRef.current}:${normalized}`;
     if (hintRequestsRef.current.has(requestKey) || savedHintsRef.current.has(normalized)) return;
-    const prepared = exercise.word_hints?.find((hint) => hint.word_ru.toLocaleLowerCase("ru-RU") === normalized);
+    const prepared = localHint ?? exercise.word_hints?.find((hint) => hint.word_ru.toLocaleLowerCase("ru-RU") === normalized);
     const epoch = flowEpochRef.current;
     const hintEpoch = hintEpochRef.current;
     if (prepared && !wordHintsRef.current[normalized]) {
@@ -791,15 +792,15 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   function renderPhrase() {
     const localized = localizedPhrase(exercise?.source_ru ?? "");
     return <h2 id="exercise-title" className="interactive-phrase" aria-label={exercise ? localized.source : t("Готовим фразу…")}>
-      {exercise ? localized.source.split(/([\p{L}]+)/gu).filter(Boolean).map((part, index) => {
-        if (!/^[\p{L}]+$/u.test(part)) return <span key={index}>{part}</span>;
-        const alias = Object.hasOwn(localized.aliases, part.toLowerCase()) ? localized.aliases[part.toLowerCase()] : undefined;
-        const word = alias?.word_ru ?? part;
+      {exercise ? splitSourcePhrase(localized.source).map((part, index) => {
+        if (!isSourceWord(part)) return <span key={index}>{part}</span>;
+        const localHint = Object.hasOwn(localized.hints, part.toLowerCase()) ? localized.hints[part.toLowerCase()] : undefined;
+        const word = part;
         const normalized = word.toLocaleLowerCase("ru-RU");
-        const hasHint = alias || exercise.word_hints?.some(hint => hint.word_ru.toLocaleLowerCase("ru-RU") === normalized);
+        const hasHint = localHint || exercise.word_hints?.some(hint => hint.word_ru.toLocaleLowerCase("ru-RU") === normalized);
         if (!hasHint && !/[А-Яа-яЁё]/.test(part)) return <span key={index}>{part}</span>;
         // eslint-disable-next-line react-hooks/refs -- the ref is read by the click handler only.
-        return <WordHintToken key={`${part}-${index}`} word={part} used={Boolean(wordHints[normalized])} disabled={checking} active={activeHint === normalized && (mobileLayout ? visiblePanel === 1 : view === "practice")} translation={wordHints[normalized] ? displaySerbian(wordHints[normalized].translation_sr, alphabet) : t("Загружаем…")} onClick={() => void showWordHint(word)} />;
+        return <WordHintToken key={`${part}-${index}`} word={part} used={Boolean(wordHints[normalized])} disabled={checking} active={activeHint === normalized && (mobileLayout ? visiblePanel === 1 : view === "practice")} translation={wordHints[normalized] ? [displaySerbian(localHint?.translation_sr ?? wordHints[normalized].translation_sr, alphabet), localHint?.note ? t(localHint.note) : ""].filter(Boolean).join(" · ") : t("Загружаем…")} onClick={() => void showWordHint(word, localHint ? { word_ru: word, translation_sr: localHint.translation_sr } : undefined)} />;
       }) : t("Готовим фразу…")}
     </h2>;
   }

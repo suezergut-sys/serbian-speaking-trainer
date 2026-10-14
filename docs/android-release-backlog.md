@@ -453,3 +453,10 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 - [x] Владелец отдельно согласовал 1.32/code42.
 - [x] Cloud APK, metadata/API/signature/9 packaged files и [GitHub v1.32](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.32)/digest/Downloads проверены.
 - [ ] Физическая приёмка. [Доказательства](desktop-topics-checkpoint-2026-10-14.md).
+
+## 14.10.2026 — следующий APK: самостоятельные английские подсказки
+
+- [x] В общем интерфейсе независимый English→Serbian набор покрывает все слова 160 фраз кроме артиклей; новые английские ключи сохранения, notes ru/en и целые compound words.
+- [x] Shared Android-layout проверен для ru/en в Chrome/Capacitor; Android 1.32/code42, package version и APK не менялись.
+- [ ] Web/backend публикация; старый APK сохраняет совместимость legacy Russian keys.
+- [ ] По отдельной команде перенести набор в следующий APK и проверить полный English coverage на телефоне. [Доказательства](independent-english-hints-checkpoint-2026-10-14.md).

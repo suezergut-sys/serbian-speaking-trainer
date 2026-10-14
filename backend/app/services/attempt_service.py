@@ -20,6 +20,7 @@ from app.services.serbian_text import has_unexpected_letter_script
 from app.services.session_service import SessionCompletedError, SessionUnavailableError
 from app.services.learner_model import LearnerModelService
 from app.services.review_service import ReviewService, normalize_ru
+from app.services.word_hints import all_word_hints
 from app.services.auth_service import UserService
 from app.models import User
 from app.repositories.transcriptions import TranscriptionReceiptRepository
@@ -227,7 +228,7 @@ class AttemptService:
         base_score = self.analyzer.overall_score(analysis)
         available_hints = {
             normalize_ru(item.get("word_ru", ""))
-            for item in exercise.target_hints_json.get("word_hints", [])
+            for item in all_word_hints(exercise.source_ru, list(exercise.target_hints_json.get("word_hints", [])))
         }
         hinted_words = list(dict.fromkeys(
             word.strip() for word in request.hinted_words if normalize_ru(word) in available_hints

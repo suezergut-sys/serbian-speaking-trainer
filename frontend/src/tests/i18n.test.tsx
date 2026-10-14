@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 import { getLanguage, getLocale, localizedPhrase, setLanguage, t, topicText } from "../i18n";
 import phrases from "../locales/phrases.en.json";
 import messages from "../locales/en.json";
+import { sourceWords } from "../sourceWords";
 import { SettingsView } from "../SettingsView";
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); setLanguage("ru"); localStorage.clear(); });
@@ -44,9 +45,8 @@ it("translates dynamic counts and errors while preserving unknown text and Serbi
   }
 });
 
-it("keeps a complete English catalog tied to all 160 canonical Serbian phrases and existing hints", () => {
+it("keeps a complete English catalog tied to all 160 canonical Serbian phrases and independent hints", () => {
   const seeds = readFileSync(resolve(process.cwd(), "../backend/app/db/topic_phrases.py"), "utf8");
-  const hints = readFileSync(resolve(process.cwd(), "../backend/app/db/topic_phrase_hints.py"), "utf8");
   expect(phrases).toHaveLength(160);
   expect(new Set(phrases.map(phrase => phrase.id)).size).toBe(160);
   expect(new Set(phrases.map(phrase => phrase.source_ru)).size).toBe(160);
@@ -56,15 +56,21 @@ it("keeps a complete English catalog tied to all 160 canonical Serbian phrases a
     expect(seeds).toContain(JSON.stringify(phrase.canonical_sr));
     expect(phrase.source_en).not.toMatch(/[А-Яа-яЁё]/);
     expect(t(phrase.source_ru)).toBe(phrase.source_en);
-    expect(Object.keys(localizedPhrase(phrase.source_ru).aliases).length).toBeGreaterThan(0);
+    expect(Object.keys(localizedPhrase(phrase.source_ru).hints).length).toBeGreaterThan(0);
+    const requiredWords = [...new Set(sourceWords(phrase.source_en).map(word => word.toLowerCase()))].filter(word => !["a", "an", "the"].includes(word));
+    expect(requiredWords.filter(word => !Object.hasOwn(phrase.word_hints, word)), phrase.id).toEqual([]);
     for (const [word, hint] of Object.entries(phrase.word_hints)) {
       expect(phrase.source_en.toLowerCase()).toContain(word);
-      expect(phrase.source_ru.toLowerCase()).toContain(hint.word_ru.toLowerCase());
-      expect(hints).toContain(hint.translation_sr);
+      expect(hint).not.toHaveProperty("word_ru");
+      expect(hint.translation_sr.trim()).not.toBe("");
+      if ("note" in hint && typeof hint.note === "string") {
+        expect(messages).toHaveProperty(hint.note);
+        expect(t(hint.note)).not.toBe(hint.note);
+      }
     }
   }
   setLanguage("ru");
-  expect(localizedPhrase(phrases[0].source_ru)).toEqual({ source: phrases[0].source_ru, aliases: {} });
+  expect(localizedPhrase(phrases[0].source_ru)).toEqual({ source: phrases[0].source_ru, hints: {} });
 });
 
 it("keeps the choice active if browser storage is blocked", () => {
@@ -72,4 +78,25 @@ it("keeps the choice active if browser storage is blocked", () => {
   setLanguage("en");
   expect(getLanguage()).toBe("en");
   expect(t("Настройки")).toBe("Settings");
+});
+
+
+it("keeps compound words intact and corrects the reported lexical hints", () => {
+  setLanguage("en");
+  const vacation = phrases.find(phrase => phrase.id === "vacation-10")!;
+  const hints = localizedPhrase(vacation.source_ru).hints;
+  expect(hints.best?.translation_sr).toBe("najbolje");
+  expect(hints.time?.translation_sr).toBe("vreme");
+  expect(hints.buy?.translation_sr).toBe("kupiti");
+  expect(hints.is?.translation_sr).toBe("je");
+  const bank = phrases.find(phrase => phrase.id === "bank-07")!;
+  expect(sourceWords(bank.source_en)).toContain("bank's");
+  expect(localizedPhrase(bank.source_ru).hints["bank's"]?.translation_sr).toBe("banke");
+  const flat = phrases.find(phrase => phrase.id === "rent-01")!;
+  expect(sourceWords(flat.source_en)).toContain("two-room");
+  expect(localizedPhrase(flat.source_ru).hints["two-room"]?.translation_sr).toBe("dvosoban");
+  const journey = phrases.find(phrase => phrase.id === "transport-06")!;
+  expect(localizedPhrase(journey.source_ru).hints.long?.translation_sr).toBe("Koliko");
+  expect(localizedPhrase(journey.source_ru).hints.take?.translation_sr).toBe("traje");
+  expect(sourceWords("Нови-Сада и two-room")).toEqual(["Нови-Сада", "и", "two-room"]);
 });
