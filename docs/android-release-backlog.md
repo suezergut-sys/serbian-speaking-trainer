@@ -426,6 +426,6 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 - [x] Общий React-код: выбор `Русский` / `English` первым пунктом настроек, сохранение выбора на устройстве; 160 английских фраз для прежних сербских канонов, общие подсказки/прогресс.
 - [x] Проверен Android-layout в Chrome с имитацией Capacitor; метаданные 1.30/code40 сохранены. [Доказательства](english-localization-checkpoint-2026-10-14.md).
 - [x] Web/backend READY/main на runtime SHA a1552f4 после PR #94; GitHub APK release v1.31 опубликован, digest/size/target проверены. [Доказательства](android-1.31-release.md).
-- [ ] Авторизованная production-проверка языка после подтверждения Google владельцем.
+- [x] После ручного Google-входа владельца проверены ru/en settings/topics/practice/statistics/phrase table, сохранение после reload и возврат на русский; console errors отсутствуют.
 - [x] Владелец отдельно согласовал 1.31/code41; полный общий frontend перенесён через production Android build/cap sync/Gradle. API, metadata, прежняя подпись и assets проверены; [доказательства](android-1.31-release.md).
 - [ ] Физическая приёмка: смена языка, тренировка, подсказки, статистика, сохранение выбора после перезапуска.
