@@ -815,3 +815,45 @@ button { cursor: pointer; background: var(--panel); }
 .mobile-web-shell--short .android-answer textarea, .mobile-web-shell--short .android-answer .voice-prompt { min-height: 60px; height: 60px; }
 .mobile-web-shell--short .android-answer .mic-button, .mobile-web-shell--short .answer-check-button { width: 52px; height: 52px; }
 .mobile-web-shell--short .android-answer { gap: .25rem; }
+
+/* Login and completion share the device language and dark app palette. */
+.login-language { justify-self: end; padding: .6rem .9rem; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); }
+.login-language:focus-visible, .review-home:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+.review-complete { display: grid; place-items: center; align-content: center; gap: 1.5rem; min-height: 100%; padding: 2rem 1rem; text-align: center; }
+.practice-stage .review-complete { min-height: 510px; }
+.review-home { display: grid; place-items: center; width: 74px; height: 74px; padding: 0; border: 1px solid var(--line); border-radius: 22px; background: var(--panel); color: var(--blue-bright); }
+.review-congratulations { max-width: 36rem; margin: 0; color: #fff; font-size: clamp(1.25rem, 3vw, 1.65rem); line-height: 1.5; }
+:root { --practice-phrase-size: clamp(1.25rem, 2.2vw, 1.85rem); }
+.phrase-card__content .interactive-phrase, .answer-input textarea { font-size: var(--practice-phrase-size); }
+.android-training-content { --practice-phrase-size: clamp(1.65rem, 7vw, 2.5rem); }
+.android-training-content > .interactive-phrase, .android-answer textarea { font-size: var(--practice-phrase-size); }
+.android-training-content.has-transcript { justify-content: center; }
+.android-training-content.has-transcript > .interactive-phrase { flex: 0 0 auto; min-height: 0; }
+.android-training-content.has-transcript .android-answer { margin-top: 0; }
+.android-answer.has-transcript textarea { height: auto; min-height: 3em; }
+.mobile-web-shell .android-training-content { --practice-phrase-size: clamp(1.55rem, 6.5vw, 2rem); }
+.mobile-web-shell .android-training-content > .interactive-phrase, .mobile-web-shell .android-answer textarea { font-size: var(--practice-phrase-size); }
+.mobile-web-shell .android-training-content.has-transcript > .interactive-phrase { flex: 0 0 auto; min-height: 0; }
+.mobile-web-shell .android-answer.has-transcript textarea { height: auto; min-height: 3em; }
+.mobile-web-shell--short .android-training-content { --practice-phrase-size: 1.25rem; }
+.practice-stage .practice-card:has(> form.has-transcript) { min-height: min(650px, calc(100dvh - 150px)); display: flex; flex-direction: column; justify-content: center; }
+.practice-stage .practice-card:has(> form.has-transcript) > .card-title { margin-bottom: auto; }
+.practice-stage .practice-card:has(> form.has-transcript) > form { margin-bottom: auto; }
+
+/* Desktop topics use the same compact two-column cards as mobile web. */
+.desktop-topic-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; align-content: start; overflow: visible; }
+.desktop-topic-grid > .desktop-topic-card { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); justify-items: start; align-content: space-between; gap: .35rem; width: 100%; min-width: 0; min-height: 92px; margin: 0; padding: .6rem .65rem; border: 1px solid var(--line); border-radius: 15px; background: var(--panel); color: var(--text); text-align: left; }
+.desktop-topic-card .topic__icon { width: 32px; height: 32px; }
+.desktop-topic-card .topic__copy { width: 100%; }
+.desktop-topic-card .topic__copy strong, .desktop-topic-card--premium > strong { overflow: visible; white-space: normal; text-overflow: clip; font-size: .78rem; line-height: 1.25; }
+.desktop-topic-card .topic__copy small { white-space: normal; font-size: .58rem; }
+.desktop-topic-card > .topic__unlearned, .desktop-topic-card > .review-topic__count, .desktop-topic-card > .premium-badge { position: absolute; top: .6rem; right: .65rem; }
+.desktop-topic-card > .topic__unlearned { min-width: 0; }
+.desktop-topic-card > .topic__unlearned strong { font-size: 1.1rem; }
+.desktop-topic-card > .topic__unlearned small { font-size: .5rem; }
+.desktop-topic-grid > .review-topic { border-color: rgba(91, 99, 238, .35); background: linear-gradient(145deg, rgba(56, 55, 137, .32), var(--panel)); }
+.desktop-topic-grid > .is-selected { border-color: var(--blue-bright); box-shadow: inset 0 0 24px rgba(45, 143, 234, .11); }
+.desktop-topic-grid > .desktop-topic-card:hover:not(:disabled) { border-color: var(--blue-bright); transform: none; }
+.desktop-topic-card:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.desktop-topic-card--premium:disabled { opacity: 1; cursor: default; background: var(--panel); color: var(--text); }
+.desktop-topic-card--premium > .topic__icon, .desktop-topic-card--premium > strong { opacity: .42; }

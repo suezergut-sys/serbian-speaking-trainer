@@ -351,5 +351,12 @@
   "Пользовательская тема без фраз.": "A custom topic with no phrases yet.",
   "Разговорная практика по теме: {0}": "Conversation practice: {0}",
   "Повседневные ситуации": "Everyday situations",
-  "Общие разговорные ситуации уровня A2.": "Everyday conversations at A2 level."
+  "Общие разговорные ситуации уровня A2.": "Everyday conversations at A2 level.",
+  "Используйте аккаунт для проверки, указанный в Play Console.": "Use the dedicated review account provided in Play Console.",
+  "Имя пользователя или email": "Username or email",
+  "Пароль": "Password",
+  "Не удалось войти. Проверьте данные и подключение и попробуйте снова.": "Sign-in failed. Check your credentials and connection, then try again.",
+  "Изменить язык": "Change language",
+  "Входим…": "Signing in…",
+  "Войти": "Sign in"
 }

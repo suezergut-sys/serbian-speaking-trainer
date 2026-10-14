@@ -5,6 +5,7 @@ from difflib import SequenceMatcher
 from pydantic import ValidationError
 
 from app.config import Settings, get_settings
+from app.db.topic_phrases_en import TOPIC_PHRASES_EN
 from app.schemas import AnswerAnalysis, AnswerIssue, CreateAttemptRequest, DemonstratedSkill
 from app.services.ai_adapter import AIServiceError, StructuredAIProvider
 from app.services.serbian_text import normalized_serbian_words, serbian_latin_for_evaluation
@@ -55,7 +56,8 @@ class AnswerAnalyzer:
             try:
                 analysis = AnswerAnalysis.model_validate(
                     self.ai.analyze_answer(
-                        source_ru=source_ru,
+                        source_ru=(TOPIC_PHRASES_EN.get(source_ru, source_ru)
+                                   if interface_language.get() == "en" else source_ru),
                         transcript_sr=evaluation_transcript,
                         canonical_sr=canonical_sr,
                         intended_sr_variants=acceptable_variants,
