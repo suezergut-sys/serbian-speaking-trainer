@@ -458,5 +458,5 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 
 - [x] В общем интерфейсе независимый English→Serbian набор покрывает все слова 160 фраз кроме артиклей; новые английские ключи сохранения, notes ru/en и целые compound words.
 - [x] Shared Android-layout проверен для ru/en в Chrome/Capacitor; Android 1.32/code42, package version и APK не менялись.
-- [ ] Web/backend публикация; старый APK сохраняет совместимость legacy Russian keys.
+- [x] Web/backend опубликованы на c0d3b6b через PR #99/#100, READY; старый APK сохраняет совместимость legacy Russian keys.
 - [ ] По отдельной команде перенести набор в следующий APK и проверить полный English coverage на телефоне. [Доказательства](independent-english-hints-checkpoint-2026-10-14.md).
