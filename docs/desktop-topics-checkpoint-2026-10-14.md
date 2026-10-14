@@ -6,7 +6,7 @@
 - [x] Browser regression: ru/en × 1024/1366 — 4 passed, проверены два столбца, компактные размеры, отсутствие горизонтального overflow, disabled/actions, золотые значки и выбор темы. Screenshots: `artifacts/desktop-topics/{ru,en}-{1024,1366}.png`.
 - [x] Девять накопленных browser scenarios login/transcript/review для desktop/mobile/shared Android-layout прошли вместе с изменением.
 - [x] Backend/scripts 293 passed / 8 skipped, Node guards 5 passed. Full UI 205 passed, App component 98 passed; lint/typecheck/production Android build и cap sync прошли.
-- [ ] Публикация web/backend и production smoke.
+- [x] [PR #97](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/97) опубликован на 05e47a4, оба Vercel deployments READY/production/main; authorized ru/en desktop smoke, v.1.32, disabled/premium и два столбца подтверждены. [Итог выпуска](android-1.32-release.md).
 - [x] Владелец отдельно согласовал 1.32/code42; cloud APK build, metadata/API/signature/9 packaged files/Downloads проверены. [Доказательства](android-1.32-release.md).
 - [ ] Физическая приёмка на телефоне.
 

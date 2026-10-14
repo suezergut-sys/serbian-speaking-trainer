@@ -442,14 +442,14 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 
 - [x] Общий React-код и backend реализованы локально: домик/крупное белое поздравление, ru/en до входа, центральный transcript размером оригинала, правильный source_text для английского анализа.
 - [x] Общий Android-layout проверен в Chrome/Capacitor для ru/en, включая форму входа; [доказательства](localization-fixes-checkpoint-2026-10-14.md).
-- [ ] Публикация общего backend/web.
-- [ ] Перенос клиентских изменений в следующий APK по отдельной команде: sync/build/version/publication не выполнялись, текущая 1.31/code41 сохранена.
+- [x] Backend/web опубликованы через [PR #97](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/97), READY на 05e47a4.
+- [x] После отдельной команды весь набор перенесён в 1.32/code42, production cloud APK проверен и опубликован. [Доказательства](android-1.32-release.md).
 - [ ] Проверка packaged bundle и физическая приёмка ru/en, клавиатуры, записи и нового разбора.
 
 ## 14.10.2026 — выпуск накопленного набора по команде владельца
 
 - [x] Desktop карточки и premium закрыты, клиентские изменения предыдущего localization checkpoint проверены в общем Android-layout.
 - [x] Выполнен production `pnpm android:sync`: весь набор после 1.31 перенесён.
-- [ ] Номер следующего выпуска отдельно согласуется; предложены 1.32/code42.
-- [ ] Cloud APK, metadata/API/signature/bundle и GitHub публикация.
+- [x] Владелец отдельно согласовал 1.32/code42.
+- [x] Cloud APK, metadata/API/signature/9 packaged files и [GitHub v1.32](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.32)/digest/Downloads проверены.
 - [ ] Физическая приёмка. [Доказательства](desktop-topics-checkpoint-2026-10-14.md).
