@@ -17,11 +17,11 @@ export function ReviewLogin() {
       catch { setPassword(""); setError(true); }
       finally { setBusy(false); }
     }}>
-      <p>Use the dedicated review account provided in Play Console.</p>
-      <label>Username or email<input type="text" required autoComplete="username" autoCapitalize="none" spellCheck={false} placeholder="serbotalkreview" value={email} disabled={busy} onChange={event => setEmail(event.target.value)} /></label>
-      <label>Password<input type="password" required autoComplete="current-password" value={password} disabled={busy} onChange={event => setPassword(event.target.value)} /></label>
-      <button type="submit" disabled={busy}>{t(busy ? "Signing in…" : "Sign in")}</button>
-      {error && <p role="alert">Sign-in failed. Check your credentials and connection, then try again.</p>}
+      <p>{t("Используйте аккаунт для проверки, указанный в Play Console.")}</p>
+      <label>{t("Имя пользователя или email")}<input type="text" required autoComplete="username" autoCapitalize="none" spellCheck={false} placeholder="serbotalkreview" value={email} disabled={busy} onChange={event => setEmail(event.target.value)} /></label>
+      <label>{t("Пароль")}<input type="password" required autoComplete="current-password" value={password} disabled={busy} onChange={event => setPassword(event.target.value)} /></label>
+      <button type="submit" disabled={busy}>{t(busy ? "Входим…" : "Войти")}</button>
+      {error && <p role="alert">{t("Не удалось войти. Проверьте данные и подключение и попробуйте снова.")}</p>}
     </form>
   </details>;
 }

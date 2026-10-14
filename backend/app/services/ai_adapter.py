@@ -116,7 +116,8 @@ class OpenAIStructuredProvider:
         timings: dict[str, object],
     ) -> AnswerAnalysis:
         payload = {
-            "source_ru": source_ru,
+            "source_text": source_ru,
+            "feedback_language": interface_language.get(),
             "transcript_sr": transcript_sr,
             "canonical_sr": canonical_sr,
             "intended_sr_variants": intended_sr_variants,
@@ -125,7 +126,7 @@ class OpenAIStructuredProvider:
             "target_level": "A2",
         }
         return self._parse(
-            prompt_name="answer_analyzer_v2.md",
+            prompt_name="answer_analyzer_v3.md",
             payload=payload,
             schema=ExplainedAnswerAnalysis,
         )
@@ -146,7 +147,7 @@ class OpenAIStructuredProvider:
     ):
         try:
             instructions = load_prompt(prompt_name)
-            if prompt_name == "answer_analyzer_v2.md" and interface_language.get() == "en":
+            if prompt_name == "answer_analyzer_v3.md" and interface_language.get() == "en":
                 instructions += "\n\n" + load_prompt("feedback_language_en_v1.md")
             input_json = json.dumps(payload, ensure_ascii=False)
             with capture_model_call(prompt_name, self.settings.openai_text_model or "", {

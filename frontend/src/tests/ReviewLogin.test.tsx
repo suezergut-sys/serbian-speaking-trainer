@@ -1,9 +1,11 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 const login = vi.hoisted(() => vi.fn());
 vi.mock("../auth", () => ({ signInReviewAccount: login }));
 import { ReviewLogin } from "../ReviewLogin";
-afterEach(() => { cleanup(); login.mockReset(); });
+import { setLanguage } from "../i18n";
+beforeEach(() => { setLanguage("en"); });
+afterEach(() => { cleanup(); login.mockReset(); setLanguage("ru"); });
 
 it("submits only entered credentials and prevents a duplicate pending request", async () => {
   let resolve!: () => void;
@@ -28,4 +30,14 @@ it("clears passwords and hides provider details on failure", async () => {
   expect(await screen.findByRole("alert")).not.toHaveTextContent("private-provider-details");
   expect(screen.getByLabelText("Password")).toHaveValue("");
   expect(screen.getByRole("button", { name: "Sign in" })).toBeEnabled();
+});
+
+it("localizes review credentials and errors in Russian", async () => {
+  setLanguage("ru");
+  login.mockRejectedValue(new Error("synthetic"));
+  render(<ReviewLogin />);
+  fireEvent.change(screen.getByLabelText("Имя пользователя или email"), { target: { value: "review" } });
+  fireEvent.change(screen.getByLabelText("Пароль"), { target: { value: "synthetic" } });
+  fireEvent.submit(screen.getByRole("button", { name: "Войти" }).closest("form")!);
+  expect(await screen.findByRole("alert")).toHaveTextContent("Не удалось войти.");
 });

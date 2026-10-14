@@ -1,11 +1,11 @@
-import { t, useLanguage, getLanguage, getLocale, localizedPhrase, topicText } from "./i18n";
+import { t, useLanguage, setLanguage, getLanguage, getLocale, localizedPhrase, topicText } from "./i18n";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 import type { Session } from "@supabase/supabase-js";
 
-import { addReviewPhrase, BackendError, createTopic, fetchNextExercise, fetchReviewSummary, fetchTopics, prepareReviewPhrase, revealWordHint, startTrainingSession, submitAttempt, transcribeAudio } from "./api/training";
-import type { Attempt, AttemptTimings, Exercise, PreparedReviewPhrase, TopicListItem, TrainingSession, WordHint } from "./types/training";
+import { BackendError, fetchNextExercise, fetchReviewSummary, fetchTopics, revealWordHint, startTrainingSession, submitAttempt, transcribeAudio } from "./api/training";
+import type { Attempt, AttemptTimings, Exercise, TopicListItem, TrainingSession, WordHint } from "./types/training";
 import { supportsVoiceRecording, VoiceRecorder } from "./voiceRecorder";
 import { DeferredPanel } from "./DeferredPanel";
 import { fetchCurrentUser } from "./api/users";
@@ -124,6 +124,11 @@ export default function App() {
   return <AuthenticatedApp />;
 }
 
+function LoginLanguageButton() {
+  const language = useLanguage();
+  return <button className="login-language" type="button" aria-label={t("Изменить язык")} onClick={() => setLanguage(language === "ru" ? "en" : "ru")}>{language === "ru" ? "English" : "Русский"}</button>;
+}
+
 function AuthenticatedApp() {
   const [authReady, setAuthReady] = useState(false);
   const [hasSession, setHasSession] = useState(false);
@@ -168,8 +173,8 @@ function AuthenticatedApp() {
     <span className="auth-loading__ring"><img src={appLogo} alt="SerboTalk" /></span>
     <p>{t("Авторизация и загрузка...")}</p>
   </div></main>;
-  if (!isAuthConfigured()) return <main className="auth-page"><div className="auth-card panel"><h1>{t("Нужна настройка входа")}</h1><p>{t("Добавьте VITE_SUPABASE_URL и VITE_SUPABASE_PUBLISHABLE_KEY в окружение frontend.")}</p></div></main>;
-  if (!hasSession || !account) return <main className="auth-page"><div className="auth-card panel"><span className="brand__mark"><Icon name="message" size={34}/></span><h1>{t("Добро пожаловать в SerboTalk")}</h1><p>{t("Войдите или зарегистрируйтесь с Google, чтобы сохранять свой прогресс на всех устройствах.")}</p><button className="google-sign-in" type="button" onClick={() => void login()}>{t("Войти через Google")}</button><ReviewLogin />{authError && <p className="error" role="alert">{t(authError)}</p>}<nav className="auth-legal" aria-label={t("Правовая информация")}><a href="/privacy">{t("Конфиденциальность")}</a><a href="/terms">{t("Условия")}</a><a href="/delete-account">{t("Удаление аккаунта")}</a></nav></div></main>;
+  if (!isAuthConfigured()) return <main className="auth-page"><div className="auth-card panel"><LoginLanguageButton /><h1>{t("Нужна настройка входа")}</h1><p>{t("Добавьте VITE_SUPABASE_URL и VITE_SUPABASE_PUBLISHABLE_KEY в окружение frontend.")}</p></div></main>;
+  if (!hasSession || !account) return <main className="auth-page"><div className="auth-card panel"><LoginLanguageButton /><span className="brand__mark"><Icon name="message" size={34}/></span><h1>{t("Добро пожаловать в SerboTalk")}</h1><p>{t("Войдите или зарегистрируйтесь с Google, чтобы сохранять свой прогресс на всех устройствах.")}</p><button className="google-sign-in" type="button" onClick={() => void login()}>{t("Войти через Google")}</button><ReviewLogin />{authError && <p className="error" role="alert">{t(authError)}</p>}<nav className="auth-legal" aria-label={t("Правовая информация")}><a href="/privacy">{t("Конфиденциальность")}</a><a href="/terms">{t("Условия")}</a><a href="/delete-account">{t("Удаление аккаунта")}</a></nav></div></main>;
   return <TrainerApp key={account.id} account={account} onAccountChange={setAccount} onSignOut={() => void signOut()} />;
 }
 
@@ -181,9 +186,6 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const [selectedTopic, setSelectedTopic] = useState<string>();
   const [customTopic, setCustomTopic] = useState("");
   const [reviewPhraseCount, setReviewPhraseCount] = useState(0);
-  const [newPhrase, setNewPhrase] = useState("");
-  const [preparedPhrase, setPreparedPhrase] = useState<PreparedReviewPhrase>();
-  const [phraseTopicId, setPhraseTopicId] = useState("");
   const [session, setSession] = useState<TrainingSession>();
   const [exercise, setExercise] = useState<Exercise>();
   const [answer, setAnswer] = useState("");
@@ -193,7 +195,6 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const [alphabet, setAlphabet] = useState<SerbianAlphabet>(() => readSerbianAlphabet(account.id));
   const alphabetRef = useRef(alphabet);
   const [attempt, setAttempt] = useState<Attempt>();
-  const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(false);
   const [advancing, setAdvancing] = useState(false);
   const [completedCount, setCompletedCount] = useState(0);
@@ -736,43 +737,20 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     setAnswer(""); setAssistanceDraft(undefined); setHasTranscript(false); setAttempt(undefined); setError(undefined); setWordHints({}); setActiveHint(undefined); setCompletedCount(0); setSessionComplete(false); setTopicExhausted(false);
   }
 
+  function returnToTopics() {
+    resetTraining();
+    setSelectedTopic(undefined); setCustomTopic("");
+    if (mobileLayout) showAndroidPanel(0);
+  }
+
+  const reviewFinished = error === "Все фразы из карусели освоены. Отличная работа!";
+
   function selectTopic(topicId: string) {
     if (session?.topic.id === topicId && exercise && !sessionComplete) return;
     if (session || preparingPhrase || sessionComplete) resetTraining();
     setSelectedTopic(topicId); setCustomTopic("");
     setSession(undefined); setExercise(undefined);
     if (topics.find((topic) => topic.id === topicId)?.phrase_count) void startTraining(topicId);
-  }
-
-  async function saveCustomTopic(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (customTopic.trim().length < 2) return;
-    setLoading(true); setError(undefined);
-    try {
-      const created = await createTopic(customTopic.trim());
-      setTopics((current) => [...current.filter((item) => item.id !== created.id), created]);
-      setSelectedTopic(created.id); setPhraseTopicId(created.id); setCustomTopic("");
-    } catch { setError("Не удалось создать тему."); }
-    finally { setLoading(false); }
-  }
-
-  async function saveReviewPhrase(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!newPhrase.trim()) return;
-    setLoading(true); setError(undefined);
-    try {
-      if (!preparedPhrase) {
-        const prepared = await prepareReviewPhrase(newPhrase.trim());
-        setPreparedPhrase(prepared);
-        setPhraseTopicId(selectedTopic ?? topics.find((topic) => topic.id === "misc")?.id ?? topics[0]?.id ?? "");
-      } else if (phraseTopicId) {
-        await addReviewPhrase(preparedPhrase, phraseTopicId);
-        void refreshReviewSummary().catch(() => undefined);
-        void fetchTopics().then(setTopics).catch(() => undefined);
-        setNewPhrase(""); setPreparedPhrase(undefined); setPhraseTopicId("");
-      }
-    } catch { setError(preparedPhrase ? "Не удалось сохранить фразу." : "Не удалось создать канонический перевод. Проверьте настройки OpenAI."); }
-    finally { setLoading(false); }
   }
 
   async function showWordHint(word: string) {
@@ -903,19 +881,24 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
           <section className="android-page android-training-page" hidden={!isNative && visiblePanel !== 1} aria-label={t("Тренировка")}>
             {preparingPhrase && !session ? <PhraseLoading /> : sessionComplete ? (
               <div className="practice-done"><h1>{t(topicExhausted ? "Все фразы темы пройдены" : "Тренировка завершена")}</h1><p>{t(topicExhausted ? `${completedCount} фраз проверено. В этой теме пока нет следующих фраз.` : `${completedCount} из ${session?.requested_length ?? 10} фраз проверено.`)}</p><button className="android-primary" type="button" onClick={() => { resetTraining(); if (mobileLayout) showAndroidPanel(0); }}>{t("Выбрать новую тему")}</button></div>
+            ) : !session && reviewFinished ? (
+              <div className="review-complete">
+                <button className="review-home" type="button" aria-label={t("Выбрать тему")} onClick={returnToTopics}><Icon name="home" size={32} /></button>
+                <p className="review-congratulations" role="status">{t(error)}</p>
+              </div>
             ) : !session ? (
               <div className="android-training-start">
                 <span className="topic__icon"><Icon name={topicIcons[currentTopic?.id ?? ""] ?? "message"} size={26} /></span>
                 <h1>{customTopic.trim() || (currentTopic ? topicText(currentTopic.id, currentTopic.title_ru) : t("Выберите тему"))}</h1>
-                {!isNative && <button className="android-primary" type="button" onClick={() => showAndroidPanel(0)}>{t("Выбрать тему")}</button>}
+                {!isNative && <button className="android-primary" type="button" onClick={returnToTopics}>{t("Выбрать тему")}</button>}
                 {error && <p className="android-error" role="alert">{t(error)}</p>}
               </div>
             ) : (
-              <div className="android-training-content practice-card">
+              <div className={`android-training-content practice-card${hasTranscript && !attempt ? " has-transcript" : ""}`}>
                 <div className="android-training-meta">{isNative ? <span>{t(currentTopic?.title_ru)}</span> : <button className="mobile-topic-switch" type="button" onClick={() => showAndroidPanel(0)}>{t(currentTopic?.title_ru)}{t(" · сменить")}</button>}</div>
                 {!attempt && renderPhrase()}
 
-                {!attempt ? <form className="android-answer" onSubmit={checkAnswer}>
+                {!attempt ? <form className={`android-answer${hasTranscript ? " has-transcript" : ""}`} onSubmit={checkAnswer}>
                   {hasTranscript ? <><label className="sr-only" htmlFor="android-serbian-answer">{t("Ваш ответ")}</label>
                     <textarea id="android-serbian-answer" value={answer} readOnly={checking} onChange={(event) => { answerEditEpochRef.current += 1; voiceTimingRef.current = undefined; setAssistanceDraft(current => current ? { ...current, edited: true } : undefined); setAnswer(event.target.value); }} placeholder={t("Введите ответ на сербском языке")} rows={3} /></> : <p className="voice-prompt">{t("Произнесите ответ в микрофон")}</p>}
                   {hasUnexpectedLetterScript(answer) && <p className="transcription-script-warning" role="alert">{t("В расшифровке есть буквы вне сербского алфавита. Исправьте текст перед проверкой или запишите ответ заново.")}</p>}
@@ -972,42 +955,37 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
         <main className="workspace">
           <aside className="topics-panel panel">
             <div className="panel-heading"><h2>{t("Темы для практики")}</h2><p>{t("Выберите ситуацию и начните разговор на сербском языке")}</p></div>
-            <button className={isReviewMode ? "review-topic is-selected" : "review-topic"} type="button" onClick={() => void startReviewTraining()}>
-              <span className="topic__icon"><Icon name="repeat" /></span>
-              <span className="topic__copy"><strong>{t("Фразы для повторения")}</strong><small>{t(reviewPhraseCount ? `${reviewPhraseCount} требуют практики` : "Список пока пуст")}</small></span>
-              <span className="review-topic__count">{reviewPhraseCount}</span>
-            </button>
-            <div className="topics" aria-label={t("Темы тренировки")}>
+            <div className="topics desktop-topic-grid" aria-label={t("Темы тренировки")}>
+              <button className={isReviewMode ? "review-topic desktop-topic-card is-selected" : "review-topic desktop-topic-card"} type="button" onClick={() => void startReviewTraining()}>
+                <span className="topic__icon"><Icon name="repeat" /></span>
+                <span className="topic__copy"><strong>{t("Фразы для повторения")}</strong><small className="sr-only">{t(reviewPhraseCount ? `${reviewPhraseCount} требуют практики` : "Список пока пуст")}</small></span>
+                <span className="review-topic__count">{reviewPhraseCount}</span>
+              </button>
               {topics.map((topic) => (
-                <button className={selectedTopic === topic.id && !customTopic ? "topic is-selected" : "topic"} key={topic.id} type="button" onClick={() => selectTopic(topic.id)}>
+                <button className={selectedTopic === topic.id && !customTopic ? "topic desktop-topic-card is-selected" : "topic desktop-topic-card"} key={topic.id} type="button" onClick={() => selectTopic(topic.id)}>
                   <span className={`topic__icon topic__icon--${topicIcons[topic.id] ?? "message"}`}><Icon name={topicIcons[topic.id] ?? "message"} /></span>
-                  <span className="topic__copy"><strong>{topicText(topic.id, topic.title_ru)}</strong><small>{t(topic.description_ru)}</small></span><span className="topic__unlearned"><strong>{topic.phrase_count}</strong><small>{t("неизученных")}</small></span>
+                  <span className="topic__copy"><strong>{topicText(topic.id, topic.title_ru)}</strong></span>
+                  <span className="topic__unlearned"><strong>{topic.phrase_count}</strong><small>{t("неизученных")}</small></span>
                 </button>
               ))}
+              <button className="desktop-topic-card desktop-topic-card--premium" type="button" disabled>
+                <span className="topic__icon"><Icon name="plus" /></span><strong>{t("+ добавить тему")}</strong><PremiumBadge />
+              </button>
+              <button className="desktop-topic-card desktop-topic-card--premium" type="button" disabled>
+                <span className="topic__icon"><Icon name="plus" /></span><strong>{t("+ добавить фразу")}</strong><PremiumBadge />
+              </button>
             </div>
-            <details className="topic-action"><summary><Icon name="plus" />{t(" Своя тема")}</summary><form className={customTopic ? "custom-topic is-selected" : "custom-topic"} onSubmit={saveCustomTopic}>
-              <span className="topic__icon"><Icon name="plus" /></span><span className="custom-topic__copy"><strong>{t("Своя тема")}</strong><small>{t("Предложите свою ситуацию")}</small></span>
-              <input value={customTopic} onChange={(event) => setCustomTopic(event.target.value)} placeholder={t("Например: стоматолог")} aria-label={t("Своя тема")} />
-              <button type="submit" disabled={loading || customTopic.trim().length < 2}>{t("Создать пустую тему")}</button>
-            </form></details>
-            <details className="topic-action"><summary><Icon name="plus" />{t(" Добавить фразу")}</summary><form className="add-phrase" onSubmit={saveReviewPhrase}>
-              <div><span className="topic__icon"><Icon name="plus" /></span><span><strong>{t("Добавить фразу")}</strong><small>{t("Введите фразу на русском")}</small></span></div>
-              <input value={newPhrase} onChange={(event) => { setNewPhrase(event.target.value); setPreparedPhrase(undefined); }} placeholder={t("Например: Я задержусь на десять минут")} aria-label={t("Новая фраза для повторения")} />
-              {preparedPhrase && <div className="phrase-preparation" aria-label={t("Канонический перевод")}>
-                <small>{t("Канонический перевод")}</small><strong lang={alphabet === "cyrillic" ? "sr-Cyrl" : "sr-Latn"}>{displaySerbian(preparedPhrase.canonical_sr, alphabet)}</strong>
-                <label>{t("Тема")}<select aria-label={t("Тема для новой фразы")} value={phraseTopicId} onChange={(event) => setPhraseTopicId(event.target.value)}>
-                  <option value="">{t("Выберите тему")}</option>
-                  {topics.map((topic) => <option value={topic.id} key={topic.id}>{topicText(topic.id, topic.title_ru)}</option>)}
-                </select></label>
-              </div>}
-              <button type="submit" disabled={loading || newPhrase.trim().length < 3 || Boolean(preparedPhrase && !phraseTopicId)}>{t(preparedPhrase ? "Сохранить в тему" : "Создать перевод")}</button>
-            </form></details>
             <div className="topics-panel__note"><Icon name="message" /><span>{t("Каждый короткий разговор делает речь увереннее.")}</span></div>
           </aside>
 
           <section className="practice-stage" aria-label={t("Практика")}>
             {preparingPhrase && !session ? <PhraseLoading /> : sessionComplete ? (
               <div className="practice-done panel"><h1>{t(topicExhausted ? "Все фразы темы пройдены" : "Тренировка завершена")}</h1><p>{t(topicExhausted ? `${completedCount} фраз проверено. В этой теме пока нет следующих фраз.` : `${completedCount} из ${session?.requested_length ?? 10} фраз проверено.`)}</p><button className="answer-submit" type="button" onClick={() => { resetTraining(); if (mobileLayout) showAndroidPanel(0); }}>{t("Выбрать новую тему")}</button></div>
+            ) : !session && reviewFinished ? (
+              <div className="review-complete">
+                <button className="review-home" type="button" aria-label={t("Выбрать тему")} onClick={returnToTopics}><Icon name="home" size={32} /></button>
+                <p className="review-congratulations" role="status">{t(error)}</p>
+              </div>
             ) : !session ? (
               <div className="welcome-card panel">
                 <div className="welcome-card__glow"/><span className="welcome-card__icon"><Icon name={topicIcons[currentTopic?.id ?? ""] ?? "message"} size={32} /></span>
@@ -1023,7 +1001,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                   <div className="card-title"><span><Icon name="message" /></span><h2>{t(isReviewMode ? "Карусель повторения" : "Основная фраза")}</h2></div>
                   {!attempt && <div className="phrase-card__content"><div><p className="kicker">{t("Скажите по-сербски · нажмите на незнакомое слово")}</p>{renderPhrase()}</div></div>}
                   {!attempt ? (
-                    <form onSubmit={checkAnswer}>
+                    <form className={hasTranscript ? "has-transcript" : undefined} onSubmit={checkAnswer}>
                       <div className="answer-input">
                         {hasTranscript ? <><label className="sr-only" htmlFor="serbian-answer">{t("Ваш ответ")}</label><textarea id="serbian-answer" value={answer} readOnly={checking} onChange={(event) => { answerEditEpochRef.current += 1; voiceTimingRef.current = undefined; setAssistanceDraft(current => current ? { ...current, edited: true } : undefined); setAnswer(event.target.value); }} placeholder={t("Введите ответ на сербском языке")} rows={4} /></> : <p className="voice-prompt">{t("Произнесите ответ в микрофон. После распознавания текст можно исправить.")}</p>}
                       </div>

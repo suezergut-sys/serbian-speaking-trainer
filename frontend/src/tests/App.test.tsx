@@ -59,8 +59,23 @@ vi.mock("../auth", () => ({
 }));
 
 import App from "../App";
+import * as auth from "../auth";
 
 describe("App", () => {
+  it("switches login language and carries it into settings after authentication", async () => {
+    vi.spyOn(auth, "initializeAuth").mockResolvedValue(null);
+    vi.stubGlobal("fetch", mockApi());
+    render(<App />);
+    expect(await screen.findByRole("heading", { name: "Добро пожаловать в SerboTalk" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Изменить язык" }));
+    expect(screen.getByRole("heading", { name: "Welcome to SerboTalk" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sign in with Google" })).toBeInTheDocument();
+    expect(localStorage.getItem("serbotalk.interface-language")).toBe("en");
+    await act(async () => { authEvents.notify?.({ access_token: "test-token" }); });
+    fireEvent.click(await screen.findByRole("button", { name: "Settings" }));
+    expect(await screen.findByRole("radio", { name: "English" })).toBeChecked();
+  });
+
   it("switches an active phrase to English while preserving the draft, canonical hint and API language", async () => {
     voiceMock.available = true;
     const baseFetch = mockApi();
@@ -493,7 +508,7 @@ describe("App", () => {
 
     expect(await screen.findByRole("heading", { name: "Темы для практики" })).toBeInTheDocument();
     expect(screen.getByText("Пока нет фраз для тренировки. Добавьте фразу или создайте тему.")).toBeInTheDocument();
-    expect(screen.getAllByText("Своя тема").length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: /добавить тему/ })).toBeDisabled();
     expect(fetchMock.mock.calls.some(([url]) => url.toString() === "/api/sessions/start")).toBe(false);
   });
 
@@ -1348,22 +1363,26 @@ describe("App", () => {
     expect(JSON.parse(attempts[0][1]?.body as string).transcript_sr).toBe("Moj odgovor");
   });
 
-  it("creates a persisted empty custom topic", async () => {
+  it("shows compact desktop topics and closes premium creation actions", async () => {
     const fetchMock = mockApi();
     vi.stubGlobal("fetch", fetchMock);
-
-    render(<App />);
+    const { container } = render(<App />);
     await screen.findByRole("button", { name: /В банке/ });
-    fireEvent.change(await screen.findByLabelText("Своя тема"), {
-      target: { value: "Поговорить с арендодателем" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Создать пустую тему" }));
-
-    await waitFor(() => {
-      const topicCall = fetchMock.mock.calls.find(([url, init]) => url === "/api/topics" && init?.method === "POST");
-      expect(JSON.parse(topicCall?.[1]?.body as string)).toEqual({ title_ru: "Поговорить с арендодателем" });
-    });
-    expect(await screen.findByRole("button", { name: /Поговорить с арендодателем/ })).toBeInTheDocument();
+    const grid = container.querySelector(".desktop-topic-grid")!;
+    expect(grid.querySelectorAll(".desktop-topic-card").length).toBeGreaterThanOrEqual(4);
+    for (const name of [/добавить тему/, /добавить фразу/]) {
+      const button = screen.getByRole("button", { name });
+      expect(button).toBeDisabled();
+      expect(button.querySelector('[role="img"]')).toHaveAccessibleName("Премиум");
+      fireEvent.click(button);
+    }
+    expect(container.querySelector(".topic-action")).toBeNull();
+    expect(fetchMock.mock.calls.some(([url, init]) => init?.method === "POST" && ["/api/topics", "/api/review-phrases", "/api/review-phrases/prepare"].includes(url.toString()))).toBe(false);
+    fireEvent.click(screen.getByRole("button", { name: "Настройки" }));
+    fireEvent.click(screen.getByRole("radio", { name: "English" }));
+    fireEvent.click(screen.getByRole("button", { name: "Practice" }));
+    expect(screen.getByRole("button", { name: /add topic/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /add phrase/ })).toBeDisabled();
   });
 
   it.each([false, true])("keeps only explanation and corrections inside analysis (native=%s)", async (native) => {
@@ -1600,40 +1619,6 @@ describe("App", () => {
     expect(bodies[0].hinted_words).toEqual(["хочу"]);
   });
 
-  it("prepares a canonical translation and then saves the phrase into a topic", async () => {
-    const fetchMock = mockApi();
-    vi.stubGlobal("fetch", fetchMock);
-    render(<App />);
-
-    const input = await screen.findByLabelText("Новая фраза для повторения");
-    fireEvent.change(input, { target: { value: "Мне нужно позвонить хозяину." } });
-    fireEvent.click(screen.getByRole("button", { name: "Создать перевод" }));
-
-    expect(await screen.findByText("Moram da pozovem vlasnika.")).toBeInTheDocument();
-    expect(screen.getByLabelText("Тема для новой фразы")).toHaveValue("bank");
-    fireEvent.click(screen.getByRole("button", { name: "Сохранить в тему" }));
-
-    expect(await screen.findByText("1 требуют практики")).toBeInTheDocument();
-    expect(screen.queryByText("Мне нужно позвонить хозяину.")).not.toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledWith("/api/review-phrases/prepare", expect.objectContaining({ method: "POST" }));
-    expect(fetchMock).toHaveBeenCalledWith("/api/review-phrases", expect.objectContaining({ method: "POST" }));
-  });
-
-  it("keeps the count accurate when saving an existing review phrase", async () => {
-    const fetchMock = mockApi(false, [{ id: "review-1" }]);
-    vi.stubGlobal("fetch", fetchMock);
-    render(<App />);
-    await screen.findByText("1 требуют практики");
-
-    fireEvent.change(screen.getByLabelText("Новая фраза для повторения"), { target: { value: "Мне нужно позвонить хозяину." } });
-    fireEvent.click(screen.getByRole("button", { name: "Создать перевод" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Сохранить в тему" }));
-
-    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url.toString() === "/api/review-phrases/summary")).toHaveLength(2));
-    expect(screen.getByText("1 требуют практики")).toBeInTheDocument();
-    expect(screen.queryByText("2 требуют практики")).not.toBeInTheDocument();
-  });
-
   it("refreshes the review count after an answer and when the page becomes visible", async () => {
     voiceMock.available = true;
     const baseFetch = mockApi(false, [{ id: "review-1" }]);
@@ -1711,7 +1696,9 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /Следующая фраза/ }));
     expect(await screen.findByText("Все фразы из карусели освоены. Отличная работа!")).toBeInTheDocument();
     await act(async () => { resolveLateSummary({ ok: true, status: 200, json: async () => ({ phrase_count: 1 }) }); });
-    expect(screen.getByText("Список пока пуст")).toBeInTheDocument();
+    expect(screen.getByText("Все фразы из карусели освоены. Отличная работа!")).toHaveClass("review-congratulations");
+    fireEvent.click(screen.getByRole("button", { name: "Выбрать тему" }));
+    expect(screen.getByRole("heading", { name: "Выберите тему" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /В банке/ }));
 
     expect(screen.queryByLabelText("Ваш ответ")).not.toBeInTheDocument();

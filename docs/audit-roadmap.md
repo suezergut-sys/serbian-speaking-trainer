@@ -1,19 +1,35 @@
 # План улучшений по аудиту SerboTalk
 
+## 13.10.2026 — release AAB 1.30
+
+- [x] Production Android sync/build и bundleProdRelease, отдельная upload-подпись, bundletool validate/dump, jarsigner verify и 7 public assets проверены; 1.30/code40 без изменения функций. [Доказательства](android-1.30-release.md).
+- [x] AAB загружен в Alpha, заполнены название/русские примечания, все страны закрытого трека сохранены. Выпуск сохранён с подтверждением Console; блокирующих ошибок выпуска нет.
+- [x] Декларация Advertising ID «Нет» проверена по packaged manifest и сохранена. 13 изменений отправлены, Console показывает «Изменения на проверке»; common-issues precheck ещё выполняется. [Доказательства](android-1.30-release.md).
+- [x] Google опубликовал Alpha 1.30/code40. По отдельному поручению владельца заявка Testers Community Starter отправлена, списан 1 оплаченный кредит; добавлены Google-группа и feedback контакт, изменения отправлены на проверку. Владелец разрешил все страны при требованиях сервиса. [Доказательства](android-1.30-release.md).
+- [ ] Одобрение группы, фактическое присоединение 12+ участников и 14 дней подряд по Google Play; сервис сейчас 0/15 участников, старт ожидается примерно через 6 часов. Физическая приёмка и все P0/P1/P2 не закрыты.
+
+## 12.10.2026 — скриншоты и завершение настройки Google Play
+
+- [x] Получены 4 реальные Android-скриншота: темы, тренировка, результат, статистика. Оригиналы 1280×2772 JPEG приняты Console без кадрирования, добавлены в указанном порядке и сохранены; карточка «Готово к отправке на проверку».
+- [x] Сохранены credentials serbotalkreview с английской инструкцией, аудитория 18+ (необязательная блокировка несовершеннолетних не включена) и ранее заполненная Data Safety по 8 типам данных. Dashboard убрал завершённый блок настройки и открыл 5 задач закрытого тестирования; [доказательства](google-play-setup-2026-10-12.md).
+- [ ] Release AAB / signing, страны, тестировщики, выпуск и отправка в Google. Скриншоты не подтверждают номер установленного APK или всю физическую приёмку; P0/P1/P2 целиком не закрыты.
+
 ## 12.10.2026 — логин ревьюера и выпуск 1.30
 
 - [x] Владелец подтвердил web/Android публикацию 1.30/code40. Backend alias без email в bundle, стандартная сессия Supabase и совместимость email-входа реализованы; 15 backend и 8 targeted frontend tests прошли. [Доказательства](android-1.30-release.md).
 - [x] Полный gate: backend/scripts 278 passed / 8 skips, Node guards 5, frontend 200 / 19 suites, lint/typecheck/build. Cloud APK 1.30/code40, API/подпись/metadata/7 assets и Downloads проверены; [доказательства](android-1.30-release.md).
 - [x] PR #92 merged на 461c5d5; backend/web READY production/main/SHA/aliases проверены. HTTP smoke и существующая review-сессия (темы, профиль без лимита, v.1.30) прошли. GitHub release v1.30: tag/target, server digest/size и Downloads совпали; [доказательства](android-1.30-release.md).
 - [x] Реальный production alias-вход подтверждён владельцем; темы/практика и настройки v.1.30 проверены после входа.
-- [ ] Физическая приёмка и скриншоты. Google Play и P0/P1/P2 целиком не закрыты.
+- [x] Получены и сохранены 4 скриншота реального Android UI; [статус Console](google-play-setup-2026-10-12.md).
+- [ ] Физическая приёмка APK 1.30, включая alias-вход и страницу удаления. Выпуск Google Play и P0/P1/P2 целиком не закрыты.
 
 ## 12.10.2026 — подготовка Google Play
 
 - [x] В Console сохранены 7 из 11 пунктов настройки, русский текст карточки, иконка 512×512 и баннер 1024×500; [доказательства и ограничения](google-play-setup-2026-10-12.md).
 - [x] Реализованы обычный Supabase email/password вход ревьюера, публичная инструкция удаления и ссылка из настроек; frontend 196 tests / 18 suites, lint/typecheck/build и diff check прошли.
 - [x] PR #91 merged, web dpl_EYLugi2rYY7sZxiNwdy6anmugjh6 Ready / production, main SHA 941bf5b/alias подтверждены. Публичная страница/ссылка из настроек и реальный email/password вход проверены; тестовый аккаунт user/premium без лимита и admin-доступа.
-- [ ] Закончить доступ, аудиторию 18+, Data Safety и карточку со скриншотами; публикация закрытого теста отдельно.
+- [x] Доступ, аудитория 18+, Data Safety и карточка с 4 скриншотами сохранены; dashboard открыл задачи закрытого теста 12.10.2026.
+- [ ] Release AAB/signing и публикация закрытого теста отдельно.
 - [x] По отдельному поручению владельца собран Android 1.29/code39; 19 metadata/environment/settings tests, 5 Node guards, APK API/подпись/assets прошли. [Доказательства](android-1.29-release.md).
 - [ ] Публикация Android 1.29, физическая приёмка и скриншоты с телефона; P0/P1/P2 целиком не закрыты.
 
@@ -582,3 +598,28 @@
 - [x] Android sync/build 1.31/code41 по отдельной команде и согласованию; metadata/API/signature/assets/Downloads проверены. [Доказательства](android-1.31-release.md).
 - [x] GitHub APK release v1.31, tag/target/digest/size и Downloads проверены.
 - [ ] Приёмка владельцем и проверка на физическом Android-устройстве.
+
+## 14.10.2026 — обязательное обновление обеих локалей интерфейса
+
+- [x] В [AGENTS.md](../AGENTS.md) закреплено одновременное добавление и изменение UI-текстов на русском и английском в одном изменении, обновление каталога и проверка обеих локалей web/общего Android-интерфейса. Односторонний перевод не считается завершённой доработкой.
+- [x] Проверен diff и `git diff --check`; изменены только правила и запись аудита, runtime и Android metadata не менялись. README проверен: описание двух языков остаётся актуальным.
+
+## 14.10.2026 — исправления экранов и английского источника разбора
+
+- [x] Домик после карусели возвращает к выбору тем без выбранной темы; поздравление крупное/белое.
+- [x] Выбор ru/en до входа и сохранение в настройках; review-вход локализован в обеих версиях.
+- [x] Размер исходной фразы и transcript одинаковый, форма поднята в центр desktop/mobile/shared Android-layout.
+- [x] Модель получает видимый английский источник; prompt v3 привязывает разбор к словам оригинала. API/unit tests, parity 160 фраз, 251 backend tests, 207 UI tests, lint/typecheck/build, 9 browser scenarios. [Доказательства](localization-fixes-checkpoint-2026-10-14.md).
+- [ ] Публикация web/backend и ссылка на PR/commit.
+- [ ] Отдельно согласованный Android sync/build/release; backlog обновлён, версия 1.31/code41 сохранена.
+- [ ] Физическая приёмка и реальный AI-разбор после публикации.
+
+## 14.10.2026 — desktop темы и накопленный релиз
+
+- [x] Desktop два столбца компактных карточек, disabled premium тема/фраза; ru/en component и 4 browser checks 1024/1366. [Доказательства](desktop-topics-checkpoint-2026-10-14.md).
+- [x] Накопленные login/transcript/review/English source checks прошли; backend/scripts 293 passed / 8 skipped, Node guards 5 passed.
+- [x] Production Android sync перенёс набор после 1.31 по команде владельца; metadata пока прежние.
+- [ ] Отдельное согласование версии и APK build/signature/API/bundle проверки.
+- [ ] GitHub PR/merge, production Ready и browser smoke.
+- [ ] GitHub APK release/digest/Downloads.
+- [ ] Физическая приёмка.

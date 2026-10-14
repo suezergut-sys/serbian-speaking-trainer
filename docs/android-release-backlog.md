@@ -1,11 +1,19 @@
 # Android-релизы и проверки
 
+## 13.10.2026 — release AAB 1.30
+
+- [x] По отдельной команде владельца подписанный release AAB 1.30/code40 собран, проверен и загружен в закрытый трек Alpha. Metadata, production API, подпись и assets проверены; выпуск сохранён с русскими примечаниями и всеми странами. [Доказательства](android-1.30-release.md).
+- [x] Дополнительная декларация Advertising ID сохранена, 13 изменений отправлены, статус «Изменения на проверке» подтверждён.
+- [x] Alpha 1.30/code40 опубликован Google, Testers Community Starter отправлен с использованием 1 оплаченного кредита. Группа testers-community@googlegroups.com сохранена и отправлена на проверку.
+- [ ] Одобрение группы, фактические участники и 14 дней Google Play; физическая приёмка остаётся отдельно.
+
 ## 12.10.2026 — выпуск 1.30
 
 - [x] Владелец подтвердил 1.30/code40 и публикацию web/Android. Alias-вход и весь frontend после 1.28 включены в исходный код; предыдущая 1.29 была проверочной локальной сборкой. [Доказательства](android-1.30-release.md).
 - [x] Production cloud sync/build и проверки API/metadata/подписи/7 packaged assets; Downloads готов. 278 backend/scripts и 200 frontend tests, Node guards 5, lint/typecheck/build прошли.
 - [x] Публикация Vercel backend/web READY на 461c5d5 и GitHub release v1.30: aliases, tag/target и server digest/size проверены. [Доказательства](android-1.30-release.md).
-- [ ] Телефонная приёмка и скриншоты.
+- [x] Получены 4 телефонных скриншота, карточка Google Play сохранена. [Статус](google-play-setup-2026-10-12.md).
+- [ ] Телефонная приёмка именно APK 1.30 и запуск Google Play закрытого теста.
 
 ## 12.10.2026 — требования Google Play к доступу и удалению
 
@@ -429,3 +437,19 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 - [x] После ручного Google-входа владельца проверены ru/en settings/topics/practice/statistics/phrase table, сохранение после reload и возврат на русский; console errors отсутствуют.
 - [x] Владелец отдельно согласовал 1.31/code41; полный общий frontend перенесён через production Android build/cap sync/Gradle. API, metadata, прежняя подпись и assets проверены; [доказательства](android-1.31-release.md).
 - [ ] Физическая приёмка: смена языка, тренировка, подсказки, статистика, сохранение выбора после перезапуска.
+
+## 14.10.2026 — следующий выпуск: повторение, вход, transcript и разбор
+
+- [x] Общий React-код и backend реализованы локально: домик/крупное белое поздравление, ru/en до входа, центральный transcript размером оригинала, правильный source_text для английского анализа.
+- [x] Общий Android-layout проверен в Chrome/Capacitor для ru/en, включая форму входа; [доказательства](localization-fixes-checkpoint-2026-10-14.md).
+- [ ] Публикация общего backend/web.
+- [ ] Перенос клиентских изменений в следующий APK по отдельной команде: sync/build/version/publication не выполнялись, текущая 1.31/code41 сохранена.
+- [ ] Проверка packaged bundle и физическая приёмка ru/en, клавиатуры, записи и нового разбора.
+
+## 14.10.2026 — выпуск накопленного набора по команде владельца
+
+- [x] Desktop карточки и premium закрыты, клиентские изменения предыдущего localization checkpoint проверены в общем Android-layout.
+- [x] Выполнен production `pnpm android:sync`: весь набор после 1.31 перенесён.
+- [ ] Номер следующего выпуска отдельно согласуется; предложены 1.32/code42.
+- [ ] Cloud APK, metadata/API/signature/bundle и GitHub публикация.
+- [ ] Физическая приёмка. [Доказательства](desktop-topics-checkpoint-2026-10-14.md).
