@@ -610,8 +610,8 @@
 - [x] Выбор ru/en до входа и сохранение в настройках; review-вход локализован в обеих версиях.
 - [x] Размер исходной фразы и transcript одинаковый, форма поднята в центр desktop/mobile/shared Android-layout.
 - [x] Модель получает видимый английский источник; prompt v3 привязывает разбор к словам оригинала. API/unit tests, parity 160 фраз, 251 backend tests, 207 UI tests, lint/typecheck/build, 9 browser scenarios. [Доказательства](localization-fixes-checkpoint-2026-10-14.md).
-- [ ] Публикация web/backend и ссылка на PR/commit.
-- [ ] Отдельно согласованный Android sync/build/release; backlog обновлён, версия 1.31/code41 сохранена.
+- [x] Web/backend опубликованы через [PR #97](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/97) на 05e47a4, READY/production/main; [доказательства](android-1.32-release.md).
+- [x] После отдельного согласования 1.32/code42: sync/cloud APK/signature/API/bundle/release проверены; [доказательства](android-1.32-release.md).
 - [ ] Физическая приёмка и реальный AI-разбор после публикации.
 
 ## 14.10.2026 — desktop темы и накопленный релиз
@@ -619,7 +619,7 @@
 - [x] Desktop два столбца компактных карточек, disabled premium тема/фраза; ru/en component и 4 browser checks 1024/1366. [Доказательства](desktop-topics-checkpoint-2026-10-14.md).
 - [x] Накопленные login/transcript/review/English source checks прошли; backend/scripts 293 passed / 8 skipped, Node guards 5 passed.
 - [x] Production Android sync перенёс набор после 1.31 по команде владельца; metadata пока прежние.
-- [ ] Отдельное согласование версии и APK build/signature/API/bundle проверки.
-- [ ] GitHub PR/merge, production Ready и browser smoke.
-- [ ] GitHub APK release/digest/Downloads.
+- [x] Владелец отдельно согласовал 1.32/code42; cloud APK/signature/API/metadata/9 packaged files проверены.
+- [x] [PR #97](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/97) merged на 05e47a4, frontend/backend READY с aliases, API/CORS и authorized ru/en browser smoke прошли.
+- [x] [APK v1.32](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.32) опубликован; tag/target/digest/size/обратная authenticated загрузка и Downloads совпали. [Доказательства](android-1.32-release.md).
 - [ ] Физическая приёмка.
