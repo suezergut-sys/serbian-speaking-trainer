@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import { Component, lazy, Suspense, useState, type ComponentType, type ReactNode } from "react";
 
 type PanelModule<Props> = { default: ComponentType<Props> };
@@ -12,8 +13,8 @@ class PanelErrorBoundary extends Component<{ children: ReactNode; onRetry: (erro
   render() {
     if (this.state.failed) {
       return <div className="deferred-panel panel" role="alert">
-        <p>Не удалось открыть раздел. Проверьте соединение и попробуйте снова.</p>
-        <button type="button" onClick={() => this.props.onRetry(this.state.error)}>Повторить загрузку</button>
+        <p>{t("Не удалось открыть раздел. Проверьте соединение и попробуйте снова.")}</p>
+        <button type="button" onClick={() => this.props.onRetry(this.state.error)}>{t("Повторить загрузку")}</button>
       </div>;
     }
     return this.props.children;
@@ -45,7 +46,7 @@ export function DeferredPanel<Props extends object>({ load, panelProps, label }:
   }
 
   return <PanelErrorBoundary key={retry} onRetry={retryLoad}>
-    <Suspense fallback={<div className="deferred-panel panel" role="status" aria-live="polite">Загружаем {label}…</div>}>
+    <Suspense fallback={<div className="deferred-panel panel" role="status" aria-live="polite">{t(`Загружаем ${label}…`)}</div>}>
       <Panel {...panelProps} />
     </Suspense>
   </PanelErrorBoundary>;

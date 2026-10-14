@@ -61,6 +61,38 @@ vi.mock("../auth", () => ({
 import App from "../App";
 
 describe("App", () => {
+  it("switches an active phrase to English while preserving the draft, canonical hint and API language", async () => {
+    voiceMock.available = true;
+    const baseFetch = mockApi();
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const response = await baseFetch(input, init);
+      if (input.toString().endsWith("/sessions/start")) {
+        const body = await response.json();
+        return { ...response, json: async () => ({ ...body, exercise: { ...body.exercise, source_ru: "Я хочу открыть новый текущий счёт." } }) };
+      }
+      return response;
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "хочу" }));
+    fireEvent.change(await recordAnswer(), { target: { value: "Želim da otvorim račun." } });
+    fireEvent.click(screen.getByRole("button", { name: "Настройки" }));
+    fireEvent.click(screen.getByRole("radio", { name: "English" }));
+    fireEvent.click(screen.getByRole("button", { name: "Practice" }));
+    expect(screen.getByRole("heading", { name: "I want to open a new current account." })).toBeInTheDocument();
+    expect(screen.getByLabelText("Your answer")).toHaveValue("Želim da otvorim račun.");
+    expect(screen.getByRole("button", { name: "want" })).toHaveClass("is-used");
+    fireEvent.click(screen.getByRole("button", { name: "want" }));
+    fireEvent.click(screen.getByRole("button", { name: "Check answer" }));
+    await waitFor(() => {
+      const call = fetchMock.mock.calls.find(([url]) => url.toString() === "/api/attempts");
+      expect(JSON.parse(call?.[1]?.body as string).hinted_words).toEqual(["хочу"]);
+      expect(new Headers(call?.[1]?.headers).get("X-Interface-Language")).toBe("en");
+    });
+    expect(fetchMock.mock.calls.filter(([url]) => url.toString().endsWith("/sessions/start"))).toHaveLength(1);
+  });
+
   afterEach(() => {
     cleanup();
     window.history.replaceState({}, "", "/");

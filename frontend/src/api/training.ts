@@ -1,6 +1,7 @@
 import type { Attempt, AttemptTimings, Exercise, PreparedReviewPhrase, ReviewPhrase, ReviewSummary, StartedTraining, TopicListItem, TranscriptionResponse, WordHint } from "../types/training";
 import { authenticatedFetch } from "../auth";
 import { apiUrl } from "./baseUrl";
+import { getLanguage } from "../i18n";
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   const controller = new AbortController();
@@ -10,7 +11,9 @@ async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   let timedOut = false;
   const timeout = window.setTimeout(() => { timedOut = true; controller.abort(); }, url === "/api/transcriptions" ? 45_000 : 30_000);
   try {
-    const response = await authenticatedFetch(apiUrl(url), { ...init, signal: controller.signal });
+    const headers = new Headers(init?.headers);
+    headers.set("X-Interface-Language", getLanguage());
+    const response = await authenticatedFetch(apiUrl(url), { ...init, headers, signal: controller.signal });
     if (!response.ok) {
       let detail: unknown;
       try { detail = (await response.json()).detail; } catch { /* Invalid error body. */ }

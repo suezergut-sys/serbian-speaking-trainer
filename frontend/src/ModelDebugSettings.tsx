@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import { useEffect, useRef, useState } from "react";
 import { fetchModelDebug, updateModelDebug } from "./api/users";
 
@@ -41,12 +42,12 @@ export function ModelDebugSettings() {
     }
   }
 
-  return <section className="assistance-settings panel" aria-label="Отладка моделей">
-    <label><input type="checkbox" role="switch" checked={enabled} disabled={busy || !loaded} onChange={event => void change(event.target.checked)} /> Режим отладки моделей</label>
-    <p>Сохранять в БД запросы и ответы моделей только вашего аккаунта, точное время, длительность и аудио для диагностики распознавания. Ключи доступа не сохраняются.</p>
-    <small>Временно хранятся последние 20 аудиозаписей. Через 7 дней аудио недоступно и очищается при следующем обращении к отладке. При выключении все логи и аудио удаляются из БД.</small>
-    {busy && <p role="status">Сохраняем или загружаем режим отладки…</p>}
-    {error && <p role="alert">{error}</p>}
-    {!busy && !loaded && <button className="debug-retry-button" type="button" onClick={() => { setBusy(true); setError(undefined); setReload(value => value + 1); }}>Повторить загрузку</button>}
+  return <section className="assistance-settings panel" aria-label={t("Отладка моделей")}>
+    <label><input type="checkbox" role="switch" checked={enabled} disabled={busy || !loaded} onChange={event => void change(event.target.checked)} />{t(" Режим отладки моделей")}</label>
+    <p>{t("Сохранять в БД запросы и ответы моделей только вашего аккаунта, точное время, длительность и аудио для диагностики распознавания. Ключи доступа не сохраняются.")}</p>
+    <small>{t("Временно хранятся последние 20 аудиозаписей. Через 7 дней аудио недоступно и очищается при следующем обращении к отладке. При выключении все логи и аудио удаляются из БД.")}</small>
+    {busy && <p role="status">{t("Сохраняем или загружаем режим отладки…")}</p>}
+    {error && <p role="alert">{t(error)}</p>}
+    {!busy && !loaded && <button className="debug-retry-button" type="button" onClick={() => { setBusy(true); setError(undefined); setReload(value => value + 1); }}>{t("Повторить загрузку")}</button>}
   </section>;
 }

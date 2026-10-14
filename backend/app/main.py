@@ -20,6 +20,7 @@ from app.api.transcriptions import router as transcriptions_router
 from app.api.review import router as review_router
 from app.config import get_settings
 from app.request_metrics import start_request_metrics, stop_request_metrics
+from app.services.interface_language import interface_language, parse_interface_language
 
 settings = get_settings()
 performance_logger = logging.getLogger("app.performance")
@@ -41,7 +42,7 @@ app.add_middleware(
     allow_origin_regex=settings.cors_allowed_origin_regex,
     allow_credentials=False,
     allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization"],
+    allow_headers=["Content-Type", "Authorization", "X-Interface-Language"],
     expose_headers=["Server-Timing"],
 )
 app.add_middleware(AudioUploadBodyLimitMiddleware)
@@ -51,10 +52,12 @@ app.add_middleware(AudioUploadBodyLimitMiddleware)
 async def record_request_timing(request: Request, call_next):
     started = perf_counter()
     metrics, token = start_request_metrics()
+    language_token = interface_language.set(parse_interface_language(request.headers.get("X-Interface-Language", "ru")))
     try:
         response = await call_next(request)
     finally:
         stop_request_metrics(token)
+        interface_language.reset(language_token)
     total_ms = (perf_counter() - started) * 1000
     auth_ms = getattr(request.state, "auth_ms", 0.0)
     sync_ms = getattr(request.state, "user_sync_ms", 0.0)

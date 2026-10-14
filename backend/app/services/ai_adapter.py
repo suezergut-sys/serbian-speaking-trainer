@@ -13,6 +13,7 @@ from app.schemas.transcriptions import TranscriptionAssistanceAnalysis
 from app.schemas.attempts import ExplainedAnswerAnalysis
 from app.request_metrics import measure_ai_call
 from app.services.model_debug import capture_model_call
+from app.services.interface_language import interface_language
 
 PROMPTS_DIR = Path(__file__).resolve().parents[1] / "prompts"
 
@@ -131,7 +132,7 @@ class OpenAIStructuredProvider:
 
     def prepare_phrase(self, *, source_ru: str, canonical_sr: str | None = None) -> PhrasePreparation:
         return self._parse(
-            prompt_name="phrase_preparation.md",
+            prompt_name="phrase_preparation_v2.md",
             payload={"source_ru": source_ru, "canonical_sr": canonical_sr, "target_level": "A2"},
             schema=PhrasePreparation,
         )
@@ -145,6 +146,8 @@ class OpenAIStructuredProvider:
     ):
         try:
             instructions = load_prompt(prompt_name)
+            if prompt_name == "answer_analyzer_v2.md" and interface_language.get() == "en":
+                instructions += "\n\n" + load_prompt("feedback_language_en_v1.md")
             input_json = json.dumps(payload, ensure_ascii=False)
             with capture_model_call(prompt_name, self.settings.openai_text_model or "", {
                 "model": self.settings.openai_text_model, "instructions": instructions,
