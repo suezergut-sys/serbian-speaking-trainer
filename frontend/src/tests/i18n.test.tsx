@@ -89,6 +89,9 @@ it("keeps compound words intact and corrects the reported lexical hints", () => 
   expect(hints.time?.translation_sr).toBe("vreme");
   expect(hints.buy?.translation_sr).toBe("kupiti");
   expect(hints.is?.translation_sr).toBe("je");
+  const job = phrases.find(phrase => phrase.id === "job-interview-01")!;
+  expect(localizedPhrase(job.source_ru).hints.i?.translation_sr).toBe("ja");
+  expect(localizedPhrase(job.source_ru).hints.work?.translation_sr).toBe("Radim");
   const bank = phrases.find(phrase => phrase.id === "bank-07")!;
   expect(sourceWords(bank.source_en)).toContain("bank's");
   expect(localizedPhrase(bank.source_ru).hints["bank's"]?.translation_sr).toBe("banke");

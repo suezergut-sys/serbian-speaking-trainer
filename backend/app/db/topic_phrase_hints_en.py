@@ -2,7 +2,7 @@
 
 ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
     'I work as an accountant in a small company.': {
-        'i': 'Radim',
+        'i': 'ja',
         'work': 'Radim',
         'accountant': 'računovođa',
         'in': 'u',
@@ -11,7 +11,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'small': 'maloj',
     },
     'I have three years of experience in this field.': {
-        'i': 'Imam',
+        'i': 'ja',
         'three': 'tri',
         'years': 'godine',
         'experience': 'iskustva',
@@ -23,7 +23,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
     },
     'Why do you want to work for our company?': {
         'why': 'Zašto',
-        'you': 'želite',
+        'you': 'vi',
         'work': 'da radite',
         'our': 'našoj',
         'company': 'firmi',
@@ -33,7 +33,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'to': 'da radite',
     },
     'I work well in an international team.': {
-        'i': 'radim',
+        'i': 'ja',
         'work': 'radim',
         'well': 'dobro',
         'in': 'u',
@@ -58,7 +58,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'is': 'je',
     },
     'I graduated from the Faculty of Economics two years ago.': {
-        'i': 'sam',
+        'i': 'ja',
         'graduated': 'Završio sam',
         'faculty': 'fakultet',
         'economics': 'Ekonomski',
@@ -78,7 +78,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'what': 'kolika',
     },
     'I learn quickly and enjoy new tasks.': {
-        'i': '∅',
+        'i': 'ja',
         'learn': 'učim',
         'quickly': 'Brzo',
         'new': 'nove',
@@ -97,7 +97,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
     },
     'In my previous job, I was responsible for important projects.': {
         'previous': 'prethodnom',
-        'i': 'sam',
+        'i': 'ja',
         'responsible': 'bio zadužen',
         'important': 'važne',
         'projects': 'projekte',
@@ -108,7 +108,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'was': 'sam bio zadužen',
     },
     'Do you have flexible working hours?': {
-        'you': 'imate',
+        'you': 'vi',
         'flexible': 'fleksibilno',
         'working': 'radno',
         'hours': 'vreme',
@@ -116,7 +116,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'have': 'imate',
     },
     'I speak Russian fluently and a little Serbian.': {
-        'i': '(ja)',
+        'i': 'ja',
         'speak': 'govorim',
         'fluently': 'tečno',
         'little': 'pomalo',
@@ -125,7 +125,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'serbian': 'srpski',
     },
     'I like finding simple solutions to complex problems.': {
-        'i': 'mi',
+        'i': 'ja',
         'like': 'volim',
         'finding': 'nalazim',
         'simple': 'jednostavna',
@@ -136,7 +136,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
     },
     'Who will I work with every day?': {
         'who': 'kim',
-        'i': 'ću',
+        'i': 'ja',
         'work': 'raditi',
         'with': 'Sa',
         'every': 'svakog',
@@ -144,7 +144,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'will': 'ću',
     },
     'I can start next Monday.': {
-        'i': '∅',
+        'i': 'ja',
         'can': 'mogu',
         'start': 'da počnem',
         'next': 'sledećeg',
@@ -172,7 +172,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'long': 'Koliko',
     },
     'I have prepared a short portfolio of my work.': {
-        'i': 'sam',
+        'i': 'ja',
         'prepared': 'Pripremio',
         'short': 'kratak',
         'portfolio': 'portfolio',
@@ -191,7 +191,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'you': 'vam',
     },
     'I want to open a new current account.': {
-        'i': 'Želim',
+        'i': 'ja',
         'want': 'Želim',
         'open': 'da otvorim',
         'new': 'novi',
@@ -228,14 +228,14 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
     },
     'Can I withdraw money without a fee?': {
         'can': 'mogu',
-        'i': 'Mogu li',
+        'i': 'ja',
         'withdraw': 'da podignem',
         'money': 'novac',
         'without': 'bez',
         'fee': 'naknade',
     },
     'I need to transfer money to an account abroad.': {
-        'i': 'mi',
+        'i': 'ja',
         'need': 'treba da',
         'transfer': 'prebacim',
         'money': 'novac',
@@ -277,7 +277,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'will': 'će',
     },
     'I forgot the password for the mobile app.': {
-        'i': 'sam',
+        'i': 'ja',
         'forgot': 'zaboravio',
         'password': 'šifru',
         'mobile': 'mobilnu',
@@ -294,7 +294,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'have': 'ima',
     },
     'I need a certificate showing my account balance.': {
-        'i': 'mi',
+        'i': 'ja',
         'need': 'potrebna',
         'certificate': 'potvrda',
         'account': 'na računu',
@@ -312,7 +312,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'i': 'ja',
     },
     'I want to change the daily card limit.': {
-        'i': 'Želim',
+        'i': 'ja',
         'want': 'Želim',
         'daily': 'dnevni',
         'card': 'na kartici',
@@ -342,14 +342,14 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
     },
     'Can I get a statement in Serbian?': {
         'can': 'Mogu',
-        'i': 'da',
+        'i': 'ja',
         'statement': 'izvod',
         'serbian': 'srpskom',
         'get': 'dobijem',
         'in': 'na',
     },
     'I need to block my lost card.': {
-        'i': 'mi',
+        'i': 'ja',
         'need': 'moram da',
         'block': 'blokiram',
         'lost': 'izgubljenu',
@@ -358,7 +358,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'to': 'da blokiram',
     },
     'Do you have a better package for foreigners?': {
-        'you': 'imate',
+        'you': 'vi',
         'better': 'povoljniji',
         'package': 'paket',
         'for': 'za',
@@ -368,7 +368,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
     },
     'Last summer we holidayed by the Adriatic Sea.': {
         'summer': 'leta',
-        'we': 'smo',
+        'we': 'mi',
         'sea': 'moru',
         'last': 'Prošlog',
         'holidayed': 'se odmarali',
@@ -385,7 +385,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
     },
     'Where do you want to go on your next holiday?': {
         'where': 'Gde',
-        'you': 'želite',
+        'you': 'vi',
         'next': 'sledeći',
         'holiday': 'odmor',
         'want': 'želite',
@@ -407,7 +407,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
     'How many days did you spend in the mountains?': {
         'how': 'Koliko',
         'days': 'dana',
-        'you': 'ste',
+        'you': 'vi',
         'in': 'na',
         'mountains': 'planini',
         'spend': 'proveli',
@@ -415,7 +415,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'many': 'Koliko',
     },
     'We rented a comfortable car for the trip.': {
-        'we': 'smo',
+        'we': 'mi',
         'rented': 'iznajmili',
         'comfortable': 'udoban',
         'car': 'auto',
@@ -431,7 +431,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'beach': 'plaži',
     },
     'I want to try local food and homemade wine.': {
-        'i': 'Želim',
+        'i': 'ja',
         'want': 'Želim',
         'try': 'da probam',
         'local': 'lokalnu',
@@ -443,7 +443,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
     },
     'In the morning, we walked around the old town.': {
         'morning': 'Ujutru',
-        'we': 'smo',
+        'we': 'mi',
         'walked': 'šetali',
         'around': 'po',
         'old': 'starom',
@@ -462,7 +462,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'to': 'kupiti',
     },
     'We really liked the view from the high mountain.': {
-        'we': 'nam',
+        'we': 'mi',
         'view': 'pogled',
         'from': 'sa',
         'high': 'visoke',
@@ -479,7 +479,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'have': 'ima',
     },
     'I forgot my warm jacket on the bus.': {
-        'i': 'sam',
+        'i': 'ja',
         'forgot': 'zaboravio',
         'warm': 'toplu',
         'jacket': 'jaknu',
@@ -488,7 +488,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'on': 'u',
     },
     'We will return home on Sunday evening.': {
-        'we': '-',
+        'we': 'mi',
         'home': 'kući',
         'sunday': 'nedelju',
         'evening': 'uveče',
@@ -509,14 +509,14 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
     'This year I have a short winter holiday.': {
         'this': 'Ove',
         'year': 'godine',
-        'i': 'imam',
+        'i': 'ja',
         'short': 'kratak',
         'winter': 'zimski',
         'holiday': 'odmor',
         'have': 'imam',
     },
     'I sent my friends some beautiful photos.': {
-        'i': 'sam',
+        'i': 'ja',
         'sent': 'Poslao',
         'friends': 'prijateljima',
         'beautiful': 'lepih',
@@ -533,7 +533,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'we': 'mi',
     },
     'We met interesting people during our trip.': {
-        'we': 'smo',
+        'we': 'mi',
         'met': 'upoznali',
         'interesting': 'zanimljive',
         'people': 'ljude',
@@ -542,7 +542,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'our': 'našeg',
     },
     'I want to spend my next holiday by a lake.': {
-        'i': 'želim',
+        'i': 'ja',
         'want': 'želim',
         'next': 'Sledeći',
         'holiday': 'odmor',
@@ -553,14 +553,14 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'to': 'da provedem',
     },
     'May I have the menu, please?': {
-        'i': 'li da dobijem',
+        'i': 'ja',
         'menu': 'jelovnik',
         'please': 'molim vas',
         'have': 'da dobijem',
         'may': 'Mogu li',
     },
     'I would like to order a strong coffee without sugar.': {
-        'i': 'Voleo bih',
+        'i': 'ja',
         'like': 'voleo bih',
         'order': 'naručim',
         'strong': 'jaku',
@@ -571,7 +571,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'would': 'bih',
     },
     'Do you have a free table by the window?': {
-        'you': 'imate',
+        'you': 'vi',
         'free': 'slobodan',
         'table': 'sto',
         'window': 'prozora',
@@ -581,7 +581,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
     },
     'What do you recommend for a light breakfast?': {
         'what': 'Šta',
-        'you': 'preporučujete',
+        'you': 'vi',
         'recommend': 'preporučujete',
         'light': 'lagan',
         'breakfast': 'doručak',
@@ -607,7 +607,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'with': 'svežom salatom',
     },
     'I do not eat meat, but I eat dairy products.': {
-        'i': '(ja)',
+        'i': 'ja',
         'not': 'ne',
         'meat': 'meso',
         'dairy': 'mlečne',
@@ -624,7 +624,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'does': 'Da li',
     },
     'We have been waiting for hot drinks for twenty minutes.': {
-        'we': 'Čekamo',
+        'we': 'mi',
         'waiting': 'čekamo',
         'hot': 'tople',
         'twenty': 'dvadeset',
@@ -643,7 +643,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'guest': 'gosta',
     },
     'I will have vegetable pasta and mineral water.': {
-        'i': 'Uzeću',
+        'i': 'ja',
         'vegetable': 'sa povrćem',
         'pasta': 'testeninu',
         'mineral': 'mineralnu',
@@ -670,7 +670,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'we': 'mi',
     },
     'I liked your homemade lemonade.': {
-        'i': 'mi',
+        'i': 'ja',
         'your': 'vaša',
         'homemade': 'domaća',
         'lemonade': 'limunada',
@@ -695,7 +695,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'is': 'je',
     },
     'I will pay by bank card.': {
-        'i': 'Platiću',
+        'i': 'ja',
         'bank': 'bankovnom',
         'card': 'karticom',
         'pay': 'Platiću',
@@ -713,7 +713,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'you': 'vi',
     },
     'You have very pleasant music today.': {
-        'you': 'imate',
+        'you': 'vi',
         'pleasant': 'prijatnu',
         'music': 'muziku',
         'today': 'Danas',
@@ -731,7 +731,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
     },
     'Today we have an important meeting with a new client.': {
         'today': 'Danas',
-        'we': 'imamo',
+        'we': 'mi',
         'important': 'važan',
         'meeting': 'sastanak',
         'with': 'sa',
@@ -740,7 +740,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'have': 'imamo',
     },
     'I need to finish this complex report by Friday.': {
-        'i': 'Moram',
+        'i': 'ja',
         'need': 'moram da',
         'this': 'ovaj',
         'complex': 'složen',
@@ -752,14 +752,14 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
     },
     'When can you discuss the new task?': {
         'when': 'Kada',
-        'you': 'možete',
+        'you': 'vi',
         'discuss': 'da razgovarate',
         'new': 'novom',
         'task': 'zadatku',
         'can': 'možete',
     },
     'I sent my colleagues the corrected version of the document.': {
-        'i': 'sam',
+        'i': 'ja',
         'sent': 'Poslao',
         'colleagues': 'kolegama',
         'corrected': 'ispravljenu',
@@ -769,7 +769,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'of': 'dokumenta',
     },
     'We will be a little late because of the morning transport.': {
-        'we': 'ćemo',
+        'we': 'mi',
         'little': 'malo',
         'late': 'kasniti',
         'morning': 'jutarnjeg',
@@ -798,7 +798,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'you': 'vi',
     },
     'I work from home two days a week.': {
-        'i': 'Radim',
+        'i': 'ja',
         'work': 'Radim',
         'from': 'od',
         'home': 'kuće',
@@ -823,7 +823,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'what': 'koliko',
     },
     'I agree with your practical suggestion.': {
-        'i': 'Slažem se',
+        'i': 'ja',
         'agree': 'Slažem se',
         'with': 'sa',
         'your': 'vašim',
@@ -831,7 +831,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'suggestion': 'predlogom',
     },
     'We do not have enough information about the old contract.': {
-        'we': 'nam',
+        'we': 'mi',
         'not': 'nedostaju',
         'information': 'informacije',
         'old': 'starom',
@@ -853,7 +853,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
     'After lunch, I will call an important supplier.': {
         'after': 'Posle',
         'lunch': 'ručka',
-        'i': 'ću',
+        'i': 'ja',
         'call': 'pozvati',
         'important': 'važnog',
         'supplier': 'dobavljača',
@@ -879,7 +879,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'is': 'je',
     },
     'I have already discussed the problem with technical support.': {
-        'i': 'sam',
+        'i': 'ja',
         'already': 'već',
         'problem': 'o problemu',
         'with': 'sa',
@@ -891,7 +891,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
     'Next week we will start a new phase of the project.': {
         'next': 'Sledeće',
         'week': 'nedelje',
-        'we': 'ćemo',
+        'we': 'mi',
         'new': 'novu',
         'phase': 'fazu',
         'project': 'projekta',
@@ -900,7 +900,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'will': 'ćemo',
     },
     'I like the calm atmosphere in our office.': {
-        'i': 'mi',
+        'i': 'ja',
         'like': 'Sviđa mi se',
         'calm': 'mirna',
         'atmosphere': 'atmosfera',
@@ -909,7 +909,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'office': 'kancelariji',
     },
     'Did you receive my last email?': {
-        'you': 'ste',
+        'you': 'vi',
         'receive': 'dobili',
         'last': 'poslednji',
         'email': 'imejl',
@@ -953,7 +953,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'i': 'ja',
     },
     'I am allergic to some antibiotics.': {
-        'i': 'sam',
+        'i': 'ja',
         'allergic': 'Alergičan',
         'antibiotics': 'antibiotike',
         'some': 'neke',
@@ -971,7 +971,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'many': 'Koliko',
     },
     'I feel weak and slightly dizzy.': {
-        'i': 'Osećam',
+        'i': 'ja',
         'feel': 'osećam',
         'weak': 'slabost',
         'dizzy': 'vrtoglavicu',
@@ -998,7 +998,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'this': 'jutros',
     },
     'I feel better after the new treatment.': {
-        'i': 'mi',
+        'i': 'ja',
         'better': 'Bolje',
         'after': 'posle',
         'new': 'nove',
@@ -1015,7 +1015,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'will': 'će',
     },
     'I cannot breathe deeply without coughing.': {
-        'i': '(ja)',
+        'i': 'ja',
         'breathe': 'da dišem',
         'deeply': 'duboko',
         'without': 'bez',
@@ -1047,7 +1047,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'on': 'dežurna',
     },
     'I need a prescription for my usual blood pressure medicine.': {
-        'i': 'mi',
+        'i': 'ja',
         'need': 'Potreban',
         'prescription': 'recept',
         'usual': 'običan',
@@ -1058,7 +1058,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'my': 'moj',
     },
     'Do you have an appointment available this week?': {
-        'you': 'imate',
+        'you': 'vi',
         'appointment': 'termin',
         'available': 'slobodan',
         'this': 'nedelje',
@@ -1067,7 +1067,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'have': 'imate',
     },
     'I injured my left leg during training.': {
-        'i': 'sam',
+        'i': 'ja',
         'injured': 'Povredio sam',
         'left': 'levu',
         'leg': 'nogu',
@@ -1077,7 +1077,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
     },
     'Can I do light exercise today?': {
         'can': 'Da li smem',
-        'i': 'da se',
+        'i': 'ja',
         'light': 'lakšim',
         'exercise': 'sportom',
         'today': 'danas',
@@ -1093,7 +1093,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'you': 'vam',
     },
     'I am looking for a bright two-room flat in the centre.': {
-        'i': 'Tražim',
+        'i': 'ja',
         'looking': 'Tražim',
         'bright': 'svetao',
         'flat': 'stan',
@@ -1138,7 +1138,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
     },
     'Can I keep a small dog in the flat?': {
         'can': 'mogu',
-        'i': 'mogu',
+        'i': 'ja',
         'keep': 'držim',
         'dog': 'psa',
         'in': 'u',
@@ -1146,7 +1146,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'small': 'malog',
     },
     'We need a written contract for one year.': {
-        'we': 'nam',
+        'we': 'mi',
         'need': 'potreban je',
         'written': 'pisani',
         'contract': 'ugovor',
@@ -1195,7 +1195,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'have': 'postoji',
     },
     'I sent the landlord a photo of the broken door.': {
-        'i': 'sam',
+        'i': 'ja',
         'sent': 'Poslao sam',
         'landlord': 'stanodavcu',
         'photo': 'fotografiju',
@@ -1233,7 +1233,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'to': 'slušaju',
     },
     'I like the view from the spacious balcony.': {
-        'i': 'mi',
+        'i': 'ja',
         'like': 'sviđa mi se',
         'view': 'pogled',
         'from': 'sa',
@@ -1251,7 +1251,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'with': 'novim',
     },
     'I will vacate the flat at the end of next month.': {
-        'i': 'ću',
+        'i': 'ja',
         'vacate': 'izaći ću',
         'flat': 'iz stana',
         'at': 'krajem',
@@ -1262,7 +1262,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'will': 'ću',
     },
     'Do you have a copy of my last payment?': {
-        'you': 'imate',
+        'you': 'vi',
         'copy': 'kopiju',
         'last': 'poslednje',
         'payment': 'uplate',
@@ -1279,7 +1279,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'is': 'se nalazi',
     },
     'I want to buy a return ticket to Novi Sad.': {
-        'i': 'Želim',
+        'i': 'ja',
         'want': 'želim',
         'return': 'povratnu',
         'ticket': 'kartu',
@@ -1297,7 +1297,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'does': '—',
     },
     'I need to change at the central station.': {
-        'i': 'mi',
+        'i': 'ja',
         'need': 'treba',
         'change': 'presednem',
         'at': 'na',
@@ -1350,7 +1350,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'on': 'Na',
     },
     'I need a cheap monthly travel pass.': {
-        'i': 'mi',
+        'i': 'ja',
         'need': 'potrebna mi je',
         'cheap': 'jeftina',
         'monthly': 'mesečna',
@@ -1383,7 +1383,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'to': 'do',
     },
     'I forgot my blue backpack in a taxi.': {
-        'i': 'sam',
+        'i': 'ja',
         'forgot': 'Zaboravio',
         'blue': 'plavi',
         'backpack': 'ranac',
@@ -1410,7 +1410,7 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'until': 'do',
     },
     'We need to get off at the third stop.': {
-        'we': 'da',
+        'we': 'mi',
         'need': 'treba',
         'at': 'na',
         'third': 'trećoj',
