@@ -1,3 +1,4 @@
+import { t, useLanguage, getLanguage, getLocale, localizedPhrase, topicText } from "./i18n";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
@@ -32,6 +33,10 @@ type AppView = "practice" | "statistics" | "settings" | "admin";
 type StartupState = "loading" | "ready" | "fallback";
 const transcriptionBreakMessage = "Проблемы с работой внешней моделью. Сделайте перерыв и вернитесь к обучению позже";
 
+function displayFeedback(text: string, alphabet: SerbianAlphabet): string {
+  return getLanguage() === "en" || !/[А-Яа-яЁё]/.test(text) ? t(text) : displaySerbianInRussianText(text, alphabet);
+}
+
 const loadStatistics = (retryUrl?: string) => (retryUrl
   ? import(/* @vite-ignore */ retryUrl) as Promise<typeof import("./StatisticsView")>
   : import("./StatisticsView")).then(({ StatisticsView }) => ({ default: StatisticsView }));
@@ -45,9 +50,9 @@ function AnswerActions({ answer, loading, native, voiceState, voiceSupported, st
 }) {
   const busy = voiceState === "connecting" || voiceState === "recording" || voiceState === "transcribing";
   return <div className="answer-actions">
-    {answer.trim() && <button className="answer-check-button" type="submit" aria-label={loading ? "Проверяем…" : native ? "Проверить" : "Проверить ответ"} disabled={loading || busy || hasUnexpectedLetterScript(answer)}><Icon name="tick" size={40} /></button>}
+    {answer.trim() && <button className="answer-check-button" type="submit" aria-label={t(loading ? "Проверяем…" : native ? "Проверить" : "Проверить ответ")} disabled={loading || busy || hasUnexpectedLetterScript(answer)}><Icon name="tick" size={40} /></button>}
     <button className={`mic-button${busy ? " is-active" : ""}${answer.trim() && !busy ? " mic-button--retry" : ""}`} type="button"
-      aria-label={busy ? voiceState === "recording" ? "Завершить запись" : "Остановить запись" : answer.trim() ? "Записать заново" : "Ответить голосом"}
+      aria-label={t(busy ? voiceState === "recording" ? "Завершить запись" : "Остановить запись" : answer.trim() ? "Записать заново" : "Ответить голосом")}
       disabled={loading || !voiceSupported || voiceState === "transcribing"}
       onClick={busy ? voiceState === "recording" ? finishVoice : stopVoice : startVoice}>
       {answer.trim() && !busy && <span className="mic-retry-ring"><Icon name="retry" size={52} /></span>}
@@ -57,9 +62,9 @@ function AnswerActions({ answer, loading, native, voiceState, voiceSupported, st
 }
 
 function PhraseLoading() {
-  return <div className="phrase-loading auth-loading" role="status" aria-label="Подготовка фразы">
+  return <div className="phrase-loading auth-loading" role="status" aria-label={t("Подготовка фразы")}>
     <span className="auth-loading__ring"><img src={appLogo} alt="SerboTalk" /></span>
-    <p>Подготовка фразы</p>
+    <p>{t("Подготовка фразы")}</p>
   </div>;
 }
 
@@ -74,7 +79,7 @@ function requestId(): string {
 function resetTimeLabel(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "после обновления лимита";
-  return `после ${new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }).format(date)}`;
+  return `после ${new Intl.DateTimeFormat(getLocale(), { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }).format(date)}`;
 }
 
 const topicIcons: Record<string, string> = {
@@ -107,10 +112,12 @@ function Icon({ name, size = 20 }: { name: string; size?: number }) {
     clock: <><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></>,
     settings: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3A1.7 1.7 0 0 0 10 3v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></>,
   };
-  return <svg aria-hidden="true" className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{paths[name] ?? paths.message}</svg>;
+  return <svg aria-hidden="true" className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{t(paths[name] ?? paths.message)}</svg>;
 }
 
 export default function App() {
+  const language = useLanguage();
+  useEffect(() => { document.documentElement.lang = language; }, [language]);
   if (window.location.pathname === "/privacy") return <LegalPage kind="privacy" />;
   if (window.location.pathname === "/terms") return <LegalPage kind="terms" />;
   if (window.location.pathname === "/delete-account") return <LegalPage kind="delete-account" />;
@@ -157,12 +164,12 @@ function AuthenticatedApp() {
     catch { setAuthError("Не удалось открыть вход через Google."); }
   }
 
-  if (!authReady) return <main className="auth-page auth-page--loading"><div className="auth-loading" role="status" aria-label="Авторизация и загрузка">
+  if (!authReady) return <main className="auth-page auth-page--loading"><div className="auth-loading" role="status" aria-label={t("Авторизация и загрузка")}>
     <span className="auth-loading__ring"><img src={appLogo} alt="SerboTalk" /></span>
-    <p>Авторизация и загрузка...</p>
+    <p>{t("Авторизация и загрузка...")}</p>
   </div></main>;
-  if (!isAuthConfigured()) return <main className="auth-page"><div className="auth-card panel"><h1>Нужна настройка входа</h1><p>Добавьте VITE_SUPABASE_URL и VITE_SUPABASE_PUBLISHABLE_KEY в окружение frontend.</p></div></main>;
-  if (!hasSession || !account) return <main className="auth-page"><div className="auth-card panel"><span className="brand__mark"><Icon name="message" size={34}/></span><h1>Добро пожаловать в SerboTalk</h1><p>Войдите или зарегистрируйтесь с Google, чтобы сохранять свой прогресс на всех устройствах.</p><button className="google-sign-in" type="button" onClick={() => void login()}>Войти через Google</button><ReviewLogin />{authError && <p className="error" role="alert">{authError}</p>}<nav className="auth-legal" aria-label="Правовая информация"><a href="/privacy">Конфиденциальность</a><a href="/terms">Условия</a><a href="/delete-account">Удаление аккаунта</a></nav></div></main>;
+  if (!isAuthConfigured()) return <main className="auth-page"><div className="auth-card panel"><h1>{t("Нужна настройка входа")}</h1><p>{t("Добавьте VITE_SUPABASE_URL и VITE_SUPABASE_PUBLISHABLE_KEY в окружение frontend.")}</p></div></main>;
+  if (!hasSession || !account) return <main className="auth-page"><div className="auth-card panel"><span className="brand__mark"><Icon name="message" size={34}/></span><h1>{t("Добро пожаловать в SerboTalk")}</h1><p>{t("Войдите или зарегистрируйтесь с Google, чтобы сохранять свой прогресс на всех устройствах.")}</p><button className="google-sign-in" type="button" onClick={() => void login()}>{t("Войти через Google")}</button><ReviewLogin />{authError && <p className="error" role="alert">{t(authError)}</p>}<nav className="auth-legal" aria-label={t("Правовая информация")}><a href="/privacy">{t("Конфиденциальность")}</a><a href="/terms">{t("Условия")}</a><a href="/delete-account">{t("Удаление аккаунта")}</a></nav></div></main>;
   return <TrainerApp key={account.id} account={account} onAccountChange={setAccount} onSignOut={() => void signOut()} />;
 }
 
@@ -804,8 +811,19 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   }
 
   function renderPhrase() {
-    // eslint-disable-next-line react-hooks/refs -- showWordHint reads refs only when the click handler runs.
-    return <h2 id="exercise-title" className="interactive-phrase" aria-label={exercise?.source_ru ?? "Готовим фразу…"}>{exercise ? exercise.source_ru.split(/([А-Яа-яЁё]+)/g).filter(Boolean).map((part, index) => /^[А-Яа-яЁё]+$/.test(part) ? <WordHintToken key={`${part}-${index}`} word={part} used={Boolean(wordHints[part.toLocaleLowerCase("ru-RU")])} disabled={checking} active={activeHint === part.toLocaleLowerCase("ru-RU") && (mobileLayout ? visiblePanel === 1 : view === "practice")} translation={wordHints[part.toLocaleLowerCase("ru-RU")] ? displaySerbian(wordHints[part.toLocaleLowerCase("ru-RU")].translation_sr, alphabet) : "Загружаем…"} onClick={() => void showWordHint(part)} /> : <span key={`${part}-${index}`}>{part}</span>) : "Готовим фразу…"}</h2>;
+    const localized = localizedPhrase(exercise?.source_ru ?? "");
+    return <h2 id="exercise-title" className="interactive-phrase" aria-label={exercise ? localized.source : t("Готовим фразу…")}>
+      {exercise ? localized.source.split(/([\p{L}]+)/gu).filter(Boolean).map((part, index) => {
+        if (!/^[\p{L}]+$/u.test(part)) return <span key={index}>{part}</span>;
+        const alias = Object.hasOwn(localized.aliases, part.toLowerCase()) ? localized.aliases[part.toLowerCase()] : undefined;
+        const word = alias?.word_ru ?? part;
+        const normalized = word.toLocaleLowerCase("ru-RU");
+        const hasHint = alias || exercise.word_hints?.some(hint => hint.word_ru.toLocaleLowerCase("ru-RU") === normalized);
+        if (!hasHint && !/[А-Яа-яЁё]/.test(part)) return <span key={index}>{part}</span>;
+        // eslint-disable-next-line react-hooks/refs -- the ref is read by the click handler only.
+        return <WordHintToken key={`${part}-${index}`} word={part} used={Boolean(wordHints[normalized])} disabled={checking} active={activeHint === normalized && (mobileLayout ? visiblePanel === 1 : view === "practice")} translation={wordHints[normalized] ? displaySerbian(wordHints[normalized].translation_sr, alphabet) : t("Загружаем…")} onClick={() => void showWordHint(word)} />;
+      }) : t("Готовим фразу…")}
+    </h2>;
   }
 
   function renderFeedback(native: boolean) {
@@ -814,11 +832,11 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     const done = !isReviewMode && completedCount >= (session?.requested_length ?? 10);
     return <div className={`feedback ${native ? "android-feedback" : ""} feedback--${attempt.analysis.verdict}`}>
       <AnswerResult source={exercise?.source_ru ?? ""} answer={attempt.transcript_sr} attempt={attempt} alphabet={alphabet} />
-      <div className="feedback__score"><span>{scorePercent}%</span><strong>{attempt.analysis.verdict === "correct" ? "Верно" : attempt.analysis.verdict === "mostly_correct" ? "Почти верно" : "Нужно доработать"}</strong></div>
-      {attempt.hint_penalty > 0 && <div className="hint-penalty"><Icon name="bulb" /><span>Подсказки: −{Math.round(attempt.hint_penalty * 100)}%</span></div>}
-      <p>{displaySerbianInRussianText(attempt.analysis.short_feedback_ru, alphabet)}</p>
-      {scorePercent < 100 && <details><summary>Разбор</summary><p>{displaySerbianInRussianText(attempt.analysis.detailed_feedback_ru, alphabet)}</p>{attempt.analysis.issues.map((issue, index) => <p className="issue" key={`${issue.skill_key}-${issue.type}-${index}`}>{displaySerbianInRussianText(issue.evidence, alphabet)}{issue.correction ? ` → ${displaySerbianInRussianText(issue.correction, alphabet)}` : ""}{issue.explanation_ru && <span className="issue-explanation">{displaySerbianInRussianText(issue.explanation_ru, alphabet)}</span>}</p>)}</details>}
-      <button className={native ? "android-primary" : "answer-submit"} type="button" disabled={advancing} onClick={() => void nextExercise()}>{advancing ? "Готовим…" : done ? "Завершить тренировку" : native ? "Следующая" : "Следующая фраза"}{!native && <Icon name="arrow" />}</button>
+      <div className="feedback__score"><span>{scorePercent}%</span><strong>{t(attempt.analysis.verdict === "correct" ? "Верно" : attempt.analysis.verdict === "mostly_correct" ? "Почти верно" : "Нужно доработать")}</strong></div>
+      {attempt.hint_penalty > 0 && <div className="hint-penalty"><Icon name="bulb" /><span>{t("Подсказки: −")}{Math.round(attempt.hint_penalty * 100)}%</span></div>}
+      <p>{displayFeedback(attempt.analysis.short_feedback_ru, alphabet)}</p>
+      {scorePercent < 100 && <details><summary>{t("Разбор")}</summary><p>{displayFeedback(attempt.analysis.detailed_feedback_ru, alphabet)}</p>{attempt.analysis.issues.map((issue, index) => <p className="issue" key={`${issue.skill_key}-${issue.type}-${index}`}>{displaySerbian(issue.evidence, alphabet)}{t(issue.correction ? ` → ${displaySerbian(issue.correction, alphabet)}` : "")}{issue.explanation_ru && <span className="issue-explanation">{displayFeedback(issue.explanation_ru, alphabet)}</span>}</p>)}</details>}
+      <button className={native ? "android-primary" : "answer-submit"} type="button" disabled={advancing} onClick={() => void nextExercise()}>{t(advancing ? "Готовим…" : done ? "Завершить тренировку" : native ? "Следующая" : "Следующая фраза")}{!native && <Icon name="arrow" />}</button>
     </div>;
   }
 
@@ -829,17 +847,17 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       <div ref={isNative ? undefined : mobileShellRef} className={`android-shell${isNative ? "" : " mobile-web-shell"}`}>
         <header className="android-header">
           <strong>Serbo<span>Talk</span></strong>
-          <nav aria-label="Панели приложения">
-            <button type="button" aria-label="Темы" aria-current={visiblePanel === 0 ? "page" : undefined} onClick={() => showAndroidPanel(0)}><Icon name="home" /></button>
-            <button type="button" aria-label="Тренировка" aria-current={visiblePanel === 1 ? "page" : undefined} onClick={() => showAndroidPanel(1)}><Icon name="mic" /></button>
-            <button type="button" aria-label="Статистика" aria-current={visiblePanel === 2 ? "page" : undefined} onClick={() => showAndroidPanel(2)}><Icon name="chart" /></button>
-            <button type="button" aria-label="Настройки" aria-current={visiblePanel === 3 ? "page" : undefined} onClick={() => showAndroidPanel(3)}><Icon name="settings" /></button>
+          <nav aria-label={t("Панели приложения")}>
+            <button type="button" aria-label={t("Темы")} aria-current={visiblePanel === 0 ? "page" : undefined} onClick={() => showAndroidPanel(0)}><Icon name="home" /></button>
+            <button type="button" aria-label={t("Тренировка")} aria-current={visiblePanel === 1 ? "page" : undefined} onClick={() => showAndroidPanel(1)}><Icon name="mic" /></button>
+            <button type="button" aria-label={t("Статистика")} aria-current={visiblePanel === 2 ? "page" : undefined} onClick={() => showAndroidPanel(2)}><Icon name="chart" /></button>
+            <button type="button" aria-label={t("Настройки")} aria-current={visiblePanel === 3 ? "page" : undefined} onClick={() => showAndroidPanel(3)}><Icon name="settings" /></button>
           </nav>
         </header>
 
         <div
           className="android-pager"
-          aria-label="Содержимое панели"
+          aria-label={t("Содержимое панели")}
           ref={androidPagerRef}
           onScroll={(event) => {
             if (!isNative) return;
@@ -855,72 +873,72 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
             }
           }}
         >
-          <section className="android-page android-topics-page" hidden={!isNative && visiblePanel !== 0} aria-label="Выбор темы">
-            <div className="android-topic-list" aria-label="Темы тренировки">
+          <section className="android-page android-topics-page" hidden={!isNative && visiblePanel !== 0} aria-label={t("Выбор темы")}>
+            <div className="android-topic-list" aria-label={t("Темы тренировки")}>
               <button className={isReviewMode ? "android-topic is-selected" : "android-topic"} type="button" disabled={reviewPhraseCount === 0} onClick={() => { showAndroidPanel(1); void startReviewTraining(); }}>
                 <span className="topic__icon"><Icon name="repeat" /></span>
-                <strong>Повторение</strong>
-                <small>{reviewPhraseCount}<span>к повторению</span></small>
+                <strong>{t("Повторение")}</strong>
+                <small>{reviewPhraseCount}<span>{t("к повторению")}</span></small>
               </button>
               {topics.map((topic) => (
                 <button className={selectedTopic === topic.id && !customTopic ? "android-topic is-selected" : "android-topic"} key={topic.id} type="button" onClick={() => { selectTopic(topic.id); showAndroidPanel(1); }}>
                   <span className={`topic__icon topic__icon--${topicIcons[topic.id] ?? "message"}`}><Icon name={topicIcons[topic.id] ?? "message"} /></span>
-                  <strong>{topic.title_ru}</strong>
-                  <small>{topic.phrase_count}<span> неизученных</span></small>
+                  <strong>{topicText(topic.id, topic.title_ru)}</strong>
+                  <small>{topic.phrase_count}<span>{t(" неизученных")}</span></small>
                 </button>
               ))}
               <button className="android-topic android-topic--premium" type="button" disabled>
                 <span className="topic__icon"><Icon name="plus" /></span>
-                <strong>+ добавить тему</strong><PremiumBadge />
+                <strong>{t("+ добавить тему")}</strong><PremiumBadge />
               </button>
               <button className="android-topic android-topic--premium" type="button" disabled>
                 <span className="topic__icon"><Icon name="plus" /></span>
-                <strong>+ добавить фразу</strong><PremiumBadge />
+                <strong>{t("+ добавить фразу")}</strong><PremiumBadge />
               </button>
             </div>
 
-            {(startupState === "fallback" || backendState === "offline") && <div className="android-error" role="alert">{startupState === "fallback" ? error : "Нет подключения к сервису."} <button type="button" onClick={retryCatalog}>Повторить загрузку</button></div>}
+            {(startupState === "fallback" || backendState === "offline") && <div className="android-error" role="alert">{t(startupState === "fallback" ? error : "Нет подключения к сервису.")} <button type="button" onClick={retryCatalog}>{t("Повторить загрузку")}</button></div>}
           </section>
 
-          <section className="android-page android-training-page" hidden={!isNative && visiblePanel !== 1} aria-label="Тренировка">
+          <section className="android-page android-training-page" hidden={!isNative && visiblePanel !== 1} aria-label={t("Тренировка")}>
             {preparingPhrase && !session ? <PhraseLoading /> : sessionComplete ? (
-              <div className="practice-done"><h1>{topicExhausted ? "Все фразы темы пройдены" : "Тренировка завершена"}</h1><p>{topicExhausted ? `${completedCount} фраз проверено. В этой теме пока нет следующих фраз.` : `${completedCount} из ${session?.requested_length ?? 10} фраз проверено.`}</p><button className="android-primary" type="button" onClick={() => { resetTraining(); if (mobileLayout) showAndroidPanel(0); }}>Выбрать новую тему</button></div>
+              <div className="practice-done"><h1>{t(topicExhausted ? "Все фразы темы пройдены" : "Тренировка завершена")}</h1><p>{t(topicExhausted ? `${completedCount} фраз проверено. В этой теме пока нет следующих фраз.` : `${completedCount} из ${session?.requested_length ?? 10} фраз проверено.`)}</p><button className="android-primary" type="button" onClick={() => { resetTraining(); if (mobileLayout) showAndroidPanel(0); }}>{t("Выбрать новую тему")}</button></div>
             ) : !session ? (
               <div className="android-training-start">
                 <span className="topic__icon"><Icon name={topicIcons[currentTopic?.id ?? ""] ?? "message"} size={26} /></span>
-                <h1>{customTopic.trim() || currentTopic?.title_ru || "Выберите тему"}</h1>
-                {!isNative && <button className="android-primary" type="button" onClick={() => showAndroidPanel(0)}>Выбрать тему</button>}
-                {error && <p className="android-error" role="alert">{error}</p>}
+                <h1>{customTopic.trim() || (currentTopic ? topicText(currentTopic.id, currentTopic.title_ru) : t("Выберите тему"))}</h1>
+                {!isNative && <button className="android-primary" type="button" onClick={() => showAndroidPanel(0)}>{t("Выбрать тему")}</button>}
+                {error && <p className="android-error" role="alert">{t(error)}</p>}
               </div>
             ) : (
               <div className="android-training-content practice-card">
-                <div className="android-training-meta">{isNative ? <span>{currentTopic?.title_ru}</span> : <button className="mobile-topic-switch" type="button" onClick={() => showAndroidPanel(0)}>{currentTopic?.title_ru} · сменить</button>}</div>
+                <div className="android-training-meta">{isNative ? <span>{t(currentTopic?.title_ru)}</span> : <button className="mobile-topic-switch" type="button" onClick={() => showAndroidPanel(0)}>{t(currentTopic?.title_ru)}{t(" · сменить")}</button>}</div>
                 {!attempt && renderPhrase()}
 
                 {!attempt ? <form className="android-answer" onSubmit={checkAnswer}>
-                  {hasTranscript ? <><label className="sr-only" htmlFor="android-serbian-answer">Ваш ответ</label>
-                    <textarea id="android-serbian-answer" value={answer} readOnly={checking} onChange={(event) => { answerEditEpochRef.current += 1; voiceTimingRef.current = undefined; setAssistanceDraft(current => current ? { ...current, edited: true } : undefined); setAnswer(event.target.value); }} placeholder="Введите ответ на сербском языке" rows={3} /></> : <p className="voice-prompt">Произнесите ответ в микрофон</p>}
-                  {hasUnexpectedLetterScript(answer) && <p className="transcription-script-warning" role="alert">В расшифровке есть буквы вне сербского алфавита. Исправьте текст перед проверкой или запишите ответ заново.</p>}
-                  {transcriptionBreakRecommended && <p className="transcription-script-warning" role="alert">{transcriptionBreakMessage}</p>}
+                  {hasTranscript ? <><label className="sr-only" htmlFor="android-serbian-answer">{t("Ваш ответ")}</label>
+                    <textarea id="android-serbian-answer" value={answer} readOnly={checking} onChange={(event) => { answerEditEpochRef.current += 1; voiceTimingRef.current = undefined; setAssistanceDraft(current => current ? { ...current, edited: true } : undefined); setAnswer(event.target.value); }} placeholder={t("Введите ответ на сербском языке")} rows={3} /></> : <p className="voice-prompt">{t("Произнесите ответ в микрофон")}</p>}
+                  {hasUnexpectedLetterScript(answer) && <p className="transcription-script-warning" role="alert">{t("В расшифровке есть буквы вне сербского алфавита. Исправьте текст перед проверкой или запишите ответ заново.")}</p>}
+                  {transcriptionBreakRecommended && <p className="transcription-script-warning" role="alert">{t(transcriptionBreakMessage)}</p>}
                   <TranscriptionAssistanceView draft={assistanceDraft} alphabet={alphabet} disabled={checking || voiceBusy} onToggle={toggleTranscriptionChange} />
                   <AnswerActions answer={answer} loading={checking} native={isNative} voiceState={voiceState} voiceSupported={voiceSupported} startVoice={() => void startVoice()} finishVoice={() => void finishVoice()} stopVoice={stopVoice} />
-                  {(!voiceSupported || voiceState !== "idle") && <p className="android-voice-state" role="status">{!voiceSupported ? "Микрофон недоступен. Разрешите доступ в настройках устройства." : voiceState === "connecting" ? "Подключаем микрофон…" : voiceState === "recording" ? "Запись" : voiceState === "transcribing" ? "Распознаём…" : "Повторите запись"}</p>}
-                  {!hasTranscript && (voiceState === "error" || !voiceSupported) && <button type="button" onClick={enterAnswerManually}>Ввести ответ вручную</button>}
+                  {(!voiceSupported || voiceState !== "idle") && <p className="android-voice-state" role="status">{t(!voiceSupported ? "Микрофон недоступен. Разрешите доступ в настройках устройства." : voiceState === "connecting" ? "Подключаем микрофон…" : voiceState === "recording" ? "Запись" : voiceState === "transcribing" ? "Распознаём…" : "Повторите запись")}</p>}
+                  {!hasTranscript && (voiceState === "error" || !voiceSupported) && <button type="button" onClick={enterAnswerManually}>{t("Ввести ответ вручную")}</button>}
 
                 </form> : renderFeedback(true)}
-                {error && <p className="android-error" role="alert">{error}</p>}
+                {error && <p className="android-error" role="alert">{t(error)}</p>}
               </div>
             )}
           </section>
 
-          <section className="android-page android-statistics-page" hidden={!isNative && visiblePanel !== 2} aria-label="Статистика">
-            {visiblePanel === 2 && <DeferredPanel load={loadStatistics} panelProps={{ alphabet, page: statisticsPage, onPageChange: setStatisticsPage }} label="статистику" />}
+          <section className="android-page android-statistics-page" hidden={!isNative && visiblePanel !== 2} aria-label={t("Статистика")}>
+            {visiblePanel === 2 && <DeferredPanel load={loadStatistics} panelProps={{ alphabet, page: statisticsPage, onPageChange: setStatisticsPage }} label={t("статистику")} />}
 
           </section>
-          <section className="android-page android-settings-page" hidden={!isNative && visiblePanel !== 3} aria-label="Настройки приложения">
-            {!isNative && view === "admin" ? <><button className="mobile-admin-link" type="button" onClick={() => showAndroidPanel(3)}>← Настройки</button><DeferredPanel load={loadAdminUsers} panelProps={{}} label="пользователей" /></> : <>
+          <section className="android-page android-settings-page" hidden={!isNative && visiblePanel !== 3} aria-label={t("Настройки приложения")}>
+            {!isNative && view === "admin" ? <><button className="mobile-admin-link" type="button" onClick={() => showAndroidPanel(3)}>{t("← Настройки")}</button><DeferredPanel load={loadAdminUsers} panelProps={{}} label={t("пользователей")} /></> : <>
             <SettingsView alphabet={alphabet} onAlphabetChange={changeAlphabet} account={account} onSignOut={onSignOut} assistanceEnabled={assistanceEnabled} assistanceSaving={assistanceSaving} assistanceError={assistanceError} onAssistanceChange={enabled => { interruptVoice(); void changeAssistance(enabled); }} />
-            {!isNative && account.role === "admin" && <button className="mobile-admin-link" type="button" onClick={() => setView("admin")}>Пользователи</button>}
+            {!isNative && account.role === "admin" && <button className="mobile-admin-link" type="button" onClick={() => setView("admin")}>{t("Пользователи")}</button>}
             </>}
 
           </section>
@@ -932,93 +950,93 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   return (
     <div className="app-shell">
       <header className="topbar">
-        <button className="brand" type="button" onClick={resetTraining} aria-label="SerboTalk — к практике">
+        <button className="brand" type="button" onClick={resetTraining} aria-label={t("SerboTalk — к практике")}>
           <span className="brand__mark"><Icon name="message" size={28} /></span>
-          <span className="brand__copy"><strong>Serbo<span>Talk</span></strong><small>Говори. Понимай. Будь ближе.</small></span>
+          <span className="brand__copy"><strong>Serbo<span>Talk</span></strong><small>{t("Говори. Понимай. Будь ближе.")}</small></span>
         </button>
-        <nav className="main-nav" aria-label="Основная навигация">
-          <button className={view === "practice" ? "is-active" : ""} type="button" onClick={() => showView("practice")}><Icon name="home" />Практика</button>
-          <button className={view === "statistics" ? "is-active" : ""} type="button" onClick={() => showView("statistics")}><Icon name="chart" />Статистика</button>
-          <button className={view === "settings" ? "is-active" : ""} type="button" onClick={() => showView("settings")}><Icon name="settings" />Настройки</button>
-          {account.role === "admin" && !Capacitor.isNativePlatform() && <button className={view === "admin" ? "is-active" : ""} type="button" onClick={() => showView("admin")}><Icon name="settings" />Пользователи</button>}
+        <nav className="main-nav" aria-label={t("Основная навигация")}>
+          <button className={view === "practice" ? "is-active" : ""} type="button" onClick={() => showView("practice")}><Icon name="home" />{t("Практика")}</button>
+          <button className={view === "statistics" ? "is-active" : ""} type="button" onClick={() => showView("statistics")}><Icon name="chart" />{t("Статистика")}</button>
+          <button className={view === "settings" ? "is-active" : ""} type="button" onClick={() => showView("settings")}><Icon name="settings" />{t("Настройки")}</button>
+          {account.role === "admin" && !Capacitor.isNativePlatform() && <button className={view === "admin" ? "is-active" : ""} type="button" onClick={() => showView("admin")}><Icon name="settings" />{t("Пользователи")}</button>}
         </nav>
         <div className="profile">
-          <div className={`connection connection--${backendState}`} role="status" aria-label={backendState === "online" ? "Backend готов" : backendState === "offline" ? "Backend недоступен" : "Подключение"}><span /></div>
-          {backendState === "offline" && <button className="connection-settings-button" type="button" aria-label="Повторить загрузку тем" onClick={retryCatalog}><Icon name="repeat" /></button>}
+          <div className={`connection connection--${backendState}`} role="status" aria-label={t(backendState === "online" ? "Backend готов" : backendState === "offline" ? "Backend недоступен" : "Подключение")}><span /></div>
+          {backendState === "offline" && <button className="connection-settings-button" type="button" aria-label={t("Повторить загрузку тем")} onClick={retryCatalog}><Icon name="repeat" /></button>}
         </div>
       </header>
 
 
 
-      {view === "admin" ? <DeferredPanel key="admin" load={loadAdminUsers} panelProps={{}} label="пользователей" /> : view === "statistics" ? <DeferredPanel key="statistics" load={loadStatistics} panelProps={{ alphabet, page: statisticsPage, onPageChange: setStatisticsPage }} label="статистику" /> : view === "settings" ? <SettingsView alphabet={alphabet} onAlphabetChange={changeAlphabet} account={account} onSignOut={onSignOut} assistanceEnabled={assistanceEnabled} assistanceSaving={assistanceSaving} assistanceError={assistanceError} onAssistanceChange={enabled => { interruptVoice(); void changeAssistance(enabled); }} /> : (
+      {view === "admin" ? <DeferredPanel key="admin" load={loadAdminUsers} panelProps={{}} label={t("пользователей")} /> : view === "statistics" ? <DeferredPanel key="statistics" load={loadStatistics} panelProps={{ alphabet, page: statisticsPage, onPageChange: setStatisticsPage }} label={t("статистику")} /> : view === "settings" ? <SettingsView alphabet={alphabet} onAlphabetChange={changeAlphabet} account={account} onSignOut={onSignOut} assistanceEnabled={assistanceEnabled} assistanceSaving={assistanceSaving} assistanceError={assistanceError} onAssistanceChange={enabled => { interruptVoice(); void changeAssistance(enabled); }} /> : (
         <main className="workspace">
           <aside className="topics-panel panel">
-            <div className="panel-heading"><h2>Темы для практики</h2><p>Выберите ситуацию и начните разговор на сербском языке</p></div>
+            <div className="panel-heading"><h2>{t("Темы для практики")}</h2><p>{t("Выберите ситуацию и начните разговор на сербском языке")}</p></div>
             <button className={isReviewMode ? "review-topic is-selected" : "review-topic"} type="button" onClick={() => void startReviewTraining()}>
               <span className="topic__icon"><Icon name="repeat" /></span>
-              <span className="topic__copy"><strong>Фразы для повторения</strong><small>{reviewPhraseCount ? `${reviewPhraseCount} требуют практики` : "Список пока пуст"}</small></span>
+              <span className="topic__copy"><strong>{t("Фразы для повторения")}</strong><small>{t(reviewPhraseCount ? `${reviewPhraseCount} требуют практики` : "Список пока пуст")}</small></span>
               <span className="review-topic__count">{reviewPhraseCount}</span>
             </button>
-            <div className="topics" aria-label="Темы тренировки">
+            <div className="topics" aria-label={t("Темы тренировки")}>
               {topics.map((topic) => (
                 <button className={selectedTopic === topic.id && !customTopic ? "topic is-selected" : "topic"} key={topic.id} type="button" onClick={() => selectTopic(topic.id)}>
                   <span className={`topic__icon topic__icon--${topicIcons[topic.id] ?? "message"}`}><Icon name={topicIcons[topic.id] ?? "message"} /></span>
-                  <span className="topic__copy"><strong>{topic.title_ru}</strong><small>{topic.description_ru}</small></span><span className="topic__unlearned"><strong>{topic.phrase_count}</strong><small>неизученных</small></span>
+                  <span className="topic__copy"><strong>{topicText(topic.id, topic.title_ru)}</strong><small>{t(topic.description_ru)}</small></span><span className="topic__unlearned"><strong>{topic.phrase_count}</strong><small>{t("неизученных")}</small></span>
                 </button>
               ))}
             </div>
-            <details className="topic-action"><summary><Icon name="plus" /> Своя тема</summary><form className={customTopic ? "custom-topic is-selected" : "custom-topic"} onSubmit={saveCustomTopic}>
-              <span className="topic__icon"><Icon name="plus" /></span><span className="custom-topic__copy"><strong>Своя тема</strong><small>Предложите свою ситуацию</small></span>
-              <input value={customTopic} onChange={(event) => setCustomTopic(event.target.value)} placeholder="Например: стоматолог" aria-label="Своя тема" />
-              <button type="submit" disabled={loading || customTopic.trim().length < 2}>Создать пустую тему</button>
+            <details className="topic-action"><summary><Icon name="plus" />{t(" Своя тема")}</summary><form className={customTopic ? "custom-topic is-selected" : "custom-topic"} onSubmit={saveCustomTopic}>
+              <span className="topic__icon"><Icon name="plus" /></span><span className="custom-topic__copy"><strong>{t("Своя тема")}</strong><small>{t("Предложите свою ситуацию")}</small></span>
+              <input value={customTopic} onChange={(event) => setCustomTopic(event.target.value)} placeholder={t("Например: стоматолог")} aria-label={t("Своя тема")} />
+              <button type="submit" disabled={loading || customTopic.trim().length < 2}>{t("Создать пустую тему")}</button>
             </form></details>
-            <details className="topic-action"><summary><Icon name="plus" /> Добавить фразу</summary><form className="add-phrase" onSubmit={saveReviewPhrase}>
-              <div><span className="topic__icon"><Icon name="plus" /></span><span><strong>Добавить фразу</strong><small>Введите фразу на русском</small></span></div>
-              <input value={newPhrase} onChange={(event) => { setNewPhrase(event.target.value); setPreparedPhrase(undefined); }} placeholder="Например: Я задержусь на десять минут" aria-label="Новая фраза для повторения" />
-              {preparedPhrase && <div className="phrase-preparation" aria-label="Канонический перевод">
-                <small>Канонический перевод</small><strong lang={alphabet === "cyrillic" ? "sr-Cyrl" : "sr-Latn"}>{displaySerbian(preparedPhrase.canonical_sr, alphabet)}</strong>
-                <label>Тема<select aria-label="Тема для новой фразы" value={phraseTopicId} onChange={(event) => setPhraseTopicId(event.target.value)}>
-                  <option value="">Выберите тему</option>
-                  {topics.map((topic) => <option value={topic.id} key={topic.id}>{topic.title_ru}</option>)}
+            <details className="topic-action"><summary><Icon name="plus" />{t(" Добавить фразу")}</summary><form className="add-phrase" onSubmit={saveReviewPhrase}>
+              <div><span className="topic__icon"><Icon name="plus" /></span><span><strong>{t("Добавить фразу")}</strong><small>{t("Введите фразу на русском")}</small></span></div>
+              <input value={newPhrase} onChange={(event) => { setNewPhrase(event.target.value); setPreparedPhrase(undefined); }} placeholder={t("Например: Я задержусь на десять минут")} aria-label={t("Новая фраза для повторения")} />
+              {preparedPhrase && <div className="phrase-preparation" aria-label={t("Канонический перевод")}>
+                <small>{t("Канонический перевод")}</small><strong lang={alphabet === "cyrillic" ? "sr-Cyrl" : "sr-Latn"}>{displaySerbian(preparedPhrase.canonical_sr, alphabet)}</strong>
+                <label>{t("Тема")}<select aria-label={t("Тема для новой фразы")} value={phraseTopicId} onChange={(event) => setPhraseTopicId(event.target.value)}>
+                  <option value="">{t("Выберите тему")}</option>
+                  {topics.map((topic) => <option value={topic.id} key={topic.id}>{topicText(topic.id, topic.title_ru)}</option>)}
                 </select></label>
               </div>}
-              <button type="submit" disabled={loading || newPhrase.trim().length < 3 || Boolean(preparedPhrase && !phraseTopicId)}>{preparedPhrase ? "Сохранить в тему" : "Создать перевод"}</button>
+              <button type="submit" disabled={loading || newPhrase.trim().length < 3 || Boolean(preparedPhrase && !phraseTopicId)}>{t(preparedPhrase ? "Сохранить в тему" : "Создать перевод")}</button>
             </form></details>
-            <div className="topics-panel__note"><Icon name="message" /><span>Каждый короткий разговор делает речь увереннее.</span></div>
+            <div className="topics-panel__note"><Icon name="message" /><span>{t("Каждый короткий разговор делает речь увереннее.")}</span></div>
           </aside>
 
-          <section className="practice-stage" aria-label="Практика">
+          <section className="practice-stage" aria-label={t("Практика")}>
             {preparingPhrase && !session ? <PhraseLoading /> : sessionComplete ? (
-              <div className="practice-done panel"><h1>{topicExhausted ? "Все фразы темы пройдены" : "Тренировка завершена"}</h1><p>{topicExhausted ? `${completedCount} фраз проверено. В этой теме пока нет следующих фраз.` : `${completedCount} из ${session?.requested_length ?? 10} фраз проверено.`}</p><button className="answer-submit" type="button" onClick={() => { resetTraining(); if (mobileLayout) showAndroidPanel(0); }}>Выбрать новую тему</button></div>
+              <div className="practice-done panel"><h1>{t(topicExhausted ? "Все фразы темы пройдены" : "Тренировка завершена")}</h1><p>{t(topicExhausted ? `${completedCount} фраз проверено. В этой теме пока нет следующих фраз.` : `${completedCount} из ${session?.requested_length ?? 10} фраз проверено.`)}</p><button className="answer-submit" type="button" onClick={() => { resetTraining(); if (mobileLayout) showAndroidPanel(0); }}>{t("Выбрать новую тему")}</button></div>
             ) : !session ? (
               <div className="welcome-card panel">
                 <div className="welcome-card__glow"/><span className="welcome-card__icon"><Icon name={topicIcons[currentTopic?.id ?? ""] ?? "message"} size={32} /></span>
-                <p className="kicker">Выбранная ситуация</p><h2>{customTopic.trim() || currentTopic?.title_ru || "Выберите тему"}</h2>
-                <p>{selectedTopicData?.phrase_count === 0 ? "Тема пока пустая. Добавьте в неё фразы — автоматической генерации не будет." : currentTopic?.description_ru || "Темы загрузятся после подключения к backend."}</p>
-                {(startupState === "fallback" || backendState === "offline") && <button className="answer-submit" type="button" onClick={retryCatalog}>Повторить загрузку</button>}
-                <div className="welcome-card__steps"><span><b>1</b> Получите фразу</span><span><b>2</b> Ответьте голосом</span><span><b>3</b> Разберите результат</span></div>
-                {error && <p className="error" role="alert">{error}</p>}
+                <p className="kicker">{t("Выбранная ситуация")}</p><h2>{customTopic.trim() || (currentTopic ? topicText(currentTopic.id, currentTopic.title_ru) : t("Выберите тему"))}</h2>
+                <p>{t(selectedTopicData?.phrase_count === 0 ? "Тема пока пустая. Добавьте в неё фразы — автоматической генерации не будет." : currentTopic?.description_ru || "Темы загрузятся после подключения к backend.")}</p>
+                {(startupState === "fallback" || backendState === "offline") && <button className="answer-submit" type="button" onClick={retryCatalog}>{t("Повторить загрузку")}</button>}
+                <div className="welcome-card__steps"><span><b>1</b>{t(" Получите фразу")}</span><span><b>2</b>{t(" Ответьте голосом")}</span><span><b>3</b>{t(" Разберите результат")}</span></div>
+                {error && <p className="error" role="alert">{t(error)}</p>}
               </div>
             ) : (
               <>
                 <div className="practice-card panel">
-                  <div className="card-title"><span><Icon name="message" /></span><h2>{isReviewMode ? "Карусель повторения" : "Основная фраза"}</h2></div>
-                  {!attempt && <div className="phrase-card__content"><div><p className="kicker">Скажите по-сербски · нажмите на незнакомое слово</p>{renderPhrase()}</div></div>}
+                  <div className="card-title"><span><Icon name="message" /></span><h2>{t(isReviewMode ? "Карусель повторения" : "Основная фраза")}</h2></div>
+                  {!attempt && <div className="phrase-card__content"><div><p className="kicker">{t("Скажите по-сербски · нажмите на незнакомое слово")}</p>{renderPhrase()}</div></div>}
                   {!attempt ? (
                     <form onSubmit={checkAnswer}>
                       <div className="answer-input">
-                        {hasTranscript ? <><label className="sr-only" htmlFor="serbian-answer">Ваш ответ</label><textarea id="serbian-answer" value={answer} readOnly={checking} onChange={(event) => { answerEditEpochRef.current += 1; voiceTimingRef.current = undefined; setAssistanceDraft(current => current ? { ...current, edited: true } : undefined); setAnswer(event.target.value); }} placeholder="Введите ответ на сербском языке" rows={4} /></> : <p className="voice-prompt">Произнесите ответ в микрофон. После распознавания текст можно исправить.</p>}
+                        {hasTranscript ? <><label className="sr-only" htmlFor="serbian-answer">{t("Ваш ответ")}</label><textarea id="serbian-answer" value={answer} readOnly={checking} onChange={(event) => { answerEditEpochRef.current += 1; voiceTimingRef.current = undefined; setAssistanceDraft(current => current ? { ...current, edited: true } : undefined); setAnswer(event.target.value); }} placeholder={t("Введите ответ на сербском языке")} rows={4} /></> : <p className="voice-prompt">{t("Произнесите ответ в микрофон. После распознавания текст можно исправить.")}</p>}
                       </div>
-                      {hasUnexpectedLetterScript(answer) && <p className="transcription-script-warning" role="alert">В расшифровке есть буквы вне сербского алфавита. Исправьте текст перед проверкой или запишите ответ заново.</p>}
-                      {transcriptionBreakRecommended && <p className="transcription-script-warning" role="alert">{transcriptionBreakMessage}</p>}
+                      {hasUnexpectedLetterScript(answer) && <p className="transcription-script-warning" role="alert">{t("В расшифровке есть буквы вне сербского алфавита. Исправьте текст перед проверкой или запишите ответ заново.")}</p>}
+                      {transcriptionBreakRecommended && <p className="transcription-script-warning" role="alert">{t(transcriptionBreakMessage)}</p>}
                       <TranscriptionAssistanceView draft={assistanceDraft} alphabet={alphabet} disabled={checking || voiceBusy} onToggle={toggleTranscriptionChange} />
                   <AnswerActions answer={answer} loading={checking} native={isNative} voiceState={voiceState} voiceSupported={voiceSupported} startVoice={() => void startVoice()} finishVoice={() => void finishVoice()} stopVoice={stopVoice} />
-                      <div className="voice-status">{!voiceSupported ? "Микрофон недоступен. Разрешите доступ к нему в браузере или устройстве." : voiceState === "recording" ? "Идёт запись. Аудио не сохраняется" : voiceState === "transcribing" ? "Расшифровываем фразу…" : voiceState === "error" ? "Не удалось распознать ответ. Повторите запись." : hasTranscript ? "Введите ответ или исправьте распознанный текст." : "Нажмите на микрофон, чтобы ответить."}</div>
-                      {!hasTranscript && (voiceState === "error" || !voiceSupported) && <button type="button" onClick={enterAnswerManually}>Ввести ответ вручную</button>}
+                      <div className="voice-status">{t(!voiceSupported ? "Микрофон недоступен. Разрешите доступ к нему в браузере или устройстве." : voiceState === "recording" ? "Идёт запись. Аудио не сохраняется" : voiceState === "transcribing" ? "Расшифровываем фразу…" : voiceState === "error" ? "Не удалось распознать ответ. Повторите запись." : hasTranscript ? "Введите ответ или исправьте распознанный текст." : "Нажмите на микрофон, чтобы ответить.")}</div>
+                      {!hasTranscript && (voiceState === "error" || !voiceSupported) && <button type="button" onClick={enterAnswerManually}>{t("Ввести ответ вручную")}</button>}
 
                     </form>
                   ) : renderFeedback(false)}
-                  {error && <p className="error" role="alert">{error}</p>}
+                  {error && <p className="error" role="alert">{t(error)}</p>}
                 </div>
               </>
             )}

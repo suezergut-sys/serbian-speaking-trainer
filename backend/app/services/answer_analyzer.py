@@ -8,6 +8,7 @@ from app.config import Settings, get_settings
 from app.schemas import AnswerAnalysis, AnswerIssue, CreateAttemptRequest, DemonstratedSkill
 from app.services.ai_adapter import AIServiceError, StructuredAIProvider
 from app.services.serbian_text import normalized_serbian_words, serbian_latin_for_evaluation
+from app.services.interface_language import interface_language
 
 
 class AnalysisUnavailableError(RuntimeError):
@@ -137,21 +138,30 @@ class AnswerAnalyzer:
         # For a local word correction, the structured pair is the only supported
         # explanation. Free-form feedback may claim a different letter was spoken.
         details: list[str] = []
+        english = interface_language.get() == "en"
         for position, issue in enumerate(analysis.issues):
             part = (
                 f"В распознанном ответе «{issue.evidence}»; "
                 f"исправленный вариант — «{issue.correction}»."
                 if issue.correction else f"Проверьте фрагмент «{issue.evidence}»."
             )
+            if english:
+                part = (
+                    f'The transcript contains “{issue.evidence}”; the correction is “{issue.correction}”.'
+                    if issue.correction else f'Check the fragment “{issue.evidence}”.'
+                )
             remaining = len(analysis.issues) - position
             if len(" ".join([*details, part])) > 1900:
-                details.append(f"Есть ещё {remaining} замечаний в списке ошибок.")
+                details.append(f"There are {remaining} more comments in the issue list." if english
+                               else f"Есть ещё {remaining} замечаний в списке ошибок.")
                 break
             details.append(part)
         return analysis.model_copy(update={
             "short_feedback_ru": (
-                "В ответе есть неточность в одном слове." if len(analysis.issues) == 1
-                else "В ответе есть несколько неточностей."
+                ("One word in your answer needs correcting." if len(analysis.issues) == 1
+                 else "Several parts of your answer need correcting.") if english else
+                ("В ответе есть неточность в одном слове." if len(analysis.issues) == 1
+                 else "В ответе есть несколько неточностей.")
             ),
             "detailed_feedback_ru": " ".join(details),
         })
@@ -186,6 +196,17 @@ class AnswerAnalyzer:
                 "Исправьте ответ с учётом замечаний ниже."
             ),
         }[analysis.verdict]
+        if interface_language.get() == "en":
+            feedback = {
+                "correct": "Your answer is correct; the canonical translation is shown below.",
+                "mostly_correct": "The main meaning is conveyed; use the canonical translation and the comments below.",
+                "needs_work": "Compare your answer with the canonical translation and comments below.",
+            }[analysis.verdict]
+            detail = {
+                "correct": f'Your answer conveys the intended meaning. The canonical translation “{canonical_sr}” is correct and natural in this context.',
+                "mostly_correct": f'The main meaning is conveyed. The canonical translation “{canonical_sr}” is correct and natural; specific comments are listed below.',
+                "needs_work": f'The canonical translation “{canonical_sr}” is correct and natural. Edit your answer using the comments below.',
+            }[analysis.verdict]
         return analysis.model_copy(
             update={
                 "corrected_sr": canonical_sr,
@@ -211,9 +232,11 @@ class AnswerAnalyzer:
             pronunciation_score=None,
             fluency_score=fluency,
             corrected_sr=matched_variant,
-            short_feedback_ru="Ответ полностью совпадает с естественным эталонным вариантом.",
+            short_feedback_ru=("Your answer exactly matches a natural reference translation." if interface_language.get() == "en"
+                               else "Ответ полностью совпадает с естественным эталонным вариантом."),
             detailed_feedback_ru=(
-                "Смысл, грамматика, лексика и естественность соответствуют эталонному варианту."
+                "Meaning, grammar, vocabulary and naturalness match the reference translation." if interface_language.get() == "en"
+                else "Смысл, грамматика, лексика и естественность соответствуют эталонному варианту."
             ),
             accepted_alternatives=alternatives,
             issues=[],

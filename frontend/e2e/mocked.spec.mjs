@@ -70,6 +70,29 @@ async function mockApp(page, submitted) {
 }
 
 const measuredSamples = Number(process.env.E2E_SAMPLES_PER_SCRIPT ?? 1);
+for (const layout of ["desktop", "mobile", "android"]) {
+  test(`English language: ${layout} settings and canonical phrase`, async ({ page }) => {
+    await page.setViewportSize(layout === "desktop" ? { width: 1366, height: 900 } : { width: 393, height: 851 });
+    if (layout === "android") await page.addInitScript(() => { window.CapacitorCustomPlatform = { name: "android" }; });
+    await mockApp(page, []);
+    await page.route("**/api/sessions/start", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ session, exercise: exercise("exercise-1", "Я хочу открыть новый текущий счёт.") }) }));
+    await page.goto("/");
+    await page.getByRole("button", { name: "Настройки", exact: true }).click();
+    await expect(page.locator(".settings-page:visible fieldset").first()).toHaveClass(/language-settings/);
+    await page.getByRole("radio", { name: "English", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
+    await expect(page.getByRole("radio", { name: "English", exact: true })).toBeChecked();
+    expect(await page.evaluate(() => document.documentElement.lang)).toBe("en");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: `test-results/language-${layout}-settings.png` });
+    await page.getByRole("button", { name: "Practice", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "I want to open a new current account.", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "want", exact: true })).toBeVisible();
+    await page.screenshot({ path: `test-results/language-${layout}-practice.png` });
+    await page.reload();
+    await expect(page.getByRole("heading", { name: "I want to open a new current account.", exact: true })).toBeVisible();
+  });
+}
 for (const native of [false, true]) {
   test(`${native ? "Android layout" : "web"} dynamic transcription analysis and unavailable fallback`, async ({ page }) => {
     await page.setViewportSize({ width: 393, height: 851 });

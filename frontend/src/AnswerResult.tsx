@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import type { Attempt } from "./types/training";
 import { displaySerbian, toSerbianLatin, type SerbianAlphabet } from "./serbianScript";
 
@@ -108,8 +109,8 @@ function HighlightedAnswer({ answer, attempt, alphabet }: { answer: string; atte
 
 export function AnswerResult({ source, answer, attempt, alphabet = "latin" }: { source: string; answer: string; attempt: Attempt; alphabet?: SerbianAlphabet }) {
   return <div className="result-phrases">
-    <div className="result-phrase"><small>Фраза на русском</small><span className="result-phrase__text">{source}</span></div>
-    <div className="result-phrase"><small>Ваш вариант</small><HighlightedAnswer answer={answer} attempt={attempt} alphabet={alphabet} /></div>
-    <div className="result-phrase correction"><small>{attempt.analysis.verdict === "correct" ? "Вариант перевода" : "Правильный вариант"}</small><span className="result-phrase__text" lang={alphabet === "cyrillic" ? "sr-Cyrl" : "sr-Latn"}>{displaySerbian(attempt.analysis.corrected_sr, alphabet)}</span></div>
+    <div className="result-phrase"><small>{t("Фраза на русском")}</small><span className="result-phrase__text">{t(source)}</span></div>
+    <div className="result-phrase"><small>{t("Ваш вариант")}</small><HighlightedAnswer answer={answer} attempt={attempt} alphabet={alphabet} /></div>
+    <div className="result-phrase correction"><small>{t(attempt.analysis.verdict === "correct" ? "Вариант перевода" : "Правильный вариант")}</small><span className="result-phrase__text" lang={alphabet === "cyrillic" ? "sr-Cyrl" : "sr-Latn"}>{displaySerbian(attempt.analysis.corrected_sr, alphabet)}</span></div>
   </div>;
 }

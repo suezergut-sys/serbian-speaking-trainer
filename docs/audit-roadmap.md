@@ -572,3 +572,12 @@
 - [x] 17 metadata/environment tests, production API, подпись, 7 dist/6 production assets и копия Downloads проверены; [доказательства](android-1.26-release.md).
 - [x] [GitHub release 1.26](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.26), tag/target SHA и asset digest/size подтверждены; PR #79 merged.
 - [ ] Физическая Android-приёмка и реальная речь; P0/P1/P2 целиком не закрыты.
+
+## 14.10.2026 — глобальная локализация ru/en
+
+- [x] Локальная реализация: язык первым пунктом настроек, общие web/Android компоненты и отдельный английский каталог всех 160 готовых фраз с прежними сербскими канонами.
+- [x] Проверки: component tests, backend unit/integration, lint, typecheck, production build и browser smoke для desktop/mobile/Android-layout; [результаты и ограничения](english-localization-checkpoint-2026-10-14.md).
+- [ ] Публикация web/backend и проверка production.
+- [x] Android sync/build 1.31/code41 по отдельной команде и согласованию; metadata/API/signature/assets/Downloads проверены. [Доказательства](android-1.31-release.md).
+- [ ] Публикация GitHub APK release.
+- [ ] Приёмка владельцем и проверка на физическом Android-устройстве.
