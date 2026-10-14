@@ -24,7 +24,9 @@
 
 ## Публикация и Android
 
-- [ ] Web/backend PR/production deployment и фактическая проверка.
+- [x] [PR #99](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/99) и [PR #100](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/100) merged, runtime SHA `c0d3b6b7b9cc0b61f0db963267779bda1017a13c`. Backend `dpl_Cw9oZvzupEMRL79k4vJQHA1ZAcdm`, frontend `dpl_9HAmtEbGwjU7akGykCr4vqzJ8Zq5` READY/production/main с подтверждёнными aliases. Web/health 200, protected auth/me 401; authorised production English DOM: все слова «We need a written contract for one year.» кроме a — buttons, missing []. Console errors [], runtime error rows 0 в обоих deployment. Подсказки/ответы в production не отправлялись; сохранение/score проверены integration tests.
 - [x] Android versionName/versionCode/package/APK не менялись; общий layout проверен, изменение внесено в backlog.
 - [ ] Перенос в следующий APK только по отдельной команде владельца.
 - [ ] Физическая приёмка нового APK.
+
+Production evidence (ignored): `artifacts/english-hints-production.json`, `english-hints-api-smoke.json`, `english-hints-runtime-logs.json`, `english-hints/production-coverage.json`, `english-hints/production-en.png`.
