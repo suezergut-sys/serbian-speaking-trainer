@@ -76,7 +76,7 @@ describe("App", () => {
     expect(await screen.findByRole("radio", { name: "English" })).toBeChecked();
   });
 
-  it("switches an active phrase to English while preserving the draft, canonical hint and API language", async () => {
+  it("switches source language while keeping independent hint keys and the answer draft", async () => {
     voiceMock.available = true;
     const baseFetch = mockApi();
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -97,12 +97,16 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Practice" }));
     expect(screen.getByRole("heading", { name: "I want to open a new current account." })).toBeInTheDocument();
     expect(screen.getByLabelText("Your answer")).toHaveValue("Želim da otvorim račun.");
-    expect(screen.getByRole("button", { name: "want" })).toHaveClass("is-used");
+    expect(screen.getByRole("button", { name: "want" })).not.toHaveClass("is-used");
     fireEvent.click(screen.getByRole("button", { name: "want" }));
+    expect(screen.getByRole("button", { name: "want" })).toHaveClass("is-used");
+    expect(screen.getByText("Želim")).toBeInTheDocument();
+    const englishHint = fetchMock.mock.calls.find(([, init]) => init?.body === JSON.stringify({ word: "want" }));
+    expect(englishHint).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: "Check answer" }));
     await waitFor(() => {
       const call = fetchMock.mock.calls.find(([url]) => url.toString() === "/api/attempts");
-      expect(JSON.parse(call?.[1]?.body as string).hinted_words).toEqual(["хочу"]);
+      expect(JSON.parse(call?.[1]?.body as string).hinted_words).toEqual(["want", "хочу"]);
       expect(new Headers(call?.[1]?.headers).get("X-Interface-Language")).toBe("en");
     });
     expect(fetchMock.mock.calls.filter(([url]) => url.toString().endsWith("/sessions/start"))).toHaveLength(1);

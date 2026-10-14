@@ -9,7 +9,7 @@ from app.config import Settings
 from app.schemas import AnswerAnalysis, CreateAttemptRequest, PhrasePreparation
 from app.db.topic_phrases import TOPIC_PHRASES
 from app.db.topic_phrases_en import TOPIC_PHRASES_EN
-from app.db.topic_phrase_hints import TOPIC_PHRASE_HINTS
+from app.db.topic_phrase_hints_en import ENGLISH_WORD_HINTS
 from app.services.ai_adapter import OpenAIStructuredProvider, get_ai_provider
 from app.services.interface_language import interface_language, parse_interface_language
 from app.main import app
@@ -73,7 +73,7 @@ def test_english_analysis_uses_versioned_instructions_and_the_same_validated_sch
         interface_language.reset(token)
 
 
-def test_catalog_has_the_same_canonical_phrases_and_exact_hint_aliases():
+def test_catalog_has_the_same_canonical_phrases_and_independent_english_hints():
     path = Path(__file__).resolve().parents[2] / "frontend/src/locales/phrases.en.json"
     catalog = {item["id"]: item for item in json.loads(path.read_text(encoding="utf-8"))}
     assert TOPIC_PHRASES_EN == {item["source_ru"]: item["source_en"] for item in catalog.values()}
@@ -83,7 +83,10 @@ def test_catalog_has_the_same_canonical_phrases_and_exact_hint_aliases():
         assert item["source_ru"] == seed.source_ru
         assert item["canonical_sr"] == seed.canonical_sr
         assert item["source_en"]
-        assert all(hint in TOPIC_PHRASE_HINTS[seed.id] for hint in item["word_hints"].values())
+        assert ENGLISH_WORD_HINTS[item["source_en"]] == {
+            word: hint["translation_sr"] for word, hint in item["word_hints"].items()
+        }
+        assert all("word_ru" not in hint for hint in item["word_hints"].values())
 
 
 def test_english_exact_match_keeps_the_canonical_score_without_ai():

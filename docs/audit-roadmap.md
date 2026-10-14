@@ -623,3 +623,12 @@
 - [x] [PR #97](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/97) merged на 05e47a4, frontend/backend READY с aliases, API/CORS и authorized ru/en browser smoke прошли.
 - [x] [APK v1.32](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.32) опубликован; tag/target/digest/size/обратная authenticated загрузка и Downloads совпали. [Доказательства](android-1.32-release.md).
 - [ ] Физическая приёмка.
+
+## 14.10.2026 — полнота и независимость английских подсказок
+
+- [x] Исследована генерация/отображение: 261 отсутствующая привязка в 136 фразах; по уточнению владельца English aliases заменены независимым набором 1124 hints для 160 фраз.
+- [x] Все слова кроме a/an/the покрыты, grammar notes ru/en и compound tokens; независимые English API/learning/scoring keys, проверка старых упражнений и совместимости APK.
+- [x] Backend/scripts 298 passed / 8 skipped, targeted final 21 passed; UI 205 passed, targeted i18n 5 passed; lint/typecheck/build, 6 ru/en desktop/mobile/Android browser scenarios. [Доказательства](independent-english-hints-checkpoint-2026-10-14.md).
+- [ ] Web/backend PR/merge и production Ready/smoke.
+- [ ] Новый APK по отдельной команде; Android backlog обновлён.
+- [ ] Физическая приёмка.

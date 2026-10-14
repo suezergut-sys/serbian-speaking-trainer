@@ -20,6 +20,7 @@ from app.repositories import (
     TrainingSessionRepository,
 )
 from app.schemas import ExerciseGenerationResult, ExerciseResponse
+from app.services.word_hints import word_hints_for_language
 from app.services.ai_adapter import AIServiceError, StructuredAIProvider
 from app.services.review_service import ReviewQueueEmptyError
 from app.services.scheduler import Scheduler
@@ -289,7 +290,7 @@ class ExerciseGenerator:
             source_ru=entity.source_ru,
             targeted_skills=list(entity.generation_meta_json.get("targeted_skill_keys", [])),
             difficulty=float(entity.generation_meta_json.get("difficulty", 0.5)),
-            word_hints=list(entity.target_hints_json.get("word_hints", [])),
+            word_hints=word_hints_for_language(entity.source_ru, list(entity.target_hints_json.get("word_hints", []))),
         )
 
     def _generate(

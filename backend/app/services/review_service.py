@@ -19,6 +19,8 @@ from app.schemas import (
     WordHintResponse,
 )
 from app.services.ai_adapter import AIServiceError, StructuredAIProvider
+from app.services.word_hints import all_word_hints, word_hints_for_language
+from app.services.interface_language import interface_language
 
 CORRECT_SCORE_THRESHOLD = 0.95
 CORRECT_STREAK_TO_MASTER = 3
@@ -214,12 +216,19 @@ class ReviewService:
         The caller holds the user lock and includes this in attempt finalization.
         """
         for word in words:
-            self._record_word_hint(exercise, word)
+            self._record_word_hint(exercise, word, all_languages=True)
 
-    def _record_word_hint(self, exercise: Exercise, word: str) -> WordHintResponse:
+    def _record_word_hint(self, exercise: Exercise, word: str, *, all_languages: bool = False) -> WordHintResponse:
         normalized = normalize_ru(word)
-        hints = [WordHint.model_validate(item) for item in exercise.target_hints_json.get("word_hints", [])]
+        stored = list(exercise.target_hints_json.get("word_hints", []))
+        selected = (all_word_hints(exercise.source_ru, stored) if all_languages
+                    else word_hints_for_language(exercise.source_ru, stored))
+        hints = [WordHint.model_validate(item) for item in selected]
         hint = next((item for item in hints if normalize_ru(item.word_ru) == normalized), None)
+        if hint is None and interface_language.get() == "en":
+            # APK 1.32 and older English clients still submit legacy Russian keys.
+            hint = next((WordHint.model_validate(item) for item in stored
+                         if normalize_ru(item["word_ru"]) == normalized), None)
         if hint is None:
             raise WordHintNotFoundError(word)
         already_revealed = list(exercise.generation_meta_json.get("revealed_hint_words", []))

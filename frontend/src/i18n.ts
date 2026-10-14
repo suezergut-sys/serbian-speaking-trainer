@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 import messages from "./locales/en.json";
 import phraseData from "./locales/phrases.en.json";
-type Phrase = { id: string; source_ru: string; source_en: string; canonical_sr: string; word_hints: Record<string, { word_ru: string; translation_sr: string } | undefined> };
+type Phrase = { id: string; source_ru: string; source_en: string; canonical_sr: string; word_hints: Record<string, { translation_sr: string; note?: string } | undefined> };
 const phrases: Phrase[] = phraseData;
 
 export type InterfaceLanguage = "ru" | "en";
@@ -41,9 +41,9 @@ const presetTopicIds = new Set(["misc", "general", "review-phrases", ...phrases.
 export function topicText(id: string | null | undefined, text: string): string {
   return id == null || presetTopicIds.has(id) ? t(text) : text;
 }
-export function localizedPhrase(source: string): { source: string; aliases: Phrase["word_hints"] } {
+export function localizedPhrase(source: string): { source: string; hints: Phrase["word_hints"] } {
   const phrase = getLanguage() === "en" ? phrases.find(item => item.source_ru === source) : undefined;
-  return { source: phrase?.source_en ?? source, aliases: phrase?.word_hints ?? {} };
+  return { source: phrase?.source_en ?? source, hints: phrase?.word_hints ?? {} };
 }
 const templates = Object.entries(dictionary).filter(([key]) => key.includes("{0}"))
   .sort(([left], [right]) => right.replace(/\{\d+\}/g, "").length - left.replace(/\{\d+\}/g, "").length)

@@ -358,5 +358,11 @@
   "Не удалось войти. Проверьте данные и подключение и попробуйте снова.": "Sign-in failed. Check your credentials and connection, then try again.",
   "Изменить язык": "Change language",
   "Входим…": "Signing in…",
-  "Войти": "Sign in"
+  "Войти": "Sign in",
+  "Вспомогательный глагол вопроса отдельно не переводится.": "This question auxiliary has no separate Serbian translation.",
+  "Инфинитивная конструкция передаётся этим сербским фрагментом.": "This Serbian fragment expresses the infinitive construction.",
+  "В эталоне это слово не выражено отдельно; показан его обычный эквивалент.": "The reference leaves this word implicit; its usual equivalent is shown.",
+  "Подсказка относится ко всей конструкции, а не к отдельному слову.": "This hint translates the whole construction, rather than an isolated word.",
+  "В этом контексте время передаётся сербской формой глагола.": "In this context, tense is expressed by the Serbian verb form.",
+  "Значение передаётся падежной формой без отдельного предлога.": "The meaning is expressed by a case form, without a separate preposition."
 }
