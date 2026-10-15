@@ -662,3 +662,11 @@
 - [x] [PR #106](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/106), runtime SHA `46b3067f4d497b6688271fc5932198df7a1282ce`; frontend READY/main/production, основной alias подтверждён. После READY: 16 production browser scenarios с mock API, 4 HTTP checks; runtime errors 0. [Доказательства](practice-layout-checkpoint-2026-10-15.md).
 - [ ] Android sync/build по отдельной команде; backlog обновлён.
 - [ ] Ручная приёмка владельцем, физический Android.
+
+## 15.10.2026 — накопленный Android-релиз 1.33
+
+- [x] Отдельная команда на APK; весь накопленный после 1.32 набор перенесён через production Android sync, 17 metadata/environment tests и 9 Android-layout browser scenarios passed.
+- [x] Владелец отдельно согласовал 1.33/code43; metadata/package/output filename/test обновлены вместе.
+- [x] Cloud APK BUILD SUCCESSFUL/109 tasks; UI 210 passed, lint; metadata/API/signature/9 public assets/Downloads/SHA-256 проверены. [Доказательства](android-1.33-release.md).
+- [ ] PR/merge и GitHub release с проверкой digest/size/обратной загрузки.
+- [ ] Физическая Android-приёмка и реальная речь; P0/P1/P2 целиком не закрыты.
