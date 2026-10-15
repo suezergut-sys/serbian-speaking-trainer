@@ -19,7 +19,9 @@
 - [x] Полный UI 210 passed / 20 files; lint passed. `pnpm android:cloud-apk` — BUILD SUCCESSFUL in 1m 7s, 109 tasks. Production Android build включает TypeScript check.
 - [x] APK metadata: 1.33/code43, applicationId com.serbiantalk.trainer, min24/target36. HTTPS production API внутри packaged JS, WebView HTTPS без mixed-content override/server URL/testlab/landing. Все 9 packaged public assets совпали с результатом cap sync; 7 web assets побайтно совпали с production Android dist, ещё 2 — Cordova shims.
 - [x] Подпись SHA-256 `1329c4638a57777b90429bf0eff9df67c2865bf95ebb8b97f45ef4fad77eadd0` совпала с опубликованным APK 1.32. APK 4475926 bytes, SHA-256 `edb2e1e46dbaf35ba3ee9a5c06e5135432ff8f8677d13d83d94ce0b9f0b3947d`. Копии artifacts и `C:/Users/MSumin/Downloads/SerboTalk-andorid16-1.33.apk` совпали.
-- [ ] PR/merge и GitHub release/tag/asset digest/обратная authenticated загрузка.
+- [x] [PR #108](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/108) CLEAN/MERGEABLE без удалённых CI checks, merged на `d132af331fec60ede8a27f6b64ffd58a212fbbf9`. Frontend source совпал побайтно с проверенной сборочной веткой.
+- [x] [GitHub release v1.33](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.33) опубликован как latest; tag/target = `d132af331fec60ede8a27f6b64ffd58a212fbbf9`. Server asset digest/size совпали с проверенным APK. Authenticated обратная загрузка совпала по SHA-256 и размеру с artifacts/Downloads. Репозиторий private: ссылка предназначена для авторизованного владельца.
+- [x] Production API health — HTTP 200. Backend и web не redeploy; исходник меняет только отображаемый номер для будущей web-сборки. Функциональный web runtime остаётся PR #106.
 - [ ] Физическая установка, Google OAuth, реальный микрофон и AI-разбор на телефоне.
 
 Предыдущие записи backlog о «будущем APK» отражают состояние на дату конкретной доработки. Этот выпуск закрывает перенос накопленного исходного кода, но не закрывает исторические пункты ручной/физической приёмки, Google Play и P0/P1/P2 целиком.

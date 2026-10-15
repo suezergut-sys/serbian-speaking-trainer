@@ -486,5 +486,5 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 ## 15.10.2026 — перенос накопленного набора в APK 1.33
 
 - [x] Production sync/cloud APK, 1.33/code43 по отдельному согласованию, 210 UI tests/lint, 9 Android-layout browser checks и metadata/API/signature/9 packaged public assets/Downloads проверены. [Доказательства](android-1.33-release.md).
-- [ ] Публикация GitHub release и проверка обратной загрузки.
+- [x] [GitHub release v1.33](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.33) опубликован на d132af3 после PR #108; tag/target/digest/size/обратная загрузка и Downloads совпали.
 - [ ] Физическая приёмка всех накопленных изменений и реальный микрофон.
