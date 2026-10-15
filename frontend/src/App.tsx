@@ -52,7 +52,7 @@ function AnswerActions({ answer, loading, native, voiceState, voiceSupported, st
 }) {
   const busy = voiceState === "connecting" || voiceState === "recording" || voiceState === "transcribing";
   return <div className="answer-actions">
-    {answer.trim() && <button className="answer-check-button" type="submit" aria-label={t(loading ? "Проверяем…" : native ? "Проверить" : "Проверить ответ")} disabled={loading || busy || hasUnexpectedLetterScript(answer)}><Icon name="tick" size={40} /></button>}
+    {answer.trim() && <button className="answer-check-button" type="submit" form="practice-answer-form" aria-label={t(loading ? "Проверяем…" : native ? "Проверить" : "Проверить ответ")} disabled={loading || busy || hasUnexpectedLetterScript(answer)}><Icon name="tick" size={40} /></button>}
     <button className={`mic-button${busy ? " is-active" : ""}${answer.trim() && !busy ? " mic-button--retry" : ""}`} type="button"
       aria-label={t(busy ? voiceState === "recording" ? "Завершить запись" : "Остановить запись" : answer.trim() ? "Записать заново" : "Ответить голосом")}
       disabled={loading || !voiceSupported || voiceState === "transcribing"}
@@ -95,7 +95,7 @@ function Icon({ name, size = 20 }: { name: string; size?: number }) {
     home: <><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10M9 20v-6h6v6"/></>,
     chart: <><path d="M4 19V9M10 19V5M16 19v-7M22 19V2"/></>,
     progress: <><path d="M4 18h16M6 15l4-4 3 2 5-7"/><path d="M16 6h2v2"/></>,
-    repeat: <><path fill="currentColor" stroke="none" d="M2.4 8.1C5.6 1.1 15.7.6 21 5.1V2.5L24 8l-5.1 3.4.4-3.2C15.6 4.8 9.2 4.2 5.3 10.2Z"/><path fill="currentColor" stroke="none" d="M21.6 15.9C18.4 22.9 8.3 23.4 3 18.9v2.6L0 16l5.1-3.4-.4 3.2c3.7 3.4 10.1 4 14-2Z"/></>,
+    repeat: <><path d="M20.49 9.5a8.85 8.85 0 0 0-17.1-.1M3.51 14.5a8.85 8.85 0 0 0 17.1.1" strokeWidth="2.4"/><path d="m16 7 4.5 2.5 1-5M8 17l-4.5-2.5-1 5" strokeWidth="2.4"/></>,
     retry: <><path d="M3 10a9 9 0 0 1 16-4l2 2M21 14a9 9 0 0 1-16 4l-2-2" strokeWidth="2.8"/><path fill="currentColor" stroke="none" d="M21.4 3.7 22 9.5 16.3 8.2ZM2.6 20.3 2 14.5l5.7 1.3Z"/></>,
     briefcase: <><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V4h8v3M3 12h18M10 12v2h4v-2"/></>,
     bank: <><path d="m3 9 9-5 9 5M5 10h14M6 10v8M10 10v8M14 10v8M18 10v8M3 20h18"/></>,
@@ -772,7 +772,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   async function showWordHint(word: string, localHint?: Pick<WordHint, "word_ru" | "translation_sr">) {
     if (!exercise || checkingRef.current) return;
     const normalized = word.toLocaleLowerCase("ru-RU");
-    setActiveHint(normalized);
+    setActiveHint(current => current === normalized ? undefined : normalized);
     const requestKey = `${hintEpochRef.current}:${normalized}`;
     if (hintRequestsRef.current.has(requestKey) || savedHintsRef.current.has(normalized)) return;
     const prepared = localHint ?? exercise.word_hints?.find((hint) => hint.word_ru.toLocaleLowerCase("ru-RU") === normalized);
@@ -814,8 +814,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
         const normalized = word.toLocaleLowerCase("ru-RU");
         const hasHint = localHint || exercise.word_hints?.some(hint => hint.word_ru.toLocaleLowerCase("ru-RU") === normalized);
         if (!hasHint && !/[А-Яа-яЁё]/.test(part)) return <span key={index}>{part}</span>;
-        // eslint-disable-next-line react-hooks/refs -- the ref is read by the click handler only.
-        return <WordHintToken key={`${part}-${index}`} word={part} used={Boolean(wordHints[normalized])} disabled={checking} active={activeHint === normalized && (mobileLayout ? visiblePanel === 1 : view === "practice")} translation={wordHints[normalized] ? [displaySerbian(localHint?.translation_sr ?? wordHints[normalized].translation_sr, alphabet), localHint?.note ? t(localHint.note) : ""].filter(Boolean).join(" · ") : t("Загружаем…")} onClick={() => void showWordHint(word, localHint ? { word_ru: word, translation_sr: localHint.translation_sr } : undefined)} />;
+        return <WordHintToken key={`${part}-${index}`} word={part} used={Boolean(wordHints[normalized])} disabled={checking || Boolean(attempt)} onDismiss={() => setActiveHint(undefined)} active={activeHint === normalized && (mobileLayout ? visiblePanel === 1 : view === "practice")} translation={wordHints[normalized] ? [displaySerbian(localHint?.translation_sr ?? wordHints[normalized].translation_sr, alphabet), localHint?.note ? t(localHint.note) : ""].filter(Boolean).join(" · ") : t("Загружаем…")} onClick={() => void showWordHint(word, localHint ? { word_ru: word, translation_sr: localHint.translation_sr } : undefined)} />;
       }) : t("Готовим фразу…")}
     </h2>;
   }
@@ -823,14 +822,38 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   function renderFeedback(native: boolean) {
     if (!attempt) return null;
     const scorePercent = Math.round(attempt.overall_score * 100);
-    const done = !isReviewMode && completedCount >= (session?.requested_length ?? 10);
     return <div className={`feedback ${native ? "android-feedback" : ""} feedback--${attempt.analysis.verdict}`}>
-      <AnswerResult source={exercise?.source_ru ?? ""} answer={attempt.transcript_sr} attempt={attempt} alphabet={alphabet} />
+      <AnswerResult answer={attempt.transcript_sr} attempt={attempt} alphabet={alphabet} />
       <div className="feedback__score"><span>{scorePercent}%</span><strong>{t(attempt.analysis.verdict === "correct" ? "Верно" : attempt.analysis.verdict === "mostly_correct" ? "Почти верно" : "Нужно доработать")}</strong></div>
       {attempt.hint_penalty > 0 && <div className="hint-penalty"><Icon name="bulb" /><span>{t("Подсказки: −")}{Math.round(attempt.hint_penalty * 100)}%</span></div>}
       <p>{displayFeedback(attempt.analysis.short_feedback_ru, alphabet)}</p>
       {scorePercent < 100 && <details><summary>{t("Разбор")}</summary><p>{displayFeedback(attempt.analysis.detailed_feedback_ru, alphabet)}</p>{attempt.analysis.issues.map((issue, index) => <p className="issue" key={`${issue.skill_key}-${issue.type}-${index}`}>{displaySerbian(issue.evidence, alphabet)}{t(issue.correction ? ` → ${displaySerbian(issue.correction, alphabet)}` : "")}{issue.explanation_ru && <span className="issue-explanation">{displayFeedback(issue.explanation_ru, alphabet)}</span>}</p>)}</details>}
-      <button className={native ? "android-primary" : "answer-submit"} type="button" disabled={advancing} onClick={() => void nextExercise()}>{t(advancing ? "Готовим…" : done ? "Завершить тренировку" : native ? "Следующая" : "Следующая фраза")}{!native && <Icon name="arrow" />}</button>
+    </div>;
+  }
+
+  function renderPractice(compact: boolean) {
+    const answerId = compact ? "android-serbian-answer" : "serbian-answer";
+    const done = !isReviewMode && completedCount >= (session?.requested_length ?? 10);
+    return <div className={`practice-card exercise-layout${compact ? " android-training-content" : " panel"}`}>
+      <div className="exercise-scroll">
+        <div className="exercise-topic">{currentTopic ? topicText(currentTopic.id, currentTopic.title_ru) : ""}</div>
+        <div className="exercise-source">{renderPhrase()}</div>
+        {!attempt ? <form id="practice-answer-form" className="exercise-answer" onSubmit={checkAnswer}>
+          {hasTranscript && <div className="exercise-answer-frame result-phrase"><label htmlFor={answerId}>{t("Ваш ответ")}</label>
+            <textarea id={answerId} value={answer} readOnly={checking} onChange={(event) => { answerEditEpochRef.current += 1; voiceTimingRef.current = undefined; setAssistanceDraft(current => current ? { ...current, edited: true } : undefined); setAnswer(event.target.value); }} placeholder={t("Введите ответ на сербском языке")} rows={3} /></div>}
+          {hasUnexpectedLetterScript(answer) && <p className="transcription-script-warning" role="alert">{t("В расшифровке есть буквы вне сербского алфавита. Исправьте текст перед проверкой или запишите ответ заново.")}</p>}
+          {transcriptionBreakRecommended && <p className="transcription-script-warning" role="alert">{t(transcriptionBreakMessage)}</p>}
+          <TranscriptionAssistanceView draft={assistanceDraft} alphabet={alphabet} disabled={checking || voiceBusy} onToggle={toggleTranscriptionChange} />
+          {!hasTranscript && (voiceState === "error" || !voiceSupported) && <button type="button" onClick={enterAnswerManually}>{t("Ввести ответ вручную")}</button>}
+        </form> : renderFeedback(compact)}
+        {error && <p className="error" role="alert">{t(error)}</p>}
+      </div>
+      <div className="exercise-controls">
+        {!attempt ? <>
+          <AnswerActions answer={answer} loading={checking} native={isNative} voiceState={voiceState} voiceSupported={voiceSupported} startVoice={() => void startVoice()} finishVoice={() => void finishVoice()} stopVoice={stopVoice} />
+          <div className="exercise-voice-status" role="status">{t(!voiceSupported ? "Микрофон недоступен. Разрешите доступ к нему в браузере или устройстве." : voiceState === "connecting" ? "Подключаем микрофон…" : voiceState === "recording" ? "Идёт запись. Аудио не сохраняется" : voiceState === "transcribing" ? "Расшифровываем фразу…" : voiceState === "error" ? "Не удалось распознать ответ. Повторите запись." : hasTranscript ? "Введите ответ или исправьте распознанный текст." : "Нажмите на микрофон, чтобы ответить.")}</div>
+        </> : <button className={compact ? "android-primary" : "answer-submit"} type="button" disabled={advancing} onClick={() => void nextExercise()}>{t(advancing ? "Готовим…" : done ? "Завершить тренировку" : compact ? "Следующая" : "Следующая фраза")}{!compact && <Icon name="arrow" />}</button>}
+      </div>
     </div>;
   }
 
@@ -910,23 +933,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                 {error && <p className="android-error" role="alert">{t(error)}</p>}
               </div>
             ) : (
-              <div className={`android-training-content practice-card${hasTranscript && !attempt ? " has-transcript" : ""}`}>
-                <div className="android-training-meta">{isNative ? <span>{t(currentTopic?.title_ru)}</span> : <button className="mobile-topic-switch" type="button" onClick={() => showAndroidPanel(0)}>{t(currentTopic?.title_ru)}{t(" · сменить")}</button>}</div>
-                {!attempt && renderPhrase()}
-
-                {!attempt ? <form className={`android-answer${hasTranscript ? " has-transcript" : ""}`} onSubmit={checkAnswer}>
-                  {hasTranscript ? <><label className="sr-only" htmlFor="android-serbian-answer">{t("Ваш ответ")}</label>
-                    <textarea id="android-serbian-answer" value={answer} readOnly={checking} onChange={(event) => { answerEditEpochRef.current += 1; voiceTimingRef.current = undefined; setAssistanceDraft(current => current ? { ...current, edited: true } : undefined); setAnswer(event.target.value); }} placeholder={t("Введите ответ на сербском языке")} rows={3} /></> : <p className="voice-prompt">{t("Произнесите ответ в микрофон")}</p>}
-                  {hasUnexpectedLetterScript(answer) && <p className="transcription-script-warning" role="alert">{t("В расшифровке есть буквы вне сербского алфавита. Исправьте текст перед проверкой или запишите ответ заново.")}</p>}
-                  {transcriptionBreakRecommended && <p className="transcription-script-warning" role="alert">{t(transcriptionBreakMessage)}</p>}
-                  <TranscriptionAssistanceView draft={assistanceDraft} alphabet={alphabet} disabled={checking || voiceBusy} onToggle={toggleTranscriptionChange} />
-                  <AnswerActions answer={answer} loading={checking} native={isNative} voiceState={voiceState} voiceSupported={voiceSupported} startVoice={() => void startVoice()} finishVoice={() => void finishVoice()} stopVoice={stopVoice} />
-                  {(!voiceSupported || voiceState !== "idle") && <p className="android-voice-state" role="status">{t(!voiceSupported ? "Микрофон недоступен. Разрешите доступ в настройках устройства." : voiceState === "connecting" ? "Подключаем микрофон…" : voiceState === "recording" ? "Запись" : voiceState === "transcribing" ? "Распознаём…" : "Повторите запись")}</p>}
-                  {!hasTranscript && (voiceState === "error" || !voiceSupported) && <button type="button" onClick={enterAnswerManually}>{t("Ввести ответ вручную")}</button>}
-
-                </form> : renderFeedback(true)}
-                {error && <p className="android-error" role="alert">{t(error)}</p>}
-              </div>
+              renderPractice(true)
             )}
           </section>
 
@@ -1012,27 +1019,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                 {error && <p className="error" role="alert">{t(error)}</p>}
               </div>
             ) : (
-              <>
-                <div className="practice-card panel">
-                  <div className="card-title"><span><Icon name="message" /></span><h2>{t(isReviewMode ? "Карусель повторения" : "Основная фраза")}</h2></div>
-                  {!attempt && <div className="phrase-card__content"><div><p className="kicker">{t("Скажите по-сербски · нажмите на незнакомое слово")}</p>{renderPhrase()}</div></div>}
-                  {!attempt ? (
-                    <form className={hasTranscript ? "has-transcript" : undefined} onSubmit={checkAnswer}>
-                      <div className="answer-input">
-                        {hasTranscript ? <><label className="sr-only" htmlFor="serbian-answer">{t("Ваш ответ")}</label><textarea id="serbian-answer" value={answer} readOnly={checking} onChange={(event) => { answerEditEpochRef.current += 1; voiceTimingRef.current = undefined; setAssistanceDraft(current => current ? { ...current, edited: true } : undefined); setAnswer(event.target.value); }} placeholder={t("Введите ответ на сербском языке")} rows={4} /></> : <p className="voice-prompt">{t("Произнесите ответ в микрофон. После распознавания текст можно исправить.")}</p>}
-                      </div>
-                      {hasUnexpectedLetterScript(answer) && <p className="transcription-script-warning" role="alert">{t("В расшифровке есть буквы вне сербского алфавита. Исправьте текст перед проверкой или запишите ответ заново.")}</p>}
-                      {transcriptionBreakRecommended && <p className="transcription-script-warning" role="alert">{t(transcriptionBreakMessage)}</p>}
-                      <TranscriptionAssistanceView draft={assistanceDraft} alphabet={alphabet} disabled={checking || voiceBusy} onToggle={toggleTranscriptionChange} />
-                  <AnswerActions answer={answer} loading={checking} native={isNative} voiceState={voiceState} voiceSupported={voiceSupported} startVoice={() => void startVoice()} finishVoice={() => void finishVoice()} stopVoice={stopVoice} />
-                      <div className="voice-status">{t(!voiceSupported ? "Микрофон недоступен. Разрешите доступ к нему в браузере или устройстве." : voiceState === "recording" ? "Идёт запись. Аудио не сохраняется" : voiceState === "transcribing" ? "Расшифровываем фразу…" : voiceState === "error" ? "Не удалось распознать ответ. Повторите запись." : hasTranscript ? "Введите ответ или исправьте распознанный текст." : "Нажмите на микрофон, чтобы ответить.")}</div>
-                      {!hasTranscript && (voiceState === "error" || !voiceSupported) && <button type="button" onClick={enterAnswerManually}>{t("Ввести ответ вручную")}</button>}
-
-                    </form>
-                  ) : renderFeedback(false)}
-                  {error && <p className="error" role="alert">{t(error)}</p>}
-                </div>
-              </>
+              renderPractice(false)
             )}
           </section>
         </main>

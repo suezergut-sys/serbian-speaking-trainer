@@ -341,7 +341,7 @@ for (const native of [false, true]) {
       await page.goto("/");
       if (native) await page.getByRole("button", { name: /В банке/ }).click();
       await expect(page.getByRole("heading", { name: "Уберите, пожалуйста, грязную чашку со стола." })).toBeVisible();
-      await expect(page.locator(".android-training-meta")).not.toContainText("1 / 10");
+      await expect(page.locator(".exercise-topic")).not.toContainText("1 / 10");
       for (const word of words) {
         await page.getByRole("button", { name: word, exact: true }).click();
         const popup = page.locator(".word-tooltip");
