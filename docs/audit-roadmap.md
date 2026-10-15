@@ -668,5 +668,5 @@
 - [x] Отдельная команда на APK; весь накопленный после 1.32 набор перенесён через production Android sync, 17 metadata/environment tests и 9 Android-layout browser scenarios passed.
 - [x] Владелец отдельно согласовал 1.33/code43; metadata/package/output filename/test обновлены вместе.
 - [x] Cloud APK BUILD SUCCESSFUL/109 tasks; UI 210 passed, lint; metadata/API/signature/9 public assets/Downloads/SHA-256 проверены. [Доказательства](android-1.33-release.md).
-- [ ] PR/merge и GitHub release с проверкой digest/size/обратной загрузки.
+- [x] [PR #108](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/108) merged на d132af3; [GitHub release v1.33](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.33), tag/target/digest/size/authenticated download/Downloads совпали. [Доказательства](android-1.33-release.md).
 - [ ] Физическая Android-приёмка и реальная речь; P0/P1/P2 целиком не закрыты.

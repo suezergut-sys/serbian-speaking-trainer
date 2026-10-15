@@ -639,3 +639,5 @@ Desktop/mobile/Capacitor используют одну renderPractice-разме
 ## 15.10.2026 — Android 1.33
 
 Владелец запросил APK со всем backlog и после production sync/проверок отдельно согласовал 1.33/code43. Источник — main после PR #107; локальный лендинг из грязной основной папки не включается. Метаданные package/Gradle/output filename/test согласованы. Только production Android build → cap sync → assembleProdDebug через pnpm android:cloud-apk с прежней установочной подписью; web/backend повторно не разворачиваются. Физическая приёмка остаётся отдельной. [Результаты](android-1.33-release.md).
+
+15.10.2026: APK 1.33/code43 опубликован через PR #108 на d132af3 и GitHub release v1.33. Tag/target, server SHA-256/size, authenticated download и Downloads совпали; установка и реальная речь на физическом устройстве ещё не проверены. Web/backend не redeploy. [Доказательства](android-1.33-release.md).
