@@ -640,3 +640,5 @@
 - [ ] Публикация web и production smoke.
 - [ ] Android APK по отдельной команде; backlog обновлён.
 - [ ] Ручная приёмка владельцем.
+
+- [x] Итоговые проверки входа: UI 206 passed (20 files, single worker), backend/scripts 299 passed / 8 skipped, Node 5 passed, lint/typecheck/build. [PR #102](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/102).
