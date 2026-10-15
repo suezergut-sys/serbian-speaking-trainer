@@ -649,6 +649,6 @@
 - [x] Одновременно обновлены ru/en assistance/debug тексты и accessibility названия; backend правила прежние.
 - [x] 12 browser checks: вход 4 layout, настройки ru/en × desktop/mobile/320px/Android, отладка с ошибкой/повтором. [Доказательства](settings-account-checkpoint-2026-10-15.md).
 - [x] Итоговые проверки: UI 209 passed / 20 files, lint/typecheck/production build.
-- [ ] Web публикация и production smoke.
+- [x] [PR #104](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/104) merged на runtime 6befe14; frontend READY/production/main, alias подтверждён. 12 production browser checks (настройки с mock API) и 4 HTTP 200. [Доказательства](settings-account-checkpoint-2026-10-15.md).
 - [ ] APK по отдельной команде; backlog обновлён.
 - [ ] Приёмка владельцем.
