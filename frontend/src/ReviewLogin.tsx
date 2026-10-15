@@ -8,7 +8,7 @@ export function ReviewLogin() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   return <details className="review-login">
-    <summary>{t("Вход для проверки / Review access")}</summary>
+    <summary>{t("Вход для проверки")}</summary>
     <form onSubmit={async event => {
       event.preventDefault();
       if (busy) return;

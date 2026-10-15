@@ -1,4 +1,7 @@
 {
+  "Выбрать русский язык": "Select Russian",
+  "Выбрать английский язык": "Select English",
+  "Язык интерфейса": "Interface language",
   "Только для администратора": "Administrators only",
   "Пользователи": "Users",
   "Регистрация, последняя активность и использование дневного лимита.": "Registration, last activity and daily limit usage.",
@@ -203,7 +206,7 @@
   "Временно хранятся последние 20 аудиозаписей. Через 7 дней аудио недоступно и очищается при следующем обращении к отладке. При выключении все логи и аудио удаляются из БД.": "The last 20 audio recordings are stored temporarily. After 7 days, audio is unavailable and removed on the next debug access. Turning debug off deletes all logs and audio from the database.",
   "Сохраняем или загружаем режим отладки…": "Saving or loading debug mode…",
   "Премиум": "Premium",
-  "Вход для проверки / Review access": "Review access",
+  "Вход для проверки": "Review access",
   "Версия приложения": "App version",
   "Алфавит сербского языка": "Serbian alphabet",
   "Выберите, как показывать сербские фразы, переводы слов и результаты проверки.": "Choose how to display Serbian phrases, word translations and feedback.",

@@ -460,3 +460,8 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 - [x] Shared Android-layout проверен для ru/en в Chrome/Capacitor; Android 1.32/code42, package version и APK не менялись.
 - [x] Web/backend опубликованы на c0d3b6b через PR #99/#100, READY; старый APK сохраняет совместимость legacy Russian keys.
 - [ ] По отдельной команде перенести набор в следующий APK и проверить полный English coverage на телефоне. [Доказательства](independent-english-hints-checkpoint-2026-10-14.md).
+
+## 15.10.2026 — следующий APK: экран входа с флагами
+
+- [x] Общий UI ru/en: квадратные SVG-флаги, золотая рамка активного языка, стабильные размеры, центрированный review-вход. Web/Capacitor-layout проверены.
+- [ ] Перенести в будущий APK по отдельной команде и проверить на телефоне; Android 1.32/code42 не менялся. [Доказательства](login-flags-checkpoint-2026-10-15.md).

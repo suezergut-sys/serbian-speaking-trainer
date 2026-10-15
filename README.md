@@ -429,3 +429,7 @@ STT использует prompt v2 с сербским латинским алф
 ## 08.10.2026 — Android 1.26
 
 Опубликована контрольная [версия 1.26/code36](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.26) со всем накопленным набором после 1.25. Проверены production API, прежняя подпись и побайтное совпадение assets с опубликованным web; копия находится в Downloads. GitHub digest/size подтверждены; физическая приёмка остаётся открытой. [Скачать APK](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/download/v1.26/SerboTalk-andorid16-1.26.apk). [Результаты выпуска](docs/android-1.26-release.md).
+
+## 15.10.2026 — выбор языка на экране входа
+
+Рядом расположены квадратные кнопки с флагами России и Великобритании; выбранный язык выделен тонкой золотой рамкой. При первом запуске выбран русский, последующий выбор сохраняется. Высота карточки и положение элементов одинаковы для ru/en на desktop/mobile web; «Вход для проверки» / «Review access» выровнены по центру. Android 1.32/code42 не менялся. [Проверки и публикация](docs/login-flags-checkpoint-2026-10-15.md).

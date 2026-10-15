@@ -19,7 +19,7 @@ body { margin: 0; min-width: 320px; min-height: 100vh; background: #020914; }
 button, input, textarea, select { color: inherit; font: inherit; }
 button { cursor: pointer; background: var(--panel); }
 .review-login { margin-top: 1rem; text-align: left; color: var(--muted); font-size: .8rem; }
-.review-login summary { cursor: pointer; color: var(--blue-bright); }
+.review-login summary { cursor: pointer; color: var(--blue-bright); text-align: center; }
 .review-login form, .review-login label { display: grid; gap: .6rem; }
 .review-login form { margin-top: .8rem; }
 .review-login input { min-width: 0; width: 100%; padding: .65rem; background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 8px; }
@@ -817,7 +817,14 @@ button { cursor: pointer; background: var(--panel); }
 .mobile-web-shell--short .android-answer { gap: .25rem; }
 
 /* Login and completion share the device language and dark app palette. */
-.login-language { justify-self: end; padding: .6rem .9rem; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); }
+.login-languages { display: flex; justify-content: center; gap: 12px; margin-bottom: 18px; }
+.login-language { display: grid; place-items: center; width: 46px; height: 46px; padding: 4px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); color: var(--text); }
+.login-language svg { display: block; }
+.login-language[aria-pressed="true"] { border-color: var(--gold); }
+.login-language:hover { background: rgba(64, 164, 255, .12); }
+.login-copy { display: grid; }
+.login-copy > span { grid-area: 1 / 1; align-self: center; }
+.login-copy__sizing { visibility: hidden; pointer-events: none; }
 .login-language:focus-visible, .review-home:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
 .review-complete { display: grid; place-items: center; align-content: center; gap: 1.5rem; min-height: 100%; padding: 2rem 1rem; text-align: center; }
 .practice-stage .review-complete { min-height: 510px; }
