@@ -1,10 +1,11 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { afterEach, expect, it } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
 import { SettingsView } from "../SettingsView";
+import { setLanguage } from "../i18n";
 
-afterEach(cleanup);
+afterEach(() => { cleanup(); setLanguage("ru"); });
 
 it("shows the current Android release number in settings", () => {
   render(<SettingsView alphabet="latin" onAlphabetChange={() => {}} />);
@@ -16,12 +17,23 @@ it("shows the current Android release number in settings", () => {
   expect(versionLabel.parentElement).toBe(screen.getByRole("heading", { name: "Настройки" }).parentElement);
 });
 
-it("provides an account deletion request from the profile", () => {
-  render(<SettingsView alphabet="latin" onAlphabetChange={() => {}} account={{
-    id: "synthetic-user", email: "review@example.com", display_name: null, avatar_url: null,
+it.each(["ru", "en"] as const)("separates account details, sign out and deletion in %s", language => {
+  setLanguage(language);
+  const en = language === "en";
+  const signOut = vi.fn();
+  render(<SettingsView alphabet="latin" onAlphabetChange={() => {}} onSignOut={signOut} account={{
+    id: "synthetic-user", email: "review@example.com", display_name: "Maksim Sumin", avatar_url: null,
     role: "user", access_tier: "free", assistance_enabled: false, can_debug_models: false,
     registered_at: "2026-10-12T00:00:00Z", last_active_at: "2026-10-12T00:00:00Z",
     daily_usage: { used: 0, limit: 10, remaining: 10, resets_at: "2026-10-13T00:00:00Z" },
   }} />);
-  expect(screen.getByRole("link", { name: "Запросить удаление аккаунта и данных" })).toHaveAttribute("href", "/delete-account");
+  const account = screen.getByRole("region", { name: en ? "Account" : "Аккаунт" });
+  expect(within(account).getByText("Maksim Sumin")).toBeInTheDocument();
+  expect(within(account).getByText("review@example.com")).toBeInTheDocument();
+  expect(within(account).queryByRole("link")).not.toBeInTheDocument();
+  fireEvent.click(within(account).getByRole("button", { name: en ? "Sign out" : "Выйти" }));
+  expect(signOut).toHaveBeenCalledOnce();
+  const deletion = screen.getByRole("region", { name: en ? "Account deletion" : "Удаление аккаунта" });
+  expect(within(deletion).getByRole("link", { name: en ? "Request account and data deletion" : "Запросить удаление аккаунта и данных" })).toHaveAttribute("href", "/delete-account");
+  expect(screen.queryByText(/По умолчанию выключено|Off by default/)).not.toBeInTheDocument();
 });

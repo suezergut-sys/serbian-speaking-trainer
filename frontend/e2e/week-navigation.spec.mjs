@@ -16,6 +16,7 @@ for (const native of [false, true]) {
     }
       let body;
       if (url.pathname === '/api/auth/me') body = { id:'week-user', email:'learner@example.invalid', display_name:'Ученик', avatar_url:null, role:'user', access_tier:'free', registered_at:'2025-12-01T00:00:00Z', last_active_at:'2026-01-05T00:00:00Z', daily_usage:{used:0,limit:10,remaining:10,resets_at:'2026-01-06T00:00:00Z'} };
+      else if (url.pathname === '/api/auth/me/preferences') body = { assistance_enabled: false };
       else if (url.pathname === '/api/topics') body = [];
       else if (url.pathname === '/api/review-phrases/summary') body = {phrase_count:0};
       else if (url.pathname === '/api/statistics/monthly') {
@@ -58,7 +59,7 @@ for (const native of [false, true]) {
     await expect(page.getByRole('heading', {name:'Статистика'})).toHaveCount(0);
     await expect(page.locator('.statistics-page').getByRole('button', {name:'Выйти'})).toHaveCount(0);
     await page.getByRole('button', {name:'Настройки',exact:true}).click();
-    await expect(page.getByRole('region', {name:'Профиль'})).toBeVisible();
+    await expect(page.getByRole('region', {name:'Аккаунт',exact:true})).toBeVisible();
     await expect(page.getByRole('button', {name:'Выйти'})).toBeVisible();
     await expect(page.getByLabel('Адрес общего backend')).toHaveCount(0);
   });

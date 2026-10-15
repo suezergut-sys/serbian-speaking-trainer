@@ -9,6 +9,7 @@ for (const layout of ['desktop', 'mobile', 'narrow', 'android']) {
     const ru = page.locator('.login-language').first();
     const en = page.locator('.login-language').last();
     await expect(ru).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.auth-card .brand__mark')).toHaveCount(0);
     const box = await ru.boundingBox();
     expect(box.width).toBe(box.height);
     const measure = () => page.locator('.auth-card').evaluate(el => {

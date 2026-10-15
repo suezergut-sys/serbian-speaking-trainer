@@ -31,18 +31,23 @@ export function SettingsView({ alphabet, onAlphabetChange, account, onSignOut, a
     <section className="assistance-settings panel">
       <label><input type="checkbox" role="switch" disabled={assistanceSaving} checked={assistanceEnabled} onChange={event => onAssistanceChange?.(event.target.checked)} />{t(" Мягкие подсказки при распознавании")}</label>
       <p>{t("Сравнивать каждую расшифровку с эталоном и допустимыми переводами, предлагая близкие варианты возможных искажений распознавания. Все изменения применяются только после вашего подтверждения.")}</p>
-      <small>{t("По умолчанию выключено. Выбор сохраняется в профиле и синхронизируется между веб-версией и Android. Настройка применяется к следующей записи.")}</small>
       {assistanceSaving && <p role="status">{t("Сохраняем настройку…")}</p>}
       {assistanceError && <p role="alert">{t(assistanceError)}</p>}
     </section>
     {account?.role === "admin" && account.can_debug_models && <ModelDebugSettings key={account.id} />}
-    {account && <section className="settings-profile panel" aria-label={t("Профиль")}>
+    {account && <><section className="settings-profile panel" aria-labelledby="settings-account-title">
+      <h2 id="settings-account-title">{t("Аккаунт")}</h2>
+      <div className="settings-profile__details">
       <div className="profile"><span className="avatar">{account.display_name?.slice(0, 1).toLocaleUpperCase() || "A"}</span>
-        <span className="profile__copy"><strong>{account.display_name || account.email}</strong><small>{t(account.daily_usage.limit === null ? `${account.daily_usage.used} фраз · без лимита` : `${account.daily_usage.remaining} из ${account.daily_usage.limit} фраз осталось`)}</small></span>
+        <span className="profile__copy"><strong>{account.display_name || account.email}</strong>{account.display_name && <span className="settings-profile__email">{account.email}</span>}<small>{t(account.daily_usage.limit === null ? `${account.daily_usage.used} фраз · без лимита` : `${account.daily_usage.remaining} из ${account.daily_usage.limit} фраз осталось`)}</small></span>
       </div>
       <button className="sign-out-button" type="button" onClick={onSignOut}>{t("Выйти")}</button>
+      </div>
+    </section>
+    <section className="settings-deletion panel" aria-labelledby="settings-deletion-title">
+      <h2 id="settings-deletion-title">{t("Удаление аккаунта")}</h2>
       <a className="account-deletion-link" href="/delete-account">{t("Запросить удаление аккаунта и данных")}</a>
-    </section>}
+    </section></>}
 
   </main>;
 }
