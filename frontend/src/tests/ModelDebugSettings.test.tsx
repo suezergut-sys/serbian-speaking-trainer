@@ -4,17 +4,18 @@ import { ModelDebugSettings } from "../ModelDebugSettings";
 import { SettingsView } from "../SettingsView";
 import { fetchModelDebug, updateModelDebug } from "../api/users";
 import type { CurrentUser } from "../types/auth";
+import { setLanguage } from "../i18n";
 
 vi.mock("../api/users", () => ({ fetchModelDebug: vi.fn(), updateModelDebug: vi.fn() }));
 
 describe("administrator model debug settings", () => {
-  afterEach(cleanup);
+  afterEach(() => { cleanup(); setLanguage("ru"); });
   beforeEach(() => { vi.resetAllMocks(); vi.mocked(fetchModelDebug).mockResolvedValue({ enabled: false }); });
 
   it("loads persisted mode and confirms enabling/disabling with server", async () => {
     vi.mocked(updateModelDebug).mockImplementation(async enabled => ({ enabled }));
     render(<ModelDebugSettings />);
-    const toggle = screen.getByRole("switch", { name: "Режим отладки моделей" });
+    const toggle = screen.getByRole("switch", { name: "Режим отладки" });
     await waitFor(() => expect(toggle).toBeEnabled());
     expect(toggle).not.toBeChecked();
     fireEvent.click(toggle);
@@ -50,15 +51,30 @@ describe("administrator model debug settings", () => {
     await waitFor(() => expect(screen.getByRole("switch")).toBeChecked());
   });
 
+  it.each(["ru", "en"] as const)("shows the concise debug copy in %s", async language => {
+    setLanguage(language);
+    render(<ModelDebugSettings />);
+    const en = language === "en";
+    const toggle = screen.getByRole("switch", { name: en ? "Debug mode" : "Режим отладки" });
+    await waitFor(() => expect(toggle).toBeEnabled());
+    expect(screen.getByText(en
+      ? "Save model requests and responses for your account, exact timestamps, durations and audio in the database for transcription diagnostics."
+      : "Сохранять в БД запросы и ответы моделей вашего аккаунта, точное время, длительность и аудио для диагностики распознавания.")).toBeInTheDocument();
+    expect(screen.getByText(en
+      ? "The last 20 audio recordings are stored temporarily. Turning debug off deletes all logs and audio from the database."
+      : "Временно хранятся последние 20 аудиозаписей. При выключении все логи и аудио удаляются из БД.")).toBeInTheDocument();
+    expect(screen.queryByText(/Через 7 дней|After 7 days|Ключи доступа|Access keys/)).not.toBeInTheDocument();
+  });
+
   it.each([ ["user", false], ["admin", false], ["user", true], ["admin", true] ] as const)("requires server capability and admin role (%s, %s)", async (role, allowed) => {
     const account = { id: "maxim", email: "suezergut@gmail.com", display_name: "Максим Сумин", role,
       can_debug_models: allowed, daily_usage: { used: 0, limit: null, remaining: null } } as CurrentUser;
     render(<SettingsView alphabet="latin" onAlphabetChange={() => {}} account={account} />);
     if (role === "admin" && allowed) {
       await waitFor(() => expect(fetchModelDebug).toHaveBeenCalledOnce());
-      expect(screen.getByRole("switch", { name: "Режим отладки моделей" })).toBeInTheDocument();
+      expect(screen.getByRole("switch", { name: "Режим отладки" })).toBeInTheDocument();
     } else {
-      expect(screen.queryByRole("switch", { name: "Режим отладки моделей" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("switch", { name: "Режим отладки" })).not.toBeInTheDocument();
       expect(fetchModelDebug).not.toHaveBeenCalled();
     }
   });

@@ -846,7 +846,7 @@ describe("App", () => {
     await screen.findByRole("heading", { name: "Я хочу открыть счёт." });
     expect(screen.queryByRole("button", { name: "Выйти" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Настройки" }));
-    expect(screen.getByRole("region", { name: "Профиль" })).toHaveTextContent("Ученик");
+    expect(screen.getByRole("region", { name: "Аккаунт" })).toHaveTextContent("Ученик");
     expect(screen.getByRole("button", { name: "Выйти" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Настроить подключение" })).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Адрес общего backend")).not.toBeInTheDocument();

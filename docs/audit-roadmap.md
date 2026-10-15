@@ -642,3 +642,13 @@
 - [ ] Ручная приёмка владельцем.
 
 - [x] Итоговые проверки входа: UI 206 passed (20 files, single worker), backend/scripts 299 passed / 8 skipped, Node 5 passed, lint/typecheck/build. [PR #102](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/102).
+
+## 15.10.2026 — настройки аккаунта и сокращённые описания
+
+- [x] Удалена иконка под флагами; аккаунт и удаление — отдельные разделы; данные и выход читаемы в mobile.
+- [x] Одновременно обновлены ru/en assistance/debug тексты и accessibility названия; backend правила прежние.
+- [x] 12 browser checks: вход 4 layout, настройки ru/en × desktop/mobile/320px/Android, отладка с ошибкой/повтором. [Доказательства](settings-account-checkpoint-2026-10-15.md).
+- [x] Итоговые проверки: UI 209 passed / 20 files, lint/typecheck/production build.
+- [ ] Web публикация и production smoke.
+- [ ] APK по отдельной команде; backlog обновлён.
+- [ ] Приёмка владельцем.

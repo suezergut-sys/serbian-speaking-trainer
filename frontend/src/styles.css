@@ -695,11 +695,21 @@ button { cursor: pointer; background: var(--panel); }
 .mic-button--retry > .icon { width: 25px; height: 25px; }
 
 .statistics-summary > div { min-width: 0; padding-inline: .65rem; }
-.settings-profile { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.25rem; }
+.settings-profile, .settings-deletion { display: grid; gap: 1rem; padding: 1.25rem; background: var(--panel); color: var(--text); }
+.settings-profile h2, .settings-deletion h2 { margin: 0; font-size: 1rem; }
+.settings-profile__details { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 1rem; }
 .settings-profile .profile { justify-content: flex-start; justify-self: auto; min-width: 0; gap: .7rem; margin-bottom: 0; }
-.settings-profile .profile__copy { display: grid; min-width: 0; overflow-wrap: anywhere; }
-.settings-profile .sign-out-button { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; padding: .7rem 1rem; border: 1px solid var(--line); border-radius: 10px; background: #07162a; color: #eaf2ff; }
+.settings-profile .profile__copy { display: grid; min-width: 0; gap: .3rem; overflow-wrap: anywhere; }
+.settings-profile .profile__copy strong { font-size: 1rem; }
+.settings-profile .profile__copy small, .settings-profile__email { color: var(--muted); font-size: .8rem; line-height: 1.5; }
+.settings-profile .sign-out-button { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; min-height: 44px; padding: .7rem 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); font-size: .85rem; }
+.settings-profile .sign-out-button:focus-visible, .settings-deletion a:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+.settings-deletion .account-deletion-link { margin: 0; line-height: 1.5; overflow-wrap: anywhere; }
 .settings-profile .avatar { flex-shrink: 0; }
+@media (max-width: 480px) {
+  .settings-profile__details { grid-template-columns: minmax(0, 1fr); }
+  .settings-profile .sign-out-button { width: 100%; }
+}
 .android-answer > button[type="button"], .practice-card form > button[type="button"] { padding: .75rem 1rem; border: 1px solid var(--line); border-radius: 12px; background: #07162a; color: #dceaff; font: inherit; }
 /* Reference artwork: matching blue discs, cyan rims and static retry arrows. */
 .answer-check-button, .mic-button--retry {
