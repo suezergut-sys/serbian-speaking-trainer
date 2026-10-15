@@ -5,10 +5,10 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
     await page.clock.setFixedTime(new Date('2026-10-07T12:00:00Z'));
     await page.setViewportSize({ width: layout === 'desktop' ? 1366 : 393, height: 900 });
     if (layout === 'android') await page.addInitScript(() => { window.CapacitorCustomPlatform = { name: 'android' }; });
-    await page.addInitScript(language => {
+    await page.addInitScript(({ language, storageKey }) => {
       localStorage.setItem('serbotalk.interface-language', language);
-      localStorage.setItem('sb-e2e-auth-auth-token', JSON.stringify({ access_token: 'e2e-local-only', refresh_token: 'e2e-local-only', token_type: 'bearer', expires_at: 4102444800, user: { id: 'calendar-user', aud: 'authenticated', role: 'authenticated', email: 'learner@example.invalid', app_metadata: {}, user_metadata: {}, created_at: '2026-10-01T00:00:00Z' } }));
-    }, language);
+      localStorage.setItem(storageKey, JSON.stringify({ access_token: 'e2e-local-only', refresh_token: 'e2e-local-only', token_type: 'bearer', expires_at: 4102444800, user: { id: 'calendar-user', aud: 'authenticated', role: 'authenticated', email: 'learner@example.invalid', app_metadata: {}, user_metadata: {}, created_at: '2026-10-01T00:00:00Z' } }));
+    }, { language, storageKey: process.env.PRACTICE_AUTH_STORAGE_KEY ?? 'sb-e2e-auth-auth-token' });
     await page.route('**/api/**', async route => {
       const url = new URL(route.request().url());
       let body;

@@ -22,6 +22,10 @@
 
 ## Публикация
 
-- [ ] PR/merge, production Ready/SHA/main/alias и production smoke.
+- [x] [PR #106](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/106), runtime SHA `46b3067f4d497b6688271fc5932198df7a1282ce`. Merge подтверждён; удалённые CI checks в репозитории не настроены, локальные quality gates прошли.
+- [x] Frontend `dpl_79mJ1N7piiLsGAEomTxk8Q4z74iQ` READY/production; Vercel API подтвердил runtime SHA, `gitCommitRef=main`, production target и основной alias [serbian-speaking-trainer.vercel.app](https://serbian-speaking-trainer.vercel.app). [Deployment](https://serbian-speaking-trainer-cof6rprv4-suezerguts-projects.vercel.app).
+- [x] После READY на основном адресе: 10/10 ru/en desktop/mobile/320px/short/Capacitor exercise scenarios и 6/6 calendar legend scenarios passed. Проверяются реальные production assets с перехваченным mock API и синтетическим микрофоном; реальные учебные данные/AI не затрагивались. Calendar smoke поддерживает отдельное имя auth storage через env.
+- [x] Публичные `/`, `/privacy`, `/terms`, `/delete-account` — HTTP 200; Vercel runtime error logs за 15m — 0 строк. Evidence (ignored): `artifacts/practice-layout/{frontend-deploy.log,deployment.json,alias.json,http.json,runtime-errors.jsonl}` и screenshots.
+- [x] Backend, Android metadata/package/APK и локальный лендинг не выпускались.
 - [ ] Ручная приёмка владельцем.
 - [ ] Будущий APK и физическая приёмка по отдельной команде.

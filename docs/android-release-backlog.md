@@ -477,5 +477,6 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 
 - [x] Общий UI: круглая иконка повторения, постоянная тема/original сверху без «сменить» и voice-prompt, answer/translation слева, score/verdict по центру, controls отдельной нижней строкой; закрытие word hints вне слова/по Escape/повторному нажатию.
 - [x] Общая шкала цветов календаря и легенды. [Доказательства](practice-layout-checkpoint-2026-10-15.md).
+- [x] Web опубликован через PR #106, runtime 46b3067 READY/main; production ru/en web/Capacitor-layout и календарь проверены (16 scenarios).
 - [ ] Перенести весь накопленный набор в будущий APK по отдельной команде; текущие 1.32/code42, package version и APK прежние.
 - [ ] Физическая Android-приёмка.

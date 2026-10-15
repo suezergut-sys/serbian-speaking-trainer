@@ -659,6 +659,6 @@
 - [x] Подсказка закрывается при outside pointer/focus, Escape и повторном нажатии; использованные слова/штраф сохранены.
 - [x] Цвета календарной легенды и дней объединены общими CSS-правилами.
 - [x] Проверки: UI 210 passed, backend/scripts 299 passed / 8 skipped, Node 5 passed, lint/typecheck/build; 10 новых layout/hint и 17 calendar/localization/result browser scenarios. [Доказательства](practice-layout-checkpoint-2026-10-15.md).
-- [ ] Публикация web.
+- [x] [PR #106](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/106), runtime SHA `46b3067f4d497b6688271fc5932198df7a1282ce`; frontend READY/main/production, основной alias подтверждён. После READY: 16 production browser scenarios с mock API, 4 HTTP checks; runtime errors 0. [Доказательства](practice-layout-checkpoint-2026-10-15.md).
 - [ ] Android sync/build по отдельной команде; backlog обновлён.
 - [ ] Ручная приёмка владельцем, физический Android.
