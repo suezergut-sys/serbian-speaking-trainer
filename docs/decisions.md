@@ -627,3 +627,5 @@ Desktop использует компактную сетку из двух ст�
 ## 15.10.2026 — разделы аккаунта и удаления
 
 Профиль и удаление представлены отдельными именованными sections с заголовками из общего ru/en каталога. Grid minmax(0, 1fr) даёт данным доступную ширину; до 480px выход переносится в собственную строку, длинный email переносится без горизонтального overflow. Debug title/description и assistance note изменены только в UI, backend capability/owner-scoping, срок 7 дней, лимит 20 и очистка при выключении не менялись. SVG языков и стабильные ru/en размеры входа сохранены, иконка сообщения удалена. [Проверки](settings-account-checkpoint-2026-10-15.md).
+
+15.10.2026: web опубликован через PR #104, runtime 6befe14; frontend READY/main/production, 12 browser smoke checks ru/en на основном адресе и 4 публичных HTTP checks прошли. Настройки проверены с mock API; реальные debug logs не затрагивались. Android 1.32/code42/APK прежние. [Доказательства](settings-account-checkpoint-2026-10-15.md).
