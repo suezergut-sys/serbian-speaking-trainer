@@ -345,7 +345,7 @@ describe("App", () => {
     const fetchMock = mockApi();
     vi.stubGlobal("fetch", fetchMock);
     const { container } = render(<App />);
-    await screen.findByRole("button", { name: /В банке/ });
+    await screen.findByRole("heading", { name: "Я хочу открыть счёт." });
     if (!native) fireEvent.click(screen.getByRole("button", { name: "Темы" }));
     const addTopic = screen.getByRole("button", { name: /добавить тему/ });
     const addPhrase = screen.getByRole("button", { name: /добавить фразу/ });
@@ -403,7 +403,8 @@ describe("App", () => {
     expect(container.querySelector(".card-title small, .android-training-meta small")).toBeNull();
     expect(screen.queryByText(/^Фраза \d+$/)).not.toBeInTheDocument();
     expect(screen.queryByText(/^\d+\s*\/\s*\d+$/)).not.toBeInTheDocument();
-    if (!native) expect(screen.getByRole("heading", { name: review ? "Карусель повторения" : "Основная фраза" })).toBeInTheDocument();
+    expect(container.querySelector(".exercise-topic")).toHaveTextContent(review ? "Фразы для повторения" : "В банке");
+    expect(container.querySelector(".voice-prompt, .mobile-topic-switch")).toBeNull();
   });
 
   it("applies only accepted assistance and keeps its evidence through manual edits", async () => {
@@ -761,7 +762,7 @@ describe("App", () => {
     expect(await screen.findByRole("button", { name: /В банке.*20.*неизученных/ })).toBeInTheDocument();
     const reviewCard = screen.getByRole("button", { name: /Повторение.*0.*к повторению/ });
     expect(reviewCard).toHaveClass("android-topic");
-    expect(reviewCard.querySelectorAll('svg path[fill="currentColor"]')).toHaveLength(2);
+    expect(reviewCard.querySelectorAll('svg path[stroke-width="2.4"]')).toHaveLength(2);
     expect(screen.getByRole("region", { name: "Тренировка" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Статистика" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Темы" })).toHaveAttribute("aria-current", "page");
@@ -1063,7 +1064,7 @@ describe("App", () => {
       await screen.findByRole("heading", { name: "Я хочу открыть счёт." });
       expect(screen.getByRole("button", { name: "Тренировка" })).toHaveAttribute("aria-current", "page");
       expect(document.querySelector(".android-topics-page")).not.toBeVisible();
-      expect(document.querySelector(".android-training-meta")).not.toHaveTextContent("1 / 10");
+      expect(document.querySelector(".exercise-topic")).not.toHaveTextContent("1 / 10");
       const answer = await recordAnswer();
       fireEvent.change(answer, { target: { value: "Sačuvaj odgovor." } });
       fireEvent.click(screen.getByRole("button", { name: "Темы" }));
@@ -1459,6 +1460,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
 
     expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Я хочу открыть счёт." })).toBeInTheDocument();
     expect(screen.getByText("Вариант перевода")).toBeInTheDocument();
     expect(screen.getByText("Ваш вариант")).toBeInTheDocument();
     expect(screen.getByText("Ваш вариант").parentElement).toHaveTextContent("Želim da otvorim račun.");

@@ -652,3 +652,13 @@
 - [x] [PR #104](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/104) merged на runtime 6befe14; frontend READY/production/main, alias подтверждён. 12 production browser checks (настройки с mock API) и 4 HTTP 200. [Доказательства](settings-account-checkpoint-2026-10-15.md).
 - [ ] APK по отдельной команде; backlog обновлён.
 - [ ] Приёмка владельцем.
+
+## 15.10.2026 — упражнение, подсказки, иконка повторения и календарь
+
+- [x] Локальная реализация: круглая иконка повторения; удалены «сменить» и рамка приглашения; original постоянно сверху, ответ/перевод выровнены слева, score/verdict по центру, controls снизу.
+- [x] Подсказка закрывается при outside pointer/focus, Escape и повторном нажатии; использованные слова/штраф сохранены.
+- [x] Цвета календарной легенды и дней объединены общими CSS-правилами.
+- [x] Проверки: UI 210 passed, backend/scripts 299 passed / 8 skipped, Node 5 passed, lint/typecheck/build; 10 новых layout/hint и 17 calendar/localization/result browser scenarios. [Доказательства](practice-layout-checkpoint-2026-10-15.md).
+- [ ] Публикация web.
+- [ ] Android sync/build по отдельной команде; backlog обновлён.
+- [ ] Ручная приёмка владельцем, физический Android.

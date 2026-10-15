@@ -23,6 +23,7 @@ for (const native of [false, true]) {
       const path = new URL(route.request().url()).pathname;
       let body;
       if (path === '/api/auth/me') body = account;
+      else if (path === '/api/auth/me/preferences') body = { assistance_enabled: false };
       else if (path === '/api/topics') body = [topic];
       else if (path === '/api/review-phrases/summary') body = { phrase_count: 0 };
       else if (path === '/api/sessions/start') { starts += 1; body = { session, exercise }; }
