@@ -57,7 +57,7 @@ for (const layout of ['desktop', 'mobile', 'android']) {
     if (layout === 'android') await page.addInitScript(() => { window.CapacitorCustomPlatform = { name: 'android' }; });
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'Добро пожаловать в SerboTalk' })).toBeVisible();
-    await page.getByRole('button', { name: 'Изменить язык' }).click();
+    await page.getByRole('button', { name: 'Выбрать английский язык' }).click();
     await expect(page.getByRole('heading', { name: 'Welcome to SerboTalk' })).toBeVisible();
     await page.getByText('Review access', { exact: true }).click();
     await expect(page.getByLabel('Username or email', { exact: true })).toBeVisible();
@@ -65,8 +65,8 @@ for (const layout of ['desktop', 'mobile', 'android']) {
     await page.screenshot({ path: `../artifacts/localization-fixes/en-${layout}-login.png` });
     await page.reload();
     await expect(page.getByRole('heading', { name: 'Welcome to SerboTalk' })).toBeVisible();
-    await page.getByRole('button', { name: 'Change language' }).click();
-    await page.getByText('Вход для проверки / Review access', { exact: true }).click();
+    await page.getByRole('button', { name: 'Select Russian' }).click();
+    await page.getByText('Вход для проверки', { exact: true }).click();
     await expect(page.getByLabel('Пароль', { exact: true })).toBeVisible();
     await page.screenshot({ path: `../artifacts/localization-fixes/ru-${layout}-login.png` });
   });

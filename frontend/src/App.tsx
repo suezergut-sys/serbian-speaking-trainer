@@ -26,6 +26,7 @@ import { hasUnexpectedLetterScript, displaySerbian, displaySerbianInRussianText,
 import { AnswerResult } from "./AnswerResult";
 import { finishUiTimingWhenVisible, startUiTiming } from "./performance";
 import appLogo from "./assets/app-logo.png?inline";
+import messages from "./locales/en.json";
 import "./styles.css";
 
 type BackendState = "checking" | "online" | "offline";
@@ -127,7 +128,21 @@ export default function App() {
 
 function LoginLanguageButton() {
   const language = useLanguage();
-  return <button className="login-language" type="button" aria-label={t("Изменить язык")} onClick={() => setLanguage(language === "ru" ? "en" : "ru")}>{language === "ru" ? "English" : "Русский"}</button>;
+  return <div className="login-languages" role="group" aria-label={t("Язык интерфейса")}>
+    {(["ru", "en"] as const).map(locale => <button key={locale} className="login-language" type="button" aria-label={t(locale === "ru" ? "Выбрать русский язык" : "Выбрать английский язык")} aria-pressed={language === locale} onClick={() => setLanguage(locale)}>
+      <svg aria-hidden="true" viewBox="0 0 60 60" width="36" height="36">
+        {locale === "ru" ? <><path fill="#fff" d="M0 0h60v20H0z"/><path fill="#0039a6" d="M0 20h60v20H0z"/><path fill="#d52b1e" d="M0 40h60v20H0z"/></> : <>
+          <path fill="#012169" d="M0 0h60v60H0z"/><path stroke="#fff" strokeWidth="12" d="m0 0 60 60M60 0 0 60"/><path stroke="#c8102e" strokeWidth="4" d="m0 0 60 60M60 0 0 60"/><path stroke="#fff" strokeWidth="20" d="M30 0v60M0 30h60"/><path stroke="#c8102e" strokeWidth="12" d="M30 0v60M0 30h60"/>
+        </>}
+      </svg>
+    </button>)}
+  </div>;
+}
+
+// Both translations participate in layout so switching languages never moves the form.
+function LoginCopy({ as: Tag, text, href }: { as: "h1" | "p" | "a"; text: keyof typeof messages; href?: string }) {
+  const language = useLanguage();
+  return <Tag className="login-copy" href={href}>{(["ru", "en"] as const).map(locale => <span key={locale} lang={locale} aria-hidden={language !== locale} className={language !== locale ? "login-copy__sizing" : undefined}>{locale === "ru" ? text : messages[text]}</span>)}</Tag>;
 }
 
 function AuthenticatedApp() {
@@ -175,7 +190,7 @@ function AuthenticatedApp() {
     <p>{t("Авторизация и загрузка...")}</p>
   </div></main>;
   if (!isAuthConfigured()) return <main className="auth-page"><div className="auth-card panel"><LoginLanguageButton /><h1>{t("Нужна настройка входа")}</h1><p>{t("Добавьте VITE_SUPABASE_URL и VITE_SUPABASE_PUBLISHABLE_KEY в окружение frontend.")}</p></div></main>;
-  if (!hasSession || !account) return <main className="auth-page"><div className="auth-card panel"><LoginLanguageButton /><span className="brand__mark"><Icon name="message" size={34}/></span><h1>{t("Добро пожаловать в SerboTalk")}</h1><p>{t("Войдите или зарегистрируйтесь с Google, чтобы сохранять свой прогресс на всех устройствах.")}</p><button className="google-sign-in" type="button" onClick={() => void login()}>{t("Войти через Google")}</button><ReviewLogin />{authError && <p className="error" role="alert">{t(authError)}</p>}<nav className="auth-legal" aria-label={t("Правовая информация")}><a href="/privacy">{t("Конфиденциальность")}</a><a href="/terms">{t("Условия")}</a><a href="/delete-account">{t("Удаление аккаунта")}</a></nav></div></main>;
+  if (!hasSession || !account) return <main className="auth-page"><div className="auth-card panel"><LoginLanguageButton /><span className="brand__mark"><Icon name="message" size={34}/></span><LoginCopy as="h1" text="Добро пожаловать в SerboTalk" /><LoginCopy as="p" text="Войдите или зарегистрируйтесь с Google, чтобы сохранять свой прогресс на всех устройствах." /><button className="google-sign-in" type="button" onClick={() => void login()}>{t("Войти через Google")}</button><ReviewLogin />{authError && <p className="error" role="alert">{t(authError)}</p>}<nav className="auth-legal" aria-label={t("Правовая информация")}><LoginCopy as="a" href="/privacy" text="Конфиденциальность" /><LoginCopy as="a" href="/terms" text="Условия" /><LoginCopy as="a" href="/delete-account" text="Удаление аккаунта" /></nav></div></main>;
   return <TrainerApp key={account.id} account={account} onAccountChange={setAccount} onSignOut={() => void signOut()} />;
 }
 

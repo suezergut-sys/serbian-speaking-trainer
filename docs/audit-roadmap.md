@@ -632,3 +632,11 @@
 - [x] [PR #99](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/99)/[#100](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/100) merged на c0d3b6b, оба production deployments READY; aliases/API и authorized English DOM coverage проверены. [Доказательства](independent-english-hints-checkpoint-2026-10-14.md).
 - [ ] Новый APK по отдельной команде; Android backlog обновлён.
 - [ ] Физическая приёмка.
+
+## 15.10.2026 — экран входа: флаги и одинаковая высота
+
+- [x] Реализация ru/en: квадратные флаги РФ/Великобритании, тонкая золотая рамка, русский по умолчанию, сохранение выбора, центрированный локализованный review-вход.
+- [x] Browser checks desktop/mobile/320px/общий Android-layout: одинаковая геометрия при смене языка, рамка, reload, формы и отсутствие horizontal overflow; 4 passed. Прежние login checks desktop/mobile/Android: 3 passed. [Доказательства](login-flags-checkpoint-2026-10-15.md).
+- [ ] Публикация web и production smoke.
+- [ ] Android APK по отдельной команде; backlog обновлён.
+- [ ] Ручная приёмка владельцем.

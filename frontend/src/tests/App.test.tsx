@@ -67,7 +67,10 @@ describe("App", () => {
     vi.stubGlobal("fetch", mockApi());
     render(<App />);
     expect(await screen.findByRole("heading", { name: "Добро пожаловать в SerboTalk" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Изменить язык" }));
+    expect(screen.getByRole("button", { name: "Выбрать русский язык" })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Выбрать английский язык" }));
+    expect(screen.getByRole("button", { name: "Select English" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Select Russian" })).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByRole("heading", { name: "Welcome to SerboTalk" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign in with Google" })).toBeInTheDocument();
     expect(localStorage.getItem("serbotalk.interface-language")).toBe("en");
