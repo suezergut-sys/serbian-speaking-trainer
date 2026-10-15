@@ -637,7 +637,7 @@
 
 - [x] Реализация ru/en: квадратные флаги РФ/Великобритании, тонкая золотая рамка, русский по умолчанию, сохранение выбора, центрированный локализованный review-вход.
 - [x] Browser checks desktop/mobile/320px/общий Android-layout: одинаковая геометрия при смене языка, рамка, reload, формы и отсутствие horizontal overflow; 4 passed. Прежние login checks desktop/mobile/Android: 3 passed. [Доказательства](login-flags-checkpoint-2026-10-15.md).
-- [ ] Публикация web и production smoke.
+- [x] Web опубликован через [PR #102](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/102), runtime 090e911, frontend READY/main/production с основным alias; 7 production browser checks и 4 HTTP checks прошли. [Доказательства](login-flags-checkpoint-2026-10-15.md).
 - [ ] Android APK по отдельной команде; backlog обновлён.
 - [ ] Ручная приёмка владельцем.
 
