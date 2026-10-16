@@ -651,3 +651,5 @@ Desktop/mobile/Capacitor используют одну renderPractice-разме
 ## 16.10.2026 — бесплатный лимит 20
 
 Значение `free_daily_phrase_limit` по умолчанию и `.env.example` повышены до 20. Учёт остаётся серверным, по пользователю и суткам UTC; история попыток и резервации не сбрасываются. Production env не содержит переопределения `FREE_DAILY_PHRASE_LIMIT`, поэтому применяется новый default. Лимит в существующих клиентах обновится из API; статический текст условий ru/en попадёт в будущий Android-релиз. Миграции, тарифы admin/premium и Android-версия не меняются. [Доказательства](free-daily-limit-20-checkpoint-2026-10-16.md).
+
+16.10.2026: лимит 20 опубликован в backend/web через PR #112, runtime ee234ee, оба Vercel READY/main/production; 6/6 production browser checks ru/en и HTTP smoke пройдены. Серверный лимит доступен существующим APK через API, статические условия ожидают следующей сборки. [Доказательства](free-daily-limit-20-checkpoint-2026-10-16.md).
