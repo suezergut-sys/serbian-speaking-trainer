@@ -683,5 +683,5 @@
 
 - [x] Backend default/.env.example = 20; условия использования и счётчик аккаунта ru/en. [Доказательства](free-daily-limit-20-checkpoint-2026-10-16.md).
 - [x] 302 backend/script tests passed, 8 skipped; 212 component tests, lint/typecheck/build; 6 browser checks ru/en desktop/mobile/Android-layout.
-- [ ] Публикация backend/web и production-проверка.
+- [x] Backend/web опубликованы через PR #112, runtime ee234ee, оба READY/main/production и aliases подтверждены. 16.10.2026, 17:52 МСК: 6/6 production browser checks, HTTP smoke и error logs прошли. [Доказательства](free-daily-limit-20-checkpoint-2026-10-16.md).
 - [ ] Статический текст условий в будущем APK и физическая приёмка отдельно.
