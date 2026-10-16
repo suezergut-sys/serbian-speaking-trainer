@@ -1,5 +1,9 @@
 # Serbian Speaking Trainer
 
+## 16.10.2026 — бесплатный лимит 20 фраз в день
+
+Бесплатный аккаунт получает 20 проверок фраз в сутки вместо 10. Лимит общий для устройств и сбрасывается в 00:00 UTC; использованные за сегодня попытки сохраняются. Web и Android получают лимит из API; условия использования обновлены ru/en. Администраторы и premium остаются без лимита. [Проверки и публикация](docs/free-daily-limit-20-checkpoint-2026-10-16.md).
+
 ## 15.10.2026 — APK SerboTalk 1.33
 
 [Скачать APK 1.33](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/download/v1.33/SerboTalk-andorid16-1.33.apk) (`versionCode 43`, прежняя установочная подпись). Включены все накопленные обновления после 1.32: English hints, вход/настройки, стабильный экран упражнения, закрытие подсказок и календарная легенда. Пакет и обратная загрузка проверены; физическая приёмка остаётся открытой. [Результаты выпуска](docs/android-1.33-release.md).
@@ -175,7 +179,7 @@ Backend environment variables:
 - `APP_ENV=production`;
 - `DATABASE_URL` — transaction pooler Supabase на порту 6543 с `sslmode=require`;
 - `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` — проверка пользовательского access token через Supabase Auth;
-- `ADMIN_EMAILS=suezergut@gmail.com`, `FREE_DAILY_PHRASE_LIMIT=10`;
+- `ADMIN_EMAILS=suezergut@gmail.com`, `FREE_DAILY_PHRASE_LIMIT=20`;
 - `OPENAI_API_KEY`;
 - `OPENAI_TEXT_MODEL` и `OPENAI_TRANSCRIBE_MODEL`;
 - `OPENAI_TIMEOUT_SECONDS`, `OPENAI_MAX_RETRIES`, `MAX_AUDIO_BYTES`;

@@ -25,10 +25,11 @@ it.each(["ru", "en"] as const)("separates account details, sign out and deletion
     id: "synthetic-user", email: "review@example.com", display_name: "Maksim Sumin", avatar_url: null,
     role: "user", access_tier: "free", assistance_enabled: false, can_debug_models: false,
     registered_at: "2026-10-12T00:00:00Z", last_active_at: "2026-10-12T00:00:00Z",
-    daily_usage: { used: 0, limit: 10, remaining: 10, resets_at: "2026-10-13T00:00:00Z" },
+    daily_usage: { used: 0, limit: 20, remaining: 20, resets_at: "2026-10-13T00:00:00Z" },
   }} />);
   const account = screen.getByRole("region", { name: en ? "Account" : "Аккаунт" });
   expect(within(account).getByText("Maksim Sumin")).toBeInTheDocument();
+  expect(within(account).getByText(en ? "20 of 20 phrases remaining" : "20 из 20 фраз осталось")).toBeInTheDocument();
   expect(within(account).getByText("review@example.com")).toBeInTheDocument();
   expect(within(account).queryByRole("link")).not.toBeInTheDocument();
   fireEvent.click(within(account).getByRole("button", { name: en ? "Sign out" : "Выйти" }));
