@@ -678,3 +678,10 @@
 - [x] Web опубликован через PR #110, runtime bef89f2, Vercel READY/main/production и alias подтверждены; 18/18 production browser checks + HTTP smoke прошли 16.10.2026, 16:43 МСК. [Доказательства](compact-result-checkpoint-2026-10-16.md).
 - [ ] Android sync/build по отдельной команде; backlog обновлён.
 - [ ] Ручная приёмка владельцем и физическая проверка Android.
+
+## 16.10.2026 — бесплатный лимит 20 фраз
+
+- [x] Backend default/.env.example = 20; условия использования и счётчик аккаунта ru/en. [Доказательства](free-daily-limit-20-checkpoint-2026-10-16.md).
+- [x] 302 backend/script tests passed, 8 skipped; 212 component tests, lint/typecheck/build; 6 browser checks ru/en desktop/mobile/Android-layout.
+- [ ] Публикация backend/web и production-проверка.
+- [ ] Статический текст условий в будущем APK и физическая приёмка отдельно.

@@ -101,8 +101,8 @@ def test_current_user_and_admin_user_list(api_client: TestClient, db_session: Se
     assert me.status_code == 200
     assert me.json()["daily_usage"] == {
         "used": 0,
-        "limit": 10,
-        "remaining": 10,
+        "limit": 20,
+        "remaining": 20,
         "resets_at": me.json()["daily_usage"]["resets_at"],
     }
     assert api_client.get("/api/admin/users").status_code == 403
@@ -266,7 +266,9 @@ def test_protected_routes_require_bearer_authentication(api_client: TestClient) 
         app.dependency_overrides[get_current_user] = override
 
 
-def test_free_user_is_limited_to_ten_attempts_per_utc_day(
+@pytest.mark.parametrize("used", [10, 19, 20])
+def test_free_user_is_limited_to_twenty_attempts_per_utc_day(
+    used: int,
     api_client: TestClient,
     db_session: Session,
 ) -> None:
@@ -278,7 +280,7 @@ def test_free_user_is_limited_to_ten_attempts_per_utc_day(
     now = datetime.now(timezone.utc)
     db_session.add_all([
         Attempt(exercise_id=exercise["id"], transcript_sr=f"attempt {index}", created_at=now)
-        for index in range(10)
+        for index in range(used)
     ])
     db_session.flush()
 
@@ -286,11 +288,19 @@ def test_free_user_is_limited_to_ten_attempts_per_utc_day(
         "/api/attempts",
         json={"exercise_id": exercise["id"], "transcript_sr": canonical},
     )
+    if used < 20:
+        assert response.status_code == 201
+        usage = response.json()["daily_usage"]
+        assert usage["limit"] == 20
+        assert usage["used"] == used + 1
+        assert usage["remaining"] == 20 - used - 1
+        return
     assert response.status_code == 429
     assert response.json()["detail"] == "Daily phrase limit reached"
 
     user = db_session.get(User, LEGACY_USER_ID)
     assert user is not None
+    assert UserService(db_session).usage(user, now=now + timedelta(days=1)).remaining == 20
     user.role = "admin"
     db_session.flush()
     assert api_client.post(
@@ -317,3 +327,8 @@ def test_user_cannot_open_another_users_session(api_client: TestClient, db_sessi
     db_session.flush()
 
     assert api_client.get(f"/api/sessions/{foreign_session.id}").status_code == 404
+
+
+def test_free_daily_limit_defaults_to_twenty(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("FREE_DAILY_PHRASE_LIMIT", raising=False)
+    assert Settings(_env_file=None).free_daily_phrase_limit == 20
