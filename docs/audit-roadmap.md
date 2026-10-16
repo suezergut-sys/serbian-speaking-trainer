@@ -675,6 +675,6 @@
 
 - [x] Реализация общего ru/en интерфейса: удалены исходная фраза после проверки и краткое пояснение под оценкой.
 - [x] 210 component tests, 18 browser checks ru/en × desktop/mobile/Android-layout × три оценки, lint, typecheck и production build. [Доказательства](compact-result-checkpoint-2026-10-16.md).
-- [ ] Публикация web.
+- [x] Web опубликован через PR #110, runtime bef89f2, Vercel READY/main/production и alias подтверждены; 18/18 production browser checks + HTTP smoke прошли 16.10.2026, 16:43 МСК. [Доказательства](compact-result-checkpoint-2026-10-16.md).
 - [ ] Android sync/build по отдельной команде; backlog обновлён.
 - [ ] Ручная приёмка владельцем и физическая проверка Android.
