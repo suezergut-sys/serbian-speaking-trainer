@@ -826,7 +826,6 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       <AnswerResult answer={attempt.transcript_sr} attempt={attempt} alphabet={alphabet} />
       <div className="feedback__score"><span>{scorePercent}%</span><strong>{t(attempt.analysis.verdict === "correct" ? "Верно" : attempt.analysis.verdict === "mostly_correct" ? "Почти верно" : "Нужно доработать")}</strong></div>
       {attempt.hint_penalty > 0 && <div className="hint-penalty"><Icon name="bulb" /><span>{t("Подсказки: −")}{Math.round(attempt.hint_penalty * 100)}%</span></div>}
-      <p>{displayFeedback(attempt.analysis.short_feedback_ru, alphabet)}</p>
       {scorePercent < 100 && <details><summary>{t("Разбор")}</summary><p>{displayFeedback(attempt.analysis.detailed_feedback_ru, alphabet)}</p>{attempt.analysis.issues.map((issue, index) => <p className="issue" key={`${issue.skill_key}-${issue.type}-${index}`}>{displaySerbian(issue.evidence, alphabet)}{t(issue.correction ? ` → ${displaySerbian(issue.correction, alphabet)}` : "")}{issue.explanation_ru && <span className="issue-explanation">{displayFeedback(issue.explanation_ru, alphabet)}</span>}</p>)}</details>}
     </div>;
   }
@@ -837,7 +836,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     return <div className={`practice-card exercise-layout${compact ? " android-training-content" : " panel"}`}>
       <div className="exercise-scroll">
         <div className="exercise-topic">{currentTopic ? topicText(currentTopic.id, currentTopic.title_ru) : ""}</div>
-        <div className="exercise-source">{renderPhrase()}</div>
+        {!attempt && <div className="exercise-source">{renderPhrase()}</div>}
         {!attempt ? <form id="practice-answer-form" className="exercise-answer" onSubmit={checkAnswer}>
           {hasTranscript && <div className="exercise-answer-frame result-phrase"><label htmlFor={answerId}>{t("Ваш ответ")}</label>
             <textarea id={answerId} value={answer} readOnly={checking} onChange={(event) => { answerEditEpochRef.current += 1; voiceTimingRef.current = undefined; setAssistanceDraft(current => current ? { ...current, edited: true } : undefined); setAnswer(event.target.value); }} placeholder={t("Введите ответ на сербском языке")} rows={3} /></div>}

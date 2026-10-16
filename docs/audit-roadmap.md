@@ -670,3 +670,11 @@
 - [x] Cloud APK BUILD SUCCESSFUL/109 tasks; UI 210 passed, lint; metadata/API/signature/9 public assets/Downloads/SHA-256 проверены. [Доказательства](android-1.33-release.md).
 - [x] [PR #108](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/108) merged на d132af3; [GitHub release v1.33](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.33), tag/target/digest/size/authenticated download/Downloads совпали. [Доказательства](android-1.33-release.md).
 - [ ] Физическая Android-приёмка и реальная речь; P0/P1/P2 целиком не закрыты.
+
+## 16.10.2026 — компактный экран результата
+
+- [x] Реализация общего ru/en интерфейса: удалены исходная фраза после проверки и краткое пояснение под оценкой.
+- [x] 210 component tests, 18 browser checks ru/en × desktop/mobile/Android-layout × три оценки, lint, typecheck и production build. [Доказательства](compact-result-checkpoint-2026-10-16.md).
+- [ ] Публикация web.
+- [ ] Android sync/build по отдельной команде; backlog обновлён.
+- [ ] Ручная приёмка владельцем и физическая проверка Android.

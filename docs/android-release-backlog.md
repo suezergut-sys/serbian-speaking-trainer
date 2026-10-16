@@ -488,3 +488,9 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 - [x] Production sync/cloud APK, 1.33/code43 по отдельному согласованию, 210 UI tests/lint, 9 Android-layout browser checks и metadata/API/signature/9 packaged public assets/Downloads проверены. [Доказательства](android-1.33-release.md).
 - [x] [GitHub release v1.33](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.33) опубликован на d132af3 после PR #108; tag/target/digest/size/обратная загрузка и Downloads совпали.
 - [ ] Физическая приёмка всех накопленных изменений и реальный микрофон.
+
+## 16.10.2026 — следующий Android-релиз: компактный результат
+
+- [x] Общий ru/en UI: исходная фраза только до проверки, результат без краткого пояснения под процентом и оценкой. [Доказательства](compact-result-checkpoint-2026-10-16.md).
+- [ ] Перенести в будущий Android-релиз по отдельной команде; sync/build и номера версий не менялись.
+- [ ] Физическая приёмка будущей сборки.

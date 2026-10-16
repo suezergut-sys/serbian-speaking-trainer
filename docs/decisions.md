@@ -641,3 +641,7 @@ Desktop/mobile/Capacitor используют одну renderPractice-разме
 Владелец запросил APK со всем backlog и после production sync/проверок отдельно согласовал 1.33/code43. Источник — main после PR #107; локальный лендинг из грязной основной папки не включается. Метаданные package/Gradle/output filename/test согласованы. Только production Android build → cap sync → assembleProdDebug через pnpm android:cloud-apk с прежней установочной подписью; web/backend повторно не разворачиваются. Физическая приёмка остаётся отдельной. [Результаты](android-1.33-release.md).
 
 15.10.2026: APK 1.33/code43 опубликован через PR #108 на d132af3 и GitHub release v1.33. Tag/target, server SHA-256/size, authenticated download и Downloads совпали; установка и реальная речь на физическом устройстве ещё не проверены. Web/backend не redeploy. [Доказательства](android-1.33-release.md).
+
+## 16.10.2026 — компактный результат
+
+Общий `renderPractice` скрывает исходную фразу при наличии результата (`!attempt`). `renderFeedback` не выводит `short_feedback_ru` под оценкой во всех layout и локалях; API и сохранённый анализ прежние. Подробный разбор остаётся закрытым до нажатия, штраф за подсказки сохраняется как часть расчёта оценки. Новых строк нет; общий каталог ru/en остаётся актуальным, ключ исходной фразы используется статистикой. Android sync/build и версии не менялись. [Проверки](compact-result-checkpoint-2026-10-16.md).
