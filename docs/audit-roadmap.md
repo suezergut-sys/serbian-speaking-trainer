@@ -689,6 +689,6 @@
 ## 17.10.2026 — Разное, 50 фраз; выпуск 1.34/code44
 
 - [x] Реализация, ru/en переводы/подсказки, повторяемый seed и миграция; backend 306/8 skipped, Node 5, frontend 212, lint/typecheck/build, browser 10 passed. [Доказательства](android-1.34-release.md).
-- [ ] Публикация backend/web и подтверждение production БД.
-- [ ] Production APK, API/metadata/подпись/assets и GitHub release.
+- [x] PR #114 merged; backend/web READY на bc85820, production БД: 50/50 новых фраз совпали, всего 210; Chrome ru/en/версия/запуск и HTTP smoke прошли. [Доказательства](android-1.34-release.md).
+- [x] Production APK 1.34/code44, API/metadata/прежняя подпись/9 assets/50 IDs/Downloads проверены; GitHub v1.34, digest/size и обратная загрузка совпали. [Доказательства](android-1.34-release.md).
 - [ ] Физическая ручная приёмка, OAuth/микрофон/реальная речь.

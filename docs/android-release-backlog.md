@@ -492,18 +492,18 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 ## 16.10.2026 — следующий Android-релиз: компактный результат
 
 - [x] Общий ru/en UI: исходная фраза только до проверки, результат без краткого пояснения под процентом и оценкой. [Доказательства](compact-result-checkpoint-2026-10-16.md).
-- [ ] Перенести в будущий Android-релиз по отдельной команде; sync/build и номера версий не менялись.
+- [x] 17.10.2026 перенесено в согласованный APK 1.34/code44; production cloud build и packaged assets проверены. [Доказательства](android-1.34-release.md).
 - [ ] Физическая приёмка будущей сборки.
 
 ## 16.10.2026 — бесплатный лимит 20
 
 - [x] Общие ru/en тексты условий обновлены до 20; счётчик аккаунта получает limit/remaining из API, APK не требует пересборки для серверного лимита. [Доказательства](free-daily-limit-20-checkpoint-2026-10-16.md).
-- [ ] Перенести новый статический текст условий в будущий APK по отдельной команде.
+- [x] 17.10.2026 статический текст условий перенесён в APK 1.34/code44; ru/en/shared Android layout и packaged assets проверены. [Доказательства](android-1.34-release.md).
 - [ ] Физическая приёмка следующей сборки; Android sync/build и версия не менялись.
 
 ## 17.10.2026 — Разное, 50 фраз; выпуск 1.34/code44
 
 - [x] Реализация, ru/en переводы/подсказки, повторяемый seed и миграция; backend 306/8 skipped, Node 5, frontend 212, lint/typecheck/build, browser 10 passed. [Доказательства](android-1.34-release.md).
-- [ ] Публикация backend/web и подтверждение production БД.
-- [ ] Production APK, API/metadata/подпись/assets и GitHub release.
+- [x] PR #114 merged; backend/web READY на bc85820, production БД: 50/50 новых фраз совпали, всего 210; Chrome ru/en/версия/запуск и HTTP smoke прошли. [Доказательства](android-1.34-release.md).
+- [x] Production APK 1.34/code44, API/metadata/прежняя подпись/9 assets/50 IDs/Downloads проверены; GitHub v1.34, digest/size и обратная загрузка совпали. [Доказательства](android-1.34-release.md).
 - [ ] Физическая ручная приёмка, OAuth/микрофон/реальная речь.
