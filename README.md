@@ -484,3 +484,5 @@ STT использует prompt v2 с сербским латинским алф
 ## 17.10.2026 — лендинг с оригинальными экранами и Google Play
 
 Лендинг использует реальные RU/EN скриншоты без пересжатия: статистика на первом экране и три шага тренировки. Обе кнопки Google Play показывают цветной логотип с прозрачным фоном; ссылка на магазин пока остаётся заглушкой. Владелец разрешил публикацию desktop и мобильного web. [Проверки и статус выпуска](docs/landing-real-screens-release-2026-10-17.md).
+
+17.10.2026, 19:12 МСК: опубликовано на https://serbotalk.app/ через PR #123, runtime `0fa68c1`, Vercel READY/production. 8 production layout checks и 4 root checks RU/EN desktop/mobile прошли; оригиналы assets совпали по SHA256. [Доказательства](docs/landing-real-screens-release-2026-10-17.md).
