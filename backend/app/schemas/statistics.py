@@ -41,7 +41,7 @@ class PhraseStatisticsGroup(BaseModel):
 class PhraseStatisticsResponse(BaseModel):
     total: int = Field(ge=0)
     page: int = Field(ge=1)
-    page_size: Literal["10", "50", "all"]
+    page_size: Literal["10", "20", "50", "all"]
     total_pages: int = Field(ge=1)
     groups: list[PhraseStatisticsGroup]
 

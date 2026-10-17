@@ -29,7 +29,7 @@ export type PhraseStatisticsItem = {
 export type PhraseStatistics = {
   total: number;
   page: number;
-  page_size: "10" | "50" | "all";
+  page_size: "10" | "20" | "50" | "all";
   total_pages: number;
   groups: Array<{
     topic_id: string | null;

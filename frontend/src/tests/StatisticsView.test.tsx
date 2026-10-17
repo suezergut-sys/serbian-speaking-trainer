@@ -2,18 +2,37 @@ import { StrictMode } from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { StatisticsView } from '../StatisticsView';
+import { setLanguage } from '../i18n';
 import { fetchMonthlyStatistics, fetchPhraseStatistics, fetchPhraseTopics } from '../api/statistics';
 import type { PhraseStatistics } from '../types/statistics';
 
 vi.mock('../api/statistics', () => ({fetchMonthlyStatistics:vi.fn(),fetchPhraseStatistics:vi.fn(),fetchPhraseTopics:vi.fn()}));
-const phrases = (title:string):PhraseStatistics => ({total:1,page:1,page_size:'10',total_pages:1,groups:[{topic_id:'topic',topic_title:title,phrases:[{id:'phrase',source_ru:'Фраза',target_sr:'Čaj i kafa.',attempts:1,status:'learning',difficulty:null,next_review_at:null}]}]});
+const phrases = (title:string):PhraseStatistics => ({total:1,page:1,page_size:'20',total_pages:1,groups:[{topic_id:'topic',topic_title:title,phrases:[{id:'phrase',source_ru:'Фраза',target_sr:'Čaj i kafa.',attempts:1,status:'learning',difficulty:null,next_review_at:null}]}]});
 beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(fetchMonthlyStatistics).mockImplementation(async month => ({month,active_days:0,total_phrases:0,total_translations:0,correct_translations:0,mastered_phrases:0,days:[]}));
   vi.mocked(fetchPhraseTopics).mockResolvedValue([{ topic_id: "topic", topic_title: "Актуальная тема", phrase_count: 1 }]);
   vi.mocked(fetchPhraseStatistics).mockResolvedValue(phrases('Актуальная тема'));
 });
-afterEach(cleanup);
+afterEach(() => { cleanup(); setLanguage('ru'); });
+
+it.each(['ru', 'en'] as const)('defaults to twenty phrases and resets pagination when changing size (%s)', async language => {
+  setLanguage(language);
+  vi.mocked(fetchPhraseStatistics).mockImplementation(async (page, pageSize) => ({
+    ...phrases('Topic'), page, page_size: pageSize, total: 45, total_pages: pageSize === '50' ? 1 : 3,
+  }));
+  render(<StatisticsView page="phrases" />);
+  const label = language === 'en' ? 'Per page' : 'На странице';
+  expect(await screen.findByRole('combobox', { name: label })).toHaveValue('20');
+  const options = screen.getByRole('combobox', { name: label }).querySelectorAll('option');
+  expect(Array.from(options, option => option.value)).toEqual(['20', '50']);
+  expect(fetchPhraseStatistics).toHaveBeenLastCalledWith(1, '20', expect.any(AbortSignal), 'topic');
+  fireEvent.click(screen.getByRole('button', { name: language === 'en' ? 'Next' : 'Вперёд' }));
+  await waitFor(() => expect(fetchPhraseStatistics).toHaveBeenLastCalledWith(2, '20', expect.any(AbortSignal), 'topic'));
+  fireEvent.change(await screen.findByRole('combobox', { name: label }), { target: { value: '50' } });
+  await waitFor(() => expect(fetchPhraseStatistics).toHaveBeenLastCalledWith(1, '50', expect.any(AbortSignal), 'topic'));
+  expect(await screen.findByRole('combobox', { name: label })).toHaveValue('50');
+});
 
 it('offers bounded pages and retries failed phrase loading without changing the selection', async () => {
   vi.mocked(fetchPhraseStatistics).mockRejectedValueOnce(new Error('offline'));
@@ -121,7 +140,7 @@ it('loads phrases only on their separate page, filters by topic and returns to a
   await screen.findByRole('heading', { name: 'Актуальная тема' });
   expect(screen.queryByLabelText('Итоги недели')).not.toBeInTheDocument();
   fireEvent.change(screen.getByRole('combobox', { name: 'Тема' }), { target: { value: 'unassigned' } });
-  await waitFor(() => expect(fetchPhraseStatistics).toHaveBeenLastCalledWith(1, '10', expect.any(AbortSignal), 'unassigned'));
+  await waitFor(() => expect(fetchPhraseStatistics).toHaveBeenLastCalledWith(1, '20', expect.any(AbortSignal), 'unassigned'));
   fireEvent.click(screen.getByRole('button', { name: '← К статистике' }));
   await screen.findByLabelText('Итоги недели');
   expect(screen.queryByRole('combobox', { name: 'Тема' })).not.toBeInTheDocument();
@@ -185,7 +204,7 @@ it('ignores a late phrase result from a previously selected topic', async () => 
     .mockResolvedValue(phrases('Новая тема'));
   render(<StatisticsView page="phrases" />);
   const select = await screen.findByRole('combobox', { name: 'Тема' });
-  await waitFor(() => expect(fetchPhraseStatistics).toHaveBeenCalledWith(1, '10', expect.any(AbortSignal), 'first'));
+  await waitFor(() => expect(fetchPhraseStatistics).toHaveBeenCalledWith(1, '20', expect.any(AbortSignal), 'first'));
   const retiredSignal = vi.mocked(fetchPhraseStatistics).mock.calls[0][2]!;
   fireEvent.change(select, { target: { value: 'second' } });
   await screen.findByRole('heading', { name: 'Новая тема' });

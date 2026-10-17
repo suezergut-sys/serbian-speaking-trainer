@@ -24,7 +24,7 @@ def monthly_statistics(
 @router.get("/phrases", response_model=PhraseStatisticsResponse)
 def phrase_statistics(
     page: int = Query(default=1, ge=1),
-    page_size: str = Query(default="10", pattern=r"^(10|50|all)$"),
+    page_size: str = Query(default="20", pattern=r"^(10|20|50|all)$"),
     topic_id: str | None = Query(default=None, min_length=1, max_length=36),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),

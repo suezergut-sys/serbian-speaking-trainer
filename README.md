@@ -1,5 +1,9 @@
 # Serbian Speaking Trainer
 
+## 17.10.2026 — компактная статистика (локально)
+
+В desktop web ширина статистики совпадает с панелью упражнения; звезда за 20 повторений увеличена до 18px. Во фразах по умолчанию 20 строк, выбор — 20/50; API сохраняет совместимость с прежними клиентами. [Проверки и статус](docs/statistics-layout-2026-10-17.md). Android sync/build и версии не менялись.
+
 ## 17.10.2026 — опубликован SerboTalk 1.35
 
 Все накопленные изменения опубликованы через [PR #125](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/125): обратная связь, Telegram-уведомления, исходная тема повторения и центрирование подготовки. Актуальные лендинг и каталог 210 фраз сохранены. Web/backend READY, production RU/EN и сохранение технического отзыва проверены. [Скачать APK 1.35/code45](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/download/v1.35/SerboTalk-andorid16-1.35.apk); файл также в Downloads. [Проверки и ограничения](docs/android-1.35-release.md).
