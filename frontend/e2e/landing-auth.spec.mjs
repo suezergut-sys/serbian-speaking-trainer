@@ -36,5 +36,8 @@ for (const language of ['ru', 'en']) for (const native of [false, true]) {
     expect(signInRequests).toBe(1);
     await page.reload();
     await expect(page.locator('.interactive-phrase').filter({ visible: true })).toBeVisible();
+    await page.goto('/landing.html#sign-in');
+    await expect(page.getByRole('link', { name: en ? /Continue practising/ : /Продолжить тренировку/ })).toBeVisible();
+    await expect(page).toHaveURL(/landing\.html#sign-in$/);
   });
 }
