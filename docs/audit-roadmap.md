@@ -720,3 +720,5 @@
 - [x] 7 component tests, typecheck/production build и lint.
 - [x] 12 локальных browser checks RU/EN desktop/mobile/320px/Android-layout и mock вход. Публикация ниже: [доказательства](landing-real-screens-release-2026-10-17.md).
 - [ ] Приёмка владельцем; Android-сборка не запрашивалась.
+
+- [x] Выпуск оригинальных экранов и Google Play завершён: PR #123, runtime `0fa68c1`, Vercel READY/main/production и alias serbotalk.app; 8 production layout checks + 4 root checks RU/EN desktop/mobile, 9 asset hashes, HTTP и error logs. [Доказательства](landing-real-screens-release-2026-10-17.md).
