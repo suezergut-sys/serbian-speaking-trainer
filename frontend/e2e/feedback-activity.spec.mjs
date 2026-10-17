@@ -60,7 +60,7 @@ for (const layout of ['desktop', 'mobile', 'android']) for (const language of ['
     const textbox = page.getByRole('textbox', { name: en ? 'Your feedback' : 'Ваша обратная связь' });
     await expect(textbox).toHaveValue(en ? 'Please add more topics.' : 'Добавьте ещё темы.');
     await textbox.fill(en ? 'Edited feedback.' : 'Исправленный отзыв.');
-    await page.screenshot({ path: `test-results/feedback-${layout}-${language}.png`, fullPage: true });
+    await page.locator(".feedback-settings").screenshot({ path: `test-results/feedback-${layout}-${language}.png` });
     await page.getByRole('button', { name: en ? 'Send feedback' : 'Отправить обратную связь' }).click();
     await expect(page.getByText(en ? 'Thank you! Your feedback has been sent.' : 'Спасибо! Обратная связь отправлена.')).toBeVisible();
     expect(submitted).toEqual({ content: en ? 'Edited feedback.' : 'Исправленный отзыв.' });

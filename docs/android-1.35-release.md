@@ -8,8 +8,9 @@
 
 - [x] Номер версии и имя APK согласованы; Android/package metadata обновлены.
 - [x] Backend production Telegram-env добавлены как sensitive, без передачи секрета в Git/frontend/APK. Предыдущая реальная тестовая доставка успешна.
-- [ ] Полный quality gate после объединения и browser regression RU/EN.
-- [ ] Production cloud APK, metadata, API URL, подпись и побайтовая проверка assets.
+- [x] Полный quality gate после объединения: backend/scripts 315 passed / 8 skipped; Node guards 5 passed; frontend 229 passed / 25 files; lint/typecheck/web build.
+- [ ] Browser regression RU/EN: проверяется полный набор, включая накопленные сценарии.
+- [x] `pnpm android:cloud-apk`: BUILD SUCCESSFUL, 109 tasks. 1.35/code45/min24/target36, production API/HTTPS, без testlab и landing. Все 7 dist assets и 9 packaged public assets совпали с sync. Прежний сертификат SHA256 `1329c4638a57777b90429bf0eff9df67c2865bf95ebb8b97f45ef4fad77eadd0`. APK 4 491 588 bytes, SHA256 `333acb185b84bfa4f953ea8aa10ab71136648019227fc6b792c4aa1de2fd4f5a`, копия в Downloads.
 - [ ] PR/merge и Vercel backend/web READY с подтверждением SHA/production alias.
 - [ ] Production smoke и runtime logs; схема отзывов и настроенный Telegram.
 - [ ] GitHub release, проверка server digest/size и обратной загрузки APK.
@@ -18,3 +19,5 @@
 Сохранение пользовательского аудио не добавляется: голосовой отзыв расшифровывается в памяти, перед отправкой пользователь подтверждает текст. Telegram получает email и тип события, без содержания отзыва/аудио. Доставка best-effort с timeout, без постоянной очереди. [Контракт и ограничения](feedback-activity-checkpoint-2026-10-17.md).
 
 AAB и Google Play Console этим поручением не обновляются. Секреты и бинарные артефакты остаются вне Git; локальные доказательства — игнорируемый `artifacts/android-1.35-*`.
+
+Браузерные проверки включают накопленные layout/hints/result/landing/catalog/calendar сценарии. Устаревшая проверка ожидавшейся исходной фразы после результата исправлена согласно уже опубликованному компактному результату. Обнаружен побочный эффект full-page screenshot в Chrome: временный viewport 1×1 пересоздаёт responsive-раскладку; снимок формы заменён на locator screenshot. Runtime-код из-за этого не менялся.
