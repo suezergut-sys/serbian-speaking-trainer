@@ -9,7 +9,7 @@
 - [x] Номер версии и имя APK согласованы; Android/package metadata обновлены.
 - [x] Backend production Telegram-env добавлены как sensitive, без передачи секрета в Git/frontend/APK. Предыдущая реальная тестовая доставка успешна.
 - [x] Полный quality gate после объединения: backend/scripts 315 passed / 8 skipped; Node guards 5 passed; frontend 229 passed / 25 files; lint/typecheck/web build.
-- [ ] Browser regression RU/EN: проверяется полный набор, включая накопленные сценарии.
+- [x] Browser regression: **70 passed** — RU/EN desktop/mobile/320px/short/Android-layout, feedback/source topic/loading, practice/hints/compact result, 210-phrase catalog, daily limit/calendar/landing/auth.
 - [x] `pnpm android:cloud-apk`: BUILD SUCCESSFUL, 109 tasks. 1.35/code45/min24/target36, production API/HTTPS, без testlab и landing. Все 7 dist assets и 9 packaged public assets совпали с sync. Прежний сертификат SHA256 `1329c4638a57777b90429bf0eff9df67c2865bf95ebb8b97f45ef4fad77eadd0`. APK 4 491 588 bytes, SHA256 `333acb185b84bfa4f953ea8aa10ab71136648019227fc6b792c4aa1de2fd4f5a`, копия в Downloads.
 - [ ] PR/merge и Vercel backend/web READY с подтверждением SHA/production alias.
 - [ ] Production smoke и runtime logs; схема отзывов и настроенный Telegram.
