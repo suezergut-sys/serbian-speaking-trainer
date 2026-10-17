@@ -4923,7 +4923,7 @@
         "translation_sr": "mnogo"
       },
       "of": {
-        "translation_sr": "od"
+        "translation_sr": "mnogo"
       },
       "work": {
         "translation_sr": "posla"
@@ -5119,7 +5119,7 @@
         "translation_sr": "stižeš"
       },
       "here": {
-        "translation_sr": "ovde"
+        "translation_sr": "stižeš"
       },
       "in": {
         "translation_sr": "za"
@@ -5186,7 +5186,7 @@
     "canonical_sr": "Jesi stigla? — Jesam, javiću ti kad raspakujem stvari.",
     "word_hints": {
       "did": {
-        "translation_sr": "Jes"
+        "translation_sr": "Jesi"
       },
       "you": {
         "translation_sr": "ti"
@@ -5204,7 +5204,7 @@
         "translation_sr": "javiću"
       },
       "know": {
-        "translation_sr": "znam"
+        "translation_sr": "javiću ti"
       },
       "when": {
         "translation_sr": "kad"
@@ -5778,7 +5778,7 @@
         "translation_sr": "da"
       },
       "lunch": {
-        "translation_sr": "ručkа"
+        "translation_sr": "ručka"
       },
       "me": {
         "translation_sr": "operem"
@@ -5895,7 +5895,7 @@
         "translation_sr": "ajde"
       },
       "and": {
-        "translation_sr": "i"
+        "translation_sr": "da se dogovorimo"
       },
       "for": {
         "translation_sr": "za"
@@ -6668,7 +6668,7 @@
         "translation_sr": "možemo"
       },
       "go": {
-        "translation_sr": "ići"
+        "translation_sr": "na pijacu"
       },
       "to": {
         "translation_sr": "na"
@@ -6712,7 +6712,7 @@
         "translation_sr": "malo"
       },
       "more": {
-        "translation_sr": "više"
+        "translation_sr": "malo sporije"
       },
       "slowly": {
         "translation_sr": "sporije"
@@ -6899,7 +6899,7 @@
     "canonical_sr": "Može i tako, prvo da kupimo hleb, pa da sednemo na kafu.",
     "word_hints": {
       "that": {
-        "translation_sr": "to"
+        "translation_sr": "tako"
       },
       "works": {
         "translation_sr": "može"

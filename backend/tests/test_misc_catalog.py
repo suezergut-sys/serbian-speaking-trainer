@@ -18,6 +18,11 @@ def test_misc_catalog_is_substantial_and_uses_conversational_expressions():
     assert len({p["canonical_sr"] for p in MISC_PHRASES}) == 50
     for phrase in MISC_PHRASES:
         assert len(phrase["canonical_sr"].split()) >= 7
+        for translation in phrase["hints_en"].values():
+            assert not re.search(r"[А-Яа-яЁё]", translation)
+    assert MISC_PHRASES[0]["hints_en"]["of"] == "mnogo"
+    assert MISC_PHRASES[7]["hints_en"]["know"] == "javiću ti"
+    assert MISC_PHRASES[21]["hints_en"]["lunch"] == "ručka"
     combined = " ".join(p["canonical_sr"] for p in MISC_PHRASES)
     for expression in ("Svejedno mi je", "Nemam pojma", "Nema veze", "Ma daj", "Nema šanse", "Čujemo se", "Sve po starom"):
         assert expression.casefold() in combined.casefold()
