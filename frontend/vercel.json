@@ -1,10 +1,29 @@
 {
-  "rewrites": [
-    { "source": "/", "has": [{ "type": "host", "value": "serbotalk.app" }], "destination": "/landing.html" },
-    { "source": "/app", "destination": "/index.html" },
-    { "source": "/api/:path*", "destination": "https://serbian-speaking-trainer-api.vercel.app/api/:path*" },
-    { "source": "/privacy", "destination": "/index.html" },
-    { "source": "/terms", "destination": "/index.html" },
-    { "source": "/delete-account", "destination": "/index.html" }
+  "routes": [
+    {
+      "src": "^/$",
+      "has": [
+        {
+          "type": "host",
+          "value": "serbotalk.app"
+        }
+      ],
+      "dest": "/landing.html"
+    },
+    {
+      "src": "^/app/?$",
+      "dest": "/index.html"
+    },
+    {
+      "src": "^/api/(.*)$",
+      "dest": "https://serbian-speaking-trainer-api.vercel.app/api/$1"
+    },
+    {
+      "src": "^/(privacy|terms|delete-account)$",
+      "dest": "/index.html"
+    },
+    {
+      "handle": "filesystem"
+    }
   ]
 }
