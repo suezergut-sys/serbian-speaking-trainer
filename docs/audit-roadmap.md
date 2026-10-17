@@ -704,5 +704,5 @@
 
 - [x] Шапка лендинга закреплена, якоря учитывают её высоту; desktop workspace 1:2, max-width 1020px.
 - [x] 223 tests, lint/typecheck/build; 8 ru/en sticky/layout checks и 8 desktop ratio checks 800–1920px. [Доказательства](sticky-header-desktop-ratio-2026-10-17.md).
-- [ ] Frontend production и smoke.
+- [x] PR #121 merged; frontend READY/main на d98e209, serbotalk.app alias, 16 production browser checks + root sticky check, HTTP/health и пустые error logs. [Доказательства](sticky-header-desktop-ratio-2026-10-17.md).
 - [ ] Приёмка владельцем; APK не запрашивался.
