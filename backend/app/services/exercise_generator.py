@@ -17,6 +17,7 @@ from app.repositories import (
     ReviewPhraseRepository,
     SkillRepository,
     TopicPhraseRepository,
+    TopicPresetRepository,
     TrainingSessionRepository,
 )
 from app.schemas import ExerciseGenerationResult, ExerciseResponse
@@ -116,6 +117,7 @@ class ExerciseGenerator:
         self.exercises = ExerciseRepository(db, user_id)
         self.review_phrases = ReviewPhraseRepository(db, user_id)
         self.topic_phrases = TopicPhraseRepository(db)
+        self.topics = TopicPresetRepository(db, user_id)
         self.skills = SkillRepository(db)
         self.ai = ai
         self.scheduler = scheduler or Scheduler()
@@ -282,9 +284,12 @@ class ExerciseGenerator:
                     return existing
             raise
 
-    @staticmethod
-    def _response(entity: Exercise) -> ExerciseResponse:
+    def _response(self, entity: Exercise) -> ExerciseResponse:
+        topic_id = entity.generation_meta_json.get("topic_id")
+        topic = self.topics.get_visible(topic_id) if topic_id and entity.generation_meta_json.get("review_phrase_id") else None
         return ExerciseResponse(
+            topic_id=topic_id,
+            topic_title_ru=topic.title_ru if topic else None,
             id=entity.id,
             session_id=entity.session_id,
             source_ru=entity.source_ru,

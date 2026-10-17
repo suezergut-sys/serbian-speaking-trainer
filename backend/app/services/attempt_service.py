@@ -297,6 +297,10 @@ class AttemptService:
         entry.attempt_id = attempt.id
         entry.response_json = response.model_dump(mode="json")
         self.db.flush()
+        if response.daily_usage and response.daily_usage.used == 20:
+            from app.config import get_settings
+            from app.services.notifications import notify_after_commit
+            notify_after_commit(self.db, get_settings(), locked_user.email, "выполнил 20 проверок за день в SerboTalk")
         self.db.commit()
         return response
 

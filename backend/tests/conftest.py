@@ -16,6 +16,12 @@ from app.services.transcription_assistance_adapter import get_transcription_assi
 from tests.fakes import FakeAIProvider, FakeTranscriptionProvider, FakeTranscriptionAssistanceProvider
 
 
+@pytest.fixture(autouse=True)
+def no_live_telegram(monkeypatch):
+    # Local credentials must never turn automated tests into real notifications.
+    monkeypatch.setattr("app.services.notifications.send_notification", lambda *_args: True)
+
+
 @pytest.fixture
 def db_session() -> Session:
     engine = create_database_engine("sqlite+pysqlite:///:memory:")

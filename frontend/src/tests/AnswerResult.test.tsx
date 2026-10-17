@@ -19,8 +19,9 @@ const attempt: Attempt = {
 describe("AnswerResult", () => {
   afterEach(cleanup);
   it("marks only evidence explicitly reported in validated analysis", () => {
-    render(<AnswerResult source="Я хочу открыть счёт." answer={attempt.transcript_sr} attempt={attempt} />);
-    expect(screen.getByText("Я хочу открыть счёт.")).toBeInTheDocument();
+    render(<AnswerResult answer={attempt.transcript_sr} attempt={attempt} />);
+    expect(screen.queryByText("Фраза на русском")).not.toBeInTheDocument();
+    expect(document.querySelectorAll(".result-phrase")).toHaveLength(2);
     const userRow = screen.getByText("Ваш вариант").parentElement as HTMLElement;
     expect(within(userRow).getByText("otovrim")).toHaveClass("answer-mark--issue");
     expect(within(userRow).getByText("otovrim")).toHaveAttribute("title", "otvorim");
@@ -30,7 +31,7 @@ describe("AnswerResult", () => {
   });
 
   it("does not mark accepted correct wording against the canonical phrase", () => {
-    render(<AnswerResult source="Русская фраза" answer="Mogu da otvorim račun." attempt={{ ...attempt, analysis: { ...attempt.analysis, verdict: "correct" } }} />);
+    render(<AnswerResult answer="Mogu da otvorim račun." attempt={{ ...attempt, analysis: { ...attempt.analysis, verdict: "correct" } }} />);
     expect(document.querySelector("mark")).not.toBeInTheDocument();
     expect(screen.getByText("Вариант перевода")).toBeInTheDocument();
   });
@@ -38,7 +39,7 @@ describe("AnswerResult", () => {
   it("marks only the changed word inside a multiword evidence phrase", () => {
     const answer = "Nemam jutreneg prevoza danas.";
     const issue = { ...attempt.analysis.issues[0], evidence: "jutreneg prevoza", correction: "jutarnjeg prevoza" };
-    render(<AnswerResult source="Русская фраза" answer={answer} attempt={{ ...attempt, analysis: { ...attempt.analysis, issues: [issue] } }} />);
+    render(<AnswerResult answer={answer} attempt={{ ...attempt, analysis: { ...attempt.analysis, issues: [issue] } }} />);
     const marks = document.querySelectorAll("mark");
     expect(marks).toHaveLength(1);
     expect(marks[0]).toHaveTextContent("jutreneg");
@@ -51,13 +52,13 @@ describe("AnswerResult", () => {
       { ...attempt.analysis.issues[0], evidence: "baš da idem", correction: "da idem" },
       { ...attempt.analysis.issues[0], evidence: "želim kući", correction: "želim da idem kući" },
     ];
-    render(<AnswerResult source="Русская фраза" answer="račun otvorim, baš da idem; želim kući." attempt={{ ...attempt, analysis: { ...attempt.analysis, issues } }} />);
+    render(<AnswerResult answer="račun otvorim, baš da idem; želim kući." attempt={{ ...attempt, analysis: { ...attempt.analysis, issues } }} />);
     expect(Array.from(document.querySelectorAll("mark"), (mark) => mark.textContent)).toEqual(["račun", "otvorim", "baš"]);
   });
 
   it("leaves repeated words unmarked when their alignment is ambiguous", () => {
     const issue = { ...attempt.analysis.issues[0], evidence: "da da idem", correction: "da idem" };
-    render(<AnswerResult source="Русская фраза" answer="da da idem" attempt={{ ...attempt, analysis: { ...attempt.analysis, issues: [issue] } }} />);
+    render(<AnswerResult answer="da da idem" attempt={{ ...attempt, analysis: { ...attempt.analysis, issues: [issue] } }} />);
     expect(document.querySelector("mark")).not.toBeInTheDocument();
   });
 
@@ -67,7 +68,7 @@ describe("AnswerResult", () => {
       { ...attempt.analysis.issues[0], evidence: "račun" },
       { ...attempt.analysis.issues[0], evidence: "rač" },
     ];
-    render(<AnswerResult source="Русская фраза" answer={answer} attempt={{ ...attempt, analysis: { ...attempt.analysis, issues } }} />);
+    render(<AnswerResult answer={answer} attempt={{ ...attempt, analysis: { ...attempt.analysis, issues } }} />);
     expect(document.querySelector("mark")).not.toBeInTheDocument();
   });
 
@@ -77,7 +78,7 @@ describe("AnswerResult", () => {
       { ...attempt.analysis.issues[0], evidence: "Platiću", correction: "Платићу" },
       { ...attempt.analysis.issues[0], evidence: "Alllergičan", correction: "Allergičan" },
     ];
-    render(<AnswerResult source="Русская фраза" answer={answer} attempt={{ ...attempt, analysis: { ...attempt.analysis, issues } }} alphabet="cyrillic" />);
+    render(<AnswerResult answer={answer} attempt={{ ...attempt, analysis: { ...attempt.analysis, issues } }} alphabet="cyrillic" />);
     const marks = document.querySelectorAll("mark");
     expect(marks).toHaveLength(1);
     expect(marks[0]).toHaveTextContent("Алллергичан");

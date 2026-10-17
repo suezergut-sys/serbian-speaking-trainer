@@ -13,6 +13,7 @@ from .entities import (
     TopicPhrase,
     TrainingSession,
     User,
+    UserFeedback,
     WordLearningItem,
 )
 
@@ -31,5 +32,6 @@ __all__ = [
     "TopicPhrase",
     "TrainingSession",
     "User",
+    "UserFeedback",
     "WordLearningItem",
 ]

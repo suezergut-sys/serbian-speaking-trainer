@@ -403,7 +403,7 @@ describe("App", () => {
     expect(container.querySelector(".card-title small, .android-training-meta small")).toBeNull();
     expect(screen.queryByText(/^Фраза \d+$/)).not.toBeInTheDocument();
     expect(screen.queryByText(/^\d+\s*\/\s*\d+$/)).not.toBeInTheDocument();
-    if (!native) expect(screen.getByRole("heading", { name: review ? "Карусель повторения" : "Основная фраза" })).toBeInTheDocument();
+    if (!native) expect(screen.getByRole("heading", { name: review ? "Фразы для повторения" : "Основная фраза" })).toBeInTheDocument();
   });
 
   it("applies only accepted assistance and keeps its evidence through manual edits", async () => {
@@ -451,7 +451,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Завершить запись" }));
     await screen.findByRole("button", { name: "Проверить ответ" });
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
-    expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
+    expect(await screen.findByText("Верно")).toBeInTheDocument();
     expect(fetchMock.mock.calls.filter(([url]) => String(url).endsWith("/api/attempts"))).toHaveLength(1);
   });
 
@@ -889,7 +889,7 @@ describe("App", () => {
     await waitFor(() => expect(next).toBeEnabled());
     expect(fetchMock.mock.calls.filter(([url]) => url.toString().endsWith("/next-exercise"))).toHaveLength(1);
     fireEvent.click(next);
-    await waitFor(() => expect(screen.queryByText("Ответ естественный и точный.")).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByText("Верно")).not.toBeInTheDocument());
     expect(fetchMock.mock.calls.filter(([url]) => url.toString().endsWith("/next-exercise"))).toHaveLength(1);
   });
 
@@ -1043,7 +1043,7 @@ describe("App", () => {
     expect(await recordAnswer()).toHaveValue("Moj odgovor.");
     expect(screen.getByText(/Мягкие подсказки временно недоступны/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
-    await screen.findByText("Ответ естественный и точный.");
+    await screen.findByText("Верно");
     const call = fetchMock.mock.calls.find(([url]) => url.toString() === "/api/attempts");
     expect(JSON.parse(call?.[1]?.body as string)).not.toHaveProperty("transcription_id");
   });
@@ -1136,7 +1136,7 @@ describe("App", () => {
     const answer = screen.getByLabelText("Ваш ответ");
     fireEvent.change(answer, { target: { value: "Moj odgovor" } });
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
-    expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
+    expect(await screen.findByText("Верно")).toBeInTheDocument();
     expect(answer).toHaveValue("Moj odgovor");
   });
 
@@ -1364,7 +1364,7 @@ describe("App", () => {
     visibility.mockReturnValue("visible");
     fireEvent(document, new Event("visibilitychange"));
 
-    expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
+    expect(await screen.findByText("Верно")).toBeInTheDocument();
     const attempts = fetchMock.mock.calls.filter(([url]) => url.toString() === "/api/attempts");
     expect(attempts).toHaveLength(1);
     expect(JSON.parse(attempts[0][1]?.body as string).transcript_sr).toBe("Moj odgovor");
@@ -1443,7 +1443,7 @@ describe("App", () => {
     } else {
       expect(screen.getByText("Разбор")).toBeInTheDocument();
     }
-    expect(screen.getByText("Ответ естественный и точный.")).toBeInTheDocument();
+    expect(screen.getByText("Верно")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: native ? "Следующая" : /Следующая фраза/ })).toBeEnabled();
   });
 
@@ -1458,9 +1458,11 @@ describe("App", () => {
     fireEvent.change(input, { target: { value: "Želim da otvorim račun." } });
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
 
-    expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
+    expect(await screen.findByText("Верно")).toBeInTheDocument();
     expect(screen.getByText("Вариант перевода")).toBeInTheDocument();
     expect(screen.getByText("Ваш вариант")).toBeInTheDocument();
+    expect(screen.queryByText("Ответ естественный и точный.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Я хочу открыть счёт.")).not.toBeInTheDocument();
     expect(screen.getByText("Ваш вариант").parentElement).toHaveTextContent("Želim da otvorim račun.");
     expect(screen.queryByLabelText("Прогресс навыков")).not.toBeInTheDocument();
     expect(screen.getByText("91%")).toBeInTheDocument();
@@ -1497,7 +1499,7 @@ describe("App", () => {
     fireEvent.change(await recordAnswer(), { target: { value: "Želim da otvorim račun." } });
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
 
-    expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
+    expect(await screen.findByText("Верно")).toBeInTheDocument();
     expect(screen.queryByLabelText("Прогресс навыков")).not.toBeInTheDocument();
   });
 
@@ -1592,7 +1594,7 @@ describe("App", () => {
     expect(saves.map((item) => item.url)).toEqual(["хочу", "открыть"]);
     await recordAnswer();
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
-    expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
+    expect(await screen.findByText("Верно")).toBeInTheDocument();
     const attemptBody = JSON.parse(fetchMock.mock.calls.find(([url]) => url === "/api/attempts")?.[1]?.body as string);
     expect(attemptBody.hinted_words).toEqual(["открыть", "хочу"]);
     await act(async () => { saves.forEach((item) => item.finish()); });
@@ -1619,7 +1621,7 @@ describe("App", () => {
     await waitFor(() => expect(hintCalls).toBe(2));
     expect(answer).toHaveValue("Moj odgovor");
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
-    await screen.findByText("Ответ естественный и точный.");
+    await screen.findByText("Верно");
     const bodies = fetchMock.mock.calls.filter(([url]) => url === "/api/attempts")
       .map(([, init]) => JSON.parse(init?.body as string));
     expect(bodies).toHaveLength(1);
@@ -1698,7 +1700,7 @@ describe("App", () => {
     expect(nextExerciseCalls).toBe(0);
     fireEvent.change(await recordAnswer(), { target: { value: "Stari odgovor" } });
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
-    expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
+    expect(await screen.findByText("Верно")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Следующая фраза/ }));
     expect(await screen.findByText("Все фразы из карусели освоены. Отличная работа!")).toBeInTheDocument();
@@ -1771,10 +1773,10 @@ describe("App", () => {
     const answer = await recordAnswer();
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Сервис проверки временно недоступен");
-    expect(screen.queryByText("Ответ естественный и точный.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Верно")).not.toBeInTheDocument();
     expect(answer).toHaveValue("Želim da otvorim račun.");
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
-    expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
+    expect(await screen.findByText("Верно")).toBeInTheDocument();
     const bodies = fetchMock.mock.calls.filter(([url]) => url.toString() === "/api/attempts")
       .map(([, init]) => JSON.parse(init?.body as string));
     expect(bodies).toHaveLength(2);
@@ -1804,7 +1806,7 @@ describe("App", () => {
     expect(answer).toHaveValue("Moj odgovor");
     expect(answer).not.toHaveAttribute("readonly");
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
-    expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
+    expect(await screen.findByText("Верно")).toBeInTheDocument();
     const bodies = fetchMock.mock.calls.filter(([url]) => url === "/api/attempts")
       .map(([, init]) => JSON.parse(init?.body as string));
     expect(bodies).toHaveLength(2);
@@ -1848,7 +1850,7 @@ describe("App", () => {
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
     await recordAnswer();
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
-    expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
+    expect(await screen.findByText("Верно")).toBeInTheDocument();
     await waitFor(() => expect(profileCalls).toBe(2));
     expect(screen.getByRole("button", { name: /Следующая фраза/ })).toBeEnabled();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
@@ -1869,7 +1871,7 @@ describe("App", () => {
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
     await recordAnswer();
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
-    expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
+    expect(await screen.findByText("Верно")).toBeInTheDocument();
     await waitFor(() => expect(nextCalls).toBe(1));
     fireEvent.click(screen.getByRole("button", { name: /Следующая фраза/ }));
     expect(await screen.findByRole("button", { name: /Ответить голосом|Записать заново/ })).toBeInTheDocument();
@@ -1892,7 +1894,7 @@ describe("App", () => {
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
     await recordAnswer();
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
-    expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
+    expect(await screen.findByText("Верно")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Следующая фраза/ }));
     expect(await screen.findByRole("heading", { name: "Все фразы темы пройдены" })).toBeInTheDocument();
     expect(screen.getByText("1 фраз проверено. В этой теме пока нет следующих фраз.")).toBeInTheDocument();
@@ -1912,7 +1914,7 @@ describe("App", () => {
     expect(screen.getByText("Загружаем…")).toBeInTheDocument();
     await recordAnswer();
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
-    expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
+    expect(await screen.findByText("Верно")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Следующая фраза/ }));
     const nextWord = await screen.findByRole("button", { name: "открыть" });
     await act(async () => { settleHint(outcome === "result"
@@ -1934,7 +1936,7 @@ describe("App", () => {
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
     await recordAnswer();
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
-    await screen.findByText("Ответ естественный и точный.");
+    await screen.findByText("Верно");
     fireEvent.click(screen.getByRole("button", { name: /Следующая фраза/ }));
     fireEvent.click(screen.getByRole("button", { name: "SerboTalk — к практике" }));
     fireEvent.click(screen.getByRole("button", { name: /В банке/ }));
@@ -1996,7 +1998,7 @@ describe("App", () => {
       ? await baseFetch("/api/attempts", { method: "POST" })
       : { ok: false, status: 503, json: async () => ({ detail: { code: "analysis_unavailable", retryable: true } }) };
     await act(async () => { settleAttempt(response); });
-    expect(screen.queryByText("Ответ естественный и точный.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Верно")).not.toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Ваш ответ")).not.toBeInTheDocument();
   });
@@ -2042,7 +2044,7 @@ describe("App", () => {
     for (let number = 1; number <= 10; number += 1) {
       await recordAnswer();
       fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
-      expect(await screen.findByText("Ответ естественный и точный.")).toBeInTheDocument();
+      expect(await screen.findByText("Верно")).toBeInTheDocument();
       fireEvent.click(screen.getByRole("button", { name: number === 10 ? "Завершить тренировку" : /Следующая фраза/ }));
       if (number < 10) await screen.findByRole("heading", { name: `Фраза ${number + 1}.` });
     }

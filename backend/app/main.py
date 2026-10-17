@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.audio_upload_middleware import AudioUploadBodyLimitMiddleware
 from app.api.attempts import router as attempts_router
 from app.api.auth import router as auth_router
+from app.api.feedback import router as feedback_router
 from app.api.health import router as health_router
 from app.api.sessions import router as sessions_router
 from app.api.statistics import router as statistics_router
@@ -78,6 +79,7 @@ async def record_request_timing(request: Request, call_next):
         )
     return response
 
+app.include_router(feedback_router, prefix="/api")
 app.include_router(health_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
 app.include_router(model_debug_router, prefix="/api")

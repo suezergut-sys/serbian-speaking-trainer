@@ -296,12 +296,12 @@ button { cursor: pointer; background: var(--panel); }
 .statistics-card__heading > span { color: #7897c5; font-size: .66rem; }
 .calendar-legend { display: flex; flex-wrap: wrap; gap: .55rem 1rem; align-items: center; }
 .calendar-legend span { display: flex; gap: .4rem; align-items: center; }
-.calendar-legend i { width: 10px; height: 10px; border-radius: 3px; background: #31c987; box-shadow: 0 0 9px rgba(49, 201, 135, .45); }
-.calendar-legend i.is-intensive { border: 2px solid #f2bd5a; background: #31c987; box-shadow: 0 0 8px rgba(242, 189, 90, .4); }
+.calendar-legend i { width: 10px; height: 10px; border-radius: 3px; flex: 0 0 auto; }
 .practice-calendar { display: grid; grid-template-columns: repeat(7, minmax(48px, 1fr)); gap: .5rem; }
 .calendar-day { position: relative; display: grid; place-items: center; aspect-ratio: 1.25; min-height: 74px; border: 1px solid rgba(66, 133, 199, .16); border-radius: 9px; background: rgba(4, 16, 33, .5); color: #7995bc; font-size: .72rem; }
-.calendar-day.is-active { border-color: rgba(58, 216, 158, .58); background: linear-gradient(145deg, rgba(34, 173, 121, .32), rgba(14, 91, 74, .42)); box-shadow: inset 0 1px rgba(255,255,255,.05), 0 0 16px rgba(42, 199, 142, .1); color: #d5ffef; font-weight: 800; }
-.calendar-day.is-intensive { border-color: #f2bd5a; box-shadow: inset 0 0 0 1px rgba(255, 216, 126, .45), 0 0 14px rgba(242, 189, 90, .22); }
+.calendar-legend i, .calendar-day.is-active { border: 1px solid rgba(58, 216, 158, .58); background: linear-gradient(145deg, rgba(34, 173, 121, .32), rgba(14, 91, 74, .42)); box-shadow: inset 0 1px rgba(255,255,255,.05), 0 0 16px rgba(42, 199, 142, .1); }
+.calendar-day.is-active { color: #d5ffef; font-weight: 800; }
+.calendar-legend i.is-intensive, .calendar-day.is-intensive { border-color: #f2bd5a; box-shadow: inset 0 0 0 1px rgba(255, 216, 126, .45), 0 0 14px rgba(242, 189, 90, .22); }
 .gold-star { display: block; flex: 0 0 auto; color: var(--gold); }
 .calendar-day { padding-bottom: 16px; }
 .calendar-day__star { position: absolute; bottom: 4px; left: calc(50% - 7px); }
@@ -874,3 +874,19 @@ button { cursor: pointer; background: var(--panel); }
 .desktop-topic-card:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 .desktop-topic-card--premium:disabled { opacity: 1; cursor: default; background: var(--panel); color: var(--text); }
 .desktop-topic-card--premium > .topic__icon, .desktop-topic-card--premium > strong { opacity: .42; }
+
+/* Fill the available practice panel while the next topic starts. */
+.practice-stage.is-preparing { align-content: stretch; }
+.practice-stage.is-preparing > .phrase-loading { min-height: 100%; width: 100%; }
+.feedback-settings form { display: grid; gap: .8rem; }
+.feedback-settings textarea { width: 100%; min-width: 0; resize: vertical; padding: .8rem; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); }
+.feedback-settings button { padding: .7rem 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); }
+.feedback-settings button:disabled, .feedback-settings textarea:disabled { background: var(--panel); color: var(--muted); opacity: .65; cursor: default; }
+.feedback-settings button:focus-visible, .feedback-settings textarea:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.feedback-settings p { color: var(--muted); }
+.feedback-settings [role="alert"] { color: #ff9eaa; }
+.feedback-settings [role="status"] { color: var(--text); }
+.feedback-settings__actions { display: flex; flex-wrap: wrap; gap: .6rem; }
+
+.feedback-settings { padding: 1.25rem; background: var(--panel); color: var(--text); }
+.feedback-settings h2 { margin: 0 0 1rem; font-size: 1rem; }

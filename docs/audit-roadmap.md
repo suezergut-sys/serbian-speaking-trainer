@@ -1,5 +1,20 @@
 # План улучшений по аудиту SerboTalk
 
+## 17.10.2026 — обратная связь, исходная тема и Telegram
+
+- [x] Центрирование web-загрузки и исходная тема повторяемой фразы в общем UI RU/EN; форма текстовой/голосовой обратной связи, отдельная таблица и миграция; Telegram после commit для регистрации, отзыва и достижения 20 проверок. [Доказательства и ограничения](feedback-activity-checkpoint-2026-10-17.md).
+- [x] Backend и UI regression-тесты, typecheck, production build, lint; локальная миграция и реальная тестовая доставка Telegram. Тесты распознавания используют mocks.
+- [ ] Публикация web/backend, production-env и миграция production БД.
+- [ ] Android sync/build и физическая приёмка, реальное голосовое распознавание. P0/P1/P2 целиком не закрываются.
+
+## 15.10.2026 — обновление закрытого теста 1.33
+
+- [x] Production AAB 1.33/code43 собран из опубликованного исходника, bundletool validate/dump, jarsigner verify и upload certificate проверены; 9 public assets совпали с APK, production API сохранён. [Доказательства](google-play-1.33-update-2026-10-15.md).
+- [x] AAB загружен в существующий Alpha, русские и английские release notes заполнены, выпуск сохранён без блокирующих ошибок. Поддержка устройств сохранена.
+- [x] Common-issues precheck прошёл, после загрузки/сохранения dashboard сохраняет 12 участников / 2 дня. Testers Community Active: день 2/16, 15/15 назначенных участников.
+- [ ] Отправка Google не подтверждается: после финального подтверждения Console оставляет «Ещё не отправленные», в истории нового запроса нет. Оставлен финальный диалог для ручного нажатия владельцем; [доказательства](google-play-1.33-update-2026-10-15.md).
+- [ ] Решение Google, получение обновления участниками, физическая приёмка и завершение 14-дневного теста; P0/P1/P2 целиком не закрыты.
+
 ## 13.10.2026 — release AAB 1.30
 
 - [x] Production Android sync/build и bundleProdRelease, отдельная upload-подпись, bundletool validate/dump, jarsigner verify и 7 public assets проверены; 1.30/code40 без изменения функций. [Доказательства](android-1.30-release.md).
@@ -652,3 +667,38 @@
 - [x] [PR #104](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/104) merged на runtime 6befe14; frontend READY/production/main, alias подтверждён. 12 production browser checks (настройки с mock API) и 4 HTTP 200. [Доказательства](settings-account-checkpoint-2026-10-15.md).
 - [ ] APK по отдельной команде; backlog обновлён.
 - [ ] Приёмка владельцем.
+## 15.10.2026 — локальный лендинг SerboTalk
+
+- [x] Отдельный адаптивный лендинг: авторская история, A1–A2, три шага, 6 мобильных web-скриншотов с демонстрационными данными, web CTA, честная заглушка Google Play; общий ru/en каталог и accessibility тексты.
+- [x] Проверки: 211 component tests / 21 files, typecheck и production build, lint; 2 сценария получения скриншотов и 8 browser checks ru/en × desktop/mobile/320px/Android-layout. Локальная страница HTTP 200; desktop и narrow screenshots просмотрены. [Доказательства](landing-checkpoint-2026-10-15.md).
+- [ ] Ручная приёмка владельцем.
+- Публикация и APK не входят в запрос: страница размещена только локально; Android 1.32/code42 не менялся.
+
+## 15.10.2026 — единые цвета легенды календаря
+
+- [x] Локальная реализация: общие CSS-правила заливки/рамки/свечения для легенды и календарных дней, включая интенсивные дни. Тексты ru/en и пороги сохранены.
+- [x] Statistics component tests: 11 passed; browser ru/en × desktop/mobile/общий Android-layout: 6 passed; lint/typecheck/production build passed. [Доказательства](calendar-legend-checkpoint-2026-10-15.md).
+- [ ] Публикация web.
+- [ ] Android sync/build по отдельной команде; backlog обновлён.
+- [ ] Ручная приёмка владельцем.
+
+## 15.10.2026 — уточнение локального лендинга
+
+- [x] Календарь ru/en во врезке по предоставленным скриншотам, удаление ленты и подписи, общее выравнивание телефонов независимо от текста.
+- [x] 2 component tests, 8 browser checks с проверками выравнивания на 800/1024/1440px и длинным текстом, typecheck/build/lint. [Доказательства](landing-checkpoint-2026-10-15.md).
+- [ ] Приёмка владельцем. Публикация и APK не запрашивались.
+
+## 16.10.2026 — компактный экран результата
+
+- [x] Реализация общего ru/en интерфейса: удалены исходная фраза после проверки и краткое пояснение под оценкой.
+- [x] 210 component tests, 18 browser checks ru/en × desktop/mobile/Android-layout × три оценки, lint, typecheck и production build. [Доказательства](compact-result-checkpoint-2026-10-16.md).
+- [x] Web опубликован через PR #110, runtime bef89f2, Vercel READY/main/production и alias подтверждены; 18/18 production browser checks + HTTP smoke прошли 16.10.2026, 16:43 МСК. [Доказательства](compact-result-checkpoint-2026-10-16.md).
+- [ ] Android sync/build по отдельной команде; backlog обновлён.
+- [ ] Ручная приёмка владельцем и физическая проверка Android.
+
+## 16.10.2026 — бесплатный лимит 20 фраз
+
+- [x] Backend default/.env.example = 20; условия использования и счётчик аккаунта ru/en. [Доказательства](free-daily-limit-20-checkpoint-2026-10-16.md).
+- [x] 302 backend/script tests passed, 8 skipped; 212 component tests, lint/typecheck/build; 6 browser checks ru/en desktop/mobile/Android-layout.
+- [x] Backend/web опубликованы через PR #112, runtime ee234ee, оба READY/main/production и aliases подтверждены. 16.10.2026, 17:52 МСК: 6/6 production browser checks, HTTP smoke и error logs прошли. [Доказательства](free-daily-limit-20-checkpoint-2026-10-16.md).
+- [ ] Статический текст условий в будущем APK и физическая приёмка отдельно.

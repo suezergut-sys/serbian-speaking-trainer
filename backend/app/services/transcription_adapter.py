@@ -56,6 +56,20 @@ class OpenAITranscriptionProvider:
             )
         return self._client
 
+    def transcribe_feedback(self, *, audio: bytes, filename: str, content_type: str):
+        from app.schemas.feedback import FeedbackTranscript
+        try:
+            with measure_ai_call():
+                response = self.client.audio.transcriptions.create(
+                    file=(filename, audio, content_type), model=self.settings.openai_transcribe_model,
+                    response_format="json",
+                )
+            return FeedbackTranscript.model_validate({"text": response.text.strip()})
+        except TranscriptionServiceError:
+            raise
+        except Exception:
+            raise TranscriptionServiceError() from None
+
     def transcribe(self, *, audio: bytes, filename: str, content_type: str) -> TranscriptionResponse:
         try:
             language_options = ({"languages": ["sr"]} if self.settings.openai_transcribe_language_parameter == "languages"

@@ -28,6 +28,8 @@ export type TrainingSession = {
 };
 
 export type Exercise = {
+  topic_id?: string | null;
+  topic_title_ru?: string | null;
   id: string;
   session_id: string;
   source_ru: string;

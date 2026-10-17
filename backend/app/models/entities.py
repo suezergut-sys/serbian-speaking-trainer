@@ -289,3 +289,11 @@ class User(Base):
         CheckConstraint("role IN ('user', 'admin')", name="ck_users_role"),
         CheckConstraint("access_tier IN ('free', 'premium')", name="ck_users_access_tier"),
     )
+
+
+class UserFeedback(Base):
+    __tablename__ = "user_feedback"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    content: Mapped[str] = mapped_column(Text)

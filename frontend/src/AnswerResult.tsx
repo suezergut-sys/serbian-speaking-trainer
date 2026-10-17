@@ -107,9 +107,8 @@ function HighlightedAnswer({ answer, attempt, alphabet }: { answer: string; atte
   return <span className="result-phrase__text" lang={alphabet === "cyrillic" ? "sr-Cyrl" : "sr-Latn"}>{content}</span>;
 }
 
-export function AnswerResult({ source, answer, attempt, alphabet = "latin" }: { source: string; answer: string; attempt: Attempt; alphabet?: SerbianAlphabet }) {
+export function AnswerResult({ answer, attempt, alphabet = "latin" }: { answer: string; attempt: Attempt; alphabet?: SerbianAlphabet }) {
   return <div className="result-phrases">
-    <div className="result-phrase"><small>{t("Фраза на русском")}</small><span className="result-phrase__text">{t(source)}</span></div>
     <div className="result-phrase"><small>{t("Ваш вариант")}</small><HighlightedAnswer answer={answer} attempt={attempt} alphabet={alphabet} /></div>
     <div className="result-phrase correction"><small>{t(attempt.analysis.verdict === "correct" ? "Вариант перевода" : "Правильный вариант")}</small><span className="result-phrase__text" lang={alphabet === "cyrillic" ? "sr-Cyrl" : "sr-Latn"}>{displaySerbian(attempt.analysis.corrected_sr, alphabet)}</span></div>
   </div>;

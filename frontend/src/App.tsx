@@ -445,6 +445,9 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const selectedTopicData = topics.find((topic) => topic.id === selectedTopic);
   const currentTopic = session?.topic ?? selectedTopicData;
   const isReviewMode = session?.topic.id === "review-phrases";
+  const phraseTopicTitle = isReviewMode
+    ? `${t("Фразы для повторения")}${exercise?.topic_title_ru ? ` / ${topicText(exercise.topic_id, exercise.topic_title_ru)}` : ""}`
+    : currentTopic ? topicText(currentTopic.id, currentTopic.title_ru) : "";
   const voiceBusy = voiceState === "connecting" || voiceState === "recording" || voiceState === "transcribing";
 
   const stopVoice = useCallback(() => {
@@ -825,10 +828,9 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     const scorePercent = Math.round(attempt.overall_score * 100);
     const done = !isReviewMode && completedCount >= (session?.requested_length ?? 10);
     return <div className={`feedback ${native ? "android-feedback" : ""} feedback--${attempt.analysis.verdict}`}>
-      <AnswerResult source={exercise?.source_ru ?? ""} answer={attempt.transcript_sr} attempt={attempt} alphabet={alphabet} />
+      <AnswerResult answer={attempt.transcript_sr} attempt={attempt} alphabet={alphabet} />
       <div className="feedback__score"><span>{scorePercent}%</span><strong>{t(attempt.analysis.verdict === "correct" ? "Верно" : attempt.analysis.verdict === "mostly_correct" ? "Почти верно" : "Нужно доработать")}</strong></div>
       {attempt.hint_penalty > 0 && <div className="hint-penalty"><Icon name="bulb" /><span>{t("Подсказки: −")}{Math.round(attempt.hint_penalty * 100)}%</span></div>}
-      <p>{displayFeedback(attempt.analysis.short_feedback_ru, alphabet)}</p>
       {scorePercent < 100 && <details><summary>{t("Разбор")}</summary><p>{displayFeedback(attempt.analysis.detailed_feedback_ru, alphabet)}</p>{attempt.analysis.issues.map((issue, index) => <p className="issue" key={`${issue.skill_key}-${issue.type}-${index}`}>{displaySerbian(issue.evidence, alphabet)}{t(issue.correction ? ` → ${displaySerbian(issue.correction, alphabet)}` : "")}{issue.explanation_ru && <span className="issue-explanation">{displayFeedback(issue.explanation_ru, alphabet)}</span>}</p>)}</details>}
       <button className={native ? "android-primary" : "answer-submit"} type="button" disabled={advancing} onClick={() => void nextExercise()}>{t(advancing ? "Готовим…" : done ? "Завершить тренировку" : native ? "Следующая" : "Следующая фраза")}{!native && <Icon name="arrow" />}</button>
     </div>;
@@ -911,7 +913,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
               </div>
             ) : (
               <div className={`android-training-content practice-card${hasTranscript && !attempt ? " has-transcript" : ""}`}>
-                <div className="android-training-meta">{isNative ? <span>{t(currentTopic?.title_ru)}</span> : <button className="mobile-topic-switch" type="button" onClick={() => showAndroidPanel(0)}>{t(currentTopic?.title_ru)}{t(" · сменить")}</button>}</div>
+                <div className="android-training-meta">{isNative ? <span>{phraseTopicTitle}</span> : <button className="mobile-topic-switch" type="button" onClick={() => showAndroidPanel(0)}>{phraseTopicTitle}{t(" · сменить")}</button>}</div>
                 {!attempt && renderPhrase()}
 
                 {!attempt ? <form className={`android-answer${hasTranscript ? " has-transcript" : ""}`} onSubmit={checkAnswer}>
@@ -994,7 +996,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
             <div className="topics-panel__note"><Icon name="message" /><span>{t("Каждый короткий разговор делает речь увереннее.")}</span></div>
           </aside>
 
-          <section className="practice-stage" aria-label={t("Практика")}>
+          <section className={`practice-stage${preparingPhrase && !session ? " is-preparing" : ""}`} aria-label={t("Практика")}>
             {preparingPhrase && !session ? <PhraseLoading /> : sessionComplete ? (
               <div className="practice-done panel"><h1>{t(topicExhausted ? "Все фразы темы пройдены" : "Тренировка завершена")}</h1><p>{t(topicExhausted ? `${completedCount} фраз проверено. В этой теме пока нет следующих фраз.` : `${completedCount} из ${session?.requested_length ?? 10} фраз проверено.`)}</p><button className="answer-submit" type="button" onClick={() => { resetTraining(); if (mobileLayout) showAndroidPanel(0); }}>{t("Выбрать новую тему")}</button></div>
             ) : !session && reviewFinished ? (
@@ -1014,7 +1016,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
             ) : (
               <>
                 <div className="practice-card panel">
-                  <div className="card-title"><span><Icon name="message" /></span><h2>{t(isReviewMode ? "Карусель повторения" : "Основная фраза")}</h2></div>
+                  <div className="card-title"><span><Icon name="message" /></span><h2>{isReviewMode ? phraseTopicTitle : t("Основная фраза")}</h2></div>
                   {!attempt && <div className="phrase-card__content"><div><p className="kicker">{t("Скажите по-сербски · нажмите на незнакомое слово")}</p>{renderPhrase()}</div></div>}
                   {!attempt ? (
                     <form className={hasTranscript ? "has-transcript" : undefined} onSubmit={checkAnswer}>
