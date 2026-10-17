@@ -692,3 +692,10 @@
 - [x] PR #114/#115 merged; backend/web READY на 7b75864, production БД: 50/50 новых фраз совпали, всего 210; Chrome ru/en/версия/запуск и HTTP smoke прошли. [Доказательства](android-1.34-release.md).
 - [x] Production APK 1.34/code44, API/metadata/прежняя подпись/9 assets/50 IDs/Downloads проверены; GitHub v1.34-final, digest/size и обратная загрузка совпали. [Доказательства](android-1.34-release.md).
 - [ ] Физическая ручная приёмка, OAuth/микрофон/реальная речь.
+
+## 17.10.2026 — публикация лендинга и встроенного входа
+
+- [x] Лендинг ru/en, компактные отступы, авторская история/скриншоты, встроенный Google/review login, session continuation и /app; старый домен и native callback сохранены.
+- [x] 223 unit/component tests, 12 browser checks с mock API/auth, lint/typecheck/production build; Supabase allow list нового callback проверен. [Доказательства](landing-domain-release-2026-10-17.md).
+- [ ] Frontend production Ready/SHA/alias и production smoke.
+- [ ] Ручная приёмка. Android-сборка не запрашивалась.

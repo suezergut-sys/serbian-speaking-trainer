@@ -6,13 +6,14 @@ import { validateAndroidEnvironment } from "./build/androidEnvironment.ts";
 
 export default defineConfig(({ mode }) => {
   if (mode === "android") validateAndroidEnvironment(loadEnv(mode, process.cwd(), "VITE_"));
+  const input: Record<string, string> = { main: resolve("index.html") };
+  if (mode === "testlab") input.testlab = resolve("testlab.html");
+  else if (mode !== "android") input.landing = resolve("landing.html");
   return ({
   plugins: [react()],
   build: {
     rollupOptions: {
-      input: mode === "testlab"
-        ? { main: resolve("index.html"), testlab: resolve("testlab.html") }
-        : resolve("index.html"),
+      input,
     },
   },
   server: {
