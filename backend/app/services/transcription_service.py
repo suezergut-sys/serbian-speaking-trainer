@@ -9,7 +9,7 @@ from app.services.ai_adapter import AIServiceError
 from app.services.transcription_assistance_adapter import TranscriptionAssistanceProvider
 from pydantic import ValidationError
 from app.services.transcription_adapter import TranscriptionProvider, TranscriptionServiceError
-from app.services.serbian_text import has_unexpected_letter_script, serbian_latin
+from app.services.serbian_text import has_unexpected_letter_script, normalized_serbian_words, serbian_latin
 from app.services.transcription_assistance import POLICY_VERSION, validate_analysis
 from app.repositories.transcriptions import TranscriptionReceiptRepository
 
@@ -85,6 +85,11 @@ class TranscriptionService:
         canonical = exercise.target_hints_json.get("canonical_sr")
         if canonical:
             variants.append(str(canonical))
+        # validate_analysis already discards proposals for these exact references.
+        # Return the original transcript without an AI call or assistance receipt.
+        normalized = normalized_serbian_words(raw)
+        if normalized and normalized in {normalized_serbian_words(v) for v in variants}:
+            return TranscriptionResponse(text=raw)
         if not self.assistance_provider.is_available:
             return TranscriptionResponse(text=raw, raw_text=raw, assistance_status="unavailable")
         try:

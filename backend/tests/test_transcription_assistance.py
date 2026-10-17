@@ -139,22 +139,58 @@ def test_assistance_failure_keeps_transcription_and_reports_unavailable(api_clie
     assert list(db_session.scalars(select(TranscriptionReceipt))) == []
 
 
-def test_every_enabled_transcription_is_analyzed_even_exact_and_alternate_answers(api_client, db_session):
+@pytest.mark.parametrize("language", ["ru", "en"])
+@pytest.mark.parametrize("text", [
+    "Želim da otvorim račun.", "Hoću da otvorim račun.",
+    "Желим да отворим рачун.", "  ŽELIM   da otvorim račun!  ",
+    "Z\u030celim da otvorim rac\u030cun.",
+])
+def test_reference_transcript_skips_assistance_and_receipt(api_client, db_session, language, text):
     exercise_id = _create_exercise(api_client)
     exercise = db_session.get(Exercise, exercise_id)
     exercise.target_hints_json = {"canonical_sr": "Želim da otvorim račun.", "intended_sr_variants": ["Hoću da otvorim račun."]}
     db_session.commit()
+    provider = FakeTranscriptionAssistanceProvider(error=AssertionError("Exact references must skip AI"))
+    app.dependency_overrides[get_transcription_assistance_provider] = lambda: provider
+    app.dependency_overrides[get_transcription_provider] = lambda: FakeTranscriptionProvider(text=text)
+    response = api_client.post("/api/transcriptions", headers={"X-Interface-Language": language},
+        data={"exercise_id": exercise_id, "assistance_enabled": "true"},
+        files={"audio": ("speech.webm", b"synthetic", "audio/webm")})
+    assert response.status_code == 200
+    from app.services.serbian_text import serbian_latin
+    assert response.json() == {"text": serbian_latin(text)}
+    assert provider.calls == []
+    assert list(db_session.scalars(select(TranscriptionReceipt))) == []
+    checked = api_client.post("/api/attempts", headers={"X-Interface-Language": language},
+        json={"exercise_id": exercise_id, "transcript_sr": response.json()["text"], "client_request_id": str(uuid4())})
+    assert checked.status_code == 201
+    assert checked.json()["analysis"]["verdict"] == "correct"
+    assert checked.json()["transcription_assisted"] is False
+
+
+@pytest.mark.parametrize("raw, hints", [
+    ("Želim da otvorim racun.", {"canonical_sr": "Želim da otvorim račun."}),
+    ("Ne želim da otvorim račun.", {"canonical_sr": "Želim da otvorim račun."}),
+    ("Imam 12 računa.", {"canonical_sr": "Imam 2 računa."}),
+    ("Želim otvoriti račun.", {"canonical_sr": "Želim da otvorim račun."}),
+    ("...", {"canonical_sr": "!", "intended_sr_variants": ["?"]}),
+    ("Moj odgovor.", {}),
+])
+def test_nonmatching_transcript_still_uses_assistance(api_client, db_session, raw, hints):
+    exercise_id = _create_exercise(api_client)
+    db_session.get(Exercise, exercise_id).target_hints_json = hints
+    db_session.commit()
     provider = FakeTranscriptionAssistanceProvider(result=analysis(acceptable_variant=True))
     app.dependency_overrides[get_transcription_assistance_provider] = lambda: provider
-    for text in ["Želim da otvorim račun.", "Hoću da otvorim račun."]:
-        app.dependency_overrides[get_transcription_provider] = lambda: FakeTranscriptionProvider(text=text)
-        response = api_client.post("/api/transcriptions", data={"exercise_id": exercise_id, "assistance_enabled": "true"},
-            files={"audio": ("speech.webm", b"synthetic", "audio/webm")})
-        assert response.status_code == 200
-        assert response.json()["changes"] == []
-        assert response.json()["assistance_status"] == "analyzed"
-        assert provider.calls[-1]["raw_text"] == text
-    assert len(provider.calls) == 2
+    app.dependency_overrides[get_transcription_provider] = lambda: FakeTranscriptionProvider(text=raw)
+    response = api_client.post("/api/transcriptions", data={"exercise_id": exercise_id, "assistance_enabled": "true"},
+        files={"audio": ("speech.webm", b"synthetic", "audio/webm")})
+    assert response.status_code == 200
+    assert response.json()["text"] == raw
+    assert response.json()["assistance_status"] == "analyzed"
+    assert response.json()["changes"] == []
+    assert len(provider.calls) == 1
+    assert len(list(db_session.scalars(select(TranscriptionReceipt)))) == 1
 
 
 @pytest.mark.parametrize("count", [2, 5])
