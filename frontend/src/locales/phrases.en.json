@@ -4888,5 +4888,2052 @@
         "translation_sr": "krenuo"
       }
     }
+  },
+  {
+    "id": "misc-01",
+    "source_ru": "Как дела? — Неплохо, просто сегодня у меня много работы.",
+    "source_en": "How are you? — Not bad, I just have a lot of work today.",
+    "canonical_sr": "Kako si? — Nije loše, samo imam mnogo posla danas.",
+    "word_hints": {
+      "how": {
+        "translation_sr": "Kako"
+      },
+      "are": {
+        "translation_sr": "si"
+      },
+      "you": {
+        "translation_sr": "si"
+      },
+      "not": {
+        "translation_sr": "Nije"
+      },
+      "bad": {
+        "translation_sr": "loše"
+      },
+      "i": {
+        "translation_sr": "ja"
+      },
+      "just": {
+        "translation_sr": "samo"
+      },
+      "have": {
+        "translation_sr": "imam"
+      },
+      "lot": {
+        "translation_sr": "mnogo"
+      },
+      "of": {
+        "translation_sr": "od"
+      },
+      "work": {
+        "translation_sr": "posla"
+      },
+      "today": {
+        "translation_sr": "danas"
+      }
+    }
+  },
+  {
+    "id": "misc-02",
+    "source_ru": "Что нового? — Ничего особенного, пью кофе и смотрю в окно.",
+    "source_en": "What's new? — Nothing special, I'm drinking coffee and looking out of the window.",
+    "canonical_sr": "Šta ima? — Ništa posebno, pijem kafu i gledam kroz prozor.",
+    "word_hints": {
+      "and": {
+        "translation_sr": "i"
+      },
+      "coffee": {
+        "translation_sr": "kafu"
+      },
+      "drinking": {
+        "translation_sr": "pijem"
+      },
+      "i'm": {
+        "translation_sr": "pijem"
+      },
+      "looking": {
+        "translation_sr": "gledam"
+      },
+      "new": {
+        "translation_sr": "ima"
+      },
+      "nothing": {
+        "translation_sr": "Ništa"
+      },
+      "of": {
+        "translation_sr": "kroz"
+      },
+      "out": {
+        "translation_sr": "kroz"
+      },
+      "special": {
+        "translation_sr": "posebno"
+      },
+      "what's": {
+        "translation_sr": "Šta"
+      },
+      "window": {
+        "translation_sr": "prozor"
+      }
+    }
+  },
+  {
+    "id": "misc-03",
+    "source_ru": "Как жизнь? — Всё по-старому: работа, дом и немного отдыха.",
+    "source_en": "How's life? — Same as always: work, home and a little rest.",
+    "canonical_sr": "Kako ide? — Sve po starom, posao, kuća i malo odmora.",
+    "word_hints": {
+      "how's": {
+        "translation_sr": "Kako ide?"
+      },
+      "life": {
+        "translation_sr": "ide"
+      },
+      "same": {
+        "translation_sr": "Sve po starom"
+      },
+      "as": {
+        "translation_sr": "po"
+      },
+      "always": {
+        "translation_sr": "starom"
+      },
+      "work": {
+        "translation_sr": "posao"
+      },
+      "home": {
+        "translation_sr": "kuća"
+      },
+      "and": {
+        "translation_sr": "i"
+      },
+      "little": {
+        "translation_sr": "malo"
+      },
+      "rest": {
+        "translation_sr": "odmora"
+      }
+    }
+  },
+  {
+    "id": "misc-04",
+    "source_ru": "Что делаешь? — Вот я и дома, готовлю что-нибудь на ужин.",
+    "source_en": "What are you doing? — I'm home now, making something for dinner.",
+    "canonical_sr": "Šta radiš? — Evo me kod kuće, spremam nešto za večeru.",
+    "word_hints": {
+      "what": {
+        "translation_sr": "Šta"
+      },
+      "are": {
+        "translation_sr": "radiš"
+      },
+      "you": {
+        "translation_sr": "radiš"
+      },
+      "doing": {
+        "translation_sr": "radiš"
+      },
+      "i'm": {
+        "translation_sr": "Evo me"
+      },
+      "home": {
+        "translation_sr": "kod kuće"
+      },
+      "now": {
+        "translation_sr": "Evo me"
+      },
+      "making": {
+        "translation_sr": "spremam"
+      },
+      "something": {
+        "translation_sr": "nešto"
+      },
+      "for": {
+        "translation_sr": "za"
+      },
+      "dinner": {
+        "translation_sr": "večeru"
+      }
+    }
+  },
+  {
+    "id": "misc-05",
+    "source_ru": "Ты где? — Я здесь, перед домом, жду, когда ты спустишься.",
+    "source_en": "Where are you? — I'm here outside the building, waiting for you to come down.",
+    "canonical_sr": "Gde si? — Tu sam ispred zgrade, čekam da siđeš.",
+    "word_hints": {
+      "are": {
+        "translation_sr": "si"
+      },
+      "building": {
+        "translation_sr": "zgrade"
+      },
+      "come": {
+        "translation_sr": "siđeš"
+      },
+      "down": {
+        "translation_sr": "siđeš"
+      },
+      "for": {
+        "translation_sr": "da"
+      },
+      "here": {
+        "translation_sr": "Tu"
+      },
+      "i'm": {
+        "translation_sr": "sam"
+      },
+      "outside": {
+        "translation_sr": "ispred"
+      },
+      "to": {
+        "translation_sr": "da"
+      },
+      "waiting": {
+        "translation_sr": "čekam"
+      },
+      "where": {
+        "translation_sr": "Gde"
+      },
+      "you": {
+        "translation_sr": "si"
+      }
+    }
+  },
+  {
+    "id": "misc-06",
+    "source_ru": "Когда приедешь? — Буду через пять минут, на дороге пробка.",
+    "source_en": "When will you get here? — In five minutes, there's a traffic jam.",
+    "canonical_sr": "Kad stižeš? — Stižem za pet minuta, gužva je na putu.",
+    "word_hints": {
+      "when": {
+        "translation_sr": "Kad"
+      },
+      "will": {
+        "translation_sr": "/"
+      },
+      "you": {
+        "translation_sr": "stižeš"
+      },
+      "get": {
+        "translation_sr": "stižeš"
+      },
+      "here": {
+        "translation_sr": "ovde"
+      },
+      "in": {
+        "translation_sr": "za"
+      },
+      "five": {
+        "translation_sr": "pet"
+      },
+      "minutes": {
+        "translation_sr": "minuta"
+      },
+      "there's": {
+        "translation_sr": "gužva je"
+      },
+      "traffic": {
+        "translation_sr": "gužva"
+      },
+      "jam": {
+        "translation_sr": "gužva"
+      }
+    }
+  },
+  {
+    "id": "misc-07",
+    "source_ru": "Ты доехал? — Да, не волнуйся, всё в порядке.",
+    "source_en": "Did you get there? — Yes, don't worry, everything is fine.",
+    "canonical_sr": "Jesi stigao? — Jesam, ne brini, sve je u redu.",
+    "word_hints": {
+      "did": {
+        "translation_sr": "Jesi"
+      },
+      "don't": {
+        "translation_sr": "ne brini"
+      },
+      "everything": {
+        "translation_sr": "sve"
+      },
+      "fine": {
+        "translation_sr": "u redu"
+      },
+      "get": {
+        "translation_sr": "stigao"
+      },
+      "is": {
+        "translation_sr": "je"
+      },
+      "there": {
+        "translation_sr": "stigao"
+      },
+      "worry": {
+        "translation_sr": "brini"
+      },
+      "yes": {
+        "translation_sr": "Jesam"
+      },
+      "you": {
+        "translation_sr": "Jesi"
+      }
+    }
+  },
+  {
+    "id": "misc-08",
+    "source_ru": "Ты доехала? — Да, дам тебе знать, когда разберу вещи.",
+    "source_en": "Did you arrive? — Yes, I'll let you know when I've unpacked.",
+    "canonical_sr": "Jesi stigla? — Jesam, javiću ti kad raspakujem stvari.",
+    "word_hints": {
+      "did": {
+        "translation_sr": "Jes"
+      },
+      "you": {
+        "translation_sr": "ti"
+      },
+      "arrive": {
+        "translation_sr": "stigla"
+      },
+      "yes": {
+        "translation_sr": "Jesam"
+      },
+      "i'll": {
+        "translation_sr": "javiću"
+      },
+      "let": {
+        "translation_sr": "javiću"
+      },
+      "know": {
+        "translation_sr": "znam"
+      },
+      "when": {
+        "translation_sr": "kad"
+      },
+      "i've": {
+        "translation_sr": "raspakujem"
+      },
+      "unpacked": {
+        "translation_sr": "raspakujem"
+      }
+    }
+  },
+  {
+    "id": "misc-09",
+    "source_ru": "Я немного опаздываю, подожди немного у пекарни, сейчас приду.",
+    "source_en": "I'm running a little late, wait by the bakery for a bit, I'll be right there.",
+    "canonical_sr": "Kasnim malo, sačekaj malo kod pekare, dolazim odmah.",
+    "word_hints": {
+      "i'm": {
+        "translation_sr": "Kasnim"
+      },
+      "running": {
+        "translation_sr": "kasnim"
+      },
+      "little": {
+        "translation_sr": "malo"
+      },
+      "late": {
+        "translation_sr": "kasnim"
+      },
+      "wait": {
+        "translation_sr": "sačekaj"
+      },
+      "by": {
+        "translation_sr": "kod"
+      },
+      "bakery": {
+        "translation_sr": "pekare"
+      },
+      "for": {
+        "translation_sr": "malo"
+      },
+      "bit": {
+        "translation_sr": "malo"
+      },
+      "i'll": {
+        "translation_sr": "dolazim"
+      },
+      "be": {
+        "translation_sr": "dolazim"
+      },
+      "right": {
+        "translation_sr": "odmah"
+      },
+      "there": {
+        "translation_sr": "odmah"
+      }
+    }
+  },
+  {
+    "id": "misc-10",
+    "source_ru": "Я уже вышел, дай знать, если нужно купить хлеб.",
+    "source_en": "I've already left, let me know if I need to buy bread.",
+    "canonical_sr": "Već sam krenuo, javi mi ako treba da kupim hleb.",
+    "word_hints": {
+      "already": {
+        "translation_sr": "već"
+      },
+      "bread": {
+        "translation_sr": "hleb"
+      },
+      "buy": {
+        "translation_sr": "kupim"
+      },
+      "i": {
+        "translation_sr": "sam"
+      },
+      "i've": {
+        "translation_sr": "sam krenuo"
+      },
+      "if": {
+        "translation_sr": "ako"
+      },
+      "know": {
+        "translation_sr": "javi mi"
+      },
+      "left": {
+        "translation_sr": "krenuo"
+      },
+      "let": {
+        "translation_sr": "javi mi"
+      },
+      "me": {
+        "translation_sr": "mi"
+      },
+      "need": {
+        "translation_sr": "treba"
+      },
+      "to": {
+        "translation_sr": "da"
+      }
+    }
+  },
+  {
+    "id": "misc-11",
+    "source_ru": "Я уже вышла, напиши, что ещё нужно на ужин.",
+    "source_en": "I've set off already, text me what else we need for dinner.",
+    "canonical_sr": "Već sam krenula, piši mi šta još treba za večeru.",
+    "word_hints": {
+      "i've": {
+        "translation_sr": "Već sam krenula"
+      },
+      "set": {
+        "translation_sr": "krenula"
+      },
+      "off": {
+        "translation_sr": "krenula"
+      },
+      "already": {
+        "translation_sr": "već"
+      },
+      "text": {
+        "translation_sr": "piši"
+      },
+      "me": {
+        "translation_sr": "mi"
+      },
+      "what": {
+        "translation_sr": "šta"
+      },
+      "else": {
+        "translation_sr": "još"
+      },
+      "we": {
+        "translation_sr": "treba"
+      },
+      "need": {
+        "translation_sr": "treba"
+      },
+      "for": {
+        "translation_sr": "za"
+      },
+      "dinner": {
+        "translation_sr": "večeru"
+      }
+    }
+  },
+  {
+    "id": "misc-12",
+    "source_ru": "Выхожу сейчас, буду через десять минут, поставь воду для кофе.",
+    "source_en": "I'm leaving now, I'll be there in ten minutes, put some water on for coffee.",
+    "canonical_sr": "Krećem sad, tu sam za deset minuta, stavi vodu za kafu.",
+    "word_hints": {
+      "i'm": {
+        "translation_sr": "Krećem"
+      },
+      "leaving": {
+        "translation_sr": "krećem"
+      },
+      "now": {
+        "translation_sr": "sad"
+      },
+      "i'll": {
+        "translation_sr": "tu sam"
+      },
+      "be": {
+        "translation_sr": "sam"
+      },
+      "there": {
+        "translation_sr": "tu"
+      },
+      "in": {
+        "translation_sr": "za"
+      },
+      "ten": {
+        "translation_sr": "deset"
+      },
+      "minutes": {
+        "translation_sr": "minuta"
+      },
+      "put": {
+        "translation_sr": "stavi"
+      },
+      "some": {
+        "translation_sr": "vodu"
+      },
+      "water": {
+        "translation_sr": "vodu"
+      },
+      "on": {
+        "translation_sr": "za"
+      },
+      "for": {
+        "translation_sr": "za"
+      },
+      "coffee": {
+        "translation_sr": "kafu"
+      }
+    }
+  },
+  {
+    "id": "misc-13",
+    "source_ru": "Минутку, ищу ключи, и можно будет выходить.",
+    "source_en": "Just a moment, I'm looking for my keys, then we can leave.",
+    "canonical_sr": "Samo trenutak, tražim ključeve, pa možemo da krenemo.",
+    "word_hints": {
+      "just": {
+        "translation_sr": "Samo"
+      },
+      "moment": {
+        "translation_sr": "trenutak"
+      },
+      "i'm": {
+        "translation_sr": "tražim"
+      },
+      "looking": {
+        "translation_sr": "tražim"
+      },
+      "for": {
+        "translation_sr": "-"
+      },
+      "my": {
+        "translation_sr": "moje"
+      },
+      "keys": {
+        "translation_sr": "ključeve"
+      },
+      "then": {
+        "translation_sr": "pa"
+      },
+      "we": {
+        "translation_sr": "možemo"
+      },
+      "can": {
+        "translation_sr": "možemo"
+      },
+      "leave": {
+        "translation_sr": "da krenemo"
+      }
+    }
+  },
+  {
+    "id": "misc-14",
+    "source_ru": "Погоди-погоди, смотри, ты оставил телефон на столе.",
+    "source_en": "Wait, wait, look, you've left your phone on the table.",
+    "canonical_sr": "Čekaj, čekaj, pazi, ostavio si telefon na stolu.",
+    "word_hints": {
+      "wait": {
+        "translation_sr": "čekaj"
+      },
+      "look": {
+        "translation_sr": "pazi"
+      },
+      "you've": {
+        "translation_sr": "ostavio si"
+      },
+      "left": {
+        "translation_sr": "ostavio"
+      },
+      "your": {
+        "translation_sr": "telefon"
+      },
+      "phone": {
+        "translation_sr": "telefon"
+      },
+      "on": {
+        "translation_sr": "na"
+      },
+      "table": {
+        "translation_sr": "stolu"
+      }
+    }
+  },
+  {
+    "id": "misc-15",
+    "source_ru": "Вот тебе пульт, держи, смотри, что тебе нравится.",
+    "source_en": "Here's the remote, here you go, watch whatever you like.",
+    "canonical_sr": "Evo ti daljinski, izvoli, gledaj šta ti se sviđa.",
+    "word_hints": {
+      "here's": {
+        "translation_sr": "evo"
+      },
+      "remote": {
+        "translation_sr": "daljinski"
+      },
+      "here": {
+        "translation_sr": "izvoli"
+      },
+      "you": {
+        "translation_sr": "ti"
+      },
+      "go": {
+        "translation_sr": "se sviđa"
+      },
+      "watch": {
+        "translation_sr": "gledaj"
+      },
+      "whatever": {
+        "translation_sr": "šta"
+      },
+      "like": {
+        "translation_sr": "sviđa"
+      }
+    }
+  },
+  {
+    "id": "misc-16",
+    "source_ru": "Вот он, мой шарф, всё это время был под курткой.",
+    "source_en": "Here's my scarf, it was under my jacket the whole time.",
+    "canonical_sr": "Evo ga moj šal, sve vreme je bio ispod jakne.",
+    "word_hints": {
+      "here's": {
+        "translation_sr": "Evo ga"
+      },
+      "it": {
+        "translation_sr": "ga"
+      },
+      "jacket": {
+        "translation_sr": "jakne"
+      },
+      "my": {
+        "translation_sr": "moj"
+      },
+      "scarf": {
+        "translation_sr": "šal"
+      },
+      "time": {
+        "translation_sr": "vreme"
+      },
+      "under": {
+        "translation_sr": "ispod"
+      },
+      "was": {
+        "translation_sr": "je bio"
+      },
+      "whole": {
+        "translation_sr": "sve"
+      }
+    }
+  },
+  {
+    "id": "misc-17",
+    "source_ru": "Вот твоя сумка, не волнуйся, ты ничего не забыла.",
+    "source_en": "Here's your bag, don't worry, you haven't forgotten anything.",
+    "canonical_sr": "Evo je tvoja torba, ne brini, ništa nisi zaboravila.",
+    "word_hints": {
+      "anything": {
+        "translation_sr": "ništa"
+      },
+      "bag": {
+        "translation_sr": "torba"
+      },
+      "don't": {
+        "translation_sr": "ne brini"
+      },
+      "forgotten": {
+        "translation_sr": "zaboravila"
+      },
+      "haven't": {
+        "translation_sr": "nisi"
+      },
+      "here's": {
+        "translation_sr": "Evo je"
+      },
+      "worry": {
+        "translation_sr": "brini"
+      },
+      "you": {
+        "translation_sr": "ti"
+      },
+      "your": {
+        "translation_sr": "tvoja"
+      }
+    }
+  },
+  {
+    "id": "misc-18",
+    "source_ru": "А вот и наши друзья, пойдём ко входу.",
+    "source_en": "Here are our friends, let's head towards the entrance.",
+    "canonical_sr": "Evo ih naši prijatelji, hajde da krenemo prema ulazu.",
+    "word_hints": {
+      "here": {
+        "translation_sr": "Evo"
+      },
+      "are": {
+        "translation_sr": "ih"
+      },
+      "our": {
+        "translation_sr": "naši"
+      },
+      "friends": {
+        "translation_sr": "prijatelji"
+      },
+      "let's": {
+        "translation_sr": "hajde da"
+      },
+      "head": {
+        "translation_sr": "krenemo"
+      },
+      "towards": {
+        "translation_sr": "prema"
+      },
+      "entrance": {
+        "translation_sr": "ulazu"
+      }
+    }
+  },
+  {
+    "id": "misc-19",
+    "source_ru": "Будешь чай или кофе? — Мне всё равно, лишь бы горячее.",
+    "source_en": "Would you like tea or coffee? — I don't mind, as long as it's hot.",
+    "canonical_sr": "Hoćeš čaj ili kafu? — Svejedno mi je, samo da je toplo.",
+    "word_hints": {
+      "would": {
+        "translation_sr": "Hoćeš"
+      },
+      "you": {
+        "translation_sr": "ti"
+      },
+      "like": {
+        "translation_sr": "hoćeš"
+      },
+      "tea": {
+        "translation_sr": "čaj"
+      },
+      "or": {
+        "translation_sr": "ili"
+      },
+      "coffee": {
+        "translation_sr": "kafu"
+      },
+      "don't": {
+        "translation_sr": "Svejedno"
+      },
+      "mind": {
+        "translation_sr": "mi je"
+      },
+      "as": {
+        "translation_sr": "samo"
+      },
+      "long": {
+        "translation_sr": "da"
+      },
+      "it's": {
+        "translation_sr": "je toplo"
+      },
+      "hot": {
+        "translation_sr": "toplo"
+      },
+      "i": {
+        "translation_sr": "mi"
+      }
+    }
+  },
+  {
+    "id": "misc-20",
+    "source_ru": "Что будешь на ужин? — Можно суп, сегодня мне не хочется готовить.",
+    "source_en": "What will you have for dinner? — Soup sounds good, I don't feel like cooking today.",
+    "canonical_sr": "Šta ćeš za večeru? — Može supa, danas mi se ne kuva.",
+    "word_hints": {
+      "what": {
+        "translation_sr": "Šta"
+      },
+      "will": {
+        "translation_sr": "ćeš"
+      },
+      "you": {
+        "translation_sr": "ćeš"
+      },
+      "have": {
+        "translation_sr": "za večeru"
+      },
+      "for": {
+        "translation_sr": "za"
+      },
+      "dinner": {
+        "translation_sr": "večeru"
+      },
+      "soup": {
+        "translation_sr": "supa"
+      },
+      "sounds": {
+        "translation_sr": "Može"
+      },
+      "good": {
+        "translation_sr": "Može"
+      },
+      "i": {
+        "translation_sr": "mi"
+      },
+      "don't": {
+        "translation_sr": "ne"
+      },
+      "feel": {
+        "translation_sr": "se"
+      },
+      "like": {
+        "translation_sr": "kuva"
+      },
+      "cooking": {
+        "translation_sr": "kuva"
+      },
+      "today": {
+        "translation_sr": "danas"
+      }
+    }
+  },
+  {
+    "id": "misc-21",
+    "source_ru": "Сядем на улице? — Да, конечно, погода очень хорошая.",
+    "source_en": "Shall we sit outside? — Sure, of course, the weather is really nice.",
+    "canonical_sr": "Da sednemo napolju? — Može, naravno, baš je lepo vreme.",
+    "word_hints": {
+      "shall": {
+        "translation_sr": "Da"
+      },
+      "we": {
+        "translation_sr": "sednemo"
+      },
+      "sit": {
+        "translation_sr": "sednemo"
+      },
+      "outside": {
+        "translation_sr": "napolju"
+      },
+      "sure": {
+        "translation_sr": "Može"
+      },
+      "of": {
+        "translation_sr": "naravno"
+      },
+      "course": {
+        "translation_sr": "naravno"
+      },
+      "weather": {
+        "translation_sr": "vreme"
+      },
+      "is": {
+        "translation_sr": "je"
+      },
+      "really": {
+        "translation_sr": "baš"
+      },
+      "nice": {
+        "translation_sr": "lepo"
+      }
+    }
+  },
+  {
+    "id": "misc-22",
+    "source_ru": "Погуляем после обеда? — Ладно, только посуду помою.",
+    "source_en": "Shall we go for a walk after lunch? — Sure, let me just wash the dishes.",
+    "canonical_sr": "Da prošetamo posle ručka? — Važi, samo da operem sudove.",
+    "word_hints": {
+      "after": {
+        "translation_sr": "posle"
+      },
+      "dishes": {
+        "translation_sr": "sudove"
+      },
+      "for": {
+        "translation_sr": "da"
+      },
+      "go": {
+        "translation_sr": "prošetamo"
+      },
+      "just": {
+        "translation_sr": "samo"
+      },
+      "let": {
+        "translation_sr": "da"
+      },
+      "lunch": {
+        "translation_sr": "ručkа"
+      },
+      "me": {
+        "translation_sr": "operem"
+      },
+      "shall": {
+        "translation_sr": "da"
+      },
+      "sure": {
+        "translation_sr": "važi"
+      },
+      "walk": {
+        "translation_sr": "prošetamo"
+      },
+      "wash": {
+        "translation_sr": "operem"
+      },
+      "we": {
+        "translation_sr": "prošetamo"
+      }
+    }
+  },
+  {
+    "id": "misc-23",
+    "source_ru": "Увидимся завтра в шесть у парка. — Договорились, дай знать, когда выйдешь.",
+    "source_en": "See you tomorrow at six by the park. — Agreed, get in touch when you leave.",
+    "canonical_sr": "Vidimo se sutra u šest kod parka. — Dogovoreno, javi se kad kreneš.",
+    "word_hints": {
+      "see": {
+        "translation_sr": "Vidimo se"
+      },
+      "you": {
+        "translation_sr": "kreneš"
+      },
+      "tomorrow": {
+        "translation_sr": "sutra"
+      },
+      "at": {
+        "translation_sr": "u"
+      },
+      "six": {
+        "translation_sr": "šest"
+      },
+      "by": {
+        "translation_sr": "kod"
+      },
+      "park": {
+        "translation_sr": "parka"
+      },
+      "agreed": {
+        "translation_sr": "Dogovoreno"
+      },
+      "get": {
+        "translation_sr": "javi"
+      },
+      "in": {
+        "translation_sr": "se"
+      },
+      "touch": {
+        "translation_sr": "javi se"
+      },
+      "when": {
+        "translation_sr": "kad"
+      },
+      "leave": {
+        "translation_sr": "kreneš"
+      }
+    }
+  },
+  {
+    "id": "misc-24",
+    "source_ru": "Позвоню тебе позже, сейчас я в магазине и несу пакеты.",
+    "source_en": "I'll call you later, I'm at the shop now carrying bags.",
+    "canonical_sr": "Zovem te kasnije, sad sam u prodavnici i nosim kese.",
+    "word_hints": {
+      "i'll": {
+        "translation_sr": "Zovem"
+      },
+      "call": {
+        "translation_sr": "zovem"
+      },
+      "you": {
+        "translation_sr": "te"
+      },
+      "later": {
+        "translation_sr": "kasnije"
+      },
+      "i'm": {
+        "translation_sr": "sam"
+      },
+      "at": {
+        "translation_sr": "u"
+      },
+      "shop": {
+        "translation_sr": "prodavnici"
+      },
+      "now": {
+        "translation_sr": "sad"
+      },
+      "carrying": {
+        "translation_sr": "nosim"
+      },
+      "bags": {
+        "translation_sr": "kese"
+      }
+    }
+  },
+  {
+    "id": "misc-25",
+    "source_ru": "Ладно, увидимся, созвонимся завтра и договоримся насчёт выходных.",
+    "source_en": "All right, see you, let's talk tomorrow and make plans for the weekend.",
+    "canonical_sr": "Ajde, vidimo se, čujemo se sutra da se dogovorimo za vikend.",
+    "word_hints": {
+      "all": {
+        "translation_sr": "ajde"
+      },
+      "and": {
+        "translation_sr": "i"
+      },
+      "for": {
+        "translation_sr": "za"
+      },
+      "let's": {
+        "translation_sr": "da se"
+      },
+      "make": {
+        "translation_sr": "dogovorimo"
+      },
+      "plans": {
+        "translation_sr": "dogovorimo"
+      },
+      "right": {
+        "translation_sr": "ajde"
+      },
+      "see": {
+        "translation_sr": "vidimo se"
+      },
+      "talk": {
+        "translation_sr": "čujemo se"
+      },
+      "tomorrow": {
+        "translation_sr": "sutra"
+      },
+      "weekend": {
+        "translation_sr": "vikend"
+      },
+      "you": {
+        "translation_sr": "se"
+      }
+    }
+  },
+  {
+    "id": "misc-26",
+    "source_ru": "Большое спасибо, что принёс вещи. — Не за что, мне по пути.",
+    "source_en": "Thanks a lot for bringing the things. — You're welcome, it's on my way.",
+    "canonical_sr": "Hvala puno što si doneo stvari. — Nema na čemu, usput mi je.",
+    "word_hints": {
+      "bringing": {
+        "translation_sr": "doneo"
+      },
+      "for": {
+        "translation_sr": "što"
+      },
+      "it's": {
+        "translation_sr": "mi je"
+      },
+      "lot": {
+        "translation_sr": "puno"
+      },
+      "my": {
+        "translation_sr": "mi"
+      },
+      "on": {
+        "translation_sr": "usput"
+      },
+      "thanks": {
+        "translation_sr": "hvala"
+      },
+      "things": {
+        "translation_sr": "stvari"
+      },
+      "way": {
+        "translation_sr": "usput"
+      },
+      "welcome": {
+        "translation_sr": "nema na čemu"
+      },
+      "you're": {
+        "translation_sr": "nema na čemu"
+      }
+    }
+  },
+  {
+    "id": "misc-27",
+    "source_ru": "Извини, я пролил немного воды. — Ничего страшного, бывает, вот тряпка.",
+    "source_en": "Sorry, I spilled some water. — Never mind, it happens, here's a cloth.",
+    "canonical_sr": "Izvini, prosuo sam malo vode. — Nema veze, dešava se, evo krpe.",
+    "word_hints": {
+      "sorry": {
+        "translation_sr": "Izvini"
+      },
+      "i": {
+        "translation_sr": "sam"
+      },
+      "spilled": {
+        "translation_sr": "prosuo"
+      },
+      "some": {
+        "translation_sr": "malo"
+      },
+      "water": {
+        "translation_sr": "vode"
+      },
+      "never": {
+        "translation_sr": "Nema"
+      },
+      "mind": {
+        "translation_sr": "veze"
+      },
+      "it": {
+        "translation_sr": "se"
+      },
+      "happens": {
+        "translation_sr": "dešava"
+      },
+      "here's": {
+        "translation_sr": "evo"
+      },
+      "cloth": {
+        "translation_sr": "krpe"
+      }
+    }
+  },
+  {
+    "id": "misc-28",
+    "source_ru": "Не нужно спешить, у нас ещё полчаса до фильма.",
+    "source_en": "There's no need to rush, we still have half an hour before the film.",
+    "canonical_sr": "Nema potrebe da žuriš, imamo još pola sata do filma.",
+    "word_hints": {
+      "there's": {
+        "translation_sr": "nema"
+      },
+      "no": {
+        "translation_sr": "nema"
+      },
+      "need": {
+        "translation_sr": "potrebe"
+      },
+      "to": {
+        "translation_sr": "da"
+      },
+      "rush": {
+        "translation_sr": "žuriš"
+      },
+      "we": {
+        "translation_sr": "imamo"
+      },
+      "still": {
+        "translation_sr": "još"
+      },
+      "have": {
+        "translation_sr": "imamo"
+      },
+      "half": {
+        "translation_sr": "pola"
+      },
+      "hour": {
+        "translation_sr": "sata"
+      },
+      "before": {
+        "translation_sr": "do"
+      },
+      "film": {
+        "translation_sr": "filma"
+      }
+    }
+  },
+  {
+    "id": "misc-29",
+    "source_ru": "Расслабься, всё будет хорошо, нам не обязательно всё заканчивать сегодня.",
+    "source_en": "Relax, it'll be fine, we don't have to finish everything today.",
+    "canonical_sr": "Opusti se, biće dobro, ne moramo sve da završimo danas.",
+    "word_hints": {
+      "relax": {
+        "translation_sr": "Opusti se"
+      },
+      "it'll": {
+        "translation_sr": "biće"
+      },
+      "be": {
+        "translation_sr": "biće"
+      },
+      "fine": {
+        "translation_sr": "dobro"
+      },
+      "we": {
+        "translation_sr": "ne moramo"
+      },
+      "don't": {
+        "translation_sr": "ne moramo"
+      },
+      "have": {
+        "translation_sr": "moramo"
+      },
+      "to": {
+        "translation_sr": "da"
+      },
+      "finish": {
+        "translation_sr": "završimo"
+      },
+      "everything": {
+        "translation_sr": "sve"
+      },
+      "today": {
+        "translation_sr": "danas"
+      }
+    }
+  },
+  {
+    "id": "misc-30",
+    "source_ru": "Не торопись, кофе горячий, можешь обжечься.",
+    "source_en": "Take it slowly, the coffee is hot, you could burn yourself.",
+    "canonical_sr": "Polako, kafa je vruća, možeš da se opečeš.",
+    "word_hints": {
+      "take": {
+        "translation_sr": "Polako"
+      },
+      "it": {
+        "translation_sr": "—"
+      },
+      "slowly": {
+        "translation_sr": "polako"
+      },
+      "coffee": {
+        "translation_sr": "kafa"
+      },
+      "is": {
+        "translation_sr": "je"
+      },
+      "hot": {
+        "translation_sr": "vruća"
+      },
+      "you": {
+        "translation_sr": "možeš"
+      },
+      "could": {
+        "translation_sr": "možeš"
+      },
+      "burn": {
+        "translation_sr": "opečeš"
+      },
+      "yourself": {
+        "translation_sr": "se"
+      }
+    }
+  },
+  {
+    "id": "misc-31",
+    "source_ru": "Мне очень нравится эта лампа, она красиво смотрится рядом с диваном.",
+    "source_en": "I really like this lamp, it looks lovely next to the sofa.",
+    "canonical_sr": "Baš mi se sviđa ova lampa, lepo izgleda pored kauča.",
+    "word_hints": {
+      "i": {
+        "translation_sr": "Baš mi se sviđa ova lampa, lepo izgleda pored kauča."
+      },
+      "really": {
+        "translation_sr": "baš"
+      },
+      "like": {
+        "translation_sr": "sviđa mi se"
+      },
+      "this": {
+        "translation_sr": "ova"
+      },
+      "lamp": {
+        "translation_sr": "lampa"
+      },
+      "it": {
+        "translation_sr": "ona"
+      },
+      "looks": {
+        "translation_sr": "izgleda"
+      },
+      "lovely": {
+        "translation_sr": "lepo"
+      },
+      "next": {
+        "translation_sr": "pored"
+      },
+      "to": {
+        "translation_sr": "kauča"
+      },
+      "sofa": {
+        "translation_sr": "kauča"
+      }
+    }
+  },
+  {
+    "id": "misc-32",
+    "source_ru": "Мне не нравится этот цвет, комната выглядит слишком тёмной.",
+    "source_en": "I don't like this colour, the room looks too dark.",
+    "canonical_sr": "Ne sviđa mi se ova boja, soba izgleda previše tamno.",
+    "word_hints": {
+      "i": {
+        "translation_sr": "mi"
+      },
+      "don't": {
+        "translation_sr": "ne sviđa mi se"
+      },
+      "like": {
+        "translation_sr": "sviđa mi se"
+      },
+      "this": {
+        "translation_sr": "ova"
+      },
+      "colour": {
+        "translation_sr": "boja"
+      },
+      "room": {
+        "translation_sr": "soba"
+      },
+      "looks": {
+        "translation_sr": "izgleda"
+      },
+      "too": {
+        "translation_sr": "previše"
+      },
+      "dark": {
+        "translation_sr": "tamno"
+      }
+    }
+  },
+  {
+    "id": "misc-33",
+    "source_ru": "Этот пирог просто супер, есть ещё один кусочек?",
+    "source_en": "This pie is great, is there another slice?",
+    "canonical_sr": "Super je ova pita, je l' ima još jedno parče?",
+    "word_hints": {
+      "this": {
+        "translation_sr": "ova"
+      },
+      "pie": {
+        "translation_sr": "pita"
+      },
+      "is": {
+        "translation_sr": "je l'"
+      },
+      "great": {
+        "translation_sr": "super"
+      },
+      "there": {
+        "translation_sr": "ima"
+      },
+      "another": {
+        "translation_sr": "još jedno"
+      },
+      "slice": {
+        "translation_sr": "parče"
+      }
+    }
+  },
+  {
+    "id": "misc-34",
+    "source_ru": "Как хорошо, что ты пришёл, мне нужна помощь с полкой.",
+    "source_en": "It's really good that you came, I need help with the shelf.",
+    "canonical_sr": "Baš dobro što si došao, treba mi pomoć oko police.",
+    "word_hints": {
+      "came": {
+        "translation_sr": "si došao"
+      },
+      "good": {
+        "translation_sr": "dobro"
+      },
+      "help": {
+        "translation_sr": "pomoć"
+      },
+      "i": {
+        "translation_sr": "mi"
+      },
+      "it's": {
+        "translation_sr": "baš"
+      },
+      "need": {
+        "translation_sr": "treba"
+      },
+      "really": {
+        "translation_sr": "baš"
+      },
+      "shelf": {
+        "translation_sr": "police"
+      },
+      "that": {
+        "translation_sr": "što"
+      },
+      "with": {
+        "translation_sr": "oko"
+      },
+      "you": {
+        "translation_sr": "si"
+      }
+    }
+  },
+  {
+    "id": "misc-35",
+    "source_ru": "Правда? Я не знал, что ты теперь живёшь на нашей улице.",
+    "source_en": "Really? I didn't know you live on our street now.",
+    "canonical_sr": "Stvarno? Nisam znao da sada živiš u našoj ulici.",
+    "word_hints": {
+      "really": {
+        "translation_sr": "Stvarno"
+      },
+      "i": {
+        "translation_sr": "Nisam"
+      },
+      "didn't": {
+        "translation_sr": "nisam"
+      },
+      "know": {
+        "translation_sr": "znao"
+      },
+      "you": {
+        "translation_sr": "živiš"
+      },
+      "live": {
+        "translation_sr": "živiš"
+      },
+      "now": {
+        "translation_sr": "sada"
+      },
+      "on": {
+        "translation_sr": "u"
+      },
+      "our": {
+        "translation_sr": "našoj"
+      },
+      "street": {
+        "translation_sr": "ulici"
+      }
+    }
+  },
+  {
+    "id": "misc-36",
+    "source_ru": "Серьёзно? Опять не работает лифт, а у нас полные пакеты.",
+    "source_en": "Seriously? The lift isn't working again, and we're carrying full bags.",
+    "canonical_sr": "Ozbiljno? Opet ne radi lift, a nosimo pune kese.",
+    "word_hints": {
+      "seriously": {
+        "translation_sr": "Ozbiljno"
+      },
+      "lift": {
+        "translation_sr": "lift"
+      },
+      "isn't": {
+        "translation_sr": "ne radi"
+      },
+      "working": {
+        "translation_sr": "ne radi"
+      },
+      "again": {
+        "translation_sr": "opet"
+      },
+      "and": {
+        "translation_sr": "a"
+      },
+      "we're": {
+        "translation_sr": "nosimo"
+      },
+      "carrying": {
+        "translation_sr": "nosimo"
+      },
+      "full": {
+        "translation_sr": "pune"
+      },
+      "bags": {
+        "translation_sr": "kese"
+      }
+    }
+  },
+  {
+    "id": "misc-37",
+    "source_ru": "Да ладно, мы ни за что не съедим всё это сами.",
+    "source_en": "Oh come on, there's no way we can eat all that ourselves.",
+    "canonical_sr": "Ma daj, nema šanse da sve to pojedemo sami.",
+    "word_hints": {
+      "oh": {
+        "translation_sr": "Ma"
+      },
+      "come": {
+        "translation_sr": "daj"
+      },
+      "on": {
+        "translation_sr": "daj"
+      },
+      "there's": {
+        "translation_sr": "nema"
+      },
+      "no": {
+        "translation_sr": "nema"
+      },
+      "way": {
+        "translation_sr": "šanse"
+      },
+      "we": {
+        "translation_sr": "pojedemo"
+      },
+      "can": {
+        "translation_sr": "pojedemo"
+      },
+      "eat": {
+        "translation_sr": "pojedemo"
+      },
+      "all": {
+        "translation_sr": "sve"
+      },
+      "that": {
+        "translation_sr": "to"
+      },
+      "ourselves": {
+        "translation_sr": "sami"
+      }
+    }
+  },
+  {
+    "id": "misc-38",
+    "source_ru": "Понятия не имею, где зарядка, посмотри возле кровати.",
+    "source_en": "I've no idea where the charger is, look next to the bed.",
+    "canonical_sr": "Nemam pojma gde je punjač, pogledaj pored kreveta.",
+    "word_hints": {
+      "i've": {
+        "translation_sr": "Nemam"
+      },
+      "no": {
+        "translation_sr": "pojma"
+      },
+      "idea": {
+        "translation_sr": "pojma"
+      },
+      "where": {
+        "translation_sr": "gde"
+      },
+      "charger": {
+        "translation_sr": "punjač"
+      },
+      "is": {
+        "translation_sr": "je"
+      },
+      "look": {
+        "translation_sr": "pogledaj"
+      },
+      "next": {
+        "translation_sr": "pored"
+      },
+      "to": {
+        "translation_sr": "pored"
+      },
+      "bed": {
+        "translation_sr": "kreveta"
+      }
+    }
+  },
+  {
+    "id": "misc-39",
+    "source_ru": "Не знаю, открыт ли ещё магазин, посмотрим, когда придём.",
+    "source_en": "I don't know if the shop is still open, we'll see when we get there.",
+    "canonical_sr": "Ne znam da li prodavnica još radi, videćemo kad stignemo.",
+    "word_hints": {
+      "don't": {
+        "translation_sr": "ne"
+      },
+      "get": {
+        "translation_sr": "stignemo"
+      },
+      "i": {
+        "translation_sr": "ja"
+      },
+      "if": {
+        "translation_sr": "da li"
+      },
+      "is": {
+        "translation_sr": "radi"
+      },
+      "know": {
+        "translation_sr": "znam"
+      },
+      "open": {
+        "translation_sr": "radi"
+      },
+      "see": {
+        "translation_sr": "videćemo"
+      },
+      "shop": {
+        "translation_sr": "prodavnica"
+      },
+      "still": {
+        "translation_sr": "još"
+      },
+      "there": {
+        "translation_sr": "kad stignemo"
+      },
+      "we": {
+        "translation_sr": "videćemo"
+      },
+      "we'll": {
+        "translation_sr": "videćemo"
+      },
+      "when": {
+        "translation_sr": "kad"
+      }
+    }
+  },
+  {
+    "id": "misc-40",
+    "source_ru": "Я не уверен, что у нас есть молоко, проверь в холодильнике.",
+    "source_en": "I'm not sure we have any milk, check in the fridge.",
+    "canonical_sr": "Nisam siguran da imamo mleka, proveri u frižideru.",
+    "word_hints": {
+      "any": {
+        "translation_sr": "mleka"
+      },
+      "check": {
+        "translation_sr": "proveri"
+      },
+      "fridge": {
+        "translation_sr": "frižideru"
+      },
+      "have": {
+        "translation_sr": "imamo"
+      },
+      "i'm": {
+        "translation_sr": "nisam siguran"
+      },
+      "in": {
+        "translation_sr": "u"
+      },
+      "milk": {
+        "translation_sr": "mleka"
+      },
+      "not": {
+        "translation_sr": "nisam"
+      },
+      "sure": {
+        "translation_sr": "siguran"
+      },
+      "we": {
+        "translation_sr": "imamo"
+      }
+    }
+  },
+  {
+    "id": "misc-41",
+    "source_ru": "Я не уверена, что это твой зонт, мой синий.",
+    "source_en": "I'm not certain this is your umbrella, mine is blue.",
+    "canonical_sr": "Nisam sigurna da je ovo tvoj kišobran, moj je plavi.",
+    "word_hints": {
+      "blue": {
+        "translation_sr": "plavi"
+      },
+      "certain": {
+        "translation_sr": "sigurna"
+      },
+      "i'm": {
+        "translation_sr": "nisam"
+      },
+      "is": {
+        "translation_sr": "je"
+      },
+      "mine": {
+        "translation_sr": "moj"
+      },
+      "not": {
+        "translation_sr": "nisam"
+      },
+      "this": {
+        "translation_sr": "ovo"
+      },
+      "umbrella": {
+        "translation_sr": "kišobran"
+      },
+      "your": {
+        "translation_sr": "tvoj"
+      }
+    }
+  },
+  {
+    "id": "misc-42",
+    "source_ru": "Думаю, да, но дам тебе знать вечером, когда проверю расписание.",
+    "source_en": "I think so, but I'll let you know tonight after I check my schedule.",
+    "canonical_sr": "Mislim da da, ali javiću ti večeras kad proverim raspored.",
+    "word_hints": {
+      "i": {
+        "translation_sr": "proverim"
+      },
+      "think": {
+        "translation_sr": "Mislim"
+      },
+      "so": {
+        "translation_sr": "da da"
+      },
+      "but": {
+        "translation_sr": "ali"
+      },
+      "i'll": {
+        "translation_sr": "javiću"
+      },
+      "let": {
+        "translation_sr": "javiću"
+      },
+      "you": {
+        "translation_sr": "ti"
+      },
+      "know": {
+        "translation_sr": "javiću ti"
+      },
+      "tonight": {
+        "translation_sr": "večeras"
+      },
+      "after": {
+        "translation_sr": "kad"
+      },
+      "check": {
+        "translation_sr": "proverim"
+      },
+      "my": {
+        "translation_sr": "raspored"
+      },
+      "schedule": {
+        "translation_sr": "raspored"
+      }
+    }
+  },
+  {
+    "id": "misc-43",
+    "source_ru": "Думаю, нет, наверное, останемся дома из-за дождя.",
+    "source_en": "I don't think so, we'll probably stay at home because of the rain.",
+    "canonical_sr": "Mislim da ne, verovatno ćemo ostati kod kuće zbog kiše.",
+    "word_hints": {
+      "i": {
+        "translation_sr": "Mislim"
+      },
+      "don't": {
+        "translation_sr": "ne"
+      },
+      "think": {
+        "translation_sr": "mislim"
+      },
+      "so": {
+        "translation_sr": "da ne"
+      },
+      "we'll": {
+        "translation_sr": "ćemo"
+      },
+      "probably": {
+        "translation_sr": "verovatno"
+      },
+      "stay": {
+        "translation_sr": "ostati"
+      },
+      "at": {
+        "translation_sr": "kod"
+      },
+      "home": {
+        "translation_sr": "kuće"
+      },
+      "because": {
+        "translation_sr": "zbog"
+      },
+      "of": {
+        "translation_sr": "kiše"
+      },
+      "rain": {
+        "translation_sr": "kiše"
+      }
+    }
+  },
+  {
+    "id": "misc-44",
+    "source_ru": "Может, завтра сходим на рынок, сегодня я очень устал.",
+    "source_en": "Maybe we can go to the market tomorrow, I'm really tired today.",
+    "canonical_sr": "Možda možemo sutra na pijacu, danas sam baš umoran.",
+    "word_hints": {
+      "maybe": {
+        "translation_sr": "Možda"
+      },
+      "we": {
+        "translation_sr": "možemo"
+      },
+      "can": {
+        "translation_sr": "možemo"
+      },
+      "go": {
+        "translation_sr": "ići"
+      },
+      "to": {
+        "translation_sr": "na"
+      },
+      "market": {
+        "translation_sr": "pijacu"
+      },
+      "tomorrow": {
+        "translation_sr": "sutra"
+      },
+      "i'm": {
+        "translation_sr": "sam"
+      },
+      "really": {
+        "translation_sr": "baš"
+      },
+      "tired": {
+        "translation_sr": "umoran"
+      },
+      "today": {
+        "translation_sr": "danas"
+      }
+    }
+  },
+  {
+    "id": "misc-45",
+    "source_ru": "Я не понял, немного помедленнее, как называется эта улица?",
+    "source_en": "I didn't understand, a little more slowly, what's that street called?",
+    "canonical_sr": "Nisam razumeo, samo malo sporije, kako se zove ta ulica?",
+    "word_hints": {
+      "called": {
+        "translation_sr": "zove"
+      },
+      "didn't": {
+        "translation_sr": "nisam"
+      },
+      "i": {
+        "translation_sr": "ja"
+      },
+      "little": {
+        "translation_sr": "malo"
+      },
+      "more": {
+        "translation_sr": "više"
+      },
+      "slowly": {
+        "translation_sr": "sporije"
+      },
+      "street": {
+        "translation_sr": "ulica"
+      },
+      "that": {
+        "translation_sr": "ta"
+      },
+      "understand": {
+        "translation_sr": "razumeo"
+      },
+      "what's": {
+        "translation_sr": "kako se zove"
+      }
+    }
+  },
+  {
+    "id": "misc-46",
+    "source_ru": "Я не поняла последнее слово, повторите, пожалуйста.",
+    "source_en": "I didn't catch the last word, please repeat it.",
+    "canonical_sr": "Nisam razumela poslednju reč, ponovite, molim vas.",
+    "word_hints": {
+      "catch": {
+        "translation_sr": "razumela"
+      },
+      "didn't": {
+        "translation_sr": "Nisam"
+      },
+      "i": {
+        "translation_sr": "Nisam"
+      },
+      "it": {
+        "translation_sr": "reč"
+      },
+      "last": {
+        "translation_sr": "poslednju"
+      },
+      "please": {
+        "translation_sr": "molim vas"
+      },
+      "repeat": {
+        "translation_sr": "ponovite"
+      },
+      "word": {
+        "translation_sr": "reč"
+      }
+    }
+  },
+  {
+    "id": "misc-47",
+    "source_ru": "Что это значит в счёте? — Подождите минутку, сейчас посмотрю.",
+    "source_en": "What does this mean on the bill? — Please wait a moment, I'll take a look.",
+    "canonical_sr": "Šta to znači na računu? — Sačekajte trenutak, sad ću pogledati.",
+    "word_hints": {
+      "what": {
+        "translation_sr": "Šta"
+      },
+      "does": {
+        "translation_sr": "/"
+      },
+      "this": {
+        "translation_sr": "to"
+      },
+      "mean": {
+        "translation_sr": "znači"
+      },
+      "on": {
+        "translation_sr": "na"
+      },
+      "bill": {
+        "translation_sr": "računu"
+      },
+      "please": {
+        "translation_sr": "Sačekajte"
+      },
+      "wait": {
+        "translation_sr": "Sačekajte"
+      },
+      "moment": {
+        "translation_sr": "trenutak"
+      },
+      "i'll": {
+        "translation_sr": "ću"
+      },
+      "take": {
+        "translation_sr": "pogledati"
+      },
+      "look": {
+        "translation_sr": "pogledati"
+      }
+    }
+  },
+  {
+    "id": "misc-48",
+    "source_ru": "Как это сказать по-сербски, та штука для открывания бутылок?",
+    "source_en": "How do you say it in Serbian, that thing for opening bottles?",
+    "canonical_sr": "Kako se to kaže na srpskom, ona stvar za otvaranje flaša?",
+    "word_hints": {
+      "how": {
+        "translation_sr": "Kako"
+      },
+      "do": {
+        "translation_sr": "se"
+      },
+      "you": {
+        "translation_sr": "se"
+      },
+      "say": {
+        "translation_sr": "kaže"
+      },
+      "it": {
+        "translation_sr": "to"
+      },
+      "in": {
+        "translation_sr": "na"
+      },
+      "serbian": {
+        "translation_sr": "srpskom"
+      },
+      "that": {
+        "translation_sr": "ona"
+      },
+      "thing": {
+        "translation_sr": "stvar"
+      },
+      "for": {
+        "translation_sr": "za"
+      },
+      "opening": {
+        "translation_sr": "otvaranje"
+      },
+      "bottles": {
+        "translation_sr": "flaša"
+      }
+    }
+  },
+  {
+    "id": "misc-49",
+    "source_ru": "Теперь понимаю, значит, сначала поворачиваю налево, потом иду прямо.",
+    "source_en": "Now I understand, so I turn left first, then go straight on.",
+    "canonical_sr": "Sad razumem, znači prvo skrenem levo, pa idem pravo.",
+    "word_hints": {
+      "now": {
+        "translation_sr": "Sad"
+      },
+      "i": {
+        "translation_sr": "razumem"
+      },
+      "understand": {
+        "translation_sr": "razumem"
+      },
+      "so": {
+        "translation_sr": "znači"
+      },
+      "turn": {
+        "translation_sr": "skrenem"
+      },
+      "left": {
+        "translation_sr": "levo"
+      },
+      "first": {
+        "translation_sr": "prvo"
+      },
+      "then": {
+        "translation_sr": "pa"
+      },
+      "go": {
+        "translation_sr": "idem"
+      },
+      "straight": {
+        "translation_sr": "pravo"
+      },
+      "on": {
+        "translation_sr": "pravo"
+      }
+    }
+  },
+  {
+    "id": "misc-50",
+    "source_ru": "Можно и так: сначала купим хлеб, потом сядем выпить кофе.",
+    "source_en": "That works too, let's buy bread first, then sit down for a coffee.",
+    "canonical_sr": "Može i tako, prvo da kupimo hleb, pa da sednemo na kafu.",
+    "word_hints": {
+      "that": {
+        "translation_sr": "to"
+      },
+      "works": {
+        "translation_sr": "može"
+      },
+      "too": {
+        "translation_sr": "i"
+      },
+      "let's": {
+        "translation_sr": "da"
+      },
+      "buy": {
+        "translation_sr": "kupimo"
+      },
+      "bread": {
+        "translation_sr": "hleb"
+      },
+      "first": {
+        "translation_sr": "prvo"
+      },
+      "then": {
+        "translation_sr": "pa"
+      },
+      "sit": {
+        "translation_sr": "sednemo"
+      },
+      "down": {
+        "translation_sr": "sednemo"
+      },
+      "for": {
+        "translation_sr": "na"
+      },
+      "coffee": {
+        "translation_sr": "kafu"
+      }
+    }
   }
 ]

@@ -13,8 +13,8 @@ from app.schemas import WordHint
 def test_seed_is_complete_and_idempotent(db_session: Session) -> None:
     assert 40 <= len(SKILLS) <= 60
     assert len(TOPICS) == 9
-    assert len(TOPIC_PHRASES) == 160
-    assert len(TOPIC_PHRASE_HINTS) == 160
+    assert len(TOPIC_PHRASES) == 210
+    assert len(TOPIC_PHRASE_HINTS) == 210
     assert all(TOPIC_PHRASE_HINTS[item.id] for item in TOPIC_PHRASES)
     allowed_omitted_words = {"я", "мне", "вы", "в"}
     for item in TOPIC_PHRASES:
@@ -37,13 +37,13 @@ def test_seed_is_complete_and_idempotent(db_session: Session) -> None:
         for topic in TOPICS
         if topic["id"] != "misc"
     )
-    assert not [item for item in TOPIC_PHRASES if item.topic_id == "misc"]
+    assert len([item for item in TOPIC_PHRASES if item.topic_id == "misc"]) == 50
 
-    assert seed_catalog(db_session) == (50, 9, 160)
+    assert seed_catalog(db_session) == (50, 9, 210)
     assert seed_catalog(db_session) == (0, 0, 0)
     assert db_session.scalar(select(func.count()).select_from(Skill)) == 50
     assert db_session.scalar(select(func.count()).select_from(TopicPreset)) == 9
-    assert db_session.scalar(select(func.count()).select_from(TopicPhrase)) == 160
+    assert db_session.scalar(select(func.count()).select_from(TopicPhrase)) == 210
     rent_phrase = db_session.get(TopicPhrase, "rent-01")
     assert rent_phrase is not None
     assert {hint["word_ru"]: hint["translation_sr"] for hint in rent_phrase.word_hints_json}["светлую"] == "svetao"

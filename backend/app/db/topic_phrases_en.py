@@ -162,3 +162,8 @@ TOPIC_PHRASES_EN: dict[str, str] = {
     'Эта дорога короче, но обычно более загруженная.': 'This route is shorter, but usually busier.',
     'Последний автобус уже ушёл с конечной остановки?': 'Has the last bus already left the terminus?',
 }
+
+
+from app.db.misc_phrases import MISC_PHRASES
+
+TOPIC_PHRASES_EN.update({item["source_ru"]: item["source_en"] for item in MISC_PHRASES})

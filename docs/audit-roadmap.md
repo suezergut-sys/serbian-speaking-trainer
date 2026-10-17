@@ -685,3 +685,10 @@
 - [x] 302 backend/script tests passed, 8 skipped; 212 component tests, lint/typecheck/build; 6 browser checks ru/en desktop/mobile/Android-layout.
 - [x] Backend/web опубликованы через PR #112, runtime ee234ee, оба READY/main/production и aliases подтверждены. 16.10.2026, 17:52 МСК: 6/6 production browser checks, HTTP smoke и error logs прошли. [Доказательства](free-daily-limit-20-checkpoint-2026-10-16.md).
 - [ ] Статический текст условий в будущем APK и физическая приёмка отдельно.
+
+## 17.10.2026 — Разное, 50 фраз; выпуск 1.34/code44
+
+- [x] Реализация, ru/en переводы/подсказки, повторяемый seed и миграция; backend 306/8 skipped, Node 5, frontend 212, lint/typecheck/build, browser 10 passed. [Доказательства](android-1.34-release.md).
+- [ ] Публикация backend/web и подтверждение production БД.
+- [ ] Production APK, API/metadata/подпись/assets и GitHub release.
+- [ ] Физическая ручная приёмка, OAuth/микрофон/реальная речь.
