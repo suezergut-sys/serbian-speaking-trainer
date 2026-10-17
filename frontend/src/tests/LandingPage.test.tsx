@@ -11,8 +11,8 @@ it("presents the creator story, real web destination and an honest Play placehol
   expect(screen.getByText(/Я создал SerboTalk, потому что/)).toHaveTextContent("Duolingo");
   expect(screen.getAllByRole("link", { name: /Начать говорить/ })[0]).toHaveAttribute("href", "#sign-in");
   expect(screen.getByText("Ссылка появится после публикации")).toBeInTheDocument();
-  expect(screen.getAllByRole("img", { name: /Мобильная веб-версия/ })).toHaveLength(4);
-  expect(screen.getByRole("img", { name: "Календарь занятий в SerboTalk" })).toHaveAttribute("src", "/landing/screens/ru-calendar.png");
+  expect(screen.getAllByRole("img", { name: /SerboTalk:/ })).toHaveLength(4);
+  expect(screen.getByRole("img", { name: "SerboTalk: статистика занятий" })).toHaveAttribute("src", "/landing/screens/phone/ru-statistics.jpg");
   expect(screen.queryByText("Знакомые слова")).not.toBeInTheDocument();
   expect(screen.queryByText("Скриншоты мобильной веб-версии. Показаны демонстрационные данные.")).not.toBeInTheDocument();
 });
@@ -23,8 +23,8 @@ it("switches copy, metadata and screenshot locale together, and restores Russian
   expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Now speak them.");
   expect(screen.getByText(/I created SerboTalk because/)).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "EN" })).toHaveAttribute("aria-pressed", "true");
-  expect(screen.getAllByRole("img", { name: /mobile web app/ })[0]).toHaveAttribute("src", "/landing/screens/en-practice.png");
-  expect(screen.getByRole("img", { name: "SerboTalk practice calendar" })).toHaveAttribute("src", "/landing/screens/en-calendar.png");
+  expect(screen.getByRole("img", { name: "SerboTalk: speaking practice" })).toHaveAttribute("src", "/landing/screens/phone/en-practice.jpg");
+  expect(screen.getByRole("img", { name: "SerboTalk: practice statistics" })).toHaveAttribute("src", "/landing/screens/phone/en-statistics.jpg");
   expect(document.title).toBe("SerboTalk — start speaking Serbian");
   fireEvent.click(screen.getByRole("button", { name: "RU" }));
   expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Пора заговорить.");
