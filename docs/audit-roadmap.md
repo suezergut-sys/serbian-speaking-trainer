@@ -699,3 +699,10 @@
 - [x] 223 unit/component tests, 12 browser checks с mock API/auth, lint/typecheck/production build; Supabase allow list нового callback проверен. [Доказательства](landing-domain-release-2026-10-17.md).
 - [x] PR #117/#118/#119 merged, frontend READY/production/main на 95827ea; alias serbotalk.app, 4 final root browser checks и реальный Google→/app→reload→landing→continue подтверждены. Error logs пусты. [Доказательства](landing-domain-release-2026-10-17.md).
 - [ ] Ручная приёмка. Android-сборка не запрашивалась.
+
+## 17.10.2026 — sticky-шапка и desktop 1:2
+
+- [x] Шапка лендинга закреплена, якоря учитывают её высоту; desktop workspace 1:2, max-width 1020px.
+- [x] 223 tests, lint/typecheck/build; 8 ru/en sticky/layout checks и 8 desktop ratio checks 800–1920px. [Доказательства](sticky-header-desktop-ratio-2026-10-17.md).
+- [ ] Frontend production и smoke.
+- [ ] Приёмка владельцем; APK не запрашивался.

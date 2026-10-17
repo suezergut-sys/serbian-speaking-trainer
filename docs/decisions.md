@@ -665,3 +665,7 @@ Desktop/mobile/Capacitor используют одну renderPractice-разме
 Host-specific rewrite serbotalk.app/ обслуживает отдельный landing entry, /app обслуживает прежний React trainer. Старый vercel.app/ сохранён. Встроенная форма использует существующий Supabase client и ReviewLogin, PKCE возвращает на точный /app; native callback прежний. Same-origin /api proxy направлен на установленный backend, без расширения CORS. Отдельного iframe, хранения credentials или второй системы аккаунтов нет. Landing исключён из Android/testlab entry. [Доказательства](landing-domain-release-2026-10-17.md).
 
 17.10.2026: production-выпуск через PR #117/#118/#119 завершён на 95827ea, frontend READY. Явные routes ставят host-specific root до filesystem; стандартный rewrite уступал index.html. Sensitive VITE_API_BASE_URL в env pull скрывал значение: production env переключён на пустое, финальная обычная сборка подтверждает same-origin API. Session restore обновляет кнопку продолжения без автоматического ухода с лендинга. Google/review вход и native callback совместимы; backend/APK прежние. [Доказательства](landing-domain-release-2026-10-17.md).
+
+## 17.10.2026 — закрепление лендинга и ширина упражнения
+
+Шапка использует position:sticky, общий фон и локальную высоту 104/84px; scroll-margin у якорей оставляет содержимое ниже неё. Desktop workspace ограничен 1020px и делит свободную ширину строго 1:2, включая промежуточные desktop-размеры. Mobile использует прежний отдельный экран. Тексты, auth и backend не менялись. [Проверки](sticky-header-desktop-ratio-2026-10-17.md).

@@ -507,3 +507,8 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 - [x] PR #114/#115 merged; backend/web READY на 7b75864, production БД: 50/50 новых фраз совпали, всего 210; Chrome ru/en/версия/запуск и HTTP smoke прошли. [Доказательства](android-1.34-release.md).
 - [x] Production APK 1.34/code44, API/metadata/прежняя подпись/9 assets/50 IDs/Downloads проверены; GitHub v1.34-final, digest/size и обратная загрузка совпали. [Доказательства](android-1.34-release.md).
 - [ ] Физическая ручная приёмка, OAuth/микрофон/реальная речь.
+
+## 17.10.2026 — desktop-пропорции общей таблицы стилей
+
+- [x] Web: workspace 1:2 и max-width 1020px; мобильный экран тренировки прежний. Лендинг sticky исключён из Android entry. Проверены ru/en landing Capacitor-layout и desktop. [Доказательства](sticky-header-desktop-ratio-2026-10-17.md).
+- [ ] При следующем разрешённом sync проверить общий stylesheet на телефоне; текущий APK 1.34/code44 не менялся.
