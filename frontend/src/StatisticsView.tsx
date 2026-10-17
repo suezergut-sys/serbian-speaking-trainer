@@ -7,7 +7,7 @@ import { displaySerbian, type SerbianAlphabet } from "./serbianScript";
 import { GoldStar } from "./GoldStar";
 
 const weekDays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
-type PageSize = "10" | "50";
+type PageSize = "20" | "50";
 
 function monthKey(value: Date): string {
   return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}`;
@@ -30,7 +30,7 @@ function formatReviewDate(value: string | null): string {
 
 function PhraseList({ alphabet, topicId }: { alphabet: SerbianAlphabet; topicId: string }) {
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState<PageSize>("10");
+  const [pageSize, setPageSize] = useState<PageSize>("20");
   const [statistics, setStatistics] = useState<PhraseStatistics>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -63,7 +63,7 @@ function PhraseList({ alphabet, topicId }: { alphabet: SerbianAlphabet; topicId:
     <div className="statistics-card__heading">
       <div><p className="kicker">{t("Интервальное повторение")}</p><h2 id="phrases-title">{t("Фразы")}</h2></div>
       <label className="page-size-control">{t("На странице")}<select value={pageSize} onChange={(event) => changePageSize(event.target.value as PageSize)}>
-          <option value="10">10</option><option value="50">50</option>
+          <option value="20">20</option><option value="50">50</option>
         </select>
       </label>
     </div>

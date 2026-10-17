@@ -1522,7 +1522,7 @@ describe("App", () => {
     expect(await screen.findByRole("heading", { name: "В банке" })).toBeInTheDocument();
     expect(screen.getByText("Želim da otvorim račun.")).toBeInTheDocument();
     expect(screen.getByText("выучена")).toBeInTheDocument();
-    expect(screen.getByLabelText("На странице")).toHaveValue("10");
+    expect(screen.getByLabelText("На странице")).toHaveValue("20");
 
   });
 

@@ -15,7 +15,7 @@ export async function fetchMonthlyStatistics(month: string, signal?: AbortSignal
 
 export async function fetchPhraseStatistics(
   page: number,
-  pageSize: "10" | "50" | "all",
+  pageSize: "10" | "20" | "50" | "all",
   signal?: AbortSignal,
   topicId?: string,
 ): Promise<PhraseStatistics> {

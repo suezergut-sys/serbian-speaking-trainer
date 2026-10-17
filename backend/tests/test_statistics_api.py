@@ -250,3 +250,26 @@ def test_phrase_topic_filter_paginates_before_grouping_and_isolates_accounts(api
     assert unassigned["total"] == 1 and unassigned["groups"][0]["topic_id"] is None
     empty = api_client.get("/api/statistics/phrases", params={"topic_id": other.id, "page": 5}).json()
     assert empty["total"] == 0 and empty["page"] == 1 and empty["groups"] == []
+
+
+def test_phrase_statistics_defaults_to_twenty_and_supports_both_page_sizes(api_client, db_session):
+    for index in range(45):
+        db_session.add(ReviewPhrase(source_ru=f"Phrase {index}", source_normalized=f"phrase {index}"))
+    db_session.commit()
+    first = api_client.get("/api/statistics/phrases")
+    assert first.status_code == 200
+    payload = first.json()
+    assert (payload["page_size"], payload["total_pages"], payload["total"]) == ("20", 3, 45)
+    first_ids = {row["id"] for group in payload["groups"] for row in group["phrases"]}
+    assert len(first_ids) == 20
+    second = api_client.get("/api/statistics/phrases", params={"page_size": "20", "page": 2})
+    assert second.status_code == 200
+    second_ids = {row["id"] for group in second.json()["groups"] for row in group["phrases"]}
+    assert len(second_ids) == 20
+    assert first_ids.isdisjoint(second_ids)
+    last = api_client.get("/api/statistics/phrases", params={"page_size": "20", "page": 3}).json()
+    assert sum(len(group["phrases"]) for group in last["groups"]) == 5
+    large = api_client.get("/api/statistics/phrases", params={"page_size": "50"})
+    assert large.status_code == 200
+    assert large.json()["total_pages"] == 1
+    assert sum(len(group["phrases"]) for group in large.json()["groups"]) == 45
