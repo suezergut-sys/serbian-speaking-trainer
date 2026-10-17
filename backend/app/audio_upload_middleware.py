@@ -13,7 +13,7 @@ class AudioUploadBodyLimitMiddleware:
         self.app = app
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        if scope["type"] != "http" or scope.get("path") != "/api/transcriptions":
+        if scope["type"] != "http" or scope.get("path") not in {"/api/transcriptions", "/api/feedback/transcribe"}:
             await self.app(scope, receive, send)
             return
 

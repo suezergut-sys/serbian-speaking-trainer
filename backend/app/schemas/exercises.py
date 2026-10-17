@@ -31,6 +31,8 @@ class ExerciseGenerationResult(BaseModel):
 
 
 class ExerciseResponse(BaseModel):
+    topic_id: str | None = None
+    topic_title_ru: str | None = None
     id: str
     session_id: str
     source_ru: str

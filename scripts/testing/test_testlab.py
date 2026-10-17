@@ -62,6 +62,22 @@ def test_pre_audio_schema_upgrades_preserving_debug_history(tmp_path):
         engine.dispose()
 
 
+def test_pre_feedback_schema_upgrades_without_changing_users(tmp_path):
+    engine = create_engine(f"sqlite:///{(tmp_path / 'pre-feedback.sqlite3').as_posix()}")
+    try:
+        _alembic(engine, "upgrade", "3f90d5a9b8c3")
+        with engine.connect() as connection:
+            users = connection.execute(text("SELECT id FROM users ORDER BY id")).all()
+        bootstrap_testlab_database(engine)
+        bootstrap_testlab_database(engine)
+        assert alembic_revision(engine) == current_revision()
+        with engine.connect() as connection:
+            assert "user_feedback" in inspect(connection).get_table_names()
+            assert connection.execute(text("SELECT id FROM users ORDER BY id")).all() == users
+    finally:
+        engine.dispose()
+
+
 def test_password_auth_returns_supabase_session_and_refresh_rotates() -> None:
     with TestClient(create_auth_app(credentials())) as client:
         session = client.post("/auth/v1/token?grant_type=password", json={"email": EMAIL, "password": credentials().password})

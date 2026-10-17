@@ -3,6 +3,7 @@ import type { CurrentUser } from "./types/auth";
 import type { SerbianAlphabet } from "./serbianScript";
 import { ModelDebugSettings } from "./ModelDebugSettings";
 import { version } from "../package.json";
+import { FeedbackSettings } from "./FeedbackSettings";
 
 export function SettingsView({ alphabet, onAlphabetChange, account, onSignOut, assistanceEnabled = false, assistanceSaving = false, assistanceError, onAssistanceChange }: {
   assistanceEnabled?: boolean;
@@ -34,6 +35,7 @@ export function SettingsView({ alphabet, onAlphabetChange, account, onSignOut, a
       {assistanceSaving && <p role="status">{t("Сохраняем настройку…")}</p>}
       {assistanceError && <p role="alert">{t(assistanceError)}</p>}
     </section>
+    <FeedbackSettings />
     {account?.role === "admin" && account.can_debug_models && <ModelDebugSettings key={account.id} />}
     {account && <><section className="settings-profile panel" aria-labelledby="settings-account-title">
       <h2 id="settings-account-title">{t("Аккаунт")}</h2>

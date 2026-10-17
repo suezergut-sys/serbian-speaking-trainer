@@ -1,5 +1,19 @@
 # План улучшений по аудиту SerboTalk
 
+## 17.10.2026 — публикация накопленного набора и APK 1.35
+
+- [x] Согласованы 1.35/code45, объединён локальный набор с опубликованными улучшениями лендинга/каталога; production Telegram-env настроены. [Доказательства](android-1.35-release.md).
+- [ ] Quality gate, APK/API/signature/assets, PR/merge и production проверки.
+- [ ] GitHub release и обратная проверка бинарника.
+- [ ] Физическая приёмка телефона и реальная речь; P0/P1/P2 целиком не закрываются.
+
+## 17.10.2026 — обратная связь, исходная тема и Telegram
+
+- [x] Центрирование web-загрузки и исходная тема повторяемой фразы в общем UI RU/EN; форма текстовой/голосовой обратной связи, отдельная таблица и миграция; Telegram после commit для регистрации, отзыва и достижения 20 проверок. [Доказательства и ограничения](feedback-activity-checkpoint-2026-10-17.md).
+- [x] Backend и UI regression-тесты, typecheck, production build, lint; локальная миграция и реальная тестовая доставка Telegram. Тесты распознавания используют mocks.
+- [ ] Публикация web/backend, production-env и миграция production БД.
+- [ ] Android sync/build и физическая приёмка, реальное голосовое распознавание. P0/P1/P2 целиком не закрываются.
+
 ## 13.10.2026 — release AAB 1.30
 
 - [x] Production Android sync/build и bundleProdRelease, отдельная upload-подпись, bundletool validate/dump, jarsigner verify и 7 public assets проверены; 1.30/code40 без изменения функций. [Доказательства](android-1.30-release.md).

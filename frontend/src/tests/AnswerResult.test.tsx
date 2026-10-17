@@ -20,7 +20,8 @@ describe("AnswerResult", () => {
   afterEach(cleanup);
   it("marks only evidence explicitly reported in validated analysis", () => {
     render(<AnswerResult answer={attempt.transcript_sr} attempt={attempt} />);
-    expect(screen.queryByText("Я хочу открыть счёт.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Фраза на русском")).not.toBeInTheDocument();
+    expect(document.querySelectorAll(".result-phrase")).toHaveLength(2);
     const userRow = screen.getByText("Ваш вариант").parentElement as HTMLElement;
     expect(within(userRow).getByText("otovrim")).toHaveClass("answer-mark--issue");
     expect(within(userRow).getByText("otovrim")).toHaveAttribute("title", "otvorim");

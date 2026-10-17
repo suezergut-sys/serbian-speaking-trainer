@@ -445,6 +445,9 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const selectedTopicData = topics.find((topic) => topic.id === selectedTopic);
   const currentTopic = session?.topic ?? selectedTopicData;
   const isReviewMode = session?.topic.id === "review-phrases";
+  const phraseTopicTitle = isReviewMode
+    ? `${t("Фразы для повторения")}${exercise?.topic_title_ru ? ` / ${topicText(exercise.topic_id, exercise.topic_title_ru)}` : ""}`
+    : currentTopic ? topicText(currentTopic.id, currentTopic.title_ru) : "";
   const voiceBusy = voiceState === "connecting" || voiceState === "recording" || voiceState === "transcribing";
 
   const stopVoice = useCallback(() => {
@@ -835,7 +838,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     const done = !isReviewMode && completedCount >= (session?.requested_length ?? 10);
     return <div className={`practice-card exercise-layout${compact ? " android-training-content" : " panel"}`}>
       <div className="exercise-scroll">
-        <div className="exercise-topic">{currentTopic ? topicText(currentTopic.id, currentTopic.title_ru) : ""}</div>
+        <div className="exercise-topic">{phraseTopicTitle}</div>
         {!attempt && <div className="exercise-source">{renderPhrase()}</div>}
         {!attempt ? <form id="practice-answer-form" className="exercise-answer" onSubmit={checkAnswer}>
           {hasTranscript && <div className="exercise-answer-frame result-phrase"><label htmlFor={answerId}>{t("Ваш ответ")}</label>
@@ -1000,7 +1003,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
             <div className="topics-panel__note"><Icon name="message" /><span>{t("Каждый короткий разговор делает речь увереннее.")}</span></div>
           </aside>
 
-          <section className="practice-stage" aria-label={t("Практика")}>
+          <section className={`practice-stage${preparingPhrase && !session ? " is-preparing" : ""}`} aria-label={t("Практика")}>
             {preparingPhrase && !session ? <PhraseLoading /> : sessionComplete ? (
               <div className="practice-done panel"><h1>{t(topicExhausted ? "Все фразы темы пройдены" : "Тренировка завершена")}</h1><p>{t(topicExhausted ? `${completedCount} фраз проверено. В этой теме пока нет следующих фраз.` : `${completedCount} из ${session?.requested_length ?? 10} фраз проверено.`)}</p><button className="answer-submit" type="button" onClick={() => { resetTraining(); if (mobileLayout) showAndroidPanel(0); }}>{t("Выбрать новую тему")}</button></div>
             ) : !session && reviewFinished ? (

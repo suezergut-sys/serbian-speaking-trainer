@@ -2,7 +2,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     free_daily_phrase_limit: int = Field(default=20, ge=1, le=1000)
     auth_timeout_seconds: float = Field(default=5, gt=0, le=30)
     auth_max_retries: int = Field(default=1, ge=0, le=3)
+
+    telegram_bot_token: SecretStr | None = Field(default=None, repr=False)
+    telegram_chat_id: str | None = None
+    telegram_timeout_seconds: float = Field(default=3, gt=0, le=10)
 
     openai_api_key: str | None = None
     openai_realtime_model: str | None = None

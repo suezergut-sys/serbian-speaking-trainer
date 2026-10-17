@@ -9,7 +9,7 @@ async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   init?.signal?.addEventListener("abort", onAbort, { once: true });
   if (init?.signal?.aborted) controller.abort();
   let timedOut = false;
-  const timeout = window.setTimeout(() => { timedOut = true; controller.abort(); }, url === "/api/transcriptions" ? 45_000 : 30_000);
+  const timeout = window.setTimeout(() => { timedOut = true; controller.abort(); }, (url === "/api/transcriptions" || url === "/api/feedback/transcribe") ? 45_000 : 30_000);
   try {
     const headers = new Headers(init?.headers);
     headers.set("X-Interface-Language", getLanguage());
@@ -87,6 +87,19 @@ function audioFilename(contentType: string): string {
   if (contentType.includes("ogg")) return "speech.ogg";
   if (contentType.includes("mp4")) return "speech.mp4";
   return "speech.webm";
+}
+
+export function sendFeedback(content: string, signal?: AbortSignal): Promise<{ id: string; created_at: string }> {
+  return requestJson("/api/feedback", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content }), signal,
+  });
+}
+
+export function transcribeFeedback(audio: Blob, signal?: AbortSignal): Promise<{ text: string }> {
+  const form = new FormData();
+  form.append("audio", audio, audioFilename(audio.type));
+  return requestJson("/api/feedback/transcribe", { method: "POST", body: form, signal });
 }
 
 export function submitAttempt(
