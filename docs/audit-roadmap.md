@@ -697,5 +697,5 @@
 
 - [x] Лендинг ru/en, компактные отступы, авторская история/скриншоты, встроенный Google/review login, session continuation и /app; старый домен и native callback сохранены.
 - [x] 223 unit/component tests, 12 browser checks с mock API/auth, lint/typecheck/production build; Supabase allow list нового callback проверен. [Доказательства](landing-domain-release-2026-10-17.md).
-- [ ] Frontend production Ready/SHA/alias и production smoke.
+- [x] PR #117/#118/#119 merged, frontend READY/production/main на 95827ea; alias serbotalk.app, 4 final root browser checks и реальный Google→/app→reload→landing→continue подтверждены. Error logs пусты. [Доказательства](landing-domain-release-2026-10-17.md).
 - [ ] Ручная приёмка. Android-сборка не запрашивалась.
