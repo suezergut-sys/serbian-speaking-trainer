@@ -77,7 +77,7 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
     expect(Math.abs((await retry.boundingBox()).y - initial.mic.y)).toBeLessThan(1);
     await check.click();
     await expect(stage.locator('.feedback')).toBeVisible();
-    expect(Math.abs((await phrase.boundingBox()).y - initial.phrase.y)).toBeLessThan(1);
+    await expect(phrase).toHaveCount(0);
     expect(Math.abs((await theme.boundingBox()).y - initial.theme.y)).toBeLessThan(1);
     await expect(stage.locator('.result-phrase')).toHaveCount(2);
     for (const row of await stage.locator('.result-phrase__text').all()) {

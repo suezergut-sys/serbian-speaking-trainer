@@ -12,6 +12,7 @@ export default defineConfig(({ mode }) => {
   return ({
   plugins: [react()],
   build: {
+    copyPublicDir: mode !== "android",
     rollupOptions: {
       input,
     },
