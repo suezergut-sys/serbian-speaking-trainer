@@ -60,6 +60,3 @@ def test_position_migration_seed_repeat_and_safe_downgrade(tmp_path):
             assert connection.exec_driver_sql("SELECT COUNT(*) FROM topic_phrases WHERE topic_id='misc'").scalar() == 50
     finally:
         engine.dispose()
-
-
-
