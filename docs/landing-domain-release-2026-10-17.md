@@ -15,3 +15,5 @@
 - [ ] Ручная приёмка владельцем.
 
 Android 1.34/code44 и package version не менялись; cap sync/APK не запускались. Landing entry исключён из Android/testlab build; native OAuth callback и Browser.open покрыты unit test. Нет изменений схемы БД, backend, моделей или хранения аудио.
+
+Production-проверка первой публикации выявила filesystem precedence: высокоуровневый rewrite для / попадал после handle:filesystem, поэтому существующий index.html закрывал лендинг. Исправление задаёт явные routes с host root до filesystem; остальные маршруты и API сохранены. Повторная production-проверка обязательна.
