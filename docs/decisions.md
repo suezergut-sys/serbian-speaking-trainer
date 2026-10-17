@@ -669,3 +669,5 @@ Host-specific rewrite serbotalk.app/ обслуживает отдельный l
 ## 17.10.2026 — закрепление лендинга и ширина упражнения
 
 Шапка использует position:sticky, общий фон и локальную высоту 104/84px; scroll-margin у якорей оставляет содержимое ниже неё. Desktop workspace ограничен 1020px и делит свободную ширину строго 1:2, включая промежуточные desktop-размеры. Mobile использует прежний отдельный экран. Тексты, auth и backend не менялись. [Проверки](sticky-header-desktop-ratio-2026-10-17.md).
+
+17.10.2026, 17:10 МСК: PR #121 опубликован, frontend READY/production/main на d98e209; 16 production layout checks и дополнительный root sticky check прошли, error logs пусты. Backend/Android прежние. [Доказательства](sticky-header-desktop-ratio-2026-10-17.md).
