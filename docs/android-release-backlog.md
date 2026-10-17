@@ -1,11 +1,14 @@
 # Android-релизы и проверки
 
+Текущий опубликованный APK — **1.35/code45**, 17.10.2026: весь накопленный исходный код, API/подпись/metadata/assets и GitHub digest/обратная загрузка проверены. [Доказательства](android-1.35-release.md). Физическая приёмка остаётся отдельной.
+
 ## 17.10.2026 — исходная тема повторения и обратная связь
 
 - [x] Общий React-интерфейс RU/EN: «Фразы для повторения / исходная тема», форма отзыва в настройках, текстовый и голосовой ввод с подтверждением расшифровки, очистка микрофона/отмена запросов, тёмные стили.
 - [x] Backend: отдельная таблица отзывов, распознавание без сохранения аудио, Telegram-события регистрации/отзыва/20 проверок. [Проверки](feedback-activity-checkpoint-2026-10-17.md).
-- [ ] Production web/backend и backend-env для Telegram.
-- [ ] Включить в следующий отдельно разрешённый Android sync/build; проверить запись, сворачивание, подписи RU/EN и отправку на физическом устройстве. APK и номера версий в этой задаче не изменялись.
+- [x] Production web/backend и backend-env для Telegram выпущены через PR #125 / bd54041; [проверки](android-1.35-release.md).
+- [x] Включено в согласованный APK 1.35/code45 через production cloud sync/build; packaged assets/API/signature и RU/EN browser layouts проверены. [Выпуск](android-1.35-release.md).
+- [ ] Запись, сворачивание и отправка на физическом устройстве.
 
 ## 13.10.2026 — release AAB 1.30
 
@@ -518,4 +521,5 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 ## 17.10.2026 — desktop-пропорции общей таблицы стилей
 
 - [x] Web: workspace 1:2 и max-width 1020px; мобильный экран тренировки прежний. Лендинг sticky исключён из Android entry. Проверены ru/en landing Capacitor-layout и desktop. [Доказательства](sticky-header-desktop-ratio-2026-10-17.md).
-- [ ] При следующем разрешённом sync проверить общий stylesheet на телефоне; текущий APK 1.34/code44 не менялся.
+- [x] Общий stylesheet перенесён production sync в APK 1.35/code45, packaged assets совпали. [Выпуск](android-1.35-release.md).
+- [ ] Проверить stylesheet на физическом телефоне.
