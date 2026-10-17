@@ -45,15 +45,20 @@ it("translates dynamic counts and errors while preserving unknown text and Serbi
   }
 });
 
-it("keeps a complete English catalog tied to all 160 canonical Serbian phrases and independent hints", () => {
+it("keeps a complete English catalog tied to all 210 canonical Serbian phrases and independent hints", () => {
   const seeds = readFileSync(resolve(process.cwd(), "../backend/app/db/topic_phrases.py"), "utf8");
-  expect(phrases).toHaveLength(160);
-  expect(new Set(phrases.map(phrase => phrase.id)).size).toBe(160);
-  expect(new Set(phrases.map(phrase => phrase.source_ru)).size).toBe(160);
+  expect(phrases).toHaveLength(210);
+  expect(new Set(phrases.map(phrase => phrase.id)).size).toBe(210);
+  expect(new Set(phrases.map(phrase => phrase.source_ru)).size).toBe(210);
   setLanguage("en");
   for (const phrase of phrases) {
-    expect(seeds).toContain(JSON.stringify(phrase.source_ru));
-    expect(seeds).toContain(JSON.stringify(phrase.canonical_sr));
+    if (phrase.id.startsWith("misc-")) {
+      const rows = readFileSync(resolve(process.cwd(), "../backend/app/db/misc_phrases.tsv"), "utf8").trim().split("\n").map(row => row.trim().split("\t"));
+      expect(rows).toContainEqual([phrase.canonical_sr, phrase.source_ru, phrase.source_en]);
+    } else {
+      expect(seeds).toContain(JSON.stringify(phrase.source_ru));
+      expect(seeds).toContain(JSON.stringify(phrase.canonical_sr));
+    }
     expect(phrase.source_en).not.toMatch(/[А-Яа-яЁё]/);
     expect(t(phrase.source_ru)).toBe(phrase.source_en);
     expect(Object.keys(localizedPhrase(phrase.source_ru).hints).length).toBeGreaterThan(0);

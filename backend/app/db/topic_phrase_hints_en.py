@@ -1446,3 +1446,8 @@ ENGLISH_WORD_HINTS: dict[str, dict[str, str]] = {
         'left': 'krenuo',
     },
 }
+
+
+from app.db.misc_phrases import MISC_PHRASES
+
+ENGLISH_WORD_HINTS.update({item["source_en"]: item["hints_en"] for item in MISC_PHRASES})

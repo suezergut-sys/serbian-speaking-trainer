@@ -44,7 +44,7 @@ def test_topics_and_preset_session_snapshot(api_client: TestClient, db_session: 
     assert len(topics.json()) == 9
     miscellaneous = next(topic for topic in topics.json() if topic["id"] == "misc")
     assert miscellaneous["title_ru"] == "Разное"
-    assert miscellaneous["phrase_count"] == 0
+    assert miscellaneous["phrase_count"] == 50
 
     created = api_client.post("/api/sessions", json={"topic_id": "bank", "length": 10})
     assert created.status_code == 201
@@ -118,6 +118,9 @@ def test_start_session_returns_first_exercise_in_one_request(api_client: TestCli
 
 
 def test_start_session_rolls_back_when_topic_has_no_phrases(api_client: TestClient, db_session: Session) -> None:
+    for phrase in db_session.scalars(select(TopicPhrase).where(TopicPhrase.topic_id == "misc")):
+        phrase.enabled = False
+    db_session.commit()
     before = db_session.scalar(select(func.count()).select_from(TrainingSession))
 
     original_db_override = app.dependency_overrides[get_db]

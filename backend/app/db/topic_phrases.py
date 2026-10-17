@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from app.db.misc_phrases import MISC_PHRASES
+
 
 @dataclass(frozen=True)
 class TopicPhraseSeed:
@@ -191,6 +193,8 @@ PHRASES: dict[str, tuple[tuple[str, str], ...]] = {
 }
 
 
+PHRASES["misc"] = tuple((item["source_ru"], item["canonical_sr"]) for item in MISC_PHRASES)
+
 CASE_SKILLS = (
     "grammar.accusative",
     "grammar.genitive",
@@ -203,8 +207,9 @@ CASE_SKILLS = (
 def phrase_seeds() -> tuple[TopicPhraseSeed, ...]:
     result: list[TopicPhraseSeed] = []
     for topic_id, phrases in PHRASES.items():
-        if len(phrases) != 20:
-            raise ValueError(f"Topic {topic_id} must contain exactly 20 phrases")
+        expected_count = 50 if topic_id == "misc" else 20
+        if len(phrases) != expected_count:
+            raise ValueError(f"Topic {topic_id} must contain exactly {expected_count} phrases")
         for position, (source_ru, canonical_sr) in enumerate(phrases, start=1):
             form_skill = "grammar.questions" if source_ru.endswith("?") else "grammar.present"
             skills = [form_skill, CASE_SKILLS[(position - 1) % len(CASE_SKILLS)]]
