@@ -63,6 +63,12 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await expect(page.locator('.landing-calendar img')).toHaveAttribute('src', `/landing/screens/${language}-calendar.png`);
     await expect(page.locator('.landing-ribbon, .landing-screenshot-note')).toHaveCount(0);
+    await expect(page.locator('.landing-header')).toBeInViewport();
+    expect(Math.abs((await page.locator('.landing-header').boundingBox()).y)).toBeLessThan(1);
+    await page.getByRole('link', { name: language === 'ru' ? 'Заглянуть внутрь' : 'Take a look inside', exact: true }).click();
+    const header = await page.locator('.landing-header').boundingBox();
+    const howHeading = await page.locator('#how .landing-section-heading').boundingBox();
+    expect(howHeading.y).toBeGreaterThanOrEqual(header.y + header.height);
     if (layout === 'desktop') {
       for (const width of [800, 1024, 1440]) {
         await page.setViewportSize({ width, height: 900 });

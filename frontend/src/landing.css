@@ -1,8 +1,10 @@
-.landing { --landing-width: 1160px; background: #020914; color: var(--text); overflow: clip; }
+.landing { --landing-width: 1160px; --landing-header-height: 104px; background: #020914; color: var(--text); overflow: clip; }
 .landing a { color: inherit; text-decoration: none; }
 .landing a:focus-visible, .landing button:focus-visible { outline: 2px solid var(--gold); outline-offset: 6px; }
 .landing-wrap { width: min(var(--landing-width), calc(100% - 80px)); margin-inline: auto; }
-.landing-header { display: flex; align-items: center; gap: 28px; min-height: 104px; border-bottom: 1px solid var(--line); }
+.landing-header { position: sticky; top: 0; z-index: 10; background: var(--panel); backdrop-filter: blur(18px); display: flex; align-items: center; gap: 28px; min-height: 104px; border-bottom: 1px solid var(--line); }
+.landing-header.landing-wrap { width: 100%; padding-inline: max(40px, calc((100% - var(--landing-width)) / 2)); }
+.landing [id] { scroll-margin-top: calc(var(--landing-header-height) + 20px); }
 .landing-brand { display: flex; align-items: center; gap: 10px; font-size: 25px; font-weight: 750; letter-spacing: -1px; }
 .landing-brand img { object-fit: contain; border-radius: 10px; }
 .landing-brand span span, .landing-footer > .landing-brand > span { color: var(--blue); }
@@ -70,6 +72,7 @@
 @media (min-width: 1500px) { .landing-hero { min-height: 660px; } }
 @media (max-width: 1000px) { .landing-header { gap: 20px; } .landing-header nav { gap: 18px; } .landing-header > .landing-cta { display: none !important; } .landing-languages { margin-left: auto; } .landing-story { gap: 50px; } .landing-steps { column-gap: 22px; } .landing-speech--top { left: -30px; } .landing h1 { font-size: 46px; } }
 @media (max-width: 700px) {
+  .landing { --landing-header-height: 84px; } .landing-header.landing-wrap { padding-inline: 20px; }
   .landing-wrap { width: calc(100% - 40px); } .landing-header { min-height: 84px; gap: 10px; } .landing-header nav { display: none; } .landing-brand { font-size: 22px; }
   .landing-hero { grid-template-columns: 1fr; gap: 35px; padding-block: 30px 20px; } .landing h1 { font-size: clamp(35px, 8.8vw, 53px); letter-spacing: -1.8px; } .landing-lead { font-size: 15px; } .landing-eyebrow { font-size: 9px; letter-spacing: 1.4px; } .landing-explore { margin-top: 25px; } .landing-hero-visual { min-height: 610px; max-width: 400px; width: 100%; margin: auto; } .landing-speech--top { left: -6px; top: 40px; }
   .landing-actions { gap: 10px; } .landing a.landing-cta { padding: 16px 18px; gap: 20px; font-size: 13px; } .landing-store { padding: 10px 15px; font-size: 12px; }

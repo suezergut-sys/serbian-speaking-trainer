@@ -1,13 +1,13 @@
 import { expect, test } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 const titles = [['job-interview', 'Собеседование'], ['bank', 'В банке'], ['vacation', 'В отпуске'], ['cafe', 'В кафе'], ['work', 'На работе'], ['doctor', 'У врача'], ['rent', 'Аренда'], ['transport', 'Транспорт'], ['misc', 'Разное']];
-for (const language of ['ru', 'en']) for (const width of [1024, 1366]) {
+for (const language of ['ru', 'en']) for (const width of [800, 1024, 1366, 1920]) {
   test(`desktop topic cards ${language} ${width}`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
-    await page.addInitScript(lang => {
-      localStorage.setItem('serbotalk.interface-language', lang);
-      localStorage.setItem('sb-e2e-auth-auth-token', JSON.stringify({ access_token: 'e2e-local-only', refresh_token: 'e2e-local-only', token_type: 'bearer', expires_at: 4102444800, user: { id: 'cards-user', aud: 'authenticated', role: 'authenticated', email: 'learner@example.invalid', app_metadata: {}, user_metadata: {}, created_at: '2026-10-01T00:00:00Z' } }));
-    }, language);
+    await page.addInitScript(({ language, storageKey }) => {
+      localStorage.setItem('serbotalk.interface-language', language);
+      localStorage.setItem(storageKey, JSON.stringify({ access_token: 'e2e-local-only', refresh_token: 'e2e-local-only', token_type: 'bearer', expires_at: 4102444800, user: { id: 'cards-user', aud: 'authenticated', role: 'authenticated', email: 'learner@example.invalid', app_metadata: {}, user_metadata: {}, created_at: '2026-10-01T00:00:00Z' } }));
+    }, { language, storageKey: process.env.LAYOUT_AUTH_STORAGE_KEY ?? 'sb-e2e-auth-auth-token' });
     await page.route('**/api/**', async route => {
       const path = new URL(route.request().url()).pathname;
       let body;
@@ -19,9 +19,15 @@ for (const language of ['ru', 'en']) for (const width of [1024, 1366]) {
       else throw new Error(`Unexpected API: ${path}`);
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
     });
-    await page.goto('/');
+    await page.goto(process.env.TRAINER_PAGE_PATH ?? '/');
     const cards = page.locator('.desktop-topic-grid > button');
     await expect(cards).toHaveCount(12);
+    const topicsPanel = await page.locator('.workspace > .topics-panel').boundingBox();
+    const practicePanel = await page.locator('.workspace > .practice-stage').boundingBox();
+    expect(Math.abs(practicePanel.width - topicsPanel.width * 2)).toBeLessThan(1);
+    expect(practicePanel.x).toBeGreaterThan(topicsPanel.x + topicsPanel.width);
+    expect(await page.locator('.workspace').evaluate(el => el.getBoundingClientRect().width)).toBeLessThanOrEqual(1020);
+    expect(await page.locator('.workspace').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
     const boxes = await cards.evaluateAll(elements => elements.map(element => { const b = element.getBoundingClientRect(); return { left: b.left, width: b.width, height: b.height, scroll: element.scrollWidth, client: element.clientWidth }; }));
     expect(new Set(boxes.map(box => box.left)).size).toBe(2);
     expect(boxes.every(box => box.width > box.height && box.scroll <= box.client)).toBe(true);
