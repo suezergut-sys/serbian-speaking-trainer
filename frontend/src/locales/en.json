@@ -364,13 +364,10 @@
   "Повседневные разговоры, короткие диалоги и разговорные выражения.": "Everyday conversations, short dialogues and colloquial expressions.",
   "Выберите свою ситуацию": "Pick your situation",
   "Кафе, банк, врач или работа. Тренируйте фразы, которые пригодятся в обычной жизни.": "A café, the bank, the doctor or work. Practise phrases you can use in everyday life.",
-  "Мобильная веб-версия SerboTalk: выбор бытовой темы": "SerboTalk mobile web app: everyday topics",
   "Скажите это по-сербски": "Say it in Serbian",
   "Соберите фразу сами и произнесите вслух. Если слово забылось, воспользуйтесь подсказкой.": "Build the phrase yourself and say it out loud. If a word slips your mind, use a hint.",
-  "Мобильная веб-версия SerboTalk: разговорная тренировка": "SerboTalk mobile web app: speaking practice",
   "Разберите и повторите": "Review and repeat",
   "Посмотрите разбор ответа и вернитесь к фразам, которым нужно ещё немного практики.": "Explore the feedback on your answer and revisit phrases that need a little more practice.",
-  "Мобильная веб-версия SerboTalk: разбор ответа": "SerboTalk mobile web app: answer feedback",
   "Открыть приложение": "Open the app",
   "Начать говорить": "Start speaking",
   "SerboTalk — начните говорить по-сербски": "SerboTalk — start speaking Serbian",
@@ -388,8 +385,6 @@
   "Скоро": "Coming soon",
   "Для уровня A1–A2 · В браузере и на Android": "For A1–A2 learners · On the web and Android",
   "Заглянуть внутрь": "Take a look inside",
-  "Один кофе, пожалуйста.": "One coffee, please.",
-  "Календарь занятий в SerboTalk": "SerboTalk practice calendar",
   "ПОЧЕМУ ПОЯВИЛСЯ SERBOTALK": "WHY I CREATED SERBOTALK",
   "Знать слово — ещё не значит": "Knowing a word is just",
   "уметь его сказать.": "the beginning.",
@@ -409,5 +404,9 @@
   "Ссылка появится после публикации": "Link available after publication",
   "Продолжить тренировку": "Continue practising",
   "Открываем Google…": "Opening Google…",
-  "Вход временно недоступен. Попробуйте позже.": "Sign-in is temporarily unavailable. Please try again later."
+  "Вход временно недоступен. Попробуйте позже.": "Sign-in is temporarily unavailable. Please try again later.",
+  "SerboTalk: выбор темы": "SerboTalk: topic selection",
+  "SerboTalk: разговорная тренировка": "SerboTalk: speaking practice",
+  "SerboTalk: разбор ответа": "SerboTalk: answer feedback",
+  "SerboTalk: статистика занятий": "SerboTalk: practice statistics"
 }

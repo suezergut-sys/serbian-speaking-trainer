@@ -706,3 +706,17 @@
 - [x] 223 tests, lint/typecheck/build; 8 ru/en sticky/layout checks и 8 desktop ratio checks 800–1920px. [Доказательства](sticky-header-desktop-ratio-2026-10-17.md).
 - [x] PR #121 merged; frontend READY/main на d98e209, serbotalk.app alias, 16 production browser checks + root sticky check, HTTP/health и пустые error logs. [Доказательства](sticky-header-desktop-ratio-2026-10-17.md).
 - [ ] Приёмка владельцем; APK не запрашивался.
+
+## 17.10.2026 — локальная перерисовка лендинга с оригинальными экранами
+
+- [x] Первый экран со статистикой без наклона/врезок; новые RU/EN скриншоты тем, упражнения и результата, ровная галерея.
+- [x] 8 JPEG 1280×2772 сохранены побайтно; 7 component tests, 12 browser checks, typecheck/build/lint; desktop/mobile local screenshots просмотрены. [Доказательства](landing-real-screens-preview-2026-10-17.md).
+- [x] Локальный preview HTTP 200 открыт для просмотра.
+- [ ] Приёмка и уточнения владельца. Публикация/Android не входят в текущий запрос.
+
+## 17.10.2026 — публикация лендинга с оригинальными экранами
+
+- [x] Цветной логотип Google Play с прозрачным фоном в обеих кнопках, сохранены RU/EN и исходные JPEG.
+- [x] 7 component tests, typecheck/production build и lint.
+- [x] 12 локальных browser checks RU/EN desktop/mobile/320px/Android-layout и mock вход. Публикация ниже: [доказательства](landing-real-screens-release-2026-10-17.md).
+- [ ] Приёмка владельцем; Android-сборка не запрашивалась.
