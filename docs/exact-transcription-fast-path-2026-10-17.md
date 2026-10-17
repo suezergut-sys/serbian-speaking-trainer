@@ -34,9 +34,16 @@
 
 ## Публикация
 
-- [ ] GitHub PR/merge.
-- [ ] Vercel backend READY на merged SHA и production alias.
-- [ ] Production web smoke RU/EN и HTTP/auth smoke; runtime error logs.
+- [x] [PR #129](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/129) merged; runtime SHA `6dca0cea1fb3ea67dcec36ff113bd6ddde6763bd`. GitHub status CLEAN/MERGEABLE, обязательных CI checks нет; локальные проверки выше.
+- [x] 17.10.2026, 22:19 МСК: Vercel backend и frontend READY/production/main на runtime SHA; production aliases подтверждены API.
+- [x] Production web в существующей авторизованной Chrome-сессии: темы и подготовленная фраза RU/EN, настройки с включённой помощью, English reload; русский восстановлен. Console errors 0. HTTP root/app/privacy/terms/health/OpenAPI 200; anonymous topics 401. Runtime error log rows 0 у обоих deployments.
 - [ ] Приёмка владельцем на реальной речи; live STT/AI во время автоматических проверок не вызывается.
 
 Android-сборка не запрошена и не выполняется.
+
+Backend deployment: [serbian-speaking-trainer-6op56ya4v](https://serbian-speaking-trainer-6op56ya4v-suezerguts-projects.vercel.app), `dpl_2oL11kXYAHau38zvVNqJDvvxLhsi`, alias `serbian-speaking-trainer-api.vercel.app`.
+Frontend deployment: [serbian-speaking-trainer-27blbk0oc](https://serbian-speaking-trainer-27blbk0oc-suezerguts-projects.vercel.app), `dpl_3X4Nv8R7qkQJhZBWF14cGs3s3ov2`, aliases `serbotalk.app` и `serbian-speaking-trainer.vercel.app`.
+
+Оба выпущены из чистого git archive runtime SHA с локально добавленной только связью Vercel project. Проверка экспорта не нашла БД, секретных env, APK, зависимостей и dist; frontend использует прежние runtime assets. Backend production seed: 0 skills/topics/phrases добавлено, миграций в изменении нет. Git-экспорт включает 147 backend и 187 frontend файлов, Vercel штатно фильтрует свои exclusions. Игнорируемые доказательства: `artifacts/exact-assistance-{backend,frontend}-deploy.log`, `exact-assistance-deployments.json`, `exact-assistance-production-http.json`, `exact-assistance-{backend,frontend}-errors.jsonl`.
+
+Live STT/assistance/AI в production не вызывались: точный пропуск проверен offline интеграционными тестами и публикацией нужного SHA, а не реальным голосовым A/B. Следующий документальный commit не меняет runtime и не требует redeploy.

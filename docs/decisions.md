@@ -706,3 +706,5 @@ Desktop statistics вычисляет ширину правой колонки w
 ## 17.10.2026 — fast path эталонного transcript
 
 До помощи используем прежний comparator `validate_analysis`: normalized_serbian_words, непустое совпадение canonical/variants с сохранением диакритики. Для совпавшего текста возвращаем существующий text-only contract, без receipt и новой UI-строки; исходный transcript не заменяется эталоном. Nonmatch, script review, ручное подтверждение и scoring прежние. Telegram и Android package не меняются. [Доказательства](exact-transcription-fast-path-2026-10-17.md).
+
+17.10.2026, 22:19 МСК: exact transcript fast path опубликован через PR #129 на `6dca0ce`; backend/web READY, production aliases, RU/EN и HTTP/auth smoke подтверждены, console/runtime error logs 0. Live AI latency не измерялась; Telegram/APK не менялись. [Доказательства](exact-transcription-fast-path-2026-10-17.md).

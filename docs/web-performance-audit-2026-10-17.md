@@ -116,3 +116,5 @@ node e2e/summary.mjs --platform web
 - [ ] Production A/B и приёмка владельцем. В этом аудите live AI не вызывался; нельзя назвать какие-либо проценты подтверждённым production-ускорением.
 
 Android-релиз/публикация не входят в исследование; runtime изменений для Android backlog нет.
+
+Продолжение 17.10.2026: первый вариант (exact-match bypass assistance) реализован, протестирован и опубликован через PR #129. [Парный benchmark и production-проверки](exact-transcription-fast-path-2026-10-17.md). Остальные варианты остаются гипотезами; live AI p50/p95 не измерялись.
