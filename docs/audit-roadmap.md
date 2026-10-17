@@ -4,7 +4,8 @@
 
 - [x] Desktop-статистика использует ширину панели упражнения; звезда 18px; страницы фраз 20 по умолчанию с выбором 20/50. API принимает 20 и сохраняет старые параметры. [Доказательства](statistics-layout-2026-10-17.md).
 - [x] 7 API integration, 231 component tests, 8 browser checks RU/EN web/native; typecheck, production build и lint.
-- [ ] Публикация web/backend и приёмка владельцем.
+- [x] 17.10.2026, 21:58 МСК: web/backend READY/main/production на `70e1292`, [PR #127](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/127); 8 production browser checks RU/EN, реальные API-данные, HTTP smoke и пустые error logs. [Доказательства](statistics-layout-2026-10-17.md).
+- [ ] Приёмка владельцем.
 - [ ] Перенос общего UI в будущий Android-релиз по отдельной команде; текущий APK 1.35/code45 прежний.
 
 ## 17.10.2026 — публикация накопленного набора и APK 1.35

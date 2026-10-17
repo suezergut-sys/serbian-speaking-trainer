@@ -696,3 +696,6 @@ Host-specific rewrite serbotalk.app/ обслуживает отдельный l
 ## 17.10.2026 — ширина статистики и страницы по 20
 
 Desktop statistics вычисляет ширину правой колонки workspace через общие CSS-переменные максимальной ширины, отступов и gap. Mobile/native сохраняют прежние правила ширины. Заголовки карточек допускают перенос легенды; календарная звезда и легенда увеличены с 14 до 18px. UI предлагает только 20/50, смена размера сбрасывает страницу на первую. Backend default — 20; параметры 10/all сохранены для совместимости с ранее выпущенными клиентами. Миграции не нужны. Новых UI-строк нет, RU/EN используют общий каталог. Публикация и Android-релиз остаются отдельными. [Доказательства](statistics-layout-2026-10-17.md).
+
+
+17.10.2026, 21:58 МСК: [PR #127](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/127) merged на `70e1292f1b8d7b90840fc577da5797e54c031f19`. Выпуск из чистого Git-экспорта: backend READY до frontend READY, основные aliases подтверждены Vercel API. 8/8 production browser checks с synthetic API/account плюс реальная авторизованная статистика RU/EN и 20/50, HTTP smoke, error logs = 0. Android assets/metadata прежние. [Доказательства](statistics-layout-2026-10-17.md).
