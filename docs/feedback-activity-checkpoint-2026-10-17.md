@@ -22,7 +22,8 @@
 
 ## Публикация и Android
 
-- [ ] PR/push и production web/backend; перед запуском production необходимы миграция и backend Telegram-env.
-- [ ] Отдельно запрошенный Android-релиз: sync/build/APK и проверка на устройстве. Текущие Android metadata и версия package.json не менялись.
+- [x] PR #125 / bd54041: production web/backend READY, миграция и Telegram-env подтверждены; реальный технический отзыв сохранён. [Выпуск](android-1.35-release.md).
+- [x] По отдельной команде владельца выпущен APK 1.35/code45; API/metadata/подпись/assets и GitHub release проверены. [Выпуск](android-1.35-release.md).
+- [ ] Приёмка на физическом устройстве и реальная речь.
 
 Контракты сверены с [Telegram sendMessage](https://core.telegram.org/bots/api#sendmessage) и [официальной документацией OpenAI по распознаванию](https://developers.openai.com/api/docs/guides/speech-to-text).

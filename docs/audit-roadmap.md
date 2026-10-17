@@ -3,16 +3,17 @@
 ## 17.10.2026 — публикация накопленного набора и APK 1.35
 
 - [x] Согласованы 1.35/code45, объединён локальный набор с опубликованными улучшениями лендинга/каталога; production Telegram-env настроены. [Доказательства](android-1.35-release.md).
-- [ ] Quality gate, APK/API/signature/assets, PR/merge и production проверки.
-- [ ] GitHub release и обратная проверка бинарника.
+- [x] Quality gate 315 backend/scripts / 229 frontend / 5 Node / 70 browser; production APK/API/metadata/signature/assets; PR #125 merged, Vercel backend/web READY на bd54041, 6 production browser checks и реальный технический отзыв. [Доказательства](android-1.35-release.md).
+- [x] GitHub v1.35 latest: tag/target/digest/size и обратная загрузка совпали; Downloads готов. [Доказательства](android-1.35-release.md).
 - [ ] Физическая приёмка телефона и реальная речь; P0/P1/P2 целиком не закрываются.
 
 ## 17.10.2026 — обратная связь, исходная тема и Telegram
 
 - [x] Центрирование web-загрузки и исходная тема повторяемой фразы в общем UI RU/EN; форма текстовой/голосовой обратной связи, отдельная таблица и миграция; Telegram после commit для регистрации, отзыва и достижения 20 проверок. [Доказательства и ограничения](feedback-activity-checkpoint-2026-10-17.md).
 - [x] Backend и UI regression-тесты, typecheck, production build, lint; локальная миграция и реальная тестовая доставка Telegram. Тесты распознавания используют mocks.
-- [ ] Публикация web/backend, production-env и миграция production БД.
-- [ ] Android sync/build и физическая приёмка, реальное голосовое распознавание. P0/P1/P2 целиком не закрываются.
+- [x] Web/backend опубликованы в 1.35; production Telegram-env и миграция подтверждены. [Выпуск](android-1.35-release.md).
+- [x] Android production sync/build 1.35 и проверки упаковки завершены. [Выпуск](android-1.35-release.md).
+- [ ] Физическая приёмка и реальное голосовое распознавание. P0/P1/P2 целиком не закрываются.
 
 ## 13.10.2026 — release AAB 1.30
 

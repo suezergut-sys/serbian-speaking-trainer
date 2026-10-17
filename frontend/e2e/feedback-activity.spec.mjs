@@ -37,7 +37,7 @@ for (const layout of ['desktop', 'mobile', 'android']) for (const language of ['
       localStorage.setItem(storageKey, JSON.stringify({ access_token: 'e2e-local-only', refresh_token: 'e2e-local-only', token_type: 'bearer', expires_in: 31536000, expires_at: 4102444800,
         user: { id: 'feedback-user', aud: 'authenticated', role: 'authenticated', email: 'learner@example.invalid', app_metadata: {}, user_metadata: {}, created_at: '2026-09-01T00:00:00Z' } }));
     }, { language, storageKey: process.env.FEEDBACK_AUTH_STORAGE_KEY ?? "sb-e2e-auth-auth-token" });
-    await page.goto('/');
+    await page.goto(process.env.FEEDBACK_APP_PATH ?? '/');
     if (layout !== 'desktop') await page.getByRole('button', { name: en ? 'Practice' : 'Тренировка', exact: true }).click();
     await expect(page.getByText(en ? 'Review phrases / Bank' : 'Фразы для повторения / Банк', { exact: true }).first()).toBeVisible();
 
