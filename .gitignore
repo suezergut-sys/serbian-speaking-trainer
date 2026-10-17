@@ -32,3 +32,4 @@ inst_user_settings.tmp
 .spec-render/
 .idea/
 .vscode/
+.vercel

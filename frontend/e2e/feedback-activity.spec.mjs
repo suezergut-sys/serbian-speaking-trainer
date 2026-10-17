@@ -39,7 +39,7 @@ for (const layout of ['desktop', 'mobile', 'android']) for (const language of ['
     }, language);
     await page.goto('/');
     if (layout !== 'desktop') await page.getByRole('button', { name: en ? 'Practice' : 'Тренировка', exact: true }).click();
-    await expect(page.getByText(en ? 'Review phrases / Bank' : 'Фразы для повторения / Банк', { exact: layout === 'desktop' || layout === 'android' }).first()).toBeVisible();
+    await expect(page.getByText(en ? 'Review phrases / Bank' : 'Фразы для повторения / Банк', { exact: true }).first()).toBeVisible();
 
     if (layout === 'desktop') {
       await page.getByRole('button', { name: /^(Банк|Bank)/ }).click();

@@ -73,7 +73,7 @@ SKILLS: tuple[SkillSeed, ...] = (
 
 
 TOPICS: tuple[dict[str, object], ...] = (
-    {"id": "misc", "title_ru": "Разное", "description_ru": "Пустая тема для пользовательских фраз.", "intents_json": [], "vocabulary_json": []},
+    {"id": "misc", "title_ru": "Разное", "description_ru": "Повседневные разговоры, короткие диалоги и разговорные выражения.", "intents_json": [], "vocabulary_json": []},
     {"id": "job-interview", "title_ru": "Собеседование", "description_ru": "Опыт, навыки и условия работы.", "intents_json": ["представиться", "рассказать об опыте", "уточнить условия"], "vocabulary_json": ["posao", "iskustvo", "veštine", "plata"]},
     {"id": "bank", "title_ru": "Банк", "description_ru": "Счёт, карта, документы и комиссии.", "intents_json": ["объяснить цель", "спросить о документах", "уточнить комиссию"], "vocabulary_json": ["račun", "kartica", "naknada", "lična karta"]},
     {"id": "vacation", "title_ru": "Отпуск", "description_ru": "Поездка, впечатления и планы.", "intents_json": ["рассказать о прошлом", "описать место", "обсудить планы"], "vocabulary_json": ["odmor", "putovanje", "more", "hotel"]},
@@ -102,6 +102,8 @@ def seed_catalog(session: Session) -> tuple[int, int, int]:
         if topic_repo.get(item["id"]) is None:
             topic_repo.add(TopicPreset(**item))
             topics_added += 1
+        elif item["id"] == "misc":
+            topic_repo.get("misc").description_ru = item["description_ru"]
 
     for item in TOPIC_PHRASES:
         phrase = phrase_repo.get(item.id)

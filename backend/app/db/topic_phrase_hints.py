@@ -1010,3 +1010,8 @@ TOPIC_PHRASE_HINTS = {'bank-01': [{'translation_sr': 'Želim', 'word_ru': 'Я'},
              {'translation_sr': 'poslednji', 'word_ru': 'последнее'},
              {'translation_sr': 'imejl', 'word_ru': 'электронное'},
              {'translation_sr': 'imejl', 'word_ru': 'письмо'}]}
+
+
+from app.db.misc_phrases import MISC_PHRASES
+
+TOPIC_PHRASE_HINTS.update({item["id"]: [{"word_ru": word, "translation_sr": sr} for word, sr in item["hints_ru"].items()] for item in MISC_PHRASES})

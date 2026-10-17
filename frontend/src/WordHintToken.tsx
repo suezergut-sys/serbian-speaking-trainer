@@ -1,12 +1,30 @@
 import { useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
-export function WordHintToken({ word, used, disabled, active, translation, onClick }: {
+export function WordHintToken({ word, used, disabled, active, translation, onClick, onDismiss }: {
   word: string; used: boolean; disabled: boolean; active: boolean;
-  translation: string; onClick: () => void;
+  translation: string; onClick: () => void; onDismiss: () => void;
 }) {
   const anchor = useRef<HTMLSpanElement>(null);
   const tooltip = useRef<HTMLSpanElement>(null);
+
+  useLayoutEffect(() => {
+    if (!active) return;
+    const dismissOutside = (event: Event) => {
+      if (event.target instanceof Node && !anchor.current?.contains(event.target)) onDismiss();
+    };
+    const dismissOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onDismiss();
+    };
+    document.addEventListener("pointerdown", dismissOutside, true);
+    document.addEventListener("focusin", dismissOutside, true);
+    document.addEventListener("keydown", dismissOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", dismissOutside, true);
+      document.removeEventListener("focusin", dismissOutside, true);
+      document.removeEventListener("keydown", dismissOnEscape);
+    };
+  }, [active, onDismiss]);
 
   useLayoutEffect(() => {
     if (!active) return;

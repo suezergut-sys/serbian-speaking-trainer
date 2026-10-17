@@ -52,9 +52,10 @@ export function onAuthStateChange(callback: (session: Session | null) => void): 
   return () => data.subscription.unsubscribe();
 }
 
-export async function signInWithGoogle(): Promise<void> {
+export async function signInWithGoogle(redirectPath: "/" | "/app" = "/"): Promise<void> {
   const native = Capacitor.isNativePlatform();
-  const redirectTo = native ? nativeRedirectUrl : `${window.location.origin}/`;
+  const webPath = window.location.pathname === "/app" ? "/app" : redirectPath;
+  const redirectTo = native ? nativeRedirectUrl : `${window.location.origin}${webPath}`;
   const { data, error } = await getSupabase().auth.signInWithOAuth({
     provider: "google",
     options: { redirectTo, skipBrowserRedirect: native },

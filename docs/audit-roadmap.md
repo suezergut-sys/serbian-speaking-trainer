@@ -7,14 +7,6 @@
 - [ ] Публикация web/backend, production-env и миграция production БД.
 - [ ] Android sync/build и физическая приёмка, реальное голосовое распознавание. P0/P1/P2 целиком не закрываются.
 
-## 15.10.2026 — обновление закрытого теста 1.33
-
-- [x] Production AAB 1.33/code43 собран из опубликованного исходника, bundletool validate/dump, jarsigner verify и upload certificate проверены; 9 public assets совпали с APK, production API сохранён. [Доказательства](google-play-1.33-update-2026-10-15.md).
-- [x] AAB загружен в существующий Alpha, русские и английские release notes заполнены, выпуск сохранён без блокирующих ошибок. Поддержка устройств сохранена.
-- [x] Common-issues precheck прошёл, после загрузки/сохранения dashboard сохраняет 12 участников / 2 дня. Testers Community Active: день 2/16, 15/15 назначенных участников.
-- [ ] Отправка Google не подтверждается: после финального подтверждения Console оставляет «Ещё не отправленные», в истории нового запроса нет. Оставлен финальный диалог для ручного нажатия владельцем; [доказательства](google-play-1.33-update-2026-10-15.md).
-- [ ] Решение Google, получение обновления участниками, физическая приёмка и завершение 14-дневного теста; P0/P1/P2 целиком не закрыты.
-
 ## 13.10.2026 — release AAB 1.30
 
 - [x] Production Android sync/build и bundleProdRelease, отдельная upload-подпись, bundletool validate/dump, jarsigner verify и 7 public assets проверены; 1.30/code40 без изменения функций. [Доказательства](android-1.30-release.md).
@@ -667,26 +659,24 @@
 - [x] [PR #104](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/104) merged на runtime 6befe14; frontend READY/production/main, alias подтверждён. 12 production browser checks (настройки с mock API) и 4 HTTP 200. [Доказательства](settings-account-checkpoint-2026-10-15.md).
 - [ ] APK по отдельной команде; backlog обновлён.
 - [ ] Приёмка владельцем.
-## 15.10.2026 — локальный лендинг SerboTalk
 
-- [x] Отдельный адаптивный лендинг: авторская история, A1–A2, три шага, 6 мобильных web-скриншотов с демонстрационными данными, web CTA, честная заглушка Google Play; общий ru/en каталог и accessibility тексты.
-- [x] Проверки: 211 component tests / 21 files, typecheck и production build, lint; 2 сценария получения скриншотов и 8 browser checks ru/en × desktop/mobile/320px/Android-layout. Локальная страница HTTP 200; desktop и narrow screenshots просмотрены. [Доказательства](landing-checkpoint-2026-10-15.md).
-- [ ] Ручная приёмка владельцем.
-- Публикация и APK не входят в запрос: страница размещена только локально; Android 1.32/code42 не менялся.
+## 15.10.2026 — упражнение, подсказки, иконка повторения и календарь
 
-## 15.10.2026 — единые цвета легенды календаря
-
-- [x] Локальная реализация: общие CSS-правила заливки/рамки/свечения для легенды и календарных дней, включая интенсивные дни. Тексты ru/en и пороги сохранены.
-- [x] Statistics component tests: 11 passed; browser ru/en × desktop/mobile/общий Android-layout: 6 passed; lint/typecheck/production build passed. [Доказательства](calendar-legend-checkpoint-2026-10-15.md).
-- [ ] Публикация web.
+- [x] Локальная реализация: круглая иконка повторения; удалены «сменить» и рамка приглашения; original постоянно сверху, ответ/перевод выровнены слева, score/verdict по центру, controls снизу.
+- [x] Подсказка закрывается при outside pointer/focus, Escape и повторном нажатии; использованные слова/штраф сохранены.
+- [x] Цвета календарной легенды и дней объединены общими CSS-правилами.
+- [x] Проверки: UI 210 passed, backend/scripts 299 passed / 8 skipped, Node 5 passed, lint/typecheck/build; 10 новых layout/hint и 17 calendar/localization/result browser scenarios. [Доказательства](practice-layout-checkpoint-2026-10-15.md).
+- [x] [PR #106](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/106), runtime SHA `46b3067f4d497b6688271fc5932198df7a1282ce`; frontend READY/main/production, основной alias подтверждён. После READY: 16 production browser scenarios с mock API, 4 HTTP checks; runtime errors 0. [Доказательства](practice-layout-checkpoint-2026-10-15.md).
 - [ ] Android sync/build по отдельной команде; backlog обновлён.
-- [ ] Ручная приёмка владельцем.
+- [ ] Ручная приёмка владельцем, физический Android.
 
-## 15.10.2026 — уточнение локального лендинга
+## 15.10.2026 — накопленный Android-релиз 1.33
 
-- [x] Календарь ru/en во врезке по предоставленным скриншотам, удаление ленты и подписи, общее выравнивание телефонов независимо от текста.
-- [x] 2 component tests, 8 browser checks с проверками выравнивания на 800/1024/1440px и длинным текстом, typecheck/build/lint. [Доказательства](landing-checkpoint-2026-10-15.md).
-- [ ] Приёмка владельцем. Публикация и APK не запрашивались.
+- [x] Отдельная команда на APK; весь накопленный после 1.32 набор перенесён через production Android sync, 17 metadata/environment tests и 9 Android-layout browser scenarios passed.
+- [x] Владелец отдельно согласовал 1.33/code43; metadata/package/output filename/test обновлены вместе.
+- [x] Cloud APK BUILD SUCCESSFUL/109 tasks; UI 210 passed, lint; metadata/API/signature/9 public assets/Downloads/SHA-256 проверены. [Доказательства](android-1.33-release.md).
+- [x] [PR #108](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/108) merged на d132af3; [GitHub release v1.33](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.33), tag/target/digest/size/authenticated download/Downloads совпали. [Доказательства](android-1.33-release.md).
+- [ ] Физическая Android-приёмка и реальная речь; P0/P1/P2 целиком не закрыты.
 
 ## 16.10.2026 — компактный экран результата
 
@@ -702,3 +692,40 @@
 - [x] 302 backend/script tests passed, 8 skipped; 212 component tests, lint/typecheck/build; 6 browser checks ru/en desktop/mobile/Android-layout.
 - [x] Backend/web опубликованы через PR #112, runtime ee234ee, оба READY/main/production и aliases подтверждены. 16.10.2026, 17:52 МСК: 6/6 production browser checks, HTTP smoke и error logs прошли. [Доказательства](free-daily-limit-20-checkpoint-2026-10-16.md).
 - [ ] Статический текст условий в будущем APK и физическая приёмка отдельно.
+
+## 17.10.2026 — Разное, 50 фраз; выпуск 1.34/code44
+
+- [x] Реализация, ru/en переводы/подсказки, повторяемый seed и миграция; backend 306/8 skipped, Node 5, frontend 212, lint/typecheck/build, browser 10 passed. [Доказательства](android-1.34-release.md).
+- [x] PR #114/#115 merged; backend/web READY на 7b75864, production БД: 50/50 новых фраз совпали, всего 210; Chrome ru/en/версия/запуск и HTTP smoke прошли. [Доказательства](android-1.34-release.md).
+- [x] Production APK 1.34/code44, API/metadata/прежняя подпись/9 assets/50 IDs/Downloads проверены; GitHub v1.34-final, digest/size и обратная загрузка совпали. [Доказательства](android-1.34-release.md).
+- [ ] Физическая ручная приёмка, OAuth/микрофон/реальная речь.
+
+## 17.10.2026 — публикация лендинга и встроенного входа
+
+- [x] Лендинг ru/en, компактные отступы, авторская история/скриншоты, встроенный Google/review login, session continuation и /app; старый домен и native callback сохранены.
+- [x] 223 unit/component tests, 12 browser checks с mock API/auth, lint/typecheck/production build; Supabase allow list нового callback проверен. [Доказательства](landing-domain-release-2026-10-17.md).
+- [x] PR #117/#118/#119 merged, frontend READY/production/main на 95827ea; alias serbotalk.app, 4 final root browser checks и реальный Google→/app→reload→landing→continue подтверждены. Error logs пусты. [Доказательства](landing-domain-release-2026-10-17.md).
+- [ ] Ручная приёмка. Android-сборка не запрашивалась.
+
+## 17.10.2026 — sticky-шапка и desktop 1:2
+
+- [x] Шапка лендинга закреплена, якоря учитывают её высоту; desktop workspace 1:2, max-width 1020px.
+- [x] 223 tests, lint/typecheck/build; 8 ru/en sticky/layout checks и 8 desktop ratio checks 800–1920px. [Доказательства](sticky-header-desktop-ratio-2026-10-17.md).
+- [x] PR #121 merged; frontend READY/main на d98e209, serbotalk.app alias, 16 production browser checks + root sticky check, HTTP/health и пустые error logs. [Доказательства](sticky-header-desktop-ratio-2026-10-17.md).
+- [ ] Приёмка владельцем; APK не запрашивался.
+
+## 17.10.2026 — локальная перерисовка лендинга с оригинальными экранами
+
+- [x] Первый экран со статистикой без наклона/врезок; новые RU/EN скриншоты тем, упражнения и результата, ровная галерея.
+- [x] 8 JPEG 1280×2772 сохранены побайтно; 7 component tests, 12 browser checks, typecheck/build/lint; desktop/mobile local screenshots просмотрены. [Доказательства](landing-real-screens-preview-2026-10-17.md).
+- [x] Локальный preview HTTP 200 открыт для просмотра.
+- [ ] Приёмка и уточнения владельца. Публикация/Android не входят в текущий запрос.
+
+## 17.10.2026 — публикация лендинга с оригинальными экранами
+
+- [x] Цветной логотип Google Play с прозрачным фоном в обеих кнопках, сохранены RU/EN и исходные JPEG.
+- [x] 7 component tests, typecheck/production build и lint.
+- [x] 12 локальных browser checks RU/EN desktop/mobile/320px/Android-layout и mock вход. Публикация ниже: [доказательства](landing-real-screens-release-2026-10-17.md).
+- [ ] Приёмка владельцем; Android-сборка не запрашивалась.
+
+- [x] Выпуск оригинальных экранов и Google Play завершён: PR #123, runtime `0fa68c1`, Vercel READY/main/production и alias serbotalk.app; 8 production layout checks + 4 root checks RU/EN desktop/mobile, 9 asset hashes, HTTP и error logs. [Доказательства](landing-real-screens-release-2026-10-17.md).

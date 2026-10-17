@@ -1,18 +1,18 @@
 import { useEffect } from "react";
 import { getLanguage, setLanguage, t, useLanguage } from "./i18n";
 import logo from "./assets/app-logo.png";
+import { LandingLogin } from "./LandingLogin";
 import "./styles.css";
 import "./landing.css";
 
-const appUrl = "https://serbian-speaking-trainer.vercel.app";
 const screenshots = [
-  { id: "topics", number: "01", title: "Выберите свою ситуацию", text: "Кафе, банк, врач или работа. Тренируйте фразы, которые пригодятся в обычной жизни.", alt: "Мобильная веб-версия SerboTalk: выбор бытовой темы" },
-  { id: "practice", number: "02", title: "Скажите это по-сербски", text: "Соберите фразу сами и произнесите вслух. Если слово забылось, воспользуйтесь подсказкой.", alt: "Мобильная веб-версия SerboTalk: разговорная тренировка" },
-  { id: "feedback", number: "03", title: "Разберите и повторите", text: "Посмотрите разбор ответа и вернитесь к фразам, которым нужно ещё немного практики.", alt: "Мобильная веб-версия SerboTalk: разбор ответа" },
+  { id: "topics", number: "01", title: "Выберите свою ситуацию", text: "Кафе, банк, врач или работа. Тренируйте фразы, которые пригодятся в обычной жизни.", alt: "SerboTalk: выбор темы" },
+  { id: "practice", number: "02", title: "Скажите это по-сербски", text: "Соберите фразу сами и произнесите вслух. Если слово забылось, воспользуйтесь подсказкой.", alt: "SerboTalk: разговорная тренировка" },
+  { id: "feedback", number: "03", title: "Разберите и повторите", text: "Посмотрите разбор ответа и вернитесь к фразам, которым нужно ещё немного практики.", alt: "SerboTalk: разбор ответа" },
 ];
 
 function AppLink({ compact = false }: { compact?: boolean }) {
-  return <a className={`landing-cta${compact ? " landing-cta--small" : ""}`} href={appUrl} target="_blank" rel="noopener noreferrer">{t(compact ? "Открыть приложение" : "Начать говорить")} <span aria-hidden="true">↗</span></a>;
+  return <a className={`landing-cta${compact ? " landing-cta--small" : ""}`} href="#sign-in">{t(compact ? "Открыть приложение" : "Начать говорить")} <span aria-hidden="true">↗</span></a>;
 }
 
 export function LandingPage() {
@@ -36,15 +36,12 @@ export function LandingPage() {
           <p className="landing-eyebrow"><span />{t("ОТ ЗНАКОМЫХ СЛОВ — К ЖИВОЙ РЕЧИ")}</p>
           <h1>{t("Вы уже знаете слова.")}<br /><span>{t("Пора заговорить.")}</span></h1>
           <p className="landing-lead">{t("Сербский для повседневной жизни. Простые фразы, ваш голос и практика, которая помогает словам складываться в речь.")}</p>
-          <div className="landing-actions"><AppLink /><a className="landing-store" href="#get-app"><svg viewBox="0 0 24 26" width="22" height="25" fill="currentColor" aria-hidden="true"><path d="M2 1 15 13 2 25zm15 13 4-2q2 1 0 3l-4 2-3-3zm-2-3L4 1l15 8zm0 5L4 25l15-7z" /></svg><span>Google Play<small>{t("Скоро")}</small></span></a></div>
+          <div className="landing-actions"><AppLink /><a className="landing-store" href="#get-app"><img className="landing-store__logo" src="/landing/google-play.png" alt="" width="26" height="29" /><span>Google Play<small>{t("Скоро")}</small></span></a></div>
           <p className="landing-hero-note">{t("Для уровня A1–A2 · В браузере и на Android")}</p>
           <a className="landing-explore" href="#how">{t("Заглянуть внутрь")} <span aria-hidden="true">↓</span></a>
         </div>
         <div className="landing-hero-visual">
-          <div className="landing-orbit" aria-hidden="true" />
-          <div className="landing-speech landing-speech--top"><span>U kafiću</span><strong>Jednu kafu, molim.</strong><small>{t("Один кофе, пожалуйста.")}</small></div>
-          <div className="landing-phone landing-phone--hero"><img src={`/landing/screens/${language}-practice.png`} alt={t(screenshots[1].alt)} width="393" height="852" fetchPriority="high" /></div>
-          <div className="landing-calendar"><img src={`/landing/screens/${language}-calendar.png`} alt={t("Календарь занятий в SerboTalk")} width="478" height="183" /></div>
+          <div className="landing-phone landing-phone--hero"><img src={`/landing/screens/phone/${language}-statistics.jpg`} alt={t("SerboTalk: статистика занятий")} width="1280" height="2772" fetchPriority="high" /></div>
         </div>
       </section>
       <section id="story" className="landing-story landing-wrap">
@@ -52,10 +49,10 @@ export function LandingPage() {
         <div className="landing-story-text"><p>{t("Я создал SerboTalk, потому что учить слова по карточкам или в приложениях вроде Duolingo — это прежде всего пополнять словарный запас. А чтобы начать разговаривать, нужно открывать рот и говорить: самому подбирать слова и складывать их во фразы.")}</p><p>{t("Так родилась идея простого, лёгкого приложения для практики большого количества несложных бытовых фраз. Достаточно словарного запаса уровня A1–A2, чтобы начать тренировать именно говорение: самостоятельно произносить слова и целые предложения.")}</p><blockquote>{t("Мне хотелось создать короткий путь от «я знаю эти слова» к «я могу это сказать» — и помочь быстрее освоиться с сербским в жизни.")}</blockquote></div>
       </section>
       <section id="how" className="landing-how landing-wrap"><div className="landing-section-heading"><div><p className="landing-eyebrow">{t("МЕНЬШЕ ТЕОРИИ. БОЛЬШЕ ВАШЕГО ГОЛОСА.")}</p><h2>{t("Ваш следующий разговор")}<br /><em>{t("начинается здесь.")}</em></h2></div><p>{t("Одна бытовая ситуация. Одна фраза за другой. Практика в вашем темпе.")}</p></div>
-        <div className="landing-steps">{screenshots.map(item => <article key={item.id}><div className="landing-step-title"><span>{item.number}</span><h3>{t(item.title)}</h3></div><p>{t(item.text)}</p><div className="landing-phone"><img src={`/landing/screens/${language}-${item.id}.png`} alt={t(item.alt)} width="393" height="852" loading="lazy" /></div></article>)}</div>
+        <div className="landing-steps">{screenshots.map(item => <article key={item.id}><div className="landing-step-title"><span>{item.number}</span><h3>{t(item.title)}</h3></div><p>{t(item.text)}</p><div className="landing-phone"><img src={`/landing/screens/phone/${language}-${item.id}.jpg`} alt={t(item.alt)} width="1280" height="2772" loading="lazy" /></div></article>)}</div>
       </section>
-      <section id="get-app" className="landing-bottom landing-wrap"><span className="landing-eyebrow">{t("НЕБОЛЬШАЯ ПРАКТИКА. НАСТОЯЩИЙ РАЗГОВОР.")}</span><h2>{t("Дайте словам")} <em>{t("свой голос.")}</em></h2><p>{t("Начните с простой фразы. Например, с кофе.")}</p><div className="landing-actions"><AppLink /><div className="landing-store landing-store--pending" role="note"><span>Google Play<small>{t("Ссылка появится после публикации")}</small></span></div></div></section>
+      <section id="get-app" className="landing-bottom landing-wrap"><span className="landing-eyebrow">{t("НЕБОЛЬШАЯ ПРАКТИКА. НАСТОЯЩИЙ РАЗГОВОР.")}</span><h2>{t("Дайте словам")} <em>{t("свой голос.")}</em></h2><p>{t("Начните с простой фразы. Например, с кофе.")}</p><LandingLogin /><div className="landing-actions"><div className="landing-store landing-store--pending" role="note"><img className="landing-store__logo" src="/landing/google-play.png" alt="" width="26" height="29" /><span>Google Play<small>{t("Ссылка появится после публикации")}</small></span></div></div></section>
     </main>
-    <footer className="landing-footer landing-wrap"><a className="landing-brand" href="#top">Serbo<span>Talk</span></a><span>{t("Сербский. Своими словами.")}</span><div><a href={`${appUrl}/privacy`} target="_blank" rel="noopener noreferrer">{t("Конфиденциальность")}</a><a href={`${appUrl}/terms`} target="_blank" rel="noopener noreferrer">{t("Условия использования")}</a></div></footer>
+    <footer className="landing-footer landing-wrap"><a className="landing-brand" href="#top">Serbo<span>Talk</span></a><span>{t("Сербский. Своими словами.")}</span><div><a href="/privacy" target="_blank" rel="noopener noreferrer">{t("Конфиденциальность")}</a><a href="/terms" target="_blank" rel="noopener noreferrer">{t("Условия использования")}</a></div></footer>
   </div>;
 }

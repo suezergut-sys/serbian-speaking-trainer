@@ -214,7 +214,7 @@ class TopicPhrase(Base):
     topic: Mapped[TopicPreset] = relationship(back_populates="phrases")
 
     __table_args__ = (
-        CheckConstraint("position >= 1 AND position <= 20"),
+        CheckConstraint("position >= 1", name="ck_topic_phrases_position_positive"),
         UniqueConstraint("topic_id", "position", name="uq_topic_phrases_topic_position"),
     )
 

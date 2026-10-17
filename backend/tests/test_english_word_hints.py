@@ -25,7 +25,7 @@ def _exercise(api_client, db_session, phrase_id, *, missing_stored_hints=False):
 
 
 def test_all_english_words_except_articles_have_independent_nonempty_hints():
-    assert len(ENGLISH_WORD_HINTS) == 160
+    assert len(ENGLISH_WORD_HINTS) == 210
     for source, hints in ENGLISH_WORD_HINTS.items():
         required = set(re.findall(r"[a-z]+(?:[-'’][a-z]+)*", source.lower())) - {"a", "an", "the"}
         assert not required - hints.keys(), source

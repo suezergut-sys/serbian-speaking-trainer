@@ -141,7 +141,7 @@ def test_feedback_migration_roundtrip(tmp_path):
         config.attributes["connection"] = connection
         command.upgrade(config, "head"); command.upgrade(config, "head")
         assert "user_feedback" in inspect(connection).get_table_names()
-        command.downgrade(config, "2e89c4f8a7b2")
+        command.downgrade(config, "3f90d5a9b8c3")
         assert "user_feedback" not in inspect(connection).get_table_names()
         command.upgrade(config, "head")
     engine.dispose()

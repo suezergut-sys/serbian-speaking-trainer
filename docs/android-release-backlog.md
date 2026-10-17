@@ -7,12 +7,6 @@
 - [ ] Production web/backend и backend-env для Telegram.
 - [ ] Включить в следующий отдельно разрешённый Android sync/build; проверить запись, сворачивание, подписи RU/EN и отправку на физическом устройстве. APK и номера версий в этой задаче не изменялись.
 
-## 15.10.2026 — Google Play AAB 1.33
-
-- [x] AAB 1.33/code43 собран с production assets опубликованного APK и прежним upload key; 9 assets/manifest/API/signature проверены. Лендинг из основной рабочей папки не включён.
-- [x] Выпуск с ru/en примечаниями сохранён в существующем Alpha. [Доказательства и статус](google-play-1.33-update-2026-10-15.md).
-- [ ] Решение Google, обновление из магазина и завершение действующего закрытого теста отдельно.
-
 ## 13.10.2026 — release AAB 1.30
 
 - [x] По отдельной команде владельца подписанный release AAB 1.30/code40 собран, проверен и загружен в закрытый трек Alpha. Metadata, production API, подпись и assets проверены; выпуск сохранён с русскими примечаниями и всеми странами. [Доказательства](android-1.30-release.md).
@@ -439,7 +433,7 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 
 - [x] Общие настройки/privacy обновлены: разрешённый debug-admin может сохранять собственное аудио; последние 20 записей/7 дней, очистка при обращении/выключении. [Статус](debug-audio-checkpoint-2026-10-12.md).
 - [x] Общий backend опубликован, поэтому серверное сохранение работает для новых запросов APK 1.28 при включённой отладке.
-- [ ] Перенос пояснения в следующий APK после отдельной команды; текущий APK 1.28 не менялся и содержит прежний текст о несохранении аудио.
+- [x] Обновлённое уведомление о временном аудио включено в APK 1.33/code43; [проверки](android-1.33-release.md).
 - [ ] Физическая приёмка.
 
 ## 14.10.2026 — английский язык интерфейса и исходных фраз
@@ -472,34 +466,56 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 - [x] В общем интерфейсе независимый English→Serbian набор покрывает все слова 160 фраз кроме артиклей; новые английские ключи сохранения, notes ru/en и целые compound words.
 - [x] Shared Android-layout проверен для ru/en в Chrome/Capacitor; Android 1.32/code42, package version и APK не менялись.
 - [x] Web/backend опубликованы на c0d3b6b через PR #99/#100, READY; старый APK сохраняет совместимость legacy Russian keys.
-- [ ] По отдельной команде перенести набор в следующий APK и проверить полный English coverage на телефоне. [Доказательства](independent-english-hints-checkpoint-2026-10-14.md).
+- [x] Независимые English hints перенесены в APK 1.33/code43; Android-layout ru/en checks passed. [Выпуск](android-1.33-release.md).
+- [ ] Проверить полный English coverage на физическом телефоне.
 
 ## 15.10.2026 — следующий APK: экран входа с флагами
 
 - [x] Общий UI ru/en: квадратные SVG-флаги, золотая рамка активного языка, стабильные размеры, центрированный review-вход. Web/Capacitor-layout проверены.
-- [ ] Перенести в будущий APK по отдельной команде и проверить на телефоне; Android 1.32/code42 не менялся. [Доказательства](login-flags-checkpoint-2026-10-15.md).
+- [x] Флаги и стабильная геометрия входа включены в APK 1.33/code43; [выпуск](android-1.33-release.md).
+- [ ] Приёмка входа на физическом телефоне.
 
 ## 15.10.2026 — следующий APK: оформление аккаунта и тексты настроек
 
 - [x] Общие ru/en компоненты: убрать login icon, отдельные account/deletion cards, читаемые имя/email/лимит и выход на мобильных, сокращённые assistance/debug описания.
 - [x] Проверка web и Capacitor-layout в обеих локалях, 320/393/1366px, ошибки/повтор изменения отладки. [Доказательства](settings-account-checkpoint-2026-10-15.md).
-- [ ] Перенести в будущий APK по отдельной команде; текущие 1.32/code42 и APK прежние.
+- [x] Обновлённые аккаунт/настройки включены в APK 1.33/code43; [выпуск](android-1.33-release.md).
 - [ ] Физическая приёмка будущего APK.
 
-## 15.10.2026 — следующий APK: цвета календарной легенды
+## 15.10.2026 — следующий APK: стабильное упражнение и легенда календаря
 
-- [x] Общие CSS-правила легенды и календарных дней: одинаковые градиент, рамка и свечение; ru/en web/mobile/Capacitor-layout проверены. [Доказательства](calendar-legend-checkpoint-2026-10-15.md).
-- [ ] Перенести в будущий APK по отдельной команде; текущие 1.32/code42 и APK прежние.
-- [ ] Физическая приёмка будущего APK.
+- [x] Общий UI: круглая иконка повторения, постоянная тема/original сверху без «сменить» и voice-prompt, answer/translation слева, score/verdict по центру, controls отдельной нижней строкой; закрытие word hints вне слова/по Escape/повторному нажатию.
+- [x] Общая шкала цветов календаря и легенды. [Доказательства](practice-layout-checkpoint-2026-10-15.md).
+- [x] Web опубликован через PR #106, runtime 46b3067 READY/main; production ru/en web/Capacitor-layout и календарь проверены (16 scenarios).
+- [x] Весь накопленный набор включён в APK 1.33/code43 по отдельной команде и согласованию номера; metadata/API/signature/public assets проверены. [Выпуск](android-1.33-release.md).
+- [ ] Физическая Android-приёмка.
+
+## 15.10.2026 — перенос накопленного набора в APK 1.33
+
+- [x] Production sync/cloud APK, 1.33/code43 по отдельному согласованию, 210 UI tests/lint, 9 Android-layout browser checks и metadata/API/signature/9 packaged public assets/Downloads проверены. [Доказательства](android-1.33-release.md).
+- [x] [GitHub release v1.33](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.33) опубликован на d132af3 после PR #108; tag/target/digest/size/обратная загрузка и Downloads совпали.
+- [ ] Физическая приёмка всех накопленных изменений и реальный микрофон.
 
 ## 16.10.2026 — следующий Android-релиз: компактный результат
 
 - [x] Общий ru/en UI: исходная фраза только до проверки, результат без краткого пояснения под процентом и оценкой. [Доказательства](compact-result-checkpoint-2026-10-16.md).
-- [ ] Перенести в будущий Android-релиз по отдельной команде; sync/build и номера версий не менялись.
+- [x] 17.10.2026 перенесено в согласованный APK 1.34/code44; production cloud build и packaged assets проверены. [Доказательства](android-1.34-release.md).
 - [ ] Физическая приёмка будущей сборки.
 
 ## 16.10.2026 — бесплатный лимит 20
 
 - [x] Общие ru/en тексты условий обновлены до 20; счётчик аккаунта получает limit/remaining из API, APK не требует пересборки для серверного лимита. [Доказательства](free-daily-limit-20-checkpoint-2026-10-16.md).
-- [ ] Перенести новый статический текст условий в будущий APK по отдельной команде.
+- [x] 17.10.2026 статический текст условий перенесён в APK 1.34/code44; ru/en/shared Android layout и packaged assets проверены. [Доказательства](android-1.34-release.md).
 - [ ] Физическая приёмка следующей сборки; Android sync/build и версия не менялись.
+
+## 17.10.2026 — Разное, 50 фраз; выпуск 1.34/code44
+
+- [x] Реализация, ru/en переводы/подсказки, повторяемый seed и миграция; backend 306/8 skipped, Node 5, frontend 212, lint/typecheck/build, browser 10 passed. [Доказательства](android-1.34-release.md).
+- [x] PR #114/#115 merged; backend/web READY на 7b75864, production БД: 50/50 новых фраз совпали, всего 210; Chrome ru/en/версия/запуск и HTTP smoke прошли. [Доказательства](android-1.34-release.md).
+- [x] Production APK 1.34/code44, API/metadata/прежняя подпись/9 assets/50 IDs/Downloads проверены; GitHub v1.34-final, digest/size и обратная загрузка совпали. [Доказательства](android-1.34-release.md).
+- [ ] Физическая ручная приёмка, OAuth/микрофон/реальная речь.
+
+## 17.10.2026 — desktop-пропорции общей таблицы стилей
+
+- [x] Web: workspace 1:2 и max-width 1020px; мобильный экран тренировки прежний. Лендинг sticky исключён из Android entry. Проверены ru/en landing Capacitor-layout и desktop. [Доказательства](sticky-header-desktop-ratio-2026-10-17.md).
+- [ ] При следующем разрешённом sync проверить общий stylesheet на телефоне; текущий APK 1.34/code44 не менялся.

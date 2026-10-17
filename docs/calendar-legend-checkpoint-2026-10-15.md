@@ -12,4 +12,4 @@
 - `pnpm lint`: passed.
 - `pnpm build`: typecheck и production build passed.
 
-Реализация локальная. Публикация web и ручная приёмка остаются открытыми. Android sync/build не выполнялись; версия 1.32/code42 и package version сохранены, изменение внесено в Android backlog. Уже установленный APK получит исправление при следующем отдельно запрошенном выпуске.
+Web опубликован вместе с исправлениями упражнения через [PR #106](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/106), runtime 46b3067 READY/main/production. После READY 6/6 calendar legend scenarios ru/en desktop/mobile/Capacitor прошли на основном адресе. [Публикация и доказательства](practice-layout-checkpoint-2026-10-15.md). Ручная приёмка остаётся открытой. Android sync/build не выполнялись; версия 1.32/code42 и package version сохранены, изменение внесено в Android backlog. Уже установленный APK получит исправление при следующем отдельно запрошенном выпуске.
