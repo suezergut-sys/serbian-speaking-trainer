@@ -745,3 +745,17 @@
 - [ ] Приёмка владельцем; Android-сборка не запрашивалась.
 
 - [x] Выпуск оригинальных экранов и Google Play завершён: PR #123, runtime `0fa68c1`, Vercel READY/main/production и alias serbotalk.app; 8 production layout checks + 4 root checks RU/EN desktop/mobile, 9 asset hashes, HTTP и error logs. [Доказательства](landing-real-screens-release-2026-10-17.md).
+## 17.10.2026 — аудит скорости web
+
+- [x] Полный backend pytest без падений (281 collected, 8 skipped), 231 frontend tests, lint/typecheck/production build; Chrome mock flow 1 прогрев + 7 измерений, 8/8 passed.
+- [x] Изолированный API benchmark: 3 прогрева + 20 измерений каждой из четырёх веток, mock AI 0/100 мс; измерены preparation/STT/analysis и цена assistance. Воспроизводимый runner добавлен; внешний network блокируется, audio не сохраняется. [Доказательства и результаты](web-performance-audit-2026-10-17.md).
+- [x] Подготовлены варианты с потенциалом >10%, с разделением измеренных mock-сравнений и непроверенных production-гипотез. Telegram исключён по указанию владельца.
+- [ ] Реализация выбранных ускорений, регрессионные проверки и production A/B с реальными p50/p95.
+- [ ] Приёмка владельцем. Публикация и Android-сборка не запрашивались; runtime и версии не менялись.
+
+## 17.10.2026 — пропуск помощи для эталонного transcript
+
+- [x] Реализация без AI/receipt на точных canonical/variant совпадениях; прежний comparator, диакритика/числа/отрицания сохранены. Telegram не менялся.
+- [x] 59 targeted backend, 288 full backend / 8 skipped, 43 scripts tests, 5 Node guards, 231 frontend tests, lint/typecheck/build, 6 browser mock checks RU/EN/web/shared Android layout. [Доказательства](exact-transcription-fast-path-2026-10-17.md).
+- [ ] Публикация PR/merge, production READY и smoke.
+- [ ] Приёмка владельцем на реальной речи. Android-сборка не запрашивалась; runtime-ускорение серверное.

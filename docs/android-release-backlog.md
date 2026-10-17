@@ -530,3 +530,10 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 - [x] Web: workspace 1:2 и max-width 1020px; мобильный экран тренировки прежний. Лендинг sticky исключён из Android entry. Проверены ru/en landing Capacitor-layout и desktop. [Доказательства](sticky-header-desktop-ratio-2026-10-17.md).
 - [x] Общий stylesheet перенесён production sync в APK 1.35/code45, packaged assets совпали. [Выпуск](android-1.35-release.md).
 - [ ] Проверить stylesheet на физическом телефоне.
+
+## 17.10.2026 — серверный пропуск помощи эталонной расшифровки
+
+- [x] Backend возвращает прежний text-only contract для canonical/variant совпадения, общий клиент совместим; shared Android layout проверен mock-сценариями. [Доказательства](exact-transcription-fast-path-2026-10-17.md).
+- [ ] Физическая приёмка на реальной речи после backend deploy.
+
+Перенос клиентских файлов не требуется. APK 1.35/code45, Android sync/build и версии не менялись.
