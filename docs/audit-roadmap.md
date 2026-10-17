@@ -750,12 +750,13 @@
 - [x] Полный backend pytest без падений (281 collected, 8 skipped), 231 frontend tests, lint/typecheck/production build; Chrome mock flow 1 прогрев + 7 измерений, 8/8 passed.
 - [x] Изолированный API benchmark: 3 прогрева + 20 измерений каждой из четырёх веток, mock AI 0/100 мс; измерены preparation/STT/analysis и цена assistance. Воспроизводимый runner добавлен; внешний network блокируется, audio не сохраняется. [Доказательства и результаты](web-performance-audit-2026-10-17.md).
 - [x] Подготовлены варианты с потенциалом >10%, с разделением измеренных mock-сравнений и непроверенных production-гипотез. Telegram исключён по указанию владельца.
-- [ ] Реализация выбранных ускорений, регрессионные проверки и production A/B с реальными p50/p95.
+- [x] Реализован и опубликован exact-match bypass assistance, регрессии и paired mock benchmark подтверждены. [Доказательства](exact-transcription-fast-path-2026-10-17.md).
+- [ ] Остальные ускорения и production A/B с реальными p50/p95.
 - [ ] Приёмка владельцем. Публикация и Android-сборка не запрашивались; runtime и версии не менялись.
 
 ## 17.10.2026 — пропуск помощи для эталонного transcript
 
 - [x] Реализация без AI/receipt на точных canonical/variant совпадениях; прежний comparator, диакритика/числа/отрицания сохранены. Telegram не менялся.
 - [x] 59 targeted backend, 288 full backend / 8 skipped, 43 scripts tests, 5 Node guards, 231 frontend tests, lint/typecheck/build, 6 browser mock checks RU/EN/web/shared Android layout. [Доказательства](exact-transcription-fast-path-2026-10-17.md).
-- [ ] Публикация PR/merge, production READY и smoke.
+- [x] 17.10.2026, 22:19 МСК: [PR #129](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/129) merged, backend/web READY/production/main на `6dca0ce`, aliases подтверждены, production RU/EN и HTTP/auth smoke прошли, console/runtime error logs 0. [Доказательства](exact-transcription-fast-path-2026-10-17.md).
 - [ ] Приёмка владельцем на реальной речи. Android-сборка не запрашивалась; runtime-ускорение серверное.
