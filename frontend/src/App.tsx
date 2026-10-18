@@ -24,6 +24,8 @@ import { WordHintToken } from "./WordHintToken";
 import { isSourceWord, splitSourcePhrase } from "./sourceWords";
 import { hasUnexpectedLetterScript, displaySerbian, displaySerbianInRussianText, readSerbianAlphabet, saveSerbianAlphabet, toSerbianLatin, type SerbianAlphabet } from "./serbianScript";
 import { AnswerResult } from "./AnswerResult";
+import { RewardOverlay } from "./RewardOverlay";
+import { useRewards } from "./useRewards";
 import { finishUiTimingWhenVisible, startUiTiming } from "./performance";
 import appLogo from "./assets/app-logo.png?inline";
 import messages from "./locales/en.json";
@@ -211,6 +213,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const [alphabet, setAlphabet] = useState<SerbianAlphabet>(() => readSerbianAlphabet(account.id));
   const alphabetRef = useRef(alphabet);
   const [attempt, setAttempt] = useState<Attempt>();
+  const { reward, prepareReward, celebrate } = useRewards();
   const [checking, setChecking] = useState(false);
   const [advancing, setAdvancing] = useState(false);
   const [completedCount, setCompletedCount] = useState(0);
@@ -700,6 +703,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     event.preventDefault();
     if (!exercise || !session || !hasTranscript || !answer.trim() || checkingRef.current || voiceBusy || hasUnexpectedLetterScript(answer)) return;
     startUiTiming("check");
+    prepareReward();
     const transcript = toSerbianLatin(answer.trim());
     const timing = voiceTimingRef.current;
     const hintedWords = Object.keys(wordHintsRef.current).sort();
@@ -717,6 +721,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       if (flowEpochRef.current !== epoch) return;
       pendingAttemptRef.current = undefined;
       setAttempt(completed);
+      celebrate(completed);
       hintEpochRef.current += 1;
       const count = completedCount + 1;
       setCompletedCount(count);
@@ -864,6 +869,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   if (mobileLayout) {
     return (
       <div ref={isNative ? undefined : mobileShellRef} className={`android-shell${isNative ? "" : " mobile-web-shell"}`}>
+        <RewardOverlay reward={reward} />
         <header className="android-header">
           <strong>Serbo<span>Talk</span></strong>
           <nav aria-label={t("Панели приложения")}>
@@ -957,6 +963,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
   return (
     <div className="app-shell">
+      <RewardOverlay reward={reward} />
       <header className="topbar">
         <button className="brand" type="button" onClick={resetTraining} aria-label={t("SerboTalk — к практике")}>
           <span className="brand__mark"><Icon name="message" size={28} /></span>

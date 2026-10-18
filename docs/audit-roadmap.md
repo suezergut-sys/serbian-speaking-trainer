@@ -760,3 +760,11 @@
 - [x] 59 targeted backend, 288 full backend / 8 skipped, 43 scripts tests, 5 Node guards, 231 frontend tests, lint/typecheck/build, 6 browser mock checks RU/EN/web/shared Android layout. [Доказательства](exact-transcription-fast-path-2026-10-17.md).
 - [x] 17.10.2026, 22:19 МСК: [PR #129](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/129) merged, backend/web READY/production/main на `6dca0ce`, aliases подтверждены, production RU/EN и HTTP/auth smoke прошли, console/runtime error logs 0. [Доказательства](exact-transcription-fast-path-2026-10-17.md).
 - [ ] Приёмка владельцем на реальной речи. Android-сборка не запрашивалась; runtime-ускорение серверное.
+
+## 18.10.2026 — награды за успехи
+
+- [x] Общая реализация web/Android-layout RU/EN: локальный звоночек и анимация за 100%, золотая награда 20/конфетти на 2 секунды за дневные 20 проверок, отдельные настройки. [Доказательства](success-rewards-2026-10-18.md).
+- [x] 247 unit/component tests, lint/typecheck/production build; 6 browser-сценариев RU/EN × desktop/mobile/Android-layout, воспроизведение bundle-звука без сетевой загрузки.
+- [ ] Публикация web.
+- [ ] Android sync/build/проверка packaged assets по отдельной команде; 1.35/code45 без изменений.
+- [ ] Ручная приёмка владельцем/физическое Android-устройство.

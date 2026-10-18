@@ -4,6 +4,7 @@ import type { SerbianAlphabet } from "./serbianScript";
 import { ModelDebugSettings } from "./ModelDebugSettings";
 import { version } from "../package.json";
 import { FeedbackSettings } from "./FeedbackSettings";
+import { setRewardPreference, useRewardPreference } from "./rewardPreferences";
 
 export function SettingsView({ alphabet, onAlphabetChange, account, onSignOut, assistanceEnabled = false, assistanceSaving = false, assistanceError, onAssistanceChange }: {
   assistanceEnabled?: boolean;
@@ -16,6 +17,8 @@ export function SettingsView({ alphabet, onAlphabetChange, account, onSignOut, a
   onAlphabetChange: (alphabet: SerbianAlphabet) => void;
 }) {
   const language = useLanguage();
+  const sounds = useRewardPreference("sounds");
+  const animations = useRewardPreference("animations");
   return <main className="settings-page">
     <header className="settings-heading"><h1>{t("Настройки")}</h1><span className="settings-version" aria-label={t("Версия приложения")}>v.{t(version.split(".").slice(0, 2).join("."))}</span></header>
     <fieldset className="alphabet-settings panel language-settings">
@@ -35,6 +38,12 @@ export function SettingsView({ alphabet, onAlphabetChange, account, onSignOut, a
       {assistanceSaving && <p role="status">{t("Сохраняем настройку…")}</p>}
       {assistanceError && <p role="alert">{t(assistanceError)}</p>}
     </section>
+    <fieldset className="alphabet-settings panel reward-settings">
+      <legend>{t("Награды за успехи")}</legend>
+      <p>{t("Звоночек за 100% и золотая награда за 20 повторений за день. Настройки сохраняются на этом устройстве.")}</p>
+      <label><input type="checkbox" role="switch" checked={sounds} onChange={event => setRewardPreference("sounds", event.target.checked)} />{t("Звуки успеха")}</label>
+      <label><input type="checkbox" role="switch" checked={animations} onChange={event => setRewardPreference("animations", event.target.checked)} />{t("Анимации успеха")}</label>
+    </fieldset>
     <FeedbackSettings />
     {account?.role === "admin" && account.can_debug_models && <ModelDebugSettings key={account.id} />}
     {account && <><section className="settings-profile panel" aria-labelledby="settings-account-title">
