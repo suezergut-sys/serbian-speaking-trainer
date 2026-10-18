@@ -1,5 +1,7 @@
 # Android-релизы и проверки
 
+Текущий опубликованный APK — **1.36/code46**, 18.10.2026: весь накопленный клиентский набор, API/подпись/metadata/assets и GitHub digest/обратная загрузка проверены. [Выпуск](android-1.36-release.md). Физическая приёмка остаётся отдельной.
+
 ## 17.10.2026 — статистика: звезда и пагинация
 
 - [x] Общий UI: звезда за 20 повторений 18px; страницы фраз 20 по умолчанию, варианты 20/50. Тексты используют прежний общий каталог RU/EN. [Проверки](statistics-layout-2026-10-17.md).
@@ -550,5 +552,6 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 
 - [x] Анимация 100% центрирована внутри панели повторения в общем web/Android UI, RU/EN и 320–1920px, portrait/landscape.
 - [x] Владелец отдельно подтвердил 1.36/code46; production cloud APK, API/metadata/прежняя подпись, 7 dist и 9 packaged public assets, embedded bell, Downloads проверены. [Доказательства](android-1.36-release.md).
-- [ ] Публикация web и GitHub APK.
+- [x] Web опубликован через PR #133, runtime `8a0c4bb`, Vercel READY/main; GitHub v1.36, server digest/size/tag и обратная загрузка подтверждены. [Доказательства](android-1.36-release.md).
+- [x] 20/20 browser checks опубликованного bundle на serbotalk.app/app, RU/EN × 10 layouts, включая Android portrait/narrow/landscape; геометрия и настройки подтверждены.
 - [ ] Физическая установка, динамик, микрофон и OAuth.
