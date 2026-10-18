@@ -4,10 +4,10 @@
 
 - [x] Общий UI: звезда за 20 повторений 18px; страницы фраз 20 по умолчанию, варианты 20/50. Тексты используют прежний общий каталог RU/EN. [Проверки](statistics-layout-2026-10-17.md).
 - [x] Backend с поддержкой page_size=20 опубликован перед frontend; оба READY на `70e1292`, [PR #127](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/127).
-- [ ] Включить общий UI в следующий отдельно согласованный Android sync/build и проверить packaged assets.
+- [x] Включено в APK 1.36/code46 через production cloud sync/build, packaged assets совпали. [Выпуск](android-1.36-release.md).
 - [ ] Физическая приёмка. Desktop-ширина применяется только к web, native-макет сохраняет полную ширину.
 
-Текущий опубликованный APK — **1.35/code45**, 17.10.2026: весь накопленный исходный код, API/подпись/metadata/assets и GitHub digest/обратная загрузка проверены. [Доказательства](android-1.35-release.md). Физическая приёмка остаётся отдельной.
+Предыдущий опубликованный APK — **1.35/code45**, 17.10.2026: весь накопленный исходный код, API/подпись/metadata/assets и GitHub digest/обратная загрузка проверены. [Доказательства](android-1.35-release.md). Физическая приёмка остаётся отдельной.
 
 ## 17.10.2026 — исходная тема повторения и обратная связь
 
@@ -543,5 +543,12 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 - [x] Общий клиент RU/EN: колокольчик за точные 100%, центральная золотая награда 20 с конфетти на 2 секунды за 20 проверок в день, отдельные локально сохраняемые переключатели звука/анимации.
 - [x] WAV встроен в bundle через ?inline, конфетти реализовано CSS; отдельные сетевые загрузки ассетов отсутствуют. Unit/component и browser RU/EN × web/mobile/Android-layout проверены. [Доказательства](success-rewards-2026-10-18.md).
 - [x] Web опубликован 18.10.2026 через PR #131, `7a42b11`, Vercel READY/main; RU/EN production web/Android-layout проверены. [Выпуск](success-rewards-2026-10-18.md).
-- [ ] Перенести весь накопленный набор в APK по отдельной команде; проверить встроенный звук, production API/metadata/подпись и packaged assets. Версия 1.35/code45 не менялась, sync/build не запускались.
+- [x] По отдельной команде 18.10.2026 весь набор перенесён в согласованный APK 1.36/code46; production API/metadata/прежняя подпись, embedded WAV и packaged assets проверены. [Выпуск](android-1.36-release.md).
 - [ ] Физическая Android-приёмка звука, анимаций и сохранения настроек.
+
+## 18.10.2026 — центрирование 100%, APK 1.36/code46
+
+- [x] Анимация 100% центрирована внутри панели повторения в общем web/Android UI, RU/EN и 320–1920px, portrait/landscape.
+- [x] Владелец отдельно подтвердил 1.36/code46; production cloud APK, API/metadata/прежняя подпись, 7 dist и 9 packaged public assets, embedded bell, Downloads проверены. [Доказательства](android-1.36-release.md).
+- [ ] Публикация web и GitHub APK.
+- [ ] Физическая установка, динамик, микрофон и OAuth.

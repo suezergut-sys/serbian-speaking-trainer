@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 import { installSyntheticMicrophone } from './flow.mjs';
-for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 'android']) {
+for (const language of ['ru', 'en']) for (const layout of ['desktop', 'wide', 'tablet', 'mobile', 'narrow', 'short', 'landscape', 'android', 'android-narrow', 'android-landscape']) {
   test(`local success rewards ${language} ${layout}`, async ({ page }) => {
     const en = language === 'en';
-    await page.setViewportSize(layout === 'desktop' ? { width: 1366, height: 900 } : layout === 'narrow' ? { width: 320, height: 568 } : layout === 'short' ? { width: 393, height: 480 } : { width: 393, height: 851 });
-    if (layout === 'android') await page.addInitScript(() => { window.CapacitorCustomPlatform = { name: 'android' }; });
+    await page.setViewportSize(layout === 'wide' ? { width: 1920, height: 1080 } : layout === 'tablet' ? { width: 800, height: 1024 } : layout.endsWith('landscape') ? { width: 851, height: 393 } : layout === 'desktop' ? { width: 1366, height: 900 } : layout.endsWith('narrow') ? { width: 320, height: 568 } : layout === 'short' ? { width: 393, height: 480 } : { width: 393, height: 851 });
+    if (layout.startsWith('android')) await page.addInitScript(() => { window.CapacitorCustomPlatform = { name: 'android' }; });
     await installSyntheticMicrophone(page);
     await page.addInitScript(() => {
       window.__rewardSounds = 0;
@@ -19,7 +19,8 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
     }, language);
     const topic = { id: 'bank', title_ru: 'В банке', description_ru: 'Счёт и платежи', phrase_count: 20, is_custom: false, likely_intents: [], suggested_vocabulary: [] };
     const verdict = 'correct';
-    const daily_usage = { used: 19, limit: 20, remaining: 1, resets_at: '2026-10-15T00:00:00Z' };
+    const daily_usage = { used: 18, limit: 20, remaining: 2, resets_at: '2026-10-15T00:00:00Z' };
+    let attemptCount = 0;
     await page.route('**/api/**', async route => {
       const path = new URL(route.request().url()).pathname;
       let body, status = 200;
@@ -31,18 +32,38 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
       else if (path.endsWith('/next-exercise')) { status = 409; body = { detail: { code: 'review_queue_empty', message: 'No active review phrases' } }; }
       else if (path.endsWith('/word-hints')) body = { word_ru: route.request().postDataJSON().word, translation_sr: 'želim', learning_status: 'learning', correct_streak: 0 };
       else if (path === '/api/transcriptions') body = { text: 'Želim da otvorim račun.' };
-      else if (path === '/api/attempts') body = { daily_usage: { ...daily_usage, used: 20, remaining: 0 }, id: 'a1', exercise_id: 'e1', transcript_sr: 'Želim da otvorim račun.', overall_score: verdict === 'needs_work' ? .62 : verdict === 'mostly_correct' ? .91 : 1, base_score: 1, hint_penalty: 0, analysis: { verdict, corrected_sr: 'Želim da otvorim račun.', short_feedback_ru: verdict === 'needs_work' ? (en ? 'Try again.' : 'Попробуйте ещё раз.') : verdict === 'mostly_correct' ? (en ? 'Almost correct.' : 'Почти верно.') : (en ? 'Correct.' : 'Верно.'), detailed_feedback_ru: en ? 'Correct.' : 'Верно.', issues: [], demonstrated_skills: [] } };
+      else if (path === '/api/attempts') body = { daily_usage: { ...daily_usage, used: ++attemptCount === 1 ? 19 : 20, remaining: 0 }, id: `a${attemptCount}`, exercise_id: 'e1', transcript_sr: 'Želim da otvorim račun.', overall_score: verdict === 'needs_work' ? .62 : verdict === 'mostly_correct' ? .91 : 1, base_score: 1, hint_penalty: 0, analysis: { verdict, corrected_sr: 'Želim da otvorim račun.', short_feedback_ru: verdict === 'needs_work' ? (en ? 'Try again.' : 'Попробуйте ещё раз.') : verdict === 'mostly_correct' ? (en ? 'Almost correct.' : 'Почти верно.') : (en ? 'Correct.' : 'Верно.'), detailed_feedback_ru: en ? 'Correct.' : 'Верно.', issues: [], demonstrated_skills: [] } };
       else throw new Error(`Unexpected path: ${path}`);
       await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
     });
     const requests = [];
+    let initialPageWidth;
     page.on('request', request => requests.push(request.url()));
-    await page.goto('/');
+    await page.goto(process.env.REWARDS_APP_PATH ?? '/');
+    initialPageWidth ??= await page.evaluate(() => document.documentElement.scrollWidth);
     await page.getByRole('button', { name: en ? 'Answer aloud' : 'Ответить голосом', exact: true }).click();
     await page.getByRole('button', { name: en ? 'Finish recording' : 'Завершить запись', exact: true }).click();
     await expect(page.getByLabel(en ? 'Your answer' : 'Ваш ответ', { exact: true })).toHaveValue('Želim da otvorim račun.');
-    await page.getByRole('button', { name: en ? (layout === 'android' ? 'Check' : 'Check answer') : (layout === 'android' ? 'Проверить' : 'Проверить ответ'), exact: true }).click();
+    await page.getByRole('button', { name: en ? (layout.startsWith('android') ? 'Check' : 'Check answer') : (layout.startsWith('android') ? 'Проверить' : 'Проверить ответ'), exact: true }).click();
     const panel = page.locator('.reward-panel');
+    await expect(panel).toHaveText(en ? 'Perfect!' : 'Идеально!');
+    const practice = page.locator('.exercise-layout:visible');
+    await expect(practice.locator('.reward-overlay--perfect')).toHaveCount(1);
+    const practiceBounds = await practice.boundingBox();
+    await expect.poll(async () => {
+      const rewardBounds = await panel.boundingBox();
+      return Math.abs(rewardBounds.x + rewardBounds.width / 2 - practiceBounds.x - practiceBounds.width / 2) + Math.abs(rewardBounds.y + rewardBounds.height / 2 - practiceBounds.y - practiceBounds.height / 2);
+    }).toBeLessThan(2);
+    await mkdir('../artifacts/reward-centering', { recursive: true });
+    await page.waitForTimeout(450);
+    await page.screenshot({ path: `../artifacts/reward-centering/${language}-${layout}.png` });
+    await expect(panel).toHaveCount(0, { timeout: 2500 });
+    // Simulate a second newly accepted check to retain coverage of the daily award.
+    await page.reload();
+    if (layout.startsWith('android')) await page.getByRole('button', { name: en ? 'Practice' : 'Тренировка', exact: true }).click();
+    await page.getByRole('button', { name: en ? 'Answer aloud' : 'Ответить голосом', exact: true }).click();
+    await page.getByRole('button', { name: en ? 'Finish recording' : 'Завершить запись', exact: true }).click();
+    await page.getByRole('button', { name: en ? (layout.startsWith('android') ? 'Check' : 'Check answer') : (layout.startsWith('android') ? 'Проверить' : 'Проверить ответ'), exact: true }).click();
     await expect(panel).toHaveText(en ? '2020 repetitions today!' : '2020 повторений за день!');
     await expect(page.locator('.reward-confetti i')).toHaveCount(32);
     await expect.poll(() => page.evaluate(() => window.__rewardSounds)).toBe(1);
@@ -68,13 +89,13 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
     await mkdir('../artifacts/rewards', { recursive: true });
     await animations.scrollIntoViewIfNeeded();
     await page.screenshot({ path: `../artifacts/rewards/${language}-${layout}-settings.png` });
-    await page.getByRole('button', { name: en ? 'Practice' : (layout === 'desktop' ? 'Практика' : 'Тренировка'), exact: true }).click();
+    await page.getByRole('button', { name: en ? 'Practice' : ((page.viewportSize().width > 780 && !layout.startsWith('android')) ? 'Практика' : 'Тренировка'), exact: true }).click();
     await page.getByRole('button', { name: en ? 'Answer aloud' : 'Ответить голосом', exact: true }).click();
     await page.getByRole('button', { name: en ? 'Finish recording' : 'Завершить запись', exact: true }).click();
-    await page.getByRole('button', { name: en ? (layout === 'android' ? 'Check' : 'Check answer') : (layout === 'android' ? 'Проверить' : 'Проверить ответ'), exact: true }).click();
+    await page.getByRole('button', { name: en ? (layout.startsWith('android') ? 'Check' : 'Check answer') : (layout.startsWith('android') ? 'Проверить' : 'Проверить ответ'), exact: true }).click();
     await expect(page.locator('.feedback:visible')).toBeVisible();
     await expect(panel).toHaveCount(0);
     expect(await page.evaluate(() => window.__rewardSounds)).toBe(0);
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(Math.max(initialPageWidth, page.viewportSize().width) + 1);
   });
 }

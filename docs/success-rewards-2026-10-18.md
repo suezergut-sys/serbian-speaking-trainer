@@ -9,7 +9,7 @@
 - [x] Lint, TypeScript и production build. Vite предупреждает о размере существующего общего chunk >500 kB; сборка успешна.
 - [x] 6 browser mock-сценариев RU/EN × desktop/mobile/Capacitor-layout: центр панели, конфетти, реальный AudioBufferSourceNode.start, отсутствие WAV/MP3/OGG сетевых запросов, исчезновение панели и сохранение выключенных переключателей после reload.
 - [x] Web опубликован через [PR #131](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/131), runtime SHA `7a42b11e12791f547885ae77284498047070ce5c`; production READY/main и aliases подтверждены 18.10.2026, 20:56 МСК.
-- [ ] Перенос в production APK и проверка packaged bundle: ожидают отдельной команды на Android-релиз. Android sync/build и версии не менялись, текущая версия 1.35/code45.
+- [x] По команде владельца перенесено в production APK 1.36/code46; API/metadata/подпись/embedded WAV и packaged assets проверены. [Выпуск](android-1.36-release.md).
 - [ ] Приёмка владельцем и воспроизведение динамиком физического Android-устройства.
 
 Браузерные screenshot evidence: `artifacts/rewards/{ru,en}-{desktop,mobile,android}.png`, дополнительно `*-settings.png`. В тестах используются только синтетические auth/API/микрофон, внешние AI-вызовы отсутствуют.

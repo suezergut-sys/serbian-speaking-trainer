@@ -768,3 +768,11 @@
 - [x] 18.10.2026, 20:56 МСК: [PR #131](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/131) merged, `7a42b11`, Vercel READY/production/main, aliases подтверждены; 6 production browser mock checks, авторизованные RU/EN настройки/reload, HTTP и hash WAV, console/runtime errors 0. [Доказательства](success-rewards-2026-10-18.md).
 - [ ] Android sync/build/проверка packaged assets по отдельной команде; 1.35/code45 без изменений.
 - [ ] Ручная приёмка владельцем/физическое Android-устройство.
+
+## 18.10.2026 — центрирование успеха и APK 1.36
+
+- [x] Общий perfect overlay перенесён внутрь панели повторения и центрирован по обеим осям; двадцатая дневная награда остаётся по центру экрана. [Доказательства](android-1.36-release.md).
+- [x] Component regression, 248 frontend tests рабочего checkout, lint/typecheck/build; геометрия RU/EN в 20 вариантах desktop/mobile/Android, 320–1920px, short/landscape.
+- [x] Согласованы 1.36/code46; production cloud APK, metadata/API/прежняя подпись, embedded WAV и 7 dist/9 packaged public assets/Downloads проверены.
+- [ ] Публикация web и GitHub APK.
+- [ ] Физическая Android-приёмка.

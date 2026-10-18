@@ -842,6 +842,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     const answerId = compact ? "android-serbian-answer" : "serbian-answer";
     const done = !isReviewMode && completedCount >= (session?.requested_length ?? 10);
     return <div className={`practice-card exercise-layout${compact ? " android-training-content" : " panel"}`}>
+      <RewardOverlay reward={reward?.kind === "perfect" ? reward : undefined} />
       <div className="exercise-scroll">
         <div className="exercise-topic">{phraseTopicTitle}</div>
         {!attempt && <div className="exercise-source">{renderPhrase()}</div>}
@@ -869,7 +870,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   if (mobileLayout) {
     return (
       <div ref={isNative ? undefined : mobileShellRef} className={`android-shell${isNative ? "" : " mobile-web-shell"}`}>
-        <RewardOverlay reward={reward} />
+        <RewardOverlay reward={reward?.kind === "twenty" ? reward : undefined} />
         <header className="android-header">
           <strong>Serbo<span>Talk</span></strong>
           <nav aria-label={t("Панели приложения")}>
@@ -963,7 +964,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
   return (
     <div className="app-shell">
-      <RewardOverlay reward={reward} />
+      <RewardOverlay reward={reward?.kind === "twenty" ? reward : undefined} />
       <header className="topbar">
         <button className="brand" type="button" onClick={resetTraining} aria-label={t("SerboTalk — к практике")}>
           <span className="brand__mark"><Icon name="message" size={28} /></span>
