@@ -69,3 +69,11 @@ it.each(["ru", "en"] as const)("renders localized rewards and persists independe
   expect(screen.getByRole("switch", { name: en ? "Success animations" : "Анимации успеха" })).not.toBeChecked();
   expect(screen.getByRole("switch", { name: en ? "Success sounds" : "Звуки успеха" })).not.toBeChecked();
 });
+
+it("keeps perfect feedback inside its practice panel and the daily milestone on the screen", () => {
+  const view = render(<section data-testid="practice"><RewardOverlay reward={{ id: "a1", kind: "perfect" }} /></section>);
+  expect(screen.getByTestId("practice").querySelector(".reward-overlay--perfect")).toBeInTheDocument();
+  view.rerender(<section data-testid="practice"><RewardOverlay reward={{ id: "a2", kind: "twenty" }} /></section>);
+  expect(screen.getByTestId("practice").querySelector(".reward-overlay")).toBeNull();
+  expect(document.body.querySelector(".reward-overlay--twenty")).toBeInTheDocument();
+});
