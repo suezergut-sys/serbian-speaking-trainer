@@ -764,7 +764,7 @@
 ## 18.10.2026 — награды за успехи
 
 - [x] Общая реализация web/Android-layout RU/EN: локальный звоночек и анимация за 100%, золотая награда 20/конфетти на 2 секунды за дневные 20 проверок, отдельные настройки. [Доказательства](success-rewards-2026-10-18.md).
-- [x] 247 unit/component tests, lint/typecheck/production build; 6 browser-сценариев RU/EN × desktop/mobile/Android-layout, воспроизведение bundle-звука без сетевой загрузки.
-- [ ] Публикация web.
+- [x] 239 unit/component tests чистого Git-экспорта (247 с локальными посторонними регрессиями), lint/typecheck/production build; 6 browser-сценариев RU/EN × desktop/mobile/Android-layout, воспроизведение bundle-звука без сетевой загрузки.
+- [x] 18.10.2026, 20:56 МСК: [PR #131](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/131) merged, `7a42b11`, Vercel READY/production/main, aliases подтверждены; 6 production browser mock checks, авторизованные RU/EN настройки/reload, HTTP и hash WAV, console/runtime errors 0. [Доказательства](success-rewards-2026-10-18.md).
 - [ ] Android sync/build/проверка packaged assets по отдельной команде; 1.35/code45 без изменений.
 - [ ] Ручная приёмка владельцем/физическое Android-устройство.
