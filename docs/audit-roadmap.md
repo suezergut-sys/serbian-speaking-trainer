@@ -766,13 +766,14 @@
 - [x] Общая реализация web/Android-layout RU/EN: локальный звоночек и анимация за 100%, золотая награда 20/конфетти на 2 секунды за дневные 20 проверок, отдельные настройки. [Доказательства](success-rewards-2026-10-18.md).
 - [x] 239 unit/component tests чистого Git-экспорта (247 с локальными посторонними регрессиями), lint/typecheck/production build; 6 browser-сценариев RU/EN × desktop/mobile/Android-layout, воспроизведение bundle-звука без сетевой загрузки.
 - [x] 18.10.2026, 20:56 МСК: [PR #131](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/131) merged, `7a42b11`, Vercel READY/production/main, aliases подтверждены; 6 production browser mock checks, авторизованные RU/EN настройки/reload, HTTP и hash WAV, console/runtime errors 0. [Доказательства](success-rewards-2026-10-18.md).
-- [ ] Android sync/build/проверка packaged assets по отдельной команде; 1.35/code45 без изменений.
+- [x] 18.10.2026 по отдельной команде включено в согласованный APK 1.36/code46; production cloud build/API/прежняя подпись/embedded WAV/assets проверены. [Выпуск](android-1.36-release.md).
 - [ ] Ручная приёмка владельцем/физическое Android-устройство.
 
 ## 18.10.2026 — центрирование успеха и APK 1.36
 
 - [x] Общий perfect overlay перенесён внутрь панели повторения и центрирован по обеим осям; двадцатая дневная награда остаётся по центру экрана. [Доказательства](android-1.36-release.md).
-- [x] Component regression, 248 frontend tests рабочего checkout, lint/typecheck/build; геометрия RU/EN в 20 вариантах desktop/mobile/Android, 320–1920px, short/landscape.
+- [x] Component regression, 240 frontend tests чистого Git-экспорта (248 с посторонними локальными регрессиями), lint/typecheck/build; геометрия RU/EN в 20 вариантах desktop/mobile/Android, 320–1920px, short/landscape.
 - [x] Согласованы 1.36/code46; production cloud APK, metadata/API/прежняя подпись, embedded WAV и 7 dist/9 packaged public assets/Downloads проверены.
-- [ ] Публикация web и GitHub APK.
+- [x] 18.10.2026: [PR #133](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/133) merged, runtime `8a0c4bb`, Vercel READY/production/main/aliases; GitHub v1.36/tag/target/server digest/size/обратная загрузка совпали. Авторизованный RU/EN UI/v1.36, HTTP/embedded WAV/CSS и console/runtime errors 0 подтверждены. [Доказательства](android-1.36-release.md).
+- [x] 20/20 production browser checks на serbotalk.app/app: RU/EN × 10 разрешений/layouts, центрирование/награды/звук/таймер/настройки. Без реальных AI-вызовов и попыток; screenshot evidence просмотрены. [Доказательства](android-1.36-release.md).
 - [ ] Физическая Android-приёмка.
