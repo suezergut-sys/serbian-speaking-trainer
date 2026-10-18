@@ -22,16 +22,16 @@ describe("shared assistance preference", () => {
     vi.mocked(updatePreferences).mockImplementation(async value => { server = value; return { assistance_enabled: server }; });
     const firstClient = render(<Client />);
     await waitFor(() => expect(fetchPreferences).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(screen.getByRole("switch")).toHaveProperty("checked", !enabled));
-    fireEvent.click(screen.getByRole("switch"));
-    await waitFor(() => expect(screen.getByRole("switch")).toHaveProperty("checked", enabled));
+    await waitFor(() => expect(screen.getByRole("switch", { name: "Мягкие подсказки при распознавании" })).toHaveProperty("checked", !enabled));
+    fireEvent.click(screen.getByRole("switch", { name: "Мягкие подсказки при распознавании" }));
+    await waitFor(() => expect(screen.getByRole("switch", { name: "Мягкие подсказки при распознавании" })).toHaveProperty("checked", enabled));
     firstClient.unmount();
     vi.mocked(updatePreferences).mockClear();
     // Old device storage (or a client's default) cannot reset the confirmed DB value.
     localStorage.setItem("serbotalk.soft-assistance.persisted-user", String(!enabled));
     render(<Client />);
     await waitFor(() => expect(fetchPreferences).toHaveBeenCalledTimes(2));
-    await waitFor(() => expect(screen.getByRole("switch")).toHaveProperty("checked", enabled));
+    await waitFor(() => expect(screen.getByRole("switch", { name: "Мягкие подсказки при распознавании" })).toHaveProperty("checked", enabled));
     expect(updatePreferences).not.toHaveBeenCalled();
     localStorage.removeItem("serbotalk.soft-assistance.persisted-user");
   });
@@ -40,7 +40,7 @@ describe("shared assistance preference", () => {
     vi.mocked(fetchPreferences).mockResolvedValue({ assistance_enabled: true });
     vi.mocked(updatePreferences).mockImplementation(async value => ({ assistance_enabled: value }));
     render(<Client />);
-    const toggle = screen.getByRole("switch");
+    const toggle = screen.getByRole("switch", { name: "Мягкие подсказки при распознавании" });
     await waitFor(() => expect(toggle).toBeChecked());
     fireEvent.click(toggle);
     await waitFor(() => expect(toggle).not.toBeChecked());
@@ -56,7 +56,7 @@ describe("shared assistance preference", () => {
     vi.mocked(updatePreferences).mockImplementation(async value => { server = value; return { assistance_enabled: server }; });
     render(<><Client /><Client /></>);
     await waitFor(() => expect(fetchPreferences).toHaveBeenCalledTimes(2));
-    const [web, android] = screen.getAllByRole("switch");
+    const [web, android] = screen.getAllByRole("switch", { name: "Мягкие подсказки при распознавании" });
     fireEvent.click(android);
     await waitFor(() => expect(android).toBeChecked());
     fireEvent(window, new Event("focus"));
@@ -71,10 +71,10 @@ describe("shared assistance preference", () => {
     vi.mocked(fetchPreferences).mockResolvedValue({ assistance_enabled: false });
     vi.mocked(updatePreferences).mockRejectedValue(new Error("offline"));
     render(<Client />);
-    fireEvent.click(screen.getByRole("switch"));
+    fireEvent.click(screen.getByRole("switch", { name: "Мягкие подсказки при распознавании" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Не удалось сохранить настройку");
-    expect(screen.getByRole("switch")).not.toBeChecked();
-    expect(screen.getByRole("switch")).toBeEnabled();
+    expect(screen.getByRole("switch", { name: "Мягкие подсказки при распознавании" })).not.toBeChecked();
+    expect(screen.getByRole("switch", { name: "Мягкие подсказки при распознавании" })).toBeEnabled();
   });
 
   it("ignores a refresh started before a confirmed change", async () => {
@@ -82,10 +82,10 @@ describe("shared assistance preference", () => {
     vi.mocked(fetchPreferences).mockReturnValue(new Promise(resolve => { finish = resolve; }));
     vi.mocked(updatePreferences).mockResolvedValue({ assistance_enabled: true });
     render(<Client />);
-    fireEvent.click(screen.getByRole("switch"));
-    await waitFor(() => expect(screen.getByRole("switch")).toBeChecked());
+    fireEvent.click(screen.getByRole("switch", { name: "Мягкие подсказки при распознавании" }));
+    await waitFor(() => expect(screen.getByRole("switch", { name: "Мягкие подсказки при распознавании" })).toBeChecked());
     await act(async () => finish({ assistance_enabled: false }));
-    expect(screen.getByRole("switch")).toBeChecked();
+    expect(screen.getByRole("switch", { name: "Мягкие подсказки при распознавании" })).toBeChecked();
   });
 
   it("refreshes periodically while open and aborts on unmount", async () => {
@@ -95,7 +95,7 @@ describe("shared assistance preference", () => {
     await act(async () => undefined);
     vi.mocked(fetchPreferences).mockResolvedValue({ assistance_enabled: true });
     await act(async () => { vi.advanceTimersByTime(15_000); });
-    expect(screen.getByRole("switch")).toBeChecked();
+    expect(screen.getByRole("switch", { name: "Мягкие подсказки при распознавании" })).toBeChecked();
     vi.mocked(fetchPreferences).mockReturnValue(new Promise(() => undefined));
     await act(async () => { vi.advanceTimersByTime(15_000); });
     const signal = vi.mocked(fetchPreferences).mock.calls.at(-1)![0];

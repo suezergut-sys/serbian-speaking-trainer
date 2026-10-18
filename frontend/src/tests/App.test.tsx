@@ -381,10 +381,10 @@ describe("App", () => {
     render(<App />);
     await screen.findByRole("heading", { name: "Я хочу открыть счёт." });
     fireEvent.click(screen.getByRole("button", { name: "Настройки" }));
-    await waitFor(() => expect(screen.getByRole("switch")).toHaveProperty("checked", initial));
+    await waitFor(() => expect(screen.getByRole("switch", { name: "Мягкие подсказки при распознавании" })).toHaveProperty("checked", initial));
     server = !initial;
     await act(async () => { nativeAppEvents.listener?.({ isActive: true }); });
-    await waitFor(() => expect(screen.getByRole("switch")).toHaveProperty("checked", !initial));
+    await waitFor(() => expect(screen.getByRole("switch", { name: "Мягкие подсказки при распознавании" })).toHaveProperty("checked", !initial));
     fireEvent.click(screen.getByRole("button", { name: "Тренировка" }));
     await recordAnswer();
     const request = fetchMock.mock.calls.find(([url]) => url.toString().endsWith("/api/transcriptions"))!;

@@ -433,5 +433,11 @@
   "Не удалось выполнить действие. Текст сохранён в форме. Попробуйте ещё раз.": "The action failed. Your text is still in the form. Please try again.",
   "17 октября 2026 года": "17 October 2026",
   "Отправленная обратная связь хранится вместе с аккаунтом, датой и временем отправки. Голосовой отзыв передаётся OpenAI для расшифровки; сохраняется только подтверждённый текст. Администратор получает через Telegram email аккаунта и уведомления о регистрации, отправке отзыва и достижении 20 проверок за день. Содержание отзыва и аудио в Telegram не передаются.": "Submitted feedback is stored with your account and submission date and time. Voice feedback is sent to OpenAI for transcription; only the text you submit is stored. The administrator receives your account email and notifications of registration, feedback submission and reaching 20 checks in a day through Telegram. Feedback content and audio are not sent to Telegram.",
-  "Закрыть": "Close"
+  "Закрыть": "Close",
+  "Награды за успехи": "Success rewards",
+  "Звоночек за 100% и золотая награда за 20 повторений за день. Настройки сохраняются на этом устройстве.": "A bell for 100% and a golden reward for 20 repetitions in a day. Settings are saved on this device.",
+  "Звуки успеха": "Success sounds",
+  "Анимации успеха": "Success animations",
+  "20 повторений за день!": "20 repetitions today!",
+  "Идеально!": "Perfect!"
 }

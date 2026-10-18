@@ -18,8 +18,8 @@ it("uses Unicode code point offsets without splitting emoji", () => {
 it("renders the off switch and dispatches the choice", () => {
   const onChange = vi.fn();
   render(<SettingsView alphabet="latin" onAlphabetChange={() => {}} onAssistanceChange={onChange} />);
-  expect(screen.getByRole("switch")).not.toBeChecked();
-  fireEvent.click(screen.getByRole("switch"));
+  expect(screen.getByRole("switch", { name: "Мягкие подсказки при распознавании" })).not.toBeChecked();
+  fireEvent.click(screen.getByRole("switch", { name: "Мягкие подсказки при распознавании" }));
   expect(onChange).toHaveBeenCalledWith(true);
 });
 it("shows only a compact suggestion, supports undo and hides edited drafts", () => {
