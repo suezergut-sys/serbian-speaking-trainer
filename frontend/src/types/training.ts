@@ -75,6 +75,7 @@ export type AnswerAnalysis = {
 };
 
 export type Attempt = {
+  first_success_today?: boolean;
   transcription_assisted?: boolean;
   id: string;
   exercise_id: string;

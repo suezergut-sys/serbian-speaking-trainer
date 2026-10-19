@@ -555,3 +555,9 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 - [x] Web опубликован через PR #133, runtime `8a0c4bb`, Vercel READY/main; GitHub v1.36, server digest/size/tag и обратная загрузка подтверждены. [Доказательства](android-1.36-release.md).
 - [x] 20/20 browser checks опубликованного bundle на serbotalk.app/app, RU/EN × 10 layouts, включая Android portrait/narrow/landscape; геометрия и настройки подтверждены.
 - [ ] Физическая установка, динамик, микрофон и OAuth.
+
+## 19.10.2026 — первый успех дня и значок 100%
+
+- [x] Общий RU/EN клиент: golden start, 100%/Верно внутри значка, удалён отдельный perfect score, масштаб 110%, прежнее центрирование/звук и переключатели. Серверный first_success_today совместим с текущим APK. [Доказательства](daily-success-rewards-2026-10-19.md).
+- [ ] Включить клиентские изменения в следующий отдельно согласованный APK; Android sync/build/версии не менялись (1.36/code46).
+- [ ] Физическая приёмка следующего APK.

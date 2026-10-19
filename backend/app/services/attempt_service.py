@@ -236,6 +236,15 @@ class AttemptService:
         self.review.record_revealed_words(exercise, hinted_words)
         hint_penalty = self.review.hint_penalty(hinted_words)
         overall_score = round(max(0.0, base_score - hint_penalty), 3)
+        day_start = datetime.combine(now.date(), time.min, tzinfo=timezone.utc)
+        day_end = day_start + timedelta(days=1)
+        created_at = entry.reserved_at or now
+        # The existing user lock serializes this check with other accepted answers.
+        first_success_today = (
+            overall_score == 1
+            and day_start <= self._utc(created_at) < day_end
+            and not self.attempts.has_perfect_between(day_start, day_end)
+        )
         attempt = self.attempts.add(
             Attempt(
                 exercise_id=exercise.id,
@@ -248,7 +257,7 @@ class AttemptService:
                 hinted_words_json=hinted_words,
                 analysis_json=analysis.model_dump(),
                 overall_score=overall_score,
-                created_at=entry.reserved_at or now,
+                created_at=created_at,
             )
         )
         for issue in analysis.issues:
@@ -293,6 +302,7 @@ class AttemptService:
             hint_penalty=hint_penalty,
             daily_usage=UserService(self.db).usage(locked_user),
             transcription_assisted=bool(assistance.get("assisted")),
+            first_success_today=first_success_today,
         )
         entry.attempt_id = attempt.id
         entry.response_json = response.model_dump(mode="json")

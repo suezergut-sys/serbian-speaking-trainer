@@ -81,6 +81,7 @@ class AttemptResponse(BaseModel):
     hint_penalty: float = Field(ge=0, le=1)
     daily_usage: DailyUsageResponse | None = None
     transcription_assisted: bool = False
+    first_success_today: bool = False
 
 
 class LearnerSkillUpdate(BaseModel):

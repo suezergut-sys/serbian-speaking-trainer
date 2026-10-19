@@ -1445,7 +1445,27 @@ describe("App", () => {
       expect(screen.getByText("Разбор")).toBeInTheDocument();
     }
     expect(screen.getByText("Верно")).toBeInTheDocument();
+    expect(document.querySelector(".feedback__score") === null).toBe(score === 1);
     expect(screen.getByRole("button", { name: native ? "Следующая" : /Следующая фраза/ })).toBeEnabled();
+  });
+
+  it.each([false, true])("hides the separate perfect score with animations disabled (native=%s)", async native => {
+    vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(native);
+    localStorage.setItem("serbotalk.rewards.animations", "false");
+    voiceMock.available = true;
+    const base = mockApi();
+    vi.stubGlobal("fetch", async (input: RequestInfo | URL, init?: RequestInit) => {
+      const response = await base(input, init);
+      if (!input.toString().endsWith("/api/attempts")) return response;
+      return { ok: true, json: async () => ({ ...await response.json(), overall_score: 1 }) };
+    });
+    render(<App />);
+    await screen.findByRole("heading", { name: "Я хочу открыть счёт." });
+    await recordAnswer();
+    fireEvent.click(screen.getByRole("button", { name: native ? "Проверить" : "Проверить ответ" }));
+    await waitFor(() => expect(document.querySelector(".feedback")).toBeInTheDocument());
+    expect(document.querySelector(".feedback__score")).toBeNull();
+    expect(document.querySelector(".reward-overlay")).toBeNull();
   });
 
   it("submits a Serbian answer and shows concise and expandable feedback", async () => {

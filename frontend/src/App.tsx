@@ -832,7 +832,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     const scorePercent = Math.round(attempt.overall_score * 100);
     return <div className={`feedback ${native ? "android-feedback" : ""} feedback--${attempt.analysis.verdict}`}>
       <AnswerResult answer={attempt.transcript_sr} attempt={attempt} alphabet={alphabet} />
-      <div className="feedback__score"><span>{scorePercent}%</span><strong>{t(attempt.analysis.verdict === "correct" ? "Верно" : attempt.analysis.verdict === "mostly_correct" ? "Почти верно" : "Нужно доработать")}</strong></div>
+      {attempt.overall_score !== 1 && <div className="feedback__score"><span>{scorePercent}%</span><strong>{t(attempt.analysis.verdict === "correct" ? "Верно" : attempt.analysis.verdict === "mostly_correct" ? "Почти верно" : "Нужно доработать")}</strong></div>}
       {attempt.hint_penalty > 0 && <div className="hint-penalty"><Icon name="bulb" /><span>{t("Подсказки: −")}{Math.round(attempt.hint_penalty * 100)}%</span></div>}
       {scorePercent < 100 && <details><summary>{t("Разбор")}</summary><p>{displayFeedback(attempt.analysis.detailed_feedback_ru, alphabet)}</p>{attempt.analysis.issues.map((issue, index) => <p className="issue" key={`${issue.skill_key}-${issue.type}-${index}`}>{displaySerbian(issue.evidence, alphabet)}{t(issue.correction ? ` → ${displaySerbian(issue.correction, alphabet)}` : "")}{issue.explanation_ru && <span className="issue-explanation">{displayFeedback(issue.explanation_ru, alphabet)}</span>}</p>)}</details>}
     </div>;
@@ -842,7 +842,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     const answerId = compact ? "android-serbian-answer" : "serbian-answer";
     const done = !isReviewMode && completedCount >= (session?.requested_length ?? 10);
     return <div className={`practice-card exercise-layout${compact ? " android-training-content" : " panel"}`}>
-      <RewardOverlay reward={reward?.kind === "perfect" ? reward : undefined} />
+      <RewardOverlay reward={reward?.kind !== "twenty" ? reward : undefined} />
       <div className="exercise-scroll">
         <div className="exercise-topic">{phraseTopicTitle}</div>
         {!attempt && <div className="exercise-source">{renderPhrase()}</div>}
