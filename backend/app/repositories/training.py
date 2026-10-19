@@ -70,6 +70,19 @@ class AttemptRepository(Repository[Attempt]):
         super().__init__(session, Attempt)
         self.user_id = user_id
 
+    def has_perfect_between(self, start: datetime, end: datetime) -> bool:
+        return self.session.scalar(
+            select(Attempt.id)
+            .join(Exercise, Exercise.id == Attempt.exercise_id)
+            .join(TrainingSession, TrainingSession.id == Exercise.session_id)
+            .where(
+                TrainingSession.user_id == self.user_id,
+                Attempt.overall_score == 1,
+                Attempt.created_at >= start,
+                Attempt.created_at < end,
+            ).limit(1)
+        ) is not None
+
     def list_created_between(self, start: datetime, end: datetime) -> list[MonthlyAttempt]:
         statement = (
             select(Attempt.created_at, Attempt.overall_score)

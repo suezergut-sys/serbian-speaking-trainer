@@ -8,10 +8,11 @@ export function RewardOverlay({ reward }: { reward?: Reward }) {
   const enabled = useRewardPreference("animations");
   if (!reward || !enabled) return null;
   const twenty = reward.kind === "twenty";
-  const overlay = <div key={reward.id} className={`reward-overlay reward-overlay--${reward.kind}`}>
+  const start = reward.kind === "start";
+  const overlay = <div key={`${reward.id}-${reward.kind}`} className={`reward-overlay reward-overlay--${reward.kind}${twenty ? "" : " reward-overlay--phrase"}`}>
     <div className="reward-panel" role="status">
-      <strong className="reward-medal">{twenty ? "20" : <svg aria-hidden="true" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>}</strong>
-      <span>{t(twenty ? "20 повторений за день!" : "Идеально!")}</span>
+      <strong className="reward-medal">{twenty ? "20" : start ? <svg aria-hidden="true" width="48" height="48" viewBox="0 0 48 48"><path fill="currentColor" d="m5 23 7-7 10 10L37 9l7 7-22 25Z" /></svg> : <><span className="reward-percent">100%</span><span className="reward-verdict">{t("Верно")}</span></>}</strong>
+      {(twenty || start) && <span>{t(twenty ? "20 повторений за день!" : "Успешный старт!")}</span>}
     </div>
     {twenty && <div className="reward-confetti" aria-hidden="true">{Array.from({ length: 32 }, (_, index) => {
       const angle = index * Math.PI * 2 / 32;

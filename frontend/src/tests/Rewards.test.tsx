@@ -77,3 +77,27 @@ it("keeps perfect feedback inside its practice panel and the daily milestone on 
   expect(screen.getByTestId("practice").querySelector(".reward-overlay")).toBeNull();
   expect(document.body.querySelector(".reward-overlay--twenty")).toBeInTheDocument();
 });
+
+it("uses the server's daily-first flag and queues a simultaneous twentieth check with one sound", () => {
+  vi.useFakeTimers();
+  const { result } = renderHook(useRewards);
+  act(() => { result.current.prepareReward(); result.current.celebrate({ ...attempt(1, 20), first_success_today: true }); });
+  expect(result.current.reward?.kind).toBe("start");
+  expect(audio.play).toHaveBeenCalledOnce();
+  act(() => vi.advanceTimersByTime(2000));
+  expect(result.current.reward?.kind).toBe("twenty");
+  act(() => vi.advanceTimersByTime(2000));
+  expect(result.current.reward).toBeUndefined();
+  expect(audio.play).toHaveBeenCalledOnce();
+});
+
+it.each(["ru", "en"] as const)("places 100%% and its verdict on the medal, and renders a golden daily start in %s", language => {
+  setLanguage(language);
+  const en = language === "en";
+  const view = render(<RewardOverlay reward={{ id: "a1", kind: "perfect" }} />);
+  expect(document.querySelector(".reward-medal")).toHaveTextContent(en ? "100%Correct" : "100%Верно");
+  view.rerender(<RewardOverlay reward={{ id: "a2", kind: "start" }} />);
+  expect(screen.getByRole("status")).toHaveTextContent(en ? "Successful start!" : "Успешный старт!");
+  expect(document.querySelector(".reward-overlay--start .reward-medal svg")).toBeInTheDocument();
+  expect(screen.queryByText("100%")).not.toBeInTheDocument();
+});

@@ -85,6 +85,8 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
       await expect(row).toHaveCSS('text-align', 'left');
     }
     const score = stage.locator('.feedback__score');
+    if (verdict === 'correct') await expect(score).toHaveCount(0);
+    else {
     const scoreBox = await score.boundingBox();
     for (const line of await score.locator('span, strong').all()) {
       const box = await line.boundingBox();
@@ -92,6 +94,7 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
     }
     const percent = await score.locator('span').boundingBox();
     expect((await score.locator('strong').boundingBox()).y).toBeGreaterThanOrEqual(percent.y + percent.height);
+    }
     await mkdir('../artifacts/practice-layout', { recursive: true });
     await page.screenshot({ path: `../artifacts/practice-layout/${language}-${layout}-result.png` });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

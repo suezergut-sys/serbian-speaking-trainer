@@ -69,8 +69,11 @@ for (const layout of ['desktop', 'mobile', 'android']) for (const language of ['
     await expect(page.locator('.result-phrase')).toHaveCount(2);
     await expect(page.getByText(exercise.source_ru, { exact: true })).toHaveCount(0);
     await expect(page.locator('.feedback > p')).toHaveCount(0);
-    await expect(page.locator('.feedback__score')).toContainText(`${Math.round(score * 100)}%`);
-    if (layout !== 'desktop') await expect(page.locator('.feedback__score')).toBeInViewport({ ratio: 1 });
+    if (score === 1) await expect(page.locator('.feedback__score')).toHaveCount(0);
+    else {
+      await expect(page.locator('.feedback__score')).toContainText(`${Math.round(score * 100)}%`);
+      if (layout !== 'desktop') await expect(page.locator('.feedback__score')).toBeInViewport({ ratio: 1 });
+    }
     const next = page.getByRole('button', { name: layout !== 'desktop' ? (en ? 'Next' : 'Следующая') : (en ? 'Next phrase' : 'Следующая фраза'), exact: true });
     await expect(next).toBeInViewport({ ratio: 1 });
     await next.click();

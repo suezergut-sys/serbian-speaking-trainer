@@ -3,7 +3,7 @@ import type { Attempt } from "./types/training";
 import { readRewardPreference, useRewardPreference } from "./rewardPreferences";
 import { RewardAudio } from "./rewardAudio";
 
-export type Reward = { id: string; kind: "perfect" | "twenty" };
+export type Reward = { id: string; kind: "perfect" | "start" | "twenty" };
 
 export function useRewards() {
   const [reward, setReward] = useState<Reward>();
@@ -29,8 +29,15 @@ export function useRewards() {
     if (perfect && readRewardPreference("sounds")) void audio.current?.play();
     if ((!perfect && !twenty) || !readRewardPreference("animations")) return;
     clearTimeout(timer.current);
-    setReward({ id: completed.id, kind: twenty ? "twenty" : "perfect" });
-    timer.current = setTimeout(() => setReward(undefined), 2000);
+    const rewards: Reward[] = [];
+    if (perfect && completed.first_success_today) rewards.push({ id: completed.id, kind: "start" });
+    if (twenty) rewards.push({ id: completed.id, kind: "twenty" });
+    else if (perfect && !completed.first_success_today) rewards.push({ id: completed.id, kind: "perfect" });
+    function present(remaining: Reward[]) {
+      setReward(remaining[0]);
+      if (remaining.length) timer.current = setTimeout(() => present(remaining.slice(1)), 2000);
+    }
+    present(rewards);
   }
 
   return { reward, prepareReward, celebrate };

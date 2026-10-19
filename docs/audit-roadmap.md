@@ -777,3 +777,11 @@
 - [x] 18.10.2026: [PR #133](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/133) merged, runtime `8a0c4bb`, Vercel READY/production/main/aliases; GitHub v1.36/tag/target/server digest/size/обратная загрузка совпали. Авторизованный RU/EN UI/v1.36, HTTP/embedded WAV/CSS и console/runtime errors 0 подтверждены. [Доказательства](android-1.36-release.md).
 - [x] 20/20 production browser checks на serbotalk.app/app: RU/EN × 10 разрешений/layouts, центрирование/награды/звук/таймер/настройки. Без реальных AI-вызовов и попыток; screenshot evidence просмотрены. [Доказательства](android-1.36-release.md).
 - [ ] Физическая Android-приёмка.
+
+## 19.10.2026 — сценарии наград за успех
+
+- [x] RU/EN: первый точный 100% за сутки аккаунта — золотая галочка/Успешный старт; последующие — 100%/Верно внутри медали, отдельный score в панели убран; масштаб 110%, центр и звук сохранены. Серверный additive флаг без миграции, idempotent replay/owner scope/UTC/concurrency проверены. [Доказательства](daily-success-rewards-2026-10-19.md).
+- [x] Backend 292 passed / 8 skipped, frontend 251 full + 110 targeted, lint/typecheck/build и 10 reward browser checks RU/EN web/Android-layout. [Доказательства](daily-success-rewards-2026-10-19.md).
+- [ ] Публикация backend/web и production-проверка.
+- [ ] Перенос в APK по отдельной команде, текущая 1.36/code46 не менялась.
+- [ ] Приёмка владельцем.
