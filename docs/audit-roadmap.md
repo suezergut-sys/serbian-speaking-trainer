@@ -781,7 +781,9 @@
 ## 19.10.2026 — сценарии наград за успех
 
 - [x] RU/EN: первый точный 100% за сутки аккаунта — золотая галочка/Успешный старт; последующие — 100%/Верно внутри медали, отдельный score в панели убран; масштаб 110%, центр и звук сохранены. Серверный additive флаг без миграции, idempotent replay/owner scope/UTC/concurrency проверены. [Доказательства](daily-success-rewards-2026-10-19.md).
-- [x] Backend 292 passed / 8 skipped, frontend 251 full + 110 targeted, lint/typecheck/build и 10 reward browser checks RU/EN web/Android-layout. [Доказательства](daily-success-rewards-2026-10-19.md).
-- [ ] Публикация backend/web и production-проверка.
+- [x] Backend 292 passed / 8 skipped, frontend 245 tests чистого Git-экспорта, lint/typecheck/build и 10 reward browser checks RU/EN web/Android-layout. [Доказательства](daily-success-rewards-2026-10-19.md).
+- [x] 19.10.2026: [PR #135](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/135) merged, `9fa4a19`, backend/web READY/production/main/aliases; additive OpenAPI field проверен. [Доказательства](daily-success-rewards-2026-10-19.md).
+- [x] HTTP/auth smoke, additive OpenAPI, unchanged embedded WAV SHA/CSS/JS и авторизованный UI проверены; console/runtime errors 0. [Доказательства](daily-success-rewards-2026-10-19.md).
+- [x] 19.10.2026: 10/10 production reward browser checks RU/EN desktop/mobile/320px/Android narrow/landscape прошли; подтверждены start/perfect/twenty, центр/+10%, скрытый постоянный score, прежний звук и настройки. [Доказательства](daily-success-rewards-2026-10-19.md).
 - [ ] Перенос в APK по отдельной команде, текущая 1.36/code46 не менялась.
 - [ ] Приёмка владельцем.
