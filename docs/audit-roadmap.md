@@ -792,6 +792,6 @@
 
 - [x] Персональный выбор из env-списка только для разрешённого debug-admin; сохранение независимо от отладки, reset/default, server-side allowlist и owner scope. Явный sr и выбранный алфавит в prompts v3; старые клиенты используют latin по умолчанию. [Доказательства](transcription-model-experiments-2026-10-20.md).
 - [x] Полный quality gate, дополнительные SDK multipart/migration tests и 8 браузерных сценариев RU/EN desktop/mobile/320px/shared Android-layout. [Доказательства](transcription-model-experiments-2026-10-20.md).
-- [ ] Публикация backend/web и production-проверка.
+- [x] 20.10.2026, 10:35 МСК: [PR #137](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/137), runtime `6f7e9ab`; backend/web READY/production/aliases, API/auth/owner RU/EN и сохранение gpt-4o-transcribe после reload, console/runtime errors 0. [Доказательства](transcription-model-experiments-2026-10-20.md).
 - [ ] Сравнение реальной речи владельцем и выбор победителя.
 - [ ] Перенос UI в следующий APK по отдельной команде; 1.36/code46 прежние.
