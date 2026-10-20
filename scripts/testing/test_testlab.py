@@ -62,6 +62,31 @@ def test_pre_audio_schema_upgrades_preserving_debug_history(tmp_path):
         engine.dispose()
 
 
+def test_pre_transcription_schema_upgrades_and_downgrades_preserving_debug_history(tmp_path):
+    engine = create_engine(f"sqlite:///{(tmp_path / 'pre-transcription.sqlite3').as_posix()}")
+    try:
+        _alembic(engine, "upgrade", "713ce912ab30")
+        with engine.begin() as connection:
+            connection.execute(text("INSERT INTO model_debug_settings (user_id,enabled,generation) "
+                "VALUES ('00000000-0000-0000-0000-000000000001',1,3)"))
+        bootstrap_testlab_database(engine)
+        bootstrap_testlab_database(engine)
+        with engine.connect() as connection:
+            assert connection.execute(text("SELECT transcription_model FROM model_debug_settings")).scalar_one() is None
+        from alembic import command
+        from app.db.cli import alembic_config
+        config = alembic_config()
+        with engine.begin() as connection:
+            config.attributes["connection"] = connection
+            command.downgrade(config, "713ce912ab30")
+        with engine.connect() as connection:
+            assert connection.execute(text("SELECT generation FROM model_debug_settings")).scalar_one() == 3
+        bootstrap_testlab_database(engine)
+        assert alembic_revision(engine) == current_revision()
+    finally:
+        engine.dispose()
+
+
 def test_pre_feedback_schema_upgrades_without_changing_users(tmp_path):
     engine = create_engine(f"sqlite:///{(tmp_path / 'pre-feedback.sqlite3').as_posix()}")
     try:

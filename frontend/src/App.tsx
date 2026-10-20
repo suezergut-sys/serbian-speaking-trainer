@@ -558,7 +558,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       if (voiceEpochRef.current !== epoch) return;
       voiceRef.current = undefined;
       startUiTiming("transcription");
-      const transcript = await transcribeAudio(exerciseId, recording.audio, controller.signal, assistanceEnabled);
+      const transcript = await transcribeAudio(exerciseId, recording.audio, controller.signal, assistanceEnabled, alphabetRef.current);
       if (voiceEpochRef.current !== epoch) return;
       const unexpectedScript = hasUnexpectedLetterScript(transcript.text);
       unexpectedScriptStreakRef.current = unexpectedScript ? unexpectedScriptStreakRef.current + 1 : 0;

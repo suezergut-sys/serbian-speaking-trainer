@@ -1,4 +1,5 @@
 from fastapi import UploadFile
+from typing import Literal
 from sqlalchemy.orm import Session
 
 from app.config import Settings
@@ -8,7 +9,8 @@ from app.schemas.transcriptions import TranscriptionAssistanceAnalysis
 from app.services.ai_adapter import AIServiceError
 from app.services.transcription_assistance_adapter import TranscriptionAssistanceProvider
 from pydantic import ValidationError
-from app.services.transcription_adapter import TranscriptionProvider, TranscriptionServiceError
+from app.services.transcription_adapter import OpenAITranscriptionProvider, TranscriptionProvider, TranscriptionServiceError
+from app.services.transcription_settings import TranscriptionSettingsService
 from app.services.serbian_text import has_unexpected_letter_script, normalized_serbian_words, serbian_latin
 from app.services.transcription_assistance import POLICY_VERSION, validate_analysis
 from app.repositories.transcriptions import TranscriptionReceiptRepository
@@ -49,11 +51,18 @@ class TranscriptionService:
         self.receipts = TranscriptionReceiptRepository(db, user_id)
         self.assistance_provider = assistance_provider
 
-    def transcribe(self, *, exercise_id: str, audio: UploadFile, assistance_enabled: bool = False) -> TranscriptionResponse:
+    def transcribe(self, *, exercise_id: str, audio: UploadFile, assistance_enabled: bool = False,
+                   alphabet: Literal["latin", "cyrillic"] = "latin") -> TranscriptionResponse:
         exercise = self.exercises.get_owned(exercise_id)
         if exercise is None:
             raise TranscriptionExerciseNotFoundError(exercise_id)
-        if not self.provider.is_available:
+        provider = self.provider
+        if isinstance(provider, OpenAITranscriptionProvider):
+            configured = TranscriptionSettingsService(self.db, self.settings, self.exercises.user_id).provider_settings()
+            scoped = OpenAITranscriptionProvider(configured, alphabet)
+            scoped._client = provider.client if provider.is_available else None
+            provider = scoped
+        if not provider.is_available:
             raise TranscriptionServiceError("transcription_not_configured")
 
         content_type = (audio.content_type or "").split(";", 1)[0].lower()
@@ -69,7 +78,7 @@ class TranscriptionService:
 
         # Normal requests keep bytes in memory; authorized debug capture may retain them temporarily.
         try:
-            result = self.provider.transcribe(
+            result = provider.transcribe(
                 audio=payload, filename=f"speech{extension}", content_type=content_type,
             )
         finally:

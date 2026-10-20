@@ -11,6 +11,7 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
       localStorage.setItem(storageKey, JSON.stringify({ access_token: 'e2e-local-only', refresh_token: 'e2e-local-only', token_type: 'bearer', expires_at: 4102444800, user: { id: 'settings-user', aud: 'authenticated', role: 'authenticated', email: 'learner@example.invalid', app_metadata: {}, user_metadata: {}, created_at: '2026-10-01T00:00:00Z' } }));
     }, { language, storageKey: process.env.SETTINGS_AUTH_STORAGE_KEY ?? 'sb-e2e-auth-auth-token' });
     let debugChanges = 0;
+    let selectedModel = null;
     await page.route('**/api/**', async route => {
       const path = new URL(route.request().url()).pathname;
       let body, status = 200;
@@ -18,6 +19,10 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
       else if (path === '/api/auth/me/preferences') body = { assistance_enabled: false };
       else if (path === '/api/topics') body = [];
       else if (path === '/api/review-phrases/summary') body = { phrase_count: 0 };
+      else if (path === '/api/admin/model-debug/transcription') {
+        if (route.request().method() === 'PATCH') selectedModel = route.request().postDataJSON().model;
+        body = { selected_model: selectedModel, effective_model: selectedModel ?? 'env-default', default_model: 'env-default', options: ['env-default', 'env-alternative'] };
+      }
       else if (path === '/api/admin/model-debug') {
         if (route.request().method() === 'PATCH') {
           if (++debugChanges === 1) { status = 503; body = {}; }
@@ -32,6 +37,19 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
     await expect(account.getByText('Maksim Sumin')).toBeVisible();
     await expect(account.getByText('maxim.sumin.long.address@example.invalid')).toBeVisible();
     await expect(account.getByText(en ? '4 phrases · unlimited' : '4 фраз · без лимита')).toBeVisible();
+    const experiment = page.getByRole('region', { name: en ? 'Experiment: speech recognition' : 'Эксперимент: распознавание речи' });
+    const modelSelect = experiment.getByRole('combobox', { name: en ? 'Transcription model' : 'Модель распознавания' });
+    await expect(modelSelect).toBeEnabled();
+    await modelSelect.selectOption('env-alternative');
+    await expect(modelSelect).toHaveValue('env-alternative');
+    await expect(modelSelect).toBeEnabled();
+    await expect(modelSelect).toHaveCSS('color', 'rgb(234, 242, 255)');
+    expect(await experiment.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+    await mkdir('../artifacts/transcription-models', { recursive: true });
+    await experiment.screenshot({ path: `../artifacts/transcription-models/${language}-${layout}.png` });
+    await modelSelect.selectOption('');
+    await expect(modelSelect).toHaveValue('');
+    await expect(modelSelect).toBeEnabled();
     await expect(account.getByRole('link')).toHaveCount(0);
     const deletion = page.getByRole('region', { name: en ? 'Account deletion' : 'Удаление аккаунта', exact: true });
     await expect(deletion.getByRole('link')).toHaveAttribute('href', '/delete-account');

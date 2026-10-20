@@ -11,6 +11,14 @@ class ModelDebugRepository:
     def setting(self):
         return self.db.get(ModelDebugSetting, self.user_id)
 
+    def select_transcription_model(self, model: str | None):
+        from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+        from sqlalchemy.dialects.postgresql import insert as pg_insert
+        insert = pg_insert if self.db.get_bind().dialect.name == "postgresql" else sqlite_insert
+        self.db.execute(insert(ModelDebugSetting).values(
+            user_id=self.user_id, enabled=False, generation=0, transcription_model=model,
+        ).on_conflict_do_update(index_elements=["user_id"], set_={"transcription_model": model}))
+
     def change(self, enabled: bool):
         # Create disabled state once; conflict-safe on both supported databases.
         from sqlalchemy.dialects.sqlite import insert as sqlite_insert

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from hashlib import sha256
-from typing import Protocol
+from typing import Literal, Protocol
 
 from openai import OpenAI, APIConnectionError, APITimeoutError, APIStatusError
 from pydantic import ValidationError
@@ -36,8 +36,9 @@ class TranscriptionProvider(Protocol):
 
 
 class OpenAITranscriptionProvider:
-    def __init__(self, settings: Settings) -> None:
+    def __init__(self, settings: Settings, alphabet: Literal["latin", "cyrillic"] = "latin") -> None:
         self.settings = settings
+        self.alphabet = alphabet
         self._client: OpenAI | None = None
 
     @property
@@ -75,7 +76,9 @@ class OpenAITranscriptionProvider:
             language_options = ({"languages": ["sr"]} if self.settings.openai_transcribe_language_parameter == "languages"
                                 else {"language": "sr"})
             for retry in range(2):
-                prompt = load_prompt("speech_transcription_v2.md" if retry == 0 else "speech_transcription_script_retry_v2.md")
+                prompt = load_prompt(f"speech_transcription_{self.alphabet}_v3.md")
+                if retry:
+                    prompt = load_prompt("speech_transcription_retry_v3.md") + "\n" + prompt
                 with capture_model_call("audio.transcriptions" if retry == 0 else "audio.transcriptions.script_retry",
                     self.settings.openai_transcribe_model or "", {
                         "model": self.settings.openai_transcribe_model, **language_options, "prompt": prompt,

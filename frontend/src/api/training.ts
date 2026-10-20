@@ -71,10 +71,11 @@ export function fetchNextExercise(sessionId: string, clientRequestId: string, si
   });
 }
 
-export function transcribeAudio(exerciseId: string, audio: Blob, signal?: AbortSignal, assistanceEnabled = false): Promise<TranscriptionResponse> {
+export function transcribeAudio(exerciseId: string, audio: Blob, signal?: AbortSignal, assistanceEnabled = false, alphabet: import("../serbianScript").SerbianAlphabet = "latin"): Promise<TranscriptionResponse> {
   const form = new FormData();
   form.append("exercise_id", exerciseId);
   form.append("assistance_enabled", String(assistanceEnabled));
+  form.append("alphabet", alphabet);
   form.append("audio", audio, audioFilename(audio.type));
   return requestJson<TranscriptionResponse>("/api/transcriptions", {
     method: "POST",

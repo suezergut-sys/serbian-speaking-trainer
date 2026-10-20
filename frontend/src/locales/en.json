@@ -440,5 +440,13 @@
   "Анимации успеха": "Success animations",
   "20 повторений за день!": "20 repetitions today!",
   "Идеально!": "Perfect!",
-  "Успешный старт!": "Successful start!"
+  "Успешный старт!": "Successful start!",
+  "Эксперимент: распознавание речи": "Experiment: speech recognition",
+  "Модель меняется только для вашего аккаунта и следующих записей. Отладку включать необязательно.": "The model changes only for your account and future recordings. Debug mode is optional.",
+  "Модель распознавания": "Transcription model",
+  "По умолчанию": "Default",
+  "Язык записи — сербский. Выбранный выше алфавит передаётся модели. Качество проверяйте на собственных записях.": "The recording language is Serbian. Your alphabet choice above is sent to the model. Compare quality using your own recordings.",
+  "Загружаем или сохраняем модель…": "Loading or saving model…",
+  "Не удалось загрузить модели распознавания.": "Could not load transcription models.",
+  "Не удалось сохранить модель. Повторите выбор.": "Could not save the model. Select it again."
 }

@@ -4,6 +4,7 @@ from typing import Literal
 
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from app.schemas.transcription_settings import TranscriptionModelOption
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 PROJECT_ROOT = BACKEND_ROOT.parent
@@ -42,6 +43,7 @@ class Settings(BaseSettings):
     openai_realtime_model: str | None = None
     openai_text_model: str | None = None
     openai_transcribe_model: str | None = None
+    openai_transcribe_models: list[TranscriptionModelOption] = Field(default_factory=list)
     openai_transcribe_language_parameter: Literal["languages", "language"] = "languages"
     openai_timeout_seconds: float = Field(default=20, gt=0, le=120)
     openai_max_retries: int = Field(default=2, ge=0, le=5)

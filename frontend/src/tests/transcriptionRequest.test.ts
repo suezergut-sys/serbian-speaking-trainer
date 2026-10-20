@@ -1,8 +1,11 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { transcribeAudio } from "../api/training";
 
+const requests = vi.hoisted(() => [] as RequestInit[]);
+
 vi.mock("../auth", () => ({
   authenticatedFetch: (_url: string, init: RequestInit) => new Promise((_resolve, reject) => {
+    requests.push(init);
     init.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")), { once: true });
   }),
 }));
@@ -23,4 +26,14 @@ it("distinguishes a 45-second request timeout from lifecycle cancellation", asyn
   controller.abort();
   await cancellation;
   expect(vi.getTimerCount()).toBe(0);
+});
+
+it.each(["latin", "cyrillic"] as const)("sends the selected %s alphabet in the multipart request", async alphabet => {
+  const controller = new AbortController();
+  const request = transcribeAudio("exercise", new Blob(), controller.signal, false, alphabet);
+  const assertion = expect(request).rejects.toMatchObject({ name: "AbortError" });
+  const form = requests.at(-1)!.body as FormData;
+  expect(form.get("alphabet")).toBe(alphabet);
+  controller.abort();
+  await assertion;
 });

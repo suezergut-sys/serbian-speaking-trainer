@@ -25,6 +25,7 @@ class ModelDebugSetting(Base):
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     enabled: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     generation: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    transcription_model: Mapped[str | None] = mapped_column(String(200))
 
 
 class ModelDebugLog(Base):

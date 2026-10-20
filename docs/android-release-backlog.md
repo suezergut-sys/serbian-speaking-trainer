@@ -562,3 +562,9 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 - [x] Backend/web опубликованы 19.10.2026 через PR #135, runtime `9fa4a19`, Vercel READY/main; актуальные статусы в [доказательствах](daily-success-rewards-2026-10-19.md).
 - [ ] Включить клиентские изменения в следующий отдельно согласованный APK; Android sync/build/версии не менялись (1.36/code46).
 - [ ] Физическая приёмка следующего APK.
+
+## 20.10.2026 — выбор STT модели и алфавит в запросе
+
+- [x] Общий RU/EN web-клиент: персональный селектор модели для разрешённого admin; selected alphabet передаётся в STT. Component/typecheck/build и RU/EN browser checks, включая общий Android-layout, выполнены. [Доказательства](transcription-model-experiments-2026-10-20.md).
+- [ ] Включить клиент в следующий отдельно согласованный APK; текущие metadata/package 1.36/code46 не менялись, cap sync/build не выполнялись. Старый APK совместим с backend и использует latin prompt по умолчанию.
+- [ ] Физическая речевая приёмка.

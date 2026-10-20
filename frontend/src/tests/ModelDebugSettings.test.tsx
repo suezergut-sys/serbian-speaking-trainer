@@ -2,15 +2,15 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ModelDebugSettings } from "../ModelDebugSettings";
 import { SettingsView } from "../SettingsView";
-import { fetchModelDebug, updateModelDebug } from "../api/users";
+import { fetchModelDebug, updateModelDebug, fetchTranscriptionModels } from "../api/users";
 import type { CurrentUser } from "../types/auth";
 import { setLanguage } from "../i18n";
 
-vi.mock("../api/users", () => ({ fetchModelDebug: vi.fn(), updateModelDebug: vi.fn() }));
+vi.mock("../api/users", () => ({ fetchModelDebug: vi.fn(), updateModelDebug: vi.fn(), fetchTranscriptionModels: vi.fn().mockResolvedValue({ options: [], selected_model: null }), updateTranscriptionModel: vi.fn() }));
 
 describe("administrator model debug settings", () => {
   afterEach(() => { cleanup(); setLanguage("ru"); });
-  beforeEach(() => { vi.resetAllMocks(); vi.mocked(fetchModelDebug).mockResolvedValue({ enabled: false }); });
+  beforeEach(() => { vi.resetAllMocks(); vi.mocked(fetchModelDebug).mockResolvedValue({ enabled: false }); vi.mocked(fetchTranscriptionModels).mockResolvedValue({ options: [], selected_model: null, effective_model: null, default_model: null }); });
 
   it("loads persisted mode and confirms enabling/disabling with server", async () => {
     vi.mocked(updateModelDebug).mockImplementation(async enabled => ({ enabled }));
