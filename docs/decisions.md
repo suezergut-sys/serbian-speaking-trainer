@@ -728,3 +728,9 @@ Desktop statistics вычисляет ширину правой колонки w
 Prompts v3 хранятся отдельно для latin/cyrillic; требуют дословный сербский transcript без перевода и исправления ошибок ученика. Ответ валидируется существующей Pydantic-схемой, прежний bounded script retry/manual review и запрет оценки чужого письма сохранены. Внутреннее представление остаётся latin для совместимости анализа/receipts. По умолчанию аудио не сохраняется; выбор модели сам по себе не включает debug. [Проверки и выпуск](transcription-model-experiments-2026-10-20.md).
 
 20.10.2026, 10:35 МСК: web/backend опубликованы через [PR #137](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/137), runtime `6f7e9ab`; Vercel READY, production aliases и owner RU/EN сохранение модели подтверждены. Для первого сравнения выбран gpt-4o-transcribe; реальная речевая приёмка открыта. [Доказательства](transcription-model-experiments-2026-10-20.md).
+
+## 20.10.2026 — общий STT default и Android 1.37
+
+После положительного первого эксперимента владелец назначил gpt-4o-transcribe всем пользователям. Меняем только backend env model и singular language contract; runtime-код не содержит model IDs, постоянный ключ не покидает backend. Существующие обычные аккаунты и старые APK получают default без миграции профилей. Debug-admin сохраняет явно выбранный вариант эксперимента; сейчас он совпадает с общим default.
+
+1.37/code47 отдельно подтверждены в чате; APK включает все клиентские изменения после 1.36 и собирается только android:cloud-apk. Production API, прежняя подпись и packaged assets проверяются отдельно от browser mocks. [Доказательства](android-1.37-release.md).

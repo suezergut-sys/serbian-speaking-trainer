@@ -795,3 +795,11 @@
 - [x] 20.10.2026, 10:35 МСК: [PR #137](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/137), runtime `6f7e9ab`; backend/web READY/production/aliases, API/auth/owner RU/EN и сохранение gpt-4o-transcribe после reload, console/runtime errors 0. [Доказательства](transcription-model-experiments-2026-10-20.md).
 - [ ] Сравнение реальной речи владельцем и выбор победителя.
 - [ ] Перенос UI в следующий APK по отдельной команде; 1.36/code46 прежние.
+
+## 20.10.2026 — общая STT модель и Android 1.37/code47
+
+- [x] gpt-4o-transcribe назначена общей backend env-моделью, language=sr; production backend READY, общий default подтверждён в авторизованных настройках. Два API regression tests для обычного пользователя и обоих алфавитов. [Доказательства](android-1.37-release.md).
+- [x] Владелец отдельно согласовал 1.37/code47; весь клиентский бэклог после 1.36 перенесён через android:cloud-apk. Metadata/API/прежняя подпись/7 dist и 9 public assets/embedded WAV/Downloads проверены. [Доказательства](android-1.37-release.md).
+- [x] 348 backend passed / 8 skipped, 258 frontend, 5 Node guards, lint/typecheck/web build; 5 targeted version/settings tests. [Доказательства](android-1.37-release.md).
+- [ ] PR/merge, web 1.37, GitHub APK и production-проверки.
+- [ ] Физическая установка, OAuth, микрофон/звук и реальная речь.

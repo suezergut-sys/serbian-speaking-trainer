@@ -50,7 +50,7 @@ def test_invalid_or_empty_model_response(response, code):
 
 @pytest.mark.parametrize("valid", ["Želeo bih jaku kafu.", "Желео бих јаку кафу."])
 def test_unexpected_script_retries_once_using_same_memory_buffer(valid):
-    provider = OpenAITranscriptionProvider(Settings(openai_api_key="secret", openai_transcribe_model="env-model"))
+    provider = OpenAITranscriptionProvider(Settings(_env_file=None, openai_api_key="secret", openai_transcribe_model="env-model"))
     create = Mock(side_effect=[SimpleNamespace(text="Θέλω καφέ"), SimpleNamespace(text=valid)])
     provider._client = SimpleNamespace(audio=SimpleNamespace(transcriptions=SimpleNamespace(create=create)))
     audio = b"synthetic"
