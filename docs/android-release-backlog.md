@@ -568,3 +568,5 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 - [x] Общий RU/EN web-клиент: персональный селектор модели для разрешённого admin; selected alphabet передаётся в STT. Component/typecheck/build и RU/EN browser checks, включая общий Android-layout, выполнены. [Доказательства](transcription-model-experiments-2026-10-20.md).
 - [ ] Включить клиент в следующий отдельно согласованный APK; текущие metadata/package 1.36/code46 не менялись, cap sync/build не выполнялись. Старый APK совместим с backend и использует latin prompt по умолчанию.
 - [ ] Физическая речевая приёмка.
+
+20.10.2026, 10:35 МСК: web/backend опубликованы через [PR #137](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/137), runtime `6f7e9ab`; Vercel READY, production aliases и owner RU/EN сохранение модели подтверждены. Для первого сравнения выбран gpt-4o-transcribe; реальная речевая приёмка открыта. [Доказательства](transcription-model-experiments-2026-10-20.md).
