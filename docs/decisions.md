@@ -734,3 +734,5 @@ Prompts v3 хранятся отдельно для latin/cyrillic; требую
 После положительного первого эксперимента владелец назначил gpt-4o-transcribe всем пользователям. Меняем только backend env model и singular language contract; runtime-код не содержит model IDs, постоянный ключ не покидает backend. Существующие обычные аккаунты и старые APK получают default без миграции профилей. Debug-admin сохраняет явно выбранный вариант эксперимента; сейчас он совпадает с общим default.
 
 1.37/code47 отдельно подтверждены в чате; APK включает все клиентские изменения после 1.36 и собирается только android:cloud-apk. Production API, прежняя подпись и packaged assets проверяются отдельно от browser mocks. [Доказательства](android-1.37-release.md).
+
+20.10.2026, 11:59 МСК: [PR #139](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/139), runtime `92a34fd`; web 1.37 READY/production, общий gpt-4o-transcribe подтверждён. [GitHub v1.37](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.37) опубликован, APK tag/digest/size/подпись и обратная загрузка проверены. [Доказательства](android-1.37-release.md). Физическая приёмка остаётся открытой.
