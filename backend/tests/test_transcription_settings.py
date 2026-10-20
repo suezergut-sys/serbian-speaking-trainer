@@ -82,3 +82,23 @@ def test_invalid_alphabet_is_rejected_before_provider_call(api_client, db_sessio
     exercise_id = _create_exercise(api_client)
     assert api_client.post("/api/transcriptions", data={"exercise_id": exercise_id, "alphabet": "greek"},
         files={"audio": ("speech.webm", b"synthetic", "audio/webm")}).status_code == 422
+
+
+@pytest.mark.parametrize("alphabet", ["latin", "cyrillic"])
+def test_global_env_default_and_language_contract_apply_to_regular_users(api_client, db_session, alphabet):
+    user, settings = configure(db_session)
+    settings.openai_transcribe_language_parameter = "language"
+    TranscriptionSettingsService(db_session, settings, user.id).change("env-alternative")
+    user.role = "user"
+    db_session.commit()
+    exercise_id = _create_exercise(api_client)
+    provider = OpenAITranscriptionProvider(settings)
+    create = Mock(return_value=SimpleNamespace(text="Želim kafu."))
+    provider._client = SimpleNamespace(audio=SimpleNamespace(transcriptions=SimpleNamespace(create=create)))
+    app.dependency_overrides[get_transcription_provider] = lambda: provider
+    response = api_client.post("/api/transcriptions", data={"exercise_id": exercise_id, "alphabet": alphabet},
+        files={"audio": ("speech.webm", b"synthetic", "audio/webm")})
+    assert response.status_code == 200
+    assert create.call_args.kwargs["model"] == "env-default"
+    assert create.call_args.kwargs["language"] == "sr"
+    assert "languages" not in create.call_args.kwargs

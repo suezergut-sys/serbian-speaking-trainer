@@ -560,13 +560,19 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 
 - [x] Общий RU/EN клиент: golden start, 100%/Верно внутри значка, удалён отдельный perfect score, масштаб 110%, прежнее центрирование/звук и переключатели. Серверный first_success_today совместим с текущим APK. [Доказательства](daily-success-rewards-2026-10-19.md).
 - [x] Backend/web опубликованы 19.10.2026 через PR #135, runtime `9fa4a19`, Vercel READY/main; актуальные статусы в [доказательствах](daily-success-rewards-2026-10-19.md).
-- [ ] Включить клиентские изменения в следующий отдельно согласованный APK; Android sync/build/версии не менялись (1.36/code46).
+- [x] 20.10.2026 включено в согласованный production APK 1.37/code47; API/metadata/подпись/assets проверены. [Выпуск](android-1.37-release.md).
 - [ ] Физическая приёмка следующего APK.
 
 ## 20.10.2026 — выбор STT модели и алфавит в запросе
 
 - [x] Общий RU/EN web-клиент: персональный селектор модели для разрешённого admin; selected alphabet передаётся в STT. Component/typecheck/build и RU/EN browser checks, включая общий Android-layout, выполнены. [Доказательства](transcription-model-experiments-2026-10-20.md).
-- [ ] Включить клиент в следующий отдельно согласованный APK; текущие metadata/package 1.36/code46 не менялись, cap sync/build не выполнялись. Старый APK совместим с backend и использует latin prompt по умолчанию.
+- [x] 20.10.2026 клиент включён в согласованный production APK 1.37/code47 через android:cloud-apk, упакованный selector/alphabet и production API проверены. Старые APK совместимы с backend. [Выпуск](android-1.37-release.md).
 - [ ] Физическая речевая приёмка.
 
 20.10.2026, 10:35 МСК: web/backend опубликованы через [PR #137](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/137), runtime `6f7e9ab`; Vercel READY, production aliases и owner RU/EN сохранение модели подтверждены. Для первого сравнения выбран gpt-4o-transcribe; реальная речевая приёмка открыта. [Доказательства](transcription-model-experiments-2026-10-20.md).
+
+## 20.10.2026 — 1.37/code47 и общая модель распознавания
+
+- [x] Полный клиентский бэклог после 1.36 перенесён в production cloud APK 1.37/code47; gpt-4o-transcribe назначена общей env-моделью backend. [Выпуск](android-1.37-release.md).
+- [ ] Публикация web 1.37 и GitHub APK.
+- [ ] Физическая приёмка 1.37.
