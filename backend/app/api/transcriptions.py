@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
@@ -30,6 +30,7 @@ def create_transcription(
     exercise_id: Annotated[str, Form(min_length=1, max_length=36)],
     audio: Annotated[UploadFile, File()],
     assistance_enabled: Annotated[bool, Form()] = False,
+    alphabet: Annotated[Literal["latin", "cyrillic"], Form()] = "latin",
     db: Session = Depends(get_db),
     provider: TranscriptionProvider = Depends(get_transcription_provider),
     assistance_provider: TranscriptionAssistanceProvider = Depends(get_transcription_assistance_provider),
@@ -37,7 +38,8 @@ def create_transcription(
     user: User = Depends(get_current_user),
 ) -> TranscriptionResponse:
     try:
-        return TranscriptionService(db, provider, settings, user.id, assistance_provider).transcribe(exercise_id=exercise_id, audio=audio, assistance_enabled=assistance_enabled)
+        return TranscriptionService(db, provider, settings, user.id, assistance_provider).transcribe(
+            exercise_id=exercise_id, audio=audio, assistance_enabled=assistance_enabled, alphabet=alphabet)
     except TranscriptionExerciseNotFoundError as exc:
         raise HTTPException(status_code=404, detail="Exercise not found") from exc
     except (UnsupportedAudioTypeError, EmptyAudioError) as exc:

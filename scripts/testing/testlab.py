@@ -328,8 +328,11 @@ def bootstrap_testlab_database(engine: Engine) -> None:
 
     del _entities
     current = _metadata_shape(Base.metadata)
-    pre_feedback = {name: columns for name, columns in current.items() if name != "user_feedback"}
-    pre_audio = {name: set(columns) for name, columns in current.items()}
+    pre_transcription = {name: set(columns) for name, columns in current.items()}
+    pre_transcription["model_debug_settings"].discard("transcription_model")
+    pre_transcription = {name: frozenset(columns) for name, columns in pre_transcription.items()}
+    pre_feedback = {name: columns for name, columns in pre_transcription.items() if name != "user_feedback"}
+    pre_audio = {name: set(columns) for name, columns in pre_transcription.items()}
     pre_audio.pop("user_feedback", None)
     pre_audio["model_debug_logs"].difference_update({"audio_payload", "audio_content_type", "audio_expires_at"})
     pre_audio = {name: frozenset(columns) for name, columns in pre_audio.items()}
@@ -361,6 +364,12 @@ def bootstrap_testlab_database(engine: Engine) -> None:
             _alembic(engine, "stamp", head)
         elif stamped_revision != head:
             raise RuntimeError("Refusing current-shaped testlab database with an unexpected Alembic revision")
+        return
+
+    if shape == pre_transcription:
+        if stamped_revision != "713ce912ab30":
+            raise RuntimeError("Refusing pre-transcription schema with unexpected Alembic revision")
+        _alembic(engine, "upgrade", "head")
         return
 
     if shape == pre_feedback:

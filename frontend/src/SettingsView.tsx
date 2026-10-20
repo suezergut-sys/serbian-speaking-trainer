@@ -2,6 +2,7 @@ import { t, useLanguage, setLanguage } from "./i18n";
 import type { CurrentUser } from "./types/auth";
 import type { SerbianAlphabet } from "./serbianScript";
 import { ModelDebugSettings } from "./ModelDebugSettings";
+import { TranscriptionModelSettings } from "./TranscriptionModelSettings";
 import { version } from "../package.json";
 import { FeedbackSettings } from "./FeedbackSettings";
 import { setRewardPreference, useRewardPreference } from "./rewardPreferences";
@@ -45,7 +46,7 @@ export function SettingsView({ alphabet, onAlphabetChange, account, onSignOut, a
       <label><input type="checkbox" role="switch" checked={animations} onChange={event => setRewardPreference("animations", event.target.checked)} />{t("Анимации успеха")}</label>
     </fieldset>
     <FeedbackSettings />
-    {account?.role === "admin" && account.can_debug_models && <ModelDebugSettings key={account.id} />}
+    {account?.role === "admin" && account.can_debug_models && <><TranscriptionModelSettings key={`transcription-${account.id}`} /><ModelDebugSettings key={account.id} /></>}
     {account && <><section className="settings-profile panel" aria-labelledby="settings-account-title">
       <h2 id="settings-account-title">{t("Аккаунт")}</h2>
       <div className="settings-profile__details">

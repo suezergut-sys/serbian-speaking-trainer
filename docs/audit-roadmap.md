@@ -787,3 +787,11 @@
 - [x] 19.10.2026: 10/10 production reward browser checks RU/EN desktop/mobile/320px/Android narrow/landscape прошли; подтверждены start/perfect/twenty, центр/+10%, скрытый постоянный score, прежний звук и настройки. [Доказательства](daily-success-rewards-2026-10-19.md).
 - [ ] Перенос в APK по отдельной команде, текущая 1.36/code46 не менялась.
 - [ ] Приёмка владельцем.
+
+## 20.10.2026 — эксперимент с моделями транскрибации
+
+- [x] Персональный выбор из env-списка только для разрешённого debug-admin; сохранение независимо от отладки, reset/default, server-side allowlist и owner scope. Явный sr и выбранный алфавит в prompts v3; старые клиенты используют latin по умолчанию. [Доказательства](transcription-model-experiments-2026-10-20.md).
+- [x] Полный quality gate, дополнительные SDK multipart/migration tests и 8 браузерных сценариев RU/EN desktop/mobile/320px/shared Android-layout. [Доказательства](transcription-model-experiments-2026-10-20.md).
+- [ ] Публикация backend/web и production-проверка.
+- [ ] Сравнение реальной речи владельцем и выбор победителя.
+- [ ] Перенос UI в следующий APK по отдельной команде; 1.36/code46 прежние.

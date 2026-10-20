@@ -104,3 +104,27 @@ def test_legacy_language_parameter_is_explicitly_configurable():
     assert create.call_args.kwargs["language"] == "sr"
     assert "languages" not in create.call_args.kwargs
     assert "a b c č ć d đ" in create.call_args.kwargs["prompt"]
+
+
+@pytest.mark.parametrize("parameter", ["language", "languages"])
+@pytest.mark.parametrize("alphabet", ["latin", "cyrillic"])
+def test_real_sdk_serializes_language_and_script_prompt(parameter, alphabet):
+    from openai import OpenAI
+    requests = []
+
+    def respond(request):
+        requests.append(request.read().decode("utf-8"))
+        return httpx.Response(200, json={"text": "Želim kafu."})
+
+    provider = OpenAITranscriptionProvider(Settings(_env_file=None, openai_api_key="synthetic-key",
+        openai_transcribe_model="env-model", openai_transcribe_language_parameter=parameter), alphabet)
+    provider._client = OpenAI(api_key="synthetic-key", max_retries=0,
+        http_client=httpx.Client(transport=httpx.MockTransport(respond)))
+    try:
+        assert provider.transcribe(audio=b"synthetic", filename="speech.webm", content_type="audio/webm").text == "Želim kafu."
+        assert len(requests) == 1
+        field = "languages[]" if parameter == "languages" else "language"
+        assert f'name="{field}"' in requests[0]
+        assert ("српском ћирилицом" if alphabet == "cyrillic" else "srpskom latinicom") in requests[0]
+    finally:
+        provider._client.close()

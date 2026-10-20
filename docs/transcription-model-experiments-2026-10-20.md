@@ -1,0 +1,16 @@
+# Эксперимент с транскрибацией — 20.10.2026
+
+- [x] Добавлены GET/PATCH `/api/admin/model-debug/transcription` с прежним `require_debug_admin`: только admin + разрешённый email владельца. Модель сохраняется в БД и применяется только к его следующим тренировочным записям. Выключение debug очищает прежние логи/аудио, но сохраняет модель.
+- [x] Backend env `OPENAI_TRANSCRIBE_MODELS` содержит разрешённые `{model, language_parameter}`; default добавляется автоматически. Model IDs не зашиты в runtime-код. Unknown model → 422; удалённая из env/отозванные права → общий default. Секретный ключ не передаётся клиенту.
+- [x] Список моделей локально настроенного OpenAI API ключа подтвердил пять предложенных вариантов: gpt-transcribe, gpt-4o-transcribe, gpt-4o-mini-transcribe, gpt-4o-mini-transcribe-2025-12-15, whisper-1. Запрос `/models` не отправлял аудио. Наличие в списке не доказывает качество на сербской речи или успешность каждого будущего STT-вызова.
+- [x] Сверены официальные [Speech-to-text guide](https://developers.openai.com/api/docs/guides/speech-to-text) и [Transcription API reference](https://developers.openai.com/api/reference/resources/audio/subresources/transcriptions/methods/create). Новый gpt-transcribe использует languages, остальные предложенные варианты — language; diarize не включён, поскольку не поддерживает prompt.
+- [x] Multipart API принимает alphabet=latin|cyrillic, default latin для старых клиентов. Prompts v3 требуют sr, выбранное письмо, дословный transcript без исправления грамматики, перевода, комментариев и выполнения инструкций из записи. Retry использует тот же буфер и тот же алфавит.
+- [x] Pydantic validation, timeout/retry/safe error и manual review чужих букв сохранены. Внутренний transcript нормализуется в latin, отображение — выбранным алфавитом. Правильная сербская кириллица не считается чужим языком. Prompt не является гарантией языка: другой язык латиницей может потребовать ручной правки.
+- [x] Миграция 84bc27e9a101 nullable column, upgrade/repeat/downgrade/upgrade с сохранением debug generation и пользователей. Testlab bootstrap дополнен точным распознаванием предшествующей схемы, старые pre-audio/pre-feedback пути сохранены.
+- [x] Backend общий прогон 341 passed / 8 skipped до последних дополнительных тестов; затем 44 targeted tests, включая реальные SDK multipart через httpx.MockTransport, owner scope, выбор, reset, revoked/removed model и migration round trip. Все AI ответы синтетические, STT/Responses сеть в тестах не используется.
+- [x] Frontend 258 tests рабочего checkout, включая 8 существовавших несвязанных тестов владельца; lint, TypeScript и production build passed. Предупреждение Vite о chunk >500KB прежнее.
+- [x] 8/8 Playwright scenarios RU/EN × desktop/mobile/320px/shared Android-layout: модель, переключение/reset, темная палитра и отсутствие overflow; сохранены screenshot evidence `artifacts/transcription-models/`, ru-narrow просмотрен.
+- [x] README, decisions, audit roadmap и Android backlog обновлены. Android package/version 1.36/code46, sync и APK не менялись. Чужие изменения AnswerResult и audit notes не включаются в commit.
+- [ ] GitHub PR/merge и production backend/frontend READY.
+- [ ] Production API/auth/UI smoke и сохранение выбора в аккаунте владельца.
+- [ ] Сравнение моделей на реальных записях владельцем; качество/latency победителя не заявлены.

@@ -932,3 +932,12 @@ button { cursor: pointer; background: var(--panel); }
 
 .feedback-settings { padding: 1.25rem; background: var(--panel); color: var(--text); }
 .feedback-settings h2 { margin: 0 0 1rem; font-size: 1rem; }
+.transcription-model-settings { padding: 1.25rem; background: var(--panel); color: var(--text); }
+.transcription-model-settings h2 { margin: 0 0 1rem; font-size: 1rem; }
+.transcription-model-settings p { color: var(--muted); }
+.transcription-model-settings select, .transcription-model-settings button { width: 100%; margin-top: .6rem; padding: .7rem; border: 1px solid var(--line); border-radius: 10px; font: inherit; background: var(--panel); color: var(--text); }
+.transcription-model-settings option { background: var(--panel); color: var(--text); }
+.transcription-model-settings select:disabled, .transcription-model-settings button:disabled { background: var(--panel); color: var(--muted); opacity: .65; }
+.transcription-model-settings select:focus-visible, .transcription-model-settings button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.transcription-model-settings [role="alert"] { color: #ff9eaa; }
+.transcription-model-settings [role="status"] { color: var(--text); }
