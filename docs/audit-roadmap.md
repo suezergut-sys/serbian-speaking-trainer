@@ -4,7 +4,7 @@
 
 - [x] Квадратные внешние рамки всех наград, ещё +15% размера, адаптация к ширине/высоте, центр и RU/EN. 348 backend/scripts / 258 frontend / 5 Node tests, lint/typecheck/build прошли; AI замокан. [Доказательства](android-1.38-release.md).
 - [x] Browser matrix 20/20 RU/EN и production APK 1.38/code48: API/assets/подпись/metadata/Downloads проверены; номер подтверждён владельцем.
-- [ ] Web publication и GitHub release проверяются отдельно в документе выпуска.
+- [x] Web READY/production на b9273dd через PR #141, 4 production browser checks RU/EN; APK v1.38 опубликован, tag/target/digest/size и обратная загрузка проверены. [Доказательства](android-1.38-release.md).
 - [ ] Физическая приёмка телефона. P0/P1/P2 целиком не закрываются.
 
 ## 17.10.2026 — ширина статистики, звезда и страницы фраз

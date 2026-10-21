@@ -7,10 +7,13 @@
 - [x] Quality gate: 348 backend/scripts passed / 8 skipped, 258 frontend tests (включая 8 существовавших пользовательских тестов, не включённых в commit), 5 Node guards, ESLint, TypeScript и production build. Существующее предупреждение о chunk >500kB сохраняется. AI в автоматических тестах замокан.
 - [x] 20/20 passed: полная browser matrix RU/EN × 10 размеров/макетов: квадратность, рост размера, центр, границы контейнера, отсутствие переполнения, таймер/звук/настройки. Скриншоты desktop и narrow просмотрены.
 - [x] pnpm android:cloud-apk: BUILD SUCCESSFUL (109 tasks). APK 1.38/code48/min24/target36, production HTTPS API и HTTPS WebView; 7 dist и 9 public assets совпали побайтно с sync/APK. Квадратные CSS и новый размер есть в packaged bundle, WAV совпал; landing/testlab/local API/backend secrets отсутствуют. apksigner verify passed, сертификат прежний. Размер 4547412 bytes, SHA256 `62cdd34f8211df06d7c2185f3b8853985cd045291f91909976f8b219638e7c8d`. Копии artifacts и Downloads совпали.
-- [ ] GitHub PR/merge, production web READY/SHA/alias и проверка реального URL.
-- [ ] GitHub APK release: tag/target/digest/size и обратная загрузка.
+- [x] [PR #141](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/141) merged, runtime SHA `b9273dd4c530dfdfac9cc4d99c08efdfc732685a`; CLEAN/MERGEABLE, обязательных GitHub checks нет. Frontend `dpl_7bpyUrsDkeKmzK6qY7MZa1xfWnws` READY/production/main, alias serbotalk.app подтверждён API. [Deployment](https://serbian-speaking-trainer-1nzm8v3y0-suezerguts-projects.vercel.app). Выпущен чистый git archive; runtime source APK совпал с merged исходниками. Backend runtime/env прежние, redeploy не требовался.
+- [x] 21.10.2026, 13:46 МСК: production root/app/privacy/terms/health HTTP 200. Четыре browser scenarios на реальном https://serbotalk.app/app RU/EN desktop и Android narrow/landscape passed (API замокан для воспроизводимых наград без изменения прогресса/AI-вызовов). Геометрия, подписи, таймер, встроенный звук и переключатели проверены; frontend runtime errors: 0 rows.
+- [x] [GitHub release v1.38](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.38) опубликован как latest. Tag/target = runtime SHA, server digest/size и обратная загрузка совпали с APK/Downloads. [Скачать APK](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/download/v1.38/SerboTalk-andorid16-1.38.apk). Репозиторий private, GitHub требует авторизации.
 - [ ] Физическая установка, Google OAuth, микрофон/динамик и реальные награды на телефоне. Browser Android-layout не заменяет физическую приёмку. Google Play/AAB не входят в поручение.
 
 Локальные evidence вне Git: `artifacts/square-rewards-quality.log`, `artifacts/square-success-rewards/`.
 
 APK: `C:/Users/MSumin/Downloads/SerboTalk-andorid16-1.38.apk`. Evidence: `artifacts/android-1.38-{build.log,badging.txt,signature.txt,verification.json}`, `artifacts/verify-android-1.38.py`.
+
+Publication evidence: `artifacts/android-1.38-{deployment,http-smoke,github-api}.json`, `artifacts/android-1.38-production-browser.log`, `artifacts/android-1.38-frontend-errors.jsonl`. Последующий документальный commit не требует redeploy.
