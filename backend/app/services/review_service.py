@@ -4,8 +4,9 @@ import re
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
+from pydantic import ValidationError
 
-from app.models import Exercise, ReviewPhrase, WordLearningItem
+from app.models import Exercise, ReviewPhrase, WordLearningItem, PhrasePreparationReceipt
 from app.repositories import ExerciseRepository, ReviewPhraseRepository, TopicPresetRepository, UserRepository, WordLearningRepository
 from app.schemas import (
     CreateReviewPhraseRequest,
@@ -18,6 +19,8 @@ from app.schemas import (
     WordHint,
     WordHintResponse,
 )
+from app.repositories.custom_content import CustomContentRepository
+from app.services.custom_content_policy import CustomContentError, MAX_TOPIC_PHRASES, MAX_CUSTOM_PHRASES
 from app.services.ai_adapter import AIServiceError, StructuredAIProvider
 from app.services.word_hints import all_word_hints, word_hints_for_language
 from app.services.interface_language import interface_language
@@ -67,14 +70,21 @@ class ReviewService:
             raise PhrasePreparationUnavailableError
         try:
             preparation = PhrasePreparation.model_validate(self.ai.prepare_phrase(source_ru=source))
-        except AIServiceError as exc:
+        except (AIServiceError, ValidationError) as exc:
             raise PhrasePreparationUnavailableError from exc
-        if not preparation.intended_sr_variants:
+        variants = [" ".join(value.split()) for value in preparation.intended_sr_variants]
+        if not variants or any(not value or len(value) > 300 for value in variants):
             raise PhrasePreparationUnavailableError
+        now = datetime.now(timezone.utc)
+        receipt = PhrasePreparationReceipt(user_id=self.user_id, source_ru=source,
+            preparation_json=PhrasePreparation(intended_sr_variants=variants, word_hints=preparation.word_hints).model_dump(),
+            expires_at=now + timedelta(minutes=30))
+        CustomContentRepository(self.db, self.user_id).add_receipt(receipt, now)
         return PreparedReviewPhraseResponse(
+            preparation_id=receipt.id,
             source_ru=source,
-            canonical_sr=preparation.intended_sr_variants[0],
-            intended_sr_variants=preparation.intended_sr_variants,
+            canonical_sr=variants[0],
+            intended_sr_variants=variants,
             word_hints=preparation.word_hints,
         )
 
@@ -96,39 +106,59 @@ class ReviewService:
             raise ReviewPhraseNotFoundError(phrase_id)
         return phrase
 
+    def list_custom_phrases(self) -> list[ReviewPhraseResponse]:
+        titles = {topic.id: topic.title_ru for topic in self.topics.list_enabled()}
+        return [self._phrase_response(phrase, topic_title=titles.get(phrase.topic_id))
+                for phrase in CustomContentRepository(self.db, self.user_id).phrases()]
+
     def create_phrase(self, request: CreateReviewPhraseRequest) -> ReviewPhraseResponse:
-        source = " ".join(request.source_ru.split())
+        UserRepository(self.db).lock(self.user_id)
+        content = CustomContentRepository(self.db, self.user_id)
         topic = self.topics.get_visible(request.topic_id)
         if topic is None or not topic.enabled:
             raise ReviewPhraseNotFoundError(request.topic_id)
-        normalized = normalize_ru(source)
-        variants = [request.canonical_sr, *request.intended_sr_variants]
-        variants = list(dict.fromkeys(" ".join(value.split()) for value in variants if value.strip()))
-        existing = self.phrases.find_by_source(normalized)
+        if not topic.is_custom or topic.owner_user_id != self.user_id:
+            raise CustomContentError("custom_topic_required", 422)
+        receipt = content.receipt(request.preparation_id)
+        now = datetime.now(timezone.utc)
+        if receipt is None or receipt.expires_at.replace(tzinfo=timezone.utc) <= now:
+            raise CustomContentError("phrase_preparation_expired")
+        if receipt.saved_phrase_id:
+            saved = self.phrases.get_owned(receipt.saved_phrase_id)
+            if saved is None or receipt.saved_topic_id != topic.id:
+                raise CustomContentError("phrase_preparation_used")
+            return self._phrase_response(saved, topic_title=topic.title_ru)
+        source = receipt.source_ru
+        preparation = PhrasePreparation.model_validate(receipt.preparation_json)
+        existing = self.phrases.find_by_source(normalize_ru(source))
         if existing is not None:
-            existing.status = "active"
-            existing.mastered_at = None
-            existing.next_review_at = None
-            existing.perfect_streak = 0
-            existing.learning_errors = 0
-            existing.topic_id = topic.id
-            existing.intended_sr_variants_json = variants
-            existing.word_hints_json = [hint.model_dump() for hint in request.word_hints]
-            existing.updated_at = datetime.now(timezone.utc)
-            self.db.flush()
-            return self._phrase_response(existing, topic_title=topic.title_ru)
-
-        phrase = self.phrases.add(
-            ReviewPhrase(
-                user_id=self.user_id,
-                source_ru=source,
-                source_normalized=normalized,
-                intended_sr_variants_json=variants,
-                word_hints_json=[hint.model_dump() for hint in request.word_hints],
-                topic_id=topic.id,
-            )
-        )
+            if existing.topic_id != topic.id or existing.topic_phrase_id is not None:
+                raise CustomContentError("phrase_already_exists")
+            # Adding the same phrase never edits its canonical answer or progress.
+            phrase = existing
+        else:
+            if content.phrase_count(topic.id) >= MAX_TOPIC_PHRASES:
+                raise CustomContentError("custom_phrase_limit")
+            if content.phrase_count() >= MAX_CUSTOM_PHRASES:
+                raise CustomContentError("custom_total_phrase_limit")
+            phrase = self.phrases.add(ReviewPhrase(
+                user_id=self.user_id, source_ru=source, source_normalized=normalize_ru(source),
+                intended_sr_variants_json=preparation.intended_sr_variants,
+                word_hints_json=[hint.model_dump() for hint in preparation.word_hints], topic_id=topic.id,
+            ))
+        receipt.saved_phrase_id = phrase.id
+        receipt.saved_topic_id = topic.id
+        self.db.flush()
         return self._phrase_response(phrase, topic_title=topic.title_ru)
+
+    def delete_custom_phrase(self, phrase_id: str) -> None:
+        UserRepository(self.db).lock(self.user_id)
+        phrase = self.phrases.get_owned(phrase_id)
+        if phrase is None or phrase.topic_phrase_id is not None:
+            raise ReviewPhraseNotFoundError(phrase_id)
+        CustomContentRepository(self.db, self.user_id).invalidate_training({phrase.id})
+        self.db.delete(phrase)
+        self.db.flush()
 
     def record_attempt(
         self,

@@ -25,6 +25,21 @@ def credentials() -> Credentials:
     return Credentials(email=EMAIL, password="test-only-password-that-is-never-logged", jwt_secret="test-only-signing-secret-that-is-long-enough")
 
 
+def test_pre_phrase_preparation_schema_upgrades_preserving_users(tmp_path):
+    engine = create_engine(f"sqlite:///{(tmp_path / 'pre-phrase-preparation.sqlite3').as_posix()}")
+    try:
+        _alembic(engine, "upgrade", "84bc27e9a101")
+        with engine.connect() as connection:
+            users = connection.execute(text("SELECT id FROM users ORDER BY id")).all()
+        bootstrap_testlab_database(engine)
+        bootstrap_testlab_database(engine)
+        with engine.connect() as connection:
+            assert "phrase_preparation_receipts" in inspect(connection).get_table_names()
+            assert connection.execute(text("SELECT id FROM users ORDER BY id")).all() == users
+    finally:
+        engine.dispose()
+
+
 def backend_model_metadata():
     backend = Path(__file__).resolve().parents[2] / "backend"
     if str(backend) not in sys.path:

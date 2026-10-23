@@ -3,7 +3,9 @@ from __future__ import annotations
 from hashlib import sha256
 
 from app.models import TopicPreset
-from app.repositories import TopicPresetRepository
+from app.repositories import TopicPresetRepository, UserRepository
+from app.repositories.custom_content import CustomContentRepository
+from app.services.custom_content_policy import CustomContentError, MAX_CUSTOM_TOPICS
 from app.schemas import CreateTopicRequest, TopicContext, TopicListItem
 from app.services.ai_adapter import AIServiceError, StructuredAIProvider
 
@@ -19,6 +21,7 @@ class TopicService:
 
     def list_presets(self) -> list[TopicListItem]:
         counts = self.repository.phrase_counts()
+        custom_counts = CustomContentRepository(self.repository.session, self.repository.user_id).phrase_counts()
         return [
             TopicListItem(
                 id=topic.id,
@@ -28,15 +31,19 @@ class TopicService:
                 suggested_vocabulary=topic.vocabulary_json,
                 is_custom=topic.is_custom,
                 phrase_count=counts.get(topic.id, 0),
+                custom_phrase_count=custom_counts.get(topic.id, 0),
             )
             for topic in self.repository.list_enabled()
         ]
 
     def create_custom(self, request: CreateTopicRequest) -> TopicListItem:
+        UserRepository(self.repository.session).lock(self.repository.user_id)
         title = " ".join(request.title_ru.split())
         topic_id = self._custom_id(title, self.repository.user_id)
         topic = self.repository.get_visible(topic_id)
         if topic is None:
+            if CustomContentRepository(self.repository.session, self.repository.user_id).topic_count() >= MAX_CUSTOM_TOPICS:
+                raise CustomContentError("custom_topic_limit")
             topic = self.repository.add(
                 TopicPreset(
                     id=topic_id,
@@ -56,7 +63,15 @@ class TopicService:
             suggested_vocabulary=topic.vocabulary_json,
             is_custom=topic.is_custom,
             phrase_count=self.repository.phrase_counts().get(topic.id, 0),
+            custom_phrase_count=CustomContentRepository(self.repository.session, self.repository.user_id).phrase_count(topic.id),
         )
+
+    def delete_custom(self, topic_id: str) -> None:
+        UserRepository(self.repository.session).lock(self.repository.user_id)
+        topic = self.repository.get_visible(topic_id)
+        if topic is None or not topic.is_custom or topic.owner_user_id != self.repository.user_id:
+            raise TopicNotFoundError(topic_id)
+        CustomContentRepository(self.repository.session, self.repository.user_id).delete_topic(topic)
 
     def preset_context(self, topic_id: str) -> TopicContext:
         topic = self.repository.get_visible(topic_id)

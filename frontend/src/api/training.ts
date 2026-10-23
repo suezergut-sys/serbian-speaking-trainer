@@ -19,6 +19,7 @@ async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
       try { detail = (await response.json()).detail; } catch { /* Invalid error body. */ }
       throw new BackendError(response.status, detail);
     }
+    if (response.status === 204) return undefined as T;
     return await response.json() as T;
   } catch (error) {
     if (timedOut && !init?.signal?.aborted) throw new DOMException("Request timed out", "TimeoutError");
@@ -152,11 +153,8 @@ export function addReviewPhrase(prepared: PreparedReviewPhrase, topicId: string)
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      source_ru: prepared.source_ru,
-      canonical_sr: prepared.canonical_sr,
+      preparation_id: prepared.preparation_id,
       topic_id: topicId,
-      intended_sr_variants: prepared.intended_sr_variants,
-      word_hints: prepared.word_hints,
     }),
   });
 }
@@ -168,4 +166,14 @@ export function revealWordHint(exerciseId: string, word: string, signal?: AbortS
     body: JSON.stringify({ word }),
     signal,
   });
+}
+
+export function fetchCustomPhrases(signal?: AbortSignal): Promise<ReviewPhrase[]> {
+  return requestJson("/api/custom-phrases", { signal });
+}
+export function deleteCustomPhrase(id: string): Promise<void> {
+  return requestJson(`/api/custom-phrases/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+export function deleteCustomTopic(id: string): Promise<void> {
+  return requestJson(`/api/topics/${encodeURIComponent(id)}`, { method: "DELETE" });
 }
