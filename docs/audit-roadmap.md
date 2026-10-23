@@ -819,7 +819,7 @@
 - [x] Доверие к canonical при save устранено серверным preparation_id; лимиты личного каталога реализованы. [Доказательства](custom-content-limits-2026-10-23.md).
 - [ ] Отдельно решить серверные роли/частоту prepare; API пока допускает любой вошедший аккаунт.
 - [x] Дубли сохраняют canonical/прогресс, неявный перенос (включая каталожную карточку) закрыт; конкурентные квоты SQLite проверены. [Доказательства](custom-content-limits-2026-10-23.md).
-- [ ] Публикация web/backend и авторизованная production-проверка.
+- [x] Web/backend опубликованы через [PR #143](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/143), `69ff666`, Ready/main/aliases; авторизованный UI и 6 production browser mock checks подтверждены. [Доказательства](custom-content-limits-2026-10-23.md).
 - [ ] Ручная приёмка владельцем с реальным переводом.
 - [ ] Android build/устройство — по отдельной команде; внесено в backlog, версия не менялась.
 
@@ -831,6 +831,7 @@
 - [x] Owner-scoped удаление фразы и темы со всеми карточками, подтверждение/отмена/ошибка/retry; preset и чужой каталог защищены. История попыток сохранена, stale/in-flight ответ не воскрешает карточку.
 - [x] Дубликаты не меняют canonical/прогресс и не переносят карточку автоматически. Два конкурирующих запроса на последнее место сериализуются на SQLite (ровно 5 тем/30 фраз).
 - [x] Финальные full frontend 289 passed, backend 328 passed / 8 skipped, targeted manager 3 passed; lint/typecheck/build/diff check и 6 browser mock RU/EN desktop/mobile/shared Android-layout. [Доказательства](custom-content-limits-2026-10-23.md).
-- [ ] Публикация backend/web с миграцией, production-проверка и приёмка владельцем с реальным переводом.
+- [x] Backend/web Ready/main на `69ff666` через [PR #143](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/143); a910bc57d302 применена, seed 0/0/0, HTTP/OpenAPI/auth и admin RU/EN UI, 6 production browser mock checks, console/runtime errors 0. [Доказательства](custom-content-limits-2026-10-23.md).
+- [ ] Приёмка владельцем с реальным переводом.
 - [ ] Production/PostgreSQL нагрузка и отдельная политика server role/rate limit для prepare.
 - [ ] Android APK/устройство — по отдельной команде; backlog обновлён, версия не менялась.
