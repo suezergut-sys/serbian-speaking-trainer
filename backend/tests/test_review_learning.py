@@ -10,7 +10,7 @@ from app.main import app
 from app.schemas import PhrasePreparation, PrepareReviewPhraseRequest, WordHint
 from app.services.ai_adapter import get_ai_provider
 from app.services.review_service import PhrasePreparationUnavailableError, ReviewService
-from tests.fakes import FakeAIProvider
+from tests.fakes import FakeAIProvider, create_custom_phrase
 
 
 def test_phrase_preparation_returns_validated_canonical_translation(db_session: Session) -> None:
@@ -116,12 +116,9 @@ def test_attempt_recovers_lost_hint_save_and_late_post_is_idempotent(
 
 
 def test_custom_review_phrase_creates_exact_exercise(api_client: TestClient) -> None:
-    created = api_client.post(
-        "/api/review-phrases",
-        json={
+    created = create_custom_phrase(api_client, {
             "source_ru": "Мне нужно позвонить хозяину квартиры.",
             "canonical_sr": "Moram da pozovem vlasnika stana.",
-            "topic_id": "misc",
         },
     )
     assert created.status_code == 201
@@ -138,9 +135,7 @@ def test_review_mode_cycles_through_active_phrases(api_client: TestClient) -> No
     sources = ["Мне нужно позвонить хозяину.", "Я задержусь на десять минут."]
     translations = ["Moram da pozovem vlasnika.", "Kasniću deset minuta."]
     for source, canonical in zip(sources, translations, strict=True):
-        response = api_client.post(
-            "/api/review-phrases",
-            json={"source_ru": source, "canonical_sr": canonical, "topic_id": "misc"},
+        response = create_custom_phrase(api_client, {"source_ru": source, "canonical_sr": canonical},
         )
         assert response.status_code == 201
 
@@ -175,12 +170,9 @@ def test_review_queue_includes_all_active_phrases_beyond_one_hundred(db_session:
 
 
 def test_review_mode_starts_with_first_phrase_in_one_request(api_client: TestClient) -> None:
-    created = api_client.post(
-        "/api/review-phrases",
-        json={
+    created = create_custom_phrase(api_client, {
             "source_ru": "Мне нужно позвонить хозяину.",
             "canonical_sr": "Moram da pozovem vlasnika.",
-            "topic_id": "misc",
         },
     )
     assert created.status_code == 201

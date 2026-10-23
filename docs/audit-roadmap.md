@@ -810,3 +810,27 @@
 - [x] 348 backend passed / 8 skipped, 258 frontend, 5 Node guards, lint/typecheck/web build; 5 targeted version/settings tests. [Доказательства](android-1.37-release.md).
 - [x] 20.10.2026, 11:59 МСК: [PR #139](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/139), runtime `92a34fd`; web READY/main/alias, v1.37 RU/EN и общий STT default, HTTP/auth smoke, console/runtime errors 0. GitHub v1.37 tag/digest/size/обратная загрузка подтверждены. [Доказательства](android-1.37-release.md).
 - [ ] Физическая установка, OAuth, микрофон/звук и реальная речь.
+
+## 23.10.2026 — пользовательские темы и фразы
+
+- [x] Локально включены формы только для admin в desktop/mobile/shared Android-layout RU/EN; подготовка/preview/выбор темы/сохранение, сохранение черновика после ошибки, reset preview при правке. [Доказательства и описание](custom-content-audit-2026-10-23.md).
+- [x] Исправлена валидация пробелов и безопасный отказ при невалидном/пустом/слишком длинном переводе; проверены owner scope, trainable custom topic и перенос дубля со сбросом серии.
+- [x] Full frontend 277 passed, backend 312 passed / 8 skipped до финального расширения regressions; последние targeted backend 26 passed; lint/typecheck/build; 6 браузерных mock сценариев RU/EN × desktop/mobile/shared Android-layout.
+- [x] Доверие к canonical при save устранено серверным preparation_id; лимиты личного каталога реализованы. [Доказательства](custom-content-limits-2026-10-23.md).
+- [ ] Отдельно решить серверные роли/частоту prepare; API пока допускает любой вошедший аккаунт.
+- [x] Дубли сохраняют canonical/прогресс, неявный перенос (включая каталожную карточку) закрыт; конкурентные квоты SQLite проверены. [Доказательства](custom-content-limits-2026-10-23.md).
+- [ ] Публикация web/backend и авторизованная production-проверка.
+- [ ] Ручная приёмка владельцем с реальным переводом.
+- [ ] Android build/устройство — по отдельной команде; внесено в backlog, версия не менялась.
+
+
+## 23.10.2026 — личный каталог: 15 слов, 5 тем × 30 фраз, удаление
+
+- [x] Новое save-body только preparation_id/topic_id; canonical/варианты/hints берутся с сервера, owner scope/expiry/replay/подмена проверены. Модель/миграция a910bc57d302 и roundtrip upgrade/downgrade проверены. [Доказательства](custom-content-limits-2026-10-23.md).
+- [x] Лимиты 15 слов и 5 личных тем × 30 фраз (включая выученные), максимум 150; добавление только в личные темы. UI RU/EN показывает счётчики, сообщения лимитов и переход к удалению.
+- [x] Owner-scoped удаление фразы и темы со всеми карточками, подтверждение/отмена/ошибка/retry; preset и чужой каталог защищены. История попыток сохранена, stale/in-flight ответ не воскрешает карточку.
+- [x] Дубликаты не меняют canonical/прогресс и не переносят карточку автоматически. Два конкурирующих запроса на последнее место сериализуются на SQLite (ровно 5 тем/30 фраз).
+- [x] Финальные full frontend 289 passed, backend 328 passed / 8 skipped, targeted manager 3 passed; lint/typecheck/build/diff check и 6 browser mock RU/EN desktop/mobile/shared Android-layout. [Доказательства](custom-content-limits-2026-10-23.md).
+- [ ] Публикация backend/web с миграцией, production-проверка и приёмка владельцем с реальным переводом.
+- [ ] Production/PostgreSQL нагрузка и отдельная политика server role/rate limit для prepare.
+- [ ] Android APK/устройство — по отдельной команде; backlog обновлён, версия не менялась.

@@ -24,6 +24,7 @@ from app.services.word_hints import all_word_hints
 from app.services.auth_service import UserService
 from app.models import User
 from app.repositories.transcriptions import TranscriptionReceiptRepository
+from app.services.custom_content_policy import CustomContentError
 from app.schemas.transcriptions import TranscriptionChange
 
 
@@ -113,6 +114,11 @@ class AttemptService:
         locked_user = UserService(self.db).users.lock(self.user.id)
         if locked_user is None:
             raise ExerciseNotFoundError(request.exercise_id)
+        exercise = self.exercises.get_owned(request.exercise_id)
+        if exercise is None:
+            raise ExerciseNotFoundError(request.exercise_id)
+        if exercise.generation_meta_json.get("custom_content_deleted"):
+            raise CustomContentError("custom_content_deleted")
         lease_now = datetime.now(timezone.utc)
         existing = self.requests.get_by_client_id(request_id) if request.client_request_id else None
         if existing is not None:
@@ -217,9 +223,13 @@ class AttemptService:
         exercise = self.exercises.get_owned(reserved.exercise_id)
         if exercise is None:
             raise ExerciseNotFoundError(reserved.exercise_id)
+        if exercise.generation_meta_json.get("custom_content_deleted"):
+            raise CustomContentError("custom_content_deleted")
         training_session = self.sessions.get_owned_for_update(exercise.session_id)
         if training_session is None:
             raise ExerciseNotFoundError(reserved.exercise_id)
+        if training_session.status == "unavailable":
+            raise SessionUnavailableError(training_session.id)
         is_carousel = bool(training_session.normalized_topic_json.get("review_carousel"))
         requested_length = int(training_session.normalized_topic_json.get("session_length", 20))
         target_keys = reserved.target_keys

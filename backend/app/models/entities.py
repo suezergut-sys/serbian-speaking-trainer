@@ -127,6 +127,17 @@ class TranscriptionReceipt(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
 
+class PhrasePreparationReceipt(Base):
+    __tablename__ = "phrase_preparation_receipts"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    source_ru: Mapped[str] = mapped_column(Text)
+    preparation_json: Mapped[dict[str, Any]] = mapped_column(JSON)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    saved_phrase_id: Mapped[str | None] = mapped_column(String(36))
+    saved_topic_id: Mapped[str | None] = mapped_column(String(80))
+
+
 class Skill(Base):
     __tablename__ = "skills"
 
