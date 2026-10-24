@@ -528,5 +528,15 @@
   "24 октября 2026 года": "24 October 2026",
   "Для входа SerboTalk использует Google или одноразовый код на email. При входе через Google сервис получает адрес электронной почты и основные сведения профиля; при входе по коду — адрес электронной почты. Приложение хранит дату регистрации, дату последней активности, учебный прогресс, текстовые ответы и числовые показатели выполнения упражнений.": "SerboTalk uses Google or a one-time email code for sign-in. Google sign-in provides your email address and basic profile information; email code sign-in provides your email address. The app stores your registration date, last activity date, learning progress, text answers, and numerical exercise metrics.",
   "Для работы приложения используются Google OAuth, Supabase, Vercel, OpenAI и Resend. Resend доставляет письма для входа и обрабатывает email получателя и содержимое служебного письма. Сервисам передаются только данные, необходимые для аутентификации, размещения приложения, распознавания и анализа учебных ответов.": "The app uses Google OAuth, Supabase, Vercel, OpenAI, and Resend. Resend delivers sign-in emails and processes the recipient email address and service email content. These services receive only the data needed for authentication, hosting, speech recognition, and answer analysis.",
-  "Пользователь отвечает за доступ к своему Google-аккаунту и электронной почте и обязуется не пытаться обходить ограничения, нарушать работу сервиса или использовать его для незаконных целей.": "You are responsible for access to your Google account and email and must not bypass limits, disrupt the service, or use it for unlawful purposes."
+  "Пользователь отвечает за доступ к своему Google-аккаунту и электронной почте и обязуется не пытаться обходить ограничения, нарушать работу сервиса или использовать его для незаконных целей.": "You are responsible for access to your Google account and email and must not bypass limits, disrupt the service, or use it for unlawful purposes.",
+  "ПРЕМИУМ": "PREMIUM",
+  "100 повторений в день": "100 repetitions per day",
+  "Возможность создавать свои фразы": "Create your own phrases",
+  "Возможность создавать свои темы": "Create your own topics",
+  "КУПИТЬ": "BUY",
+  "Создать тему": "Create topic",
+  "Создать фразу": "Create phrase",
+  "Фраз:": "Phrases:",
+  "Выберите тему, чтобы увидеть фразы.": "Select a topic to see its phrases.",
+  "В этой теме пока нет своих фраз.": "This topic has no custom phrases yet."
 }

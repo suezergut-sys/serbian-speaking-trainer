@@ -888,3 +888,11 @@
 
 - [x] Правила и исторические доказательства PR #60 перенесены в общий PR #145, без отката Android metadata и актуальной документации. [Статус](workspace-consistency-checkpoint.md).
 - [x] Recovery snapshot `506afa7` сохранён/pushed, основная папка обновлена main. Все 12 копий проверены, финальная повторная проверка следует за merge доказательств; [отчёт](android-1.39-release.md).
+
+## 24.10.2026 — отдельная вкладка Premium
+
+- [x] Реализация RU/EN: вкладка и crown, free-offer/disabled BUY, premium/admin creation и topic-filtered исходники/удаление, домашние личные темы/reload. [Доказательства](premium-tab-2026-10-24.md).
+- [x] 12 browser mock scenarios desktop/mobile/shared Android, component regressions без AI.
+- [x] Финальный quality gate: 377 backend/scripts, 5 Node guards, 304 frontend tests, lint/typecheck/build.
+- [ ] Web-публикация: статусы в документе доказательств.
+- [ ] Android production build/sync и физическая приёмка — отдельная команда.

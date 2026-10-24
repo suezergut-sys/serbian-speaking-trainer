@@ -1,4 +1,5 @@
 :root {
+  --gold-muted: #a47c36;
   --text: #eaf2ff;
   color: var(--text);
   background: #020914;
@@ -969,3 +970,36 @@ button { cursor: pointer; background: var(--panel); }
 .custom-content-manager h3 { margin: 0; font-size: 1rem; }
 .custom-content-item, .custom-content-confirmation { display: grid; min-width: 0; gap: .5rem; padding: .6rem 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
 .custom-content-confirmation { border: 1px solid var(--cyan); border-radius: 8px; padding: .7rem; }
+
+/* Premium uses the existing crown and the shared navigation palette. */
+.main-nav .premium-nav .premium-badge { color: inherit; width: 20px; height: 20px; }
+.main-nav .premium-nav.is-active .premium-badge { color: var(--blue); }
+.android-header .premium-nav .premium-badge { color: inherit; }
+.main-nav .premium-nav--active .premium-badge,
+.android-header nav .premium-nav--active { color: var(--gold-muted); }
+.main-nav .premium-nav--active.is-active .premium-badge,
+.android-header nav .premium-nav--active[aria-current="page"] { color: var(--gold); }
+.main-nav .premium-nav--active.is-active::after { background: var(--gold); box-shadow: 0 0 12px var(--gold); }
+.premium-page { width: min(100%, 680px); margin: 0 auto; padding: 1.25rem; color: var(--text); }
+.premium-page h1 { margin: 0 0 1.25rem; font-size: 1.55rem; }
+.premium-offer { padding: 1.5rem; }
+.premium-offer ul { margin: 0 0 1.5rem; padding-left: 1.25rem; line-height: 1.6; }
+.premium-offer li + li { margin-top: .75rem; }
+.premium-page button { min-height: 44px; padding: .75rem 1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--text); font: inherit; }
+.premium-page button:disabled { background: var(--panel); color: var(--muted); opacity: .65; cursor: default; }
+.premium-page button[aria-pressed="true"] { border-color: var(--blue-bright); background: var(--reward-background); color: var(--blue-bright); }
+.premium-offer > button { width: 100%; border-color: var(--gold-muted); color: var(--gold); }
+.premium-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin-bottom: 1rem; }
+.premium-page .custom-content-form { margin-bottom: 1rem; }
+.premium-page .custom-content-item { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+.premium-page .custom-content-item > strong { overflow-wrap: anywhere; }
+.premium-page .premium-topic { display: flex; justify-content: space-between; align-items: center; gap: .75rem; text-align: left; }
+.premium-topic strong { overflow-wrap: anywhere; }
+.premium-topic span { flex-shrink: 0; color: var(--muted); font-size: .8rem; }
+.android-premium-page .premium-page { padding: 0; }
+@media (max-width: 360px) {
+  .android-header, .mobile-web-shell .android-header { padding-left: .5rem; padding-right: .25rem; }
+  .android-header nav { gap: 0; }
+  .android-header nav button, .mobile-web-shell .android-header nav button { width: 38px; }
+  .premium-page .custom-content-item { grid-template-columns: minmax(0, 1fr); }
+}
