@@ -908,6 +908,6 @@
 
 - [x] Resolver лимита premium100/free20/admin unlimited, additive admin daily_limit, RU/EN premium роль; расход/UTC/reservations сохраняются. [Доказательства](premium-100-2026-10-24.md).
 - [x] 383 backend/scripts, 9 skipped; 5 Node guards; 310 frontend tests; lint/typecheck/build; 22 browser mock scenarios RU/EN.
-- [ ] Backend/web-публикация и production-проверки.
-- [ ] Назначение premium четырём указанным аккаунтам и проверка Supabase.
+- [x] PR #151, runtime 82edc87; backend/web Ready/alias/SHA, production env100, HTTP/schema и 22 browser checks прошли. [Доказательства](premium-100-2026-10-24.md).
+- [x] Ровно четыре заданных аккаунта назначены/подтверждены premium в Supabase; настоящий admin UI показывает всем Premium user и 0 / 100, история/расход сохранены.
 - [ ] Android sync/build/физическая приёмка — отдельные статусы.
