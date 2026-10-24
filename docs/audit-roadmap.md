@@ -901,5 +901,5 @@
 
 - [x] Удалены домашние карточки создания; личные темы premium/admin отмечены тонкой золотой рамкой. [Доказательства](premium-home-2026-10-24.md).
 - [x] 306 frontend tests, lint/typecheck/build и 21 browser mock scenarios RU/EN прошли.
-- [ ] Web-публикация и production-проверки.
+- [x] PR #149, web runtime 7eef170 Ready/production/alias/SHA; HTTP и 18 production browser scenarios прошли, авторизованный EN home без creation cards проверен. [Доказательства](premium-home-2026-10-24.md).
 - [ ] Android build/sync/физическая приёмка — отдельный выпуск.
