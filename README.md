@@ -563,3 +563,5 @@ STT использует prompt v2 с сербским латинским алф
 20.10.2026, 11:59 МСК: [PR #139](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/139), runtime `92a34fd`; web 1.37 READY/production, общий gpt-4o-transcribe подтверждён. [GitHub v1.37](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.37) опубликован, APK tag/digest/size/подпись и обратная загрузка проверены. [Доказательства](docs/android-1.37-release.md). Физическая приёмка остаётся открытой.
 
 21.10.2026: [PR #141](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/141), runtime `b9273dd`; web READY/production, 4 production browser scenarios RU/EN passed. [APK 1.38](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.38) опубликован; API/assets/подпись/metadata/digest и обратная загрузка проверены. Физическая приёмка телефона остаётся отдельно.
+
+После публикации основная папка и завершённые рабочие копии синхронизируются с origin/main; незавершённая работа предварительно сохраняется в recovery-ветках. [История и статус](docs/workspace-consistency-checkpoint.md).

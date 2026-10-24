@@ -10,6 +10,8 @@
 - [x] Накопленные регрессии подсветки ответов RU/EN и обоих алфавитов; документы диагностики, premium-доступа, обзора старого тестирования и черновиков Google Play включены. Карточка/трек Play Console не изменяются этим выпуском.
 - [x] Сверена вся грязная рабочая копия с origin/main: backend/API/migration/custom-content файлы уже соответствуют #143/#144; локальные ShareApp и тесты добавлены в изолированный release worktree без потери изменений владельца.
 
+- [x] Дополнительно перенесены накопленные правила/documentation PR #60 с актуальными AGENTS; runtime/APK от этого не меняется. Финальная синхронизация рабочих копий учитывается отдельно.
+
 ## Проверки и выпуск
 
 - [x] Полный scripts/check.ps1: 377 backend/scripts passed, 8 skipped, 5 Node guards; 299 frontend tests; lint, TypeScript и production web build.
