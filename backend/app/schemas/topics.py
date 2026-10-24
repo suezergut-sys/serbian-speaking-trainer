@@ -25,10 +25,11 @@ class TopicListItem(BaseModel):
     suggested_vocabulary: list[str]
     is_custom: bool = False
     phrase_count: int = Field(default=0, ge=0)
+    custom_phrase_count: int = Field(default=0, ge=0)
 
 
 class CreateTopicRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     title_ru: str = Field(min_length=2, max_length=160)
 

@@ -921,6 +921,17 @@ button { cursor: pointer; background: var(--panel); }
 /* Fill the available practice panel while the next topic starts. */
 .practice-stage.is-preparing { align-content: stretch; }
 .practice-stage.is-preparing > .phrase-loading { min-height: 100%; width: 100%; }
+.share-app-settings { padding: 1.25rem; background: var(--panel); color: var(--text); }
+.share-app-settings h2 { margin: 0 0 1rem; font-size: 1rem; }
+.share-app-settings p { color: var(--muted); }
+.share-app-settings label { display: block; margin: 1rem 0 .5rem; color: var(--text); }
+.share-app-settings input { width: 100%; min-width: 0; padding: .8rem; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); }
+.share-app-settings button { min-height: 44px; padding: .7rem 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); }
+.share-app-settings button:disabled { background: var(--panel); color: var(--muted); opacity: .65; cursor: default; }
+.share-app-settings button:focus-visible, .share-app-settings input:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.share-app-settings [role="status"] { color: var(--text); }
+.share-app-settings [role="alert"] { color: #ff9eaa; }
+.share-app-settings__actions { display: flex; flex-wrap: wrap; gap: .6rem; }
 .feedback-settings form { display: grid; gap: .8rem; }
 .feedback-settings textarea { width: 100%; min-width: 0; resize: vertical; padding: .8rem; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); }
 .feedback-settings button { padding: .7rem 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); }
@@ -942,3 +953,19 @@ button { cursor: pointer; background: var(--panel); }
 .transcription-model-settings select:focus-visible, .transcription-model-settings button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 .transcription-model-settings [role="alert"] { color: #ff9eaa; }
 .transcription-model-settings [role="status"] { color: var(--text); }
+
+/* Shared administrator content forms, including the mobile/Android layout. */
+.custom-content-form { display: grid; gap: .7rem; min-width: 0; padding: 1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--text); }
+.custom-content-form label { display: grid; gap: .4rem; }
+.custom-content-form p { margin: 0; overflow-wrap: anywhere; color: var(--muted); }
+.custom-content-form input, .custom-content-form select, .custom-content-form button { width: 100%; min-width: 0; padding: .7rem; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--text); font: inherit; color-scheme: dark; }
+.custom-content-form :disabled { background: var(--panel); color: var(--muted); opacity: .65; }
+.custom-content-form :focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.custom-content-form [role="alert"] { color: var(--text); border-left: 2px solid var(--cyan); padding-left: .5rem; }
+.custom-content-form .custom-content-translation { color: var(--text); }
+
+.custom-content-manage-button { width: 100%; padding: .75rem; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--text); font: inherit; }
+.custom-content-manage-button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.custom-content-manager h3 { margin: 0; font-size: 1rem; }
+.custom-content-item, .custom-content-confirmation { display: grid; min-width: 0; gap: .5rem; padding: .6rem 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.custom-content-confirmation { border: 1px solid var(--cyan); border-radius: 8px; padding: .7rem; }

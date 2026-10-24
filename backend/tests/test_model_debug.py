@@ -173,6 +173,7 @@ def test_migration_upgrade_repeat_and_downgrade(tmp_path):
 
 
 def test_api_context_captures_only_debug_administrator_and_disable_clears(api_client, db_session):
+    from app.config import get_settings
     from app.main import app
     from app.api.dependencies import get_current_user
     from app.services.transcription_adapter import get_transcription_provider
@@ -183,6 +184,7 @@ def test_api_context_captures_only_debug_administrator_and_disable_clears(api_cl
     api_client.patch("/api/admin/model-debug", json={"enabled": True})
     exercise = _create_exercise(api_client)
     provider = OpenAITranscriptionProvider(Settings(openai_api_key="private", openai_transcribe_model="env-stt"))
+    app.dependency_overrides[get_settings] = lambda: provider.settings
     provider._client = SimpleNamespace(audio=SimpleNamespace(transcriptions=SimpleNamespace(create=Mock(return_value=SimpleNamespace(text="Želim kafu.")))))
     app.dependency_overrides[get_transcription_provider] = lambda: provider
     response = api_client.post("/api/transcriptions", data={"exercise_id": exercise}, files={"audio": ("speech.webm", b"synthetic", "audio/webm")})

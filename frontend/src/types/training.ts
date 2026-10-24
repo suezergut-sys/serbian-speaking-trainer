@@ -8,6 +8,7 @@ export type TopicListItem = {
   suggested_vocabulary: string[];
   is_custom: boolean;
   phrase_count: number;
+  custom_phrase_count?: number;
 };
 
 export type TopicContext = TopicListItem & {
@@ -113,6 +114,7 @@ export type ReviewSummary = {
 };
 
 export type PreparedReviewPhrase = {
+  preparation_id: string;
   source_ru: string;
   canonical_sr: string;
   intended_sr_variants: string[];

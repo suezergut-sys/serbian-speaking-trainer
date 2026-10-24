@@ -22,12 +22,18 @@ from app.api.review import router as review_router
 from app.config import get_settings
 from app.request_metrics import start_request_metrics, stop_request_metrics
 from app.services.interface_language import interface_language, parse_interface_language
+from app.services.custom_content_policy import CustomContentError
 
 settings = get_settings()
 performance_logger = logging.getLogger("app.performance")
 performance_logger.setLevel(logging.INFO)
 
 app = FastAPI(title="Serbian Speaking Trainer API", version="1.4.0")
+
+
+@app.exception_handler(CustomContentError)
+async def custom_content_error(_request: Request, exc: CustomContentError):
+    return JSONResponse({"detail": {"code": exc.code}}, status_code=exc.status)
 
 
 @app.exception_handler(RequestValidationError)
@@ -42,7 +48,7 @@ app.add_middleware(
     allow_origins=["http://localhost", "https://localhost", "capacitor://localhost"],
     allow_origin_regex=settings.cors_allowed_origin_regex,
     allow_credentials=False,
-    allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization", "X-Interface-Language"],
     expose_headers=["Server-Timing"],
 )

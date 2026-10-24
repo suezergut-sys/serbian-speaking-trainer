@@ -25,6 +25,28 @@ from app.models import User
 router = APIRouter(tags=["review"])
 
 
+@router.get("/custom-phrases", response_model=list[ReviewPhraseResponse])
+def list_custom_phrases(
+    db: Session = Depends(get_db),
+    ai: StructuredAIProvider = Depends(get_ai_provider),
+    user: User = Depends(get_current_user),
+) -> list[ReviewPhraseResponse]:
+    return ReviewService(db, ai, user.id).list_custom_phrases()
+
+
+@router.delete("/custom-phrases/{phrase_id}", status_code=204)
+def delete_custom_phrase(
+    phrase_id: str,
+    db: Session = Depends(get_db),
+    ai: StructuredAIProvider = Depends(get_ai_provider),
+    user: User = Depends(get_current_user),
+) -> None:
+    try:
+        ReviewService(db, ai, user.id).delete_custom_phrase(phrase_id)
+    except ReviewPhraseNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Phrase not found") from exc
+
+
 class RevealWordRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

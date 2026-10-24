@@ -1,15 +1,28 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.repositories import TopicPresetRepository
 from app.schemas import CreateTopicRequest, NormalizeTopicRequest, TopicContext, TopicListItem
 from app.services.ai_adapter import StructuredAIProvider, get_ai_provider
-from app.services.topic_service import TopicService
+from app.services.topic_service import TopicService, TopicNotFoundError
 from app.api.dependencies import get_current_user
 from app.models import User
 
 router = APIRouter(prefix="/topics", tags=["topics"])
+
+
+@router.delete("/{topic_id}", status_code=204)
+def delete_topic(
+    topic_id: str,
+    db: Session = Depends(get_db),
+    ai: StructuredAIProvider = Depends(get_ai_provider),
+    user: User = Depends(get_current_user),
+) -> None:
+    try:
+        TopicService(TopicPresetRepository(db, user.id), ai).delete_custom(topic_id)
+    except TopicNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Topic not found") from exc
 
 
 @router.get("", response_model=list[TopicListItem])

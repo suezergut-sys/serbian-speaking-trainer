@@ -198,6 +198,7 @@ describe("App", () => {
         last_active_at: "2026-09-22T10:00:00Z", phrases_today: 12,
       }];
       else if (url === "/api/review-phrases/prepare" && init?.method === "POST") body = {
+        preparation_id: "12345678-1234-1234-1234-123456789012",
         source_ru: "Мне нужно позвонить хозяину.", canonical_sr: "Moram da pozovem vlasnika.",
         intended_sr_variants: ["Moram da pozovem vlasnika."], word_hints: [],
       };
@@ -337,6 +338,28 @@ describe("App", () => {
       await screen.findByRole("button", { name: "Записать заново" });
       expect(screen.queryByText(/Проблемы с работой внешней моделью/)).not.toBeInTheDocument();
     }
+  });
+
+  it.each(["desktop", "mobile", "native"])("enables custom content for administrators (%s)", async layout => {
+    vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(layout === "native");
+    if (layout === "mobile") vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
+    vi.stubGlobal("fetch", mockApi(false, [], "admin"));
+    render(<App />);
+    if (layout === "mobile") fireEvent.click(await screen.findByRole("button", { name: "Темы" }));
+    await screen.findByRole("button", { name: /В банке/ });
+    const addTopic = screen.getByRole("button", { name: /добавить тему/ });
+    expect(addTopic).toBeEnabled();
+    expect(addTopic.querySelector('[aria-label="Премиум"]')).not.toBeInTheDocument();
+    fireEvent.click(addTopic);
+    fireEvent.change(screen.getByRole("textbox", { name: "Название темы" }), { target: { value: "Поговорить с арендодателем" } });
+    fireEvent.click(screen.getByText("Сохранить тему"));
+    await screen.findByText("Тема сохранена.");
+    expect(screen.getByRole("button", { name: /Поговорить с арендодателем/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Закрыть"));
+    fireEvent.click(screen.getByRole("button", { name: /Поговорить с арендодателем/ }));
+    if (layout === "mobile") fireEvent.click(screen.getByRole("button", { name: "Темы" }));
+    fireEvent.click(screen.getByRole("button", { name: /добавить фразу/ }));
+    expect(screen.getAllByLabelText("Фраза на русском языке")).toHaveLength(1);
   });
 
   it.each([false, true])("places disabled premium topic and phrase cards inside the mobile topic grid (native=%s)", async (native) => {

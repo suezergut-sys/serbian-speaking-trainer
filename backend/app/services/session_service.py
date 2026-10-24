@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from app.models import TrainingSession
-from app.repositories import AttemptRepository, ReviewPhraseRepository, TopicPresetRepository, TrainingSessionRepository
+from app.repositories import AttemptRepository, ReviewPhraseRepository, TopicPresetRepository, TrainingSessionRepository, UserRepository
 from app.schemas import CreateSessionRequest, CreateTopicRequest, SessionResponse, TopicContext
 from app.services.ai_adapter import StructuredAIProvider
 from app.services.review_service import ReviewQueueEmptyError
@@ -69,6 +69,14 @@ class SessionService:
         else:
             topic = self.topic_service.general_context()
 
+        if topic.source == "custom":
+            # Serialize snapshot creation against owner-scoped deletion. Preset
+            # sessions keep their existing query path.
+            UserRepository(self.repository.session).lock(self.user_id)
+            if request.topic_id:
+                self.topic_service.preset_context(request.topic_id)
+            if review_phrase and self.review_phrases.get_owned(review_phrase.id) is None:
+                raise TopicNotFoundError(review_phrase.id)
         entity = self.repository.add(
             TrainingSession(
                 user_id=self.user_id,

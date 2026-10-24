@@ -1,27 +1,34 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic_core import PydanticCustomError
 
 from app.schemas.exercises import WordHint
 
 
 class CreateReviewPhraseRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    source_ru: str = Field(min_length=3, max_length=240)
-    canonical_sr: str = Field(min_length=1, max_length=300)
+    preparation_id: str = Field(min_length=36, max_length=36)
     topic_id: str = Field(min_length=1, max_length=80)
-    intended_sr_variants: list[str] = Field(default_factory=list, max_length=4)
-    word_hints: list[WordHint] = Field(default_factory=list, max_length=30)
 
 
 class PrepareReviewPhraseRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     source_ru: str = Field(min_length=3, max_length=240)
 
+    @field_validator("source_ru")
+    @classmethod
+    def limit_words(cls, value: str) -> str:
+        value = " ".join(value.split())
+        if len(value.split()) > 15:
+            raise PydanticCustomError("phrase_word_limit", "A phrase may contain at most 15 words")
+        return value
+
 
 class PreparedReviewPhraseResponse(BaseModel):
+    preparation_id: str
     source_ru: str
     canonical_sr: str
     intended_sr_variants: list[str]

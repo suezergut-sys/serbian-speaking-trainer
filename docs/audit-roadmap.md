@@ -1,11 +1,40 @@
 # План улучшений по аудиту SerboTalk
 
+## 24.10.2026 — Resend SMTP и вход по email
+
+- [x] Настроены домен Resend/DNS, ограниченный sending key и Supabase SMTP, RU/EN шаблоны для регистрации и входа. Реальное письмо доставлено во Входящие, владелец вошёл с прежним прогрессом. [Доказательства](email-otp-2026-10-24.md).
+- [x] Общий RU/EN UI, cooldown/busy/errors, feature flag, правовые тексты; frontend/backend/component/browser проверки зафиксированы в отчёте.
+- [ ] Публикация web, включение production-флага и проверка публичного входа.
+- [ ] Android sync/build и физическая приёмка по отдельной команде. P0/P1/P2 целиком не закрываются.
+
+
+## 22.10.2026 — описания Google Play и «Поделиться приложением»
+
+- [x] Подготовлены [RU/EN черновики названия, краткого и полного описания](google-play-descriptions-2026-10-22.md); длины проверены, функции сверены с 1.38. По уточнению владельца материалы предназначены для публикации 1.38 или новее; 1.30 — только история трека. Ничего не сохранено в Console и не опубликовано.
+- [ ] Проверка текущей версии закрытого трека и фактических текстов Console не завершена: Computer Use остановлен из-за невозможности достоверно определить URL Chrome. Исторический Alpha 1.30 и текущий APK 1.38 не отождествляются; требуется повторная проверка доступа в отдельном сеансе.
+- [x] Локально реализовано «Поделиться» в общих настройках RU/EN: публичный web URL, native/web share, clipboard/manual fallback, loading/error/cancel. 269 frontend tests, 6 browser scenarios, lint/typecheck/production build. [Доказательства](share-app-checkpoint-2026-10-22.md).
+- [ ] Одобрение текстов владельцем и отдельная публикация Google Play/web.
+- [ ] Android sync/build и физическая приёмка будущего релиза по отдельной команде; текущая 1.38/code48 не менялась. P0/P1/P2 не закрываются целиком.
+
 ## 21.10.2026 — квадратные награды и Android 1.38
 
 - [x] Квадратные внешние рамки всех наград, ещё +15% размера, адаптация к ширине/высоте, центр и RU/EN. 348 backend/scripts / 258 frontend / 5 Node tests, lint/typecheck/build прошли; AI замокан. [Доказательства](android-1.38-release.md).
 - [x] Browser matrix 20/20 RU/EN и production APK 1.38/code48: API/assets/подпись/metadata/Downloads проверены; номер подтверждён владельцем.
 - [x] Web READY/production на b9273dd через PR #141, 4 production browser checks RU/EN; APK v1.38 опубликован, tag/target/digest/size и обратная загрузка проверены. [Доказательства](android-1.38-release.md).
 - [ ] Физическая приёмка телефона. P0/P1/P2 целиком не закрываются.
+
+## 20.10.2026 — актуальность старого Android-отчёта Testers Community
+
+- [x] Выполнен только согласованный пункт 1: сопоставлены 7 основных и 5 дополнительных рекомендаций PDF с текущими исходниками и существующим APK 1.37/code47. Учтено уточнение владельца: отчёт относится к старой Android-версии для Google Play. Точная версия PDF не установлена; Alpha 1.30 и APK 1.37 не отождествляются. [Таблица, доказательства и ограничения](testers-feedback-review-2026-10-20.md).
+- [x] Подтверждены уже реализованные Google-вход, выделение активного раздела и обратная связь; сценарий отдельной email-регистрации отсутствует. Проверены SHA-256 и 9 packaged public files APK без build/sync. Существующие 5 frontend suites: 118 tests passed, внешние сервисы замоканы. Runtime не менялся; публикация и новая Android-сборка не требуются.
+- [ ] Одобрение владельцем каждого следующего пункта уточнённой очереди; реализации не начаты.
+- [ ] Физическая приёмка уже реализованных Android-сценариев и проверка фактической версии/описаний в Play Console отдельно. Публичные RU/EN URL через web-инструмент недоступны; это не оценка качества карточки. P0/P1/P2 целиком не закрываются.
+
+## 17.10.2026 — проверка неподсвеченного Da вместо Može
+
+- [x] По owner-scoped production debug и сохранённой попытке 22:21 МСК подтверждено: анализатор признал `Da, naravno` допустимым; issues содержат вставку начального `Da` и порядок `lepo je`. [Доказательства](answer-da-debug-check-2026-10-17.md).
+- [x] Регрессии отображения RU/EN × latinica/кириллица: 15 targeted / 239 full frontend tests, lint/typecheck/build. Runtime и prompt не менялись, публикация и APK не требуются.
+- [ ] Приёмка вывода владельцем; физическая Android-проверка не выполнялась.
 
 ## 17.10.2026 — ширина статистики, звезда и страницы фраз
 
@@ -810,3 +839,35 @@
 - [x] 348 backend passed / 8 skipped, 258 frontend, 5 Node guards, lint/typecheck/web build; 5 targeted version/settings tests. [Доказательства](android-1.37-release.md).
 - [x] 20.10.2026, 11:59 МСК: [PR #139](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/139), runtime `92a34fd`; web READY/main/alias, v1.37 RU/EN и общий STT default, HTTP/auth smoke, console/runtime errors 0. GitHub v1.37 tag/digest/size/обратная загрузка подтверждены. [Доказательства](android-1.37-release.md).
 - [ ] Физическая установка, OAuth, микрофон/звук и реальная речь.
+
+## 23.10.2026 — персональный безлимит
+
+- [x] Двум аккаунтам по команде владельца включён premium без административных прав. Отдельный production SELECT подтвердил обе записи и отсутствие дневного лимита. Код и Android не менялись; redeploy не требуется. [Доказательства](daily-limit-access-2026-10-23.md).
+
+- [x] 23.10.2026: по дополнительной команде владельца безлимит включён ещё одному аккаунту без административных прав; отдельный production SELECT подтвердил результат. [Доказательства](daily-limit-access-2026-10-23.md).
+
+
+## 23.10.2026 — пользовательские темы и фразы
+
+- [x] Локально включены формы только для admin в desktop/mobile/shared Android-layout RU/EN; подготовка/preview/выбор темы/сохранение, сохранение черновика после ошибки, reset preview при правке. [Доказательства и описание](custom-content-audit-2026-10-23.md).
+- [x] Исправлена валидация пробелов и безопасный отказ при невалидном/пустом/слишком длинном переводе; проверены owner scope, trainable custom topic и перенос дубля со сбросом серии.
+- [x] Full frontend 277 passed, backend 312 passed / 8 skipped до финального расширения regressions; последние targeted backend 26 passed; lint/typecheck/build; 6 браузерных mock сценариев RU/EN × desktop/mobile/shared Android-layout.
+- [x] Доверие к canonical при save устранено серверным preparation_id; лимиты личного каталога реализованы. [Доказательства](custom-content-limits-2026-10-23.md).
+- [ ] Отдельно решить серверные роли/частоту prepare; API пока допускает любой вошедший аккаунт.
+- [x] Дубли сохраняют canonical/прогресс, неявный перенос (включая каталожную карточку) закрыт; конкурентные квоты SQLite проверены. [Доказательства](custom-content-limits-2026-10-23.md).
+- [x] Web/backend опубликованы через [PR #143](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/143), `69ff666`, Ready/main/aliases; авторизованный UI и 6 production browser mock checks подтверждены. [Доказательства](custom-content-limits-2026-10-23.md).
+- [ ] Ручная приёмка владельцем с реальным переводом.
+- [ ] Android build/устройство — по отдельной команде; внесено в backlog, версия не менялась.
+
+
+## 23.10.2026 — личный каталог: 15 слов, 5 тем × 30 фраз, удаление
+
+- [x] Новое save-body только preparation_id/topic_id; canonical/варианты/hints берутся с сервера, owner scope/expiry/replay/подмена проверены. Модель/миграция a910bc57d302 и roundtrip upgrade/downgrade проверены. [Доказательства](custom-content-limits-2026-10-23.md).
+- [x] Лимиты 15 слов и 5 личных тем × 30 фраз (включая выученные), максимум 150; добавление только в личные темы. UI RU/EN показывает счётчики, сообщения лимитов и переход к удалению.
+- [x] Owner-scoped удаление фразы и темы со всеми карточками, подтверждение/отмена/ошибка/retry; preset и чужой каталог защищены. История попыток сохранена, stale/in-flight ответ не воскрешает карточку.
+- [x] Дубликаты не меняют canonical/прогресс и не переносят карточку автоматически. Два конкурирующих запроса на последнее место сериализуются на SQLite (ровно 5 тем/30 фраз).
+- [x] Финальные full frontend 289 passed, backend 328 passed / 8 skipped, targeted manager 3 passed; lint/typecheck/build/diff check и 6 browser mock RU/EN desktop/mobile/shared Android-layout. [Доказательства](custom-content-limits-2026-10-23.md).
+- [x] Backend/web Ready/main на `69ff666` через [PR #143](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/143); a910bc57d302 применена, seed 0/0/0, HTTP/OpenAPI/auth и admin RU/EN UI, 6 production browser mock checks, console/runtime errors 0. [Доказательства](custom-content-limits-2026-10-23.md).
+- [ ] Приёмка владельцем с реальным переводом.
+- [ ] Production/PostgreSQL нагрузка и отдельная политика server role/rate limit для prepare.
+- [ ] Android APK/устройство — по отдельной команде; backlog обновлён, версия не менялась.

@@ -13,12 +13,15 @@ import { initializeAuth, isAuthConfigured, onAuthStateChange, signInWithGoogle, 
 import type { CurrentUser } from "./types/auth";
 import { LegalPage } from "./LegalPage";
 import { ReviewLogin } from "./ReviewLogin";
+import { EmailLogin } from "./EmailLogin";
 import { assistedText } from "./transcriptionAssistance";
 import { transcriptionErrorMessage } from "./transcriptionError";
 import { TranscriptionAssistanceView, type AssistanceDraft } from "./TranscriptionAssistanceView";
 import { useAssistancePreference } from "./useAssistancePreference";
 import { useMobileLayout } from "./useMobileLayout";
 import { SettingsView } from "./SettingsView";
+import { CustomContentManager } from "./CustomContentManager";
+import { CustomContentForm } from "./CustomContentForm";
 import { PremiumBadge } from "./PremiumBadge";
 import { WordHintToken } from "./WordHintToken";
 import { isSourceWord, splitSourcePhrase } from "./sourceWords";
@@ -192,7 +195,7 @@ function AuthenticatedApp() {
     <p>{t("Авторизация и загрузка...")}</p>
   </div></main>;
   if (!isAuthConfigured()) return <main className="auth-page"><div className="auth-card panel"><LoginLanguageButton /><h1>{t("Нужна настройка входа")}</h1><p>{t("Добавьте VITE_SUPABASE_URL и VITE_SUPABASE_PUBLISHABLE_KEY в окружение frontend.")}</p></div></main>;
-  if (!hasSession || !account) return <main className="auth-page"><div className="auth-card panel"><LoginLanguageButton /><LoginCopy as="h1" text="Добро пожаловать в SerboTalk" /><LoginCopy as="p" text="Войдите или зарегистрируйтесь с Google, чтобы сохранять свой прогресс на всех устройствах." /><button className="google-sign-in" type="button" onClick={() => void login()}>{t("Войти через Google")}</button><ReviewLogin />{authError && <p className="error" role="alert">{t(authError)}</p>}<nav className="auth-legal" aria-label={t("Правовая информация")}><LoginCopy as="a" href="/privacy" text="Конфиденциальность" /><LoginCopy as="a" href="/terms" text="Условия" /><LoginCopy as="a" href="/delete-account" text="Удаление аккаунта" /></nav></div></main>;
+  if (!hasSession || !account) return <main className="auth-page"><div className="auth-card panel"><LoginLanguageButton /><LoginCopy as="h1" text="Добро пожаловать в SerboTalk" /><LoginCopy as="p" text="Войдите или зарегистрируйтесь, чтобы сохранять свой прогресс на всех устройствах." /><button className="google-sign-in" type="button" onClick={() => void login()}>{t("Войти через Google")}</button><EmailLogin /><ReviewLogin />{authError && <p className="error" role="alert">{t(authError)}</p>}<nav className="auth-legal" aria-label={t("Правовая информация")}><LoginCopy as="a" href="/privacy" text="Конфиденциальность" /><LoginCopy as="a" href="/terms" text="Условия" /><LoginCopy as="a" href="/delete-account" text="Удаление аккаунта" /></nav></div></main>;
   return <TrainerApp key={account.id} account={account} onAccountChange={setAccount} onSignOut={() => void signOut()} />;
 }
 
@@ -202,6 +205,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const [view, setView] = useState<AppView>("practice");
   const [topics, setTopics] = useState<TopicListItem[]>([]);
   const [selectedTopic, setSelectedTopic] = useState<string>();
+  const [contentForm, setContentForm] = useState<"topic" | "phrase" | "manage">();
   const [customTopic, setCustomTopic] = useState("");
   const [reviewPhraseCount, setReviewPhraseCount] = useState(0);
   const [session, setSession] = useState<TrainingSession>();
@@ -812,6 +816,27 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     }
   }
 
+  function refreshCustomContent() {
+    void Promise.allSettled([fetchTopics().then(setTopics), refreshReviewSummary()]).then(results => {
+      if (results.some(result => result.status === "rejected")) setError("Не удалось обновить каталог. Повторите загрузку тем.");
+    });
+  }
+
+  function renderContentForm() {
+    if (account.role !== "admin") return null;
+    return <>
+      <button className="custom-content-manage-button" type="button" onClick={() => { interruptVoice(); setContentForm("manage"); }}>{t("Свои темы и фразы")}</button>
+      {contentForm === "manage" ? <CustomContentManager topics={topics} alphabet={alphabet} onClose={() => setContentForm(undefined)} onDeleted={topicId => {
+        interruptVoice(); resetTraining();
+        if (topicId) { setTopics(current => current.filter(topic => topic.id !== topicId)); if (selectedTopic === topicId) setSelectedTopic(undefined); }
+        refreshCustomContent();
+      }} /> : contentForm ? <CustomContentForm key={contentForm} mode={contentForm} topics={topics} selectedTopic={selectedTopic} alphabet={alphabet}
+        onClose={() => setContentForm(undefined)} onManage={() => setContentForm("manage")} onCreateTopic={() => setContentForm("topic")}
+        onTopicCreated={topic => setTopics(current => [...current.filter(item => item.id !== topic.id), topic])}
+        onPhraseSaved={refreshCustomContent} /> : null}
+    </>;
+  }
+
   function renderPhrase() {
     const localized = localizedPhrase(exercise?.source_ru ?? "");
     return <h2 id="exercise-title" className="interactive-phrase" aria-label={exercise ? localized.source : t("Готовим фразу…")}>
@@ -913,16 +938,17 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                   <small>{topic.phrase_count}<span>{t(" неизученных")}</span></small>
                 </button>
               ))}
-              <button className="android-topic android-topic--premium" type="button" disabled>
+              <button className={account.role === "admin" ? "android-topic android-topic--add" : "android-topic android-topic--premium"} type="button" disabled={account.role !== "admin"} onClick={() => { interruptVoice(); setContentForm("topic"); }}>
                 <span className="topic__icon"><Icon name="plus" /></span>
-                <strong>{t("+ добавить тему")}</strong><PremiumBadge />
+                <strong>{t("+ добавить тему")}</strong>{account.role !== "admin" && <PremiumBadge />}
               </button>
-              <button className="android-topic android-topic--premium" type="button" disabled>
+              <button className={account.role === "admin" ? "android-topic android-topic--add" : "android-topic android-topic--premium"} type="button" disabled={account.role !== "admin"} onClick={() => { interruptVoice(); setContentForm("phrase"); }}>
                 <span className="topic__icon"><Icon name="plus" /></span>
-                <strong>{t("+ добавить фразу")}</strong><PremiumBadge />
+                <strong>{t("+ добавить фразу")}</strong>{account.role !== "admin" && <PremiumBadge />}
               </button>
             </div>
 
+            {renderContentForm()}
             {(startupState === "fallback" || backendState === "offline") && <div className="android-error" role="alert">{t(startupState === "fallback" ? error : "Нет подключения к сервису.")} <button type="button" onClick={retryCatalog}>{t("Повторить загрузку")}</button></div>}
           </section>
 
@@ -1001,13 +1027,14 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                   <span className="topic__unlearned"><strong>{topic.phrase_count}</strong><small>{t("неизученных")}</small></span>
                 </button>
               ))}
-              <button className="desktop-topic-card desktop-topic-card--premium" type="button" disabled>
-                <span className="topic__icon"><Icon name="plus" /></span><strong>{t("+ добавить тему")}</strong><PremiumBadge />
+              <button className={account.role === "admin" ? "desktop-topic-card" : "desktop-topic-card desktop-topic-card--premium"} type="button" disabled={account.role !== "admin"} onClick={() => { interruptVoice(); setContentForm("topic"); }}>
+                <span className="topic__icon"><Icon name="plus" /></span><strong>{t("+ добавить тему")}</strong>{account.role !== "admin" && <PremiumBadge />}
               </button>
-              <button className="desktop-topic-card desktop-topic-card--premium" type="button" disabled>
-                <span className="topic__icon"><Icon name="plus" /></span><strong>{t("+ добавить фразу")}</strong><PremiumBadge />
+              <button className={account.role === "admin" ? "desktop-topic-card" : "desktop-topic-card desktop-topic-card--premium"} type="button" disabled={account.role !== "admin"} onClick={() => { interruptVoice(); setContentForm("phrase"); }}>
+                <span className="topic__icon"><Icon name="plus" /></span><strong>{t("+ добавить фразу")}</strong>{account.role !== "admin" && <PremiumBadge />}
               </button>
             </div>
+            {renderContentForm()}
             <div className="topics-panel__note"><Icon name="message" /><span>{t("Каждый короткий разговор делает речь увереннее.")}</span></div>
           </aside>
 

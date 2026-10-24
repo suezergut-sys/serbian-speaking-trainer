@@ -77,3 +77,22 @@ class FakeTranscriptionAssistanceProvider:
         if self.error:
             raise self.error
         return self.result
+
+
+def create_custom_phrase(client, body):
+    """Exercise the real server-owned prepare/save API with a synthetic model."""
+    from app.main import app
+    from app.services.ai_adapter import get_ai_provider
+    topic_id = body.get("topic_id")
+    if topic_id is None:
+        topic_id = client.post("/api/topics", json={"title_ru": "Личные фразы"}).json()["id"]
+    previous = app.dependency_overrides[get_ai_provider]
+    app.dependency_overrides[get_ai_provider] = lambda: FakeAIProvider(
+        available=True, phrase_result=PhrasePreparation(intended_sr_variants=[body["canonical_sr"]], word_hints=[]),
+    )
+    try:
+        prepared = client.post("/api/review-phrases/prepare", json={"source_ru": body["source_ru"]})
+        assert prepared.status_code == 200, prepared.json()
+        return client.post("/api/review-phrases", json={"preparation_id": prepared.json()["preparation_id"], "topic_id": topic_id})
+    finally:
+        app.dependency_overrides[get_ai_provider] = previous

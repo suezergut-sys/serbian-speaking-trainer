@@ -130,6 +130,8 @@ class ExerciseGenerator:
         if request_id:
             existing = self.exercises.get_by_client_id(session_id, request_id)
             if existing is not None:
+                if existing.generation_meta_json.get("custom_content_deleted"):
+                    raise SessionUnavailableError(session_id)
                 return self._response(existing)
         if training_session.status == "completed":
             raise SessionCompletedError(session_id)
