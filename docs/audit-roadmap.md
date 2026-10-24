@@ -896,3 +896,10 @@
 - [x] Финальный quality gate: 377 backend/scripts, 5 Node guards, 304 frontend tests, lint/typecheck/build.
 - [x] Web опубликован через PR #147, runtime 50c8e2a, Vercel Ready/alias/SHA подтверждены; HTTP и 12 production browser mock scenarios прошли, авторизованный каталог владельца проверен. [Доказательства](premium-tab-2026-10-24.md).
 - [ ] Android production build/sync и физическая приёмка — отдельная команда.
+
+## 24.10.2026 — домашние темы Premium
+
+- [x] Удалены домашние карточки создания; личные темы premium/admin отмечены тонкой золотой рамкой. [Доказательства](premium-home-2026-10-24.md).
+- [x] 306 frontend tests, lint/typecheck/build и 21 browser mock scenarios RU/EN прошли.
+- [ ] Web-публикация и production-проверки.
+- [ ] Android build/sync/физическая приёмка — отдельный выпуск.

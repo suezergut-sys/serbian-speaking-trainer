@@ -29,6 +29,8 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
     });
     await page.goto(process.env.TRAINER_PAGE_PATH ?? '/');
+    if (layout !== 'desktop') await page.getByRole('button', { name: ru ? 'Темы' : 'Topics', exact: true }).click();
+    await expect(page.getByRole('button', { name: /добавить тему|добавить фразу|add topic|add phrase/ })).toHaveCount(0);
     const nav = page.locator(layout === 'desktop' ? '.main-nav' : '.android-header nav');
     await expect(nav.getByRole('button', { name: ru ? 'Премиум' : 'Premium', exact: true })).toBeVisible();
     const buttons = await nav.getByRole('button').allTextContents();
@@ -53,9 +55,16 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
       await expect(content.getByText(ru ? 'Тема сохранена.' : 'Topic saved.', { exact: true })).toBeVisible();
       await nav.getByRole('button', { name: ru ? layout === 'desktop' ? 'Практика' : 'Темы' : layout === 'desktop' ? 'Practice' : 'Topics', exact: true }).click();
       await expect(page.getByRole('button', { name: /Моя тема/ })).toBeVisible();
+      await expect(page.getByRole('button', { name: /Моя тема/ })).toHaveCSS('border-color', 'rgb(242, 189, 90)');
+      await expect(page.getByRole('button', { name: /Моя тема/ })).toHaveCSS('border-width', '1px');
       await page.reload();
       if (layout === 'mobile') await nav.getByRole('button', { name: ru ? 'Темы' : 'Topics', exact: true }).click();
       await expect(page.getByRole('button', { name: /Моя тема/ })).toBeVisible();
+      await expect(page.getByRole('button', { name: /Моя тема/ })).toHaveCSS('border-color', 'rgb(242, 189, 90)');
+      await expect(page.getByRole('button', { name: /Моя тема/ })).toHaveCSS('border-width', '1px');
+      await expect(page.locator('.topic--personal')).toHaveCount(1);
+      await mkdir('../artifacts/premium-home', { recursive: true });
+      await page.screenshot({ path: `../artifacts/premium-home/${language}-${layout}-home.png` });
       await premium.click();
       await content.getByRole('button', { name: ru ? 'Создать фразу' : 'Create phrase', exact: true }).click();
       await content.getByLabel(ru ? 'Фраза на русском языке' : 'Phrase in Russian').fill(prepared.source_ru);

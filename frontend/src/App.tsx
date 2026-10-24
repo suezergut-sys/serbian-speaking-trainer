@@ -20,8 +20,6 @@ import { TranscriptionAssistanceView, type AssistanceDraft } from "./Transcripti
 import { useAssistancePreference } from "./useAssistancePreference";
 import { useMobileLayout } from "./useMobileLayout";
 import { SettingsView } from "./SettingsView";
-import { CustomContentManager } from "./CustomContentManager";
-import { CustomContentForm } from "./CustomContentForm";
 import { PremiumView } from "./PremiumView";
 import { PremiumBadge } from "./PremiumBadge";
 import { WordHintToken } from "./WordHintToken";
@@ -206,7 +204,6 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const [view, setView] = useState<AppView>("practice");
   const [topics, setTopics] = useState<TopicListItem[]>([]);
   const [selectedTopic, setSelectedTopic] = useState<string>();
-  const [contentForm, setContentForm] = useState<"topic" | "phrase" | "manage">();
   const [customTopic, setCustomTopic] = useState("");
   const [reviewPhraseCount, setReviewPhraseCount] = useState(0);
   const [session, setSession] = useState<TrainingSession>();
@@ -833,21 +830,6 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
         refreshCustomContent();
       }} />;
 
-  function renderContentForm() {
-    if (!premiumActive) return null;
-    return <>
-      <button className="custom-content-manage-button" type="button" onClick={() => { interruptVoice(); setContentForm("manage"); }}>{t("Свои темы и фразы")}</button>
-      {contentForm === "manage" ? <CustomContentManager topics={topics} alphabet={alphabet} onClose={() => setContentForm(undefined)} onDeleted={topicId => {
-        interruptVoice(); resetTraining();
-        if (topicId) { setTopics(current => current.filter(topic => topic.id !== topicId)); if (selectedTopic === topicId) setSelectedTopic(undefined); }
-        refreshCustomContent();
-      }} /> : contentForm ? <CustomContentForm key={contentForm} mode={contentForm} topics={topics} selectedTopic={selectedTopic} alphabet={alphabet}
-        onClose={() => setContentForm(undefined)} onManage={() => setContentForm("manage")} onCreateTopic={() => setContentForm("topic")}
-        onTopicCreated={topic => setTopics(current => [...current.filter(item => item.id !== topic.id), topic])}
-        onPhraseSaved={refreshCustomContent} /> : null}
-    </>;
-  }
-
   function renderPhrase() {
     const localized = localizedPhrase(exercise?.source_ru ?? "");
     return <h2 id="exercise-title" className="interactive-phrase" aria-label={exercise ? localized.source : t("Готовим фразу…")}>
@@ -944,23 +926,14 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                 <small>{reviewPhraseCount}<span>{t("к повторению")}</span></small>
               </button>
               {topics.map((topic) => (
-                <button className={selectedTopic === topic.id && !customTopic ? "android-topic is-selected" : "android-topic"} key={topic.id} type="button" onClick={() => { selectTopic(topic.id); showAndroidPanel(1); }}>
+                <button className={`android-topic${selectedTopic === topic.id && !customTopic ? " is-selected" : ""}${premiumActive && topic.is_custom ? " topic--personal" : ""}`} key={topic.id} type="button" onClick={() => { selectTopic(topic.id); showAndroidPanel(1); }}>
                   <span className={`topic__icon topic__icon--${topicIcons[topic.id] ?? "message"}`}><Icon name={topicIcons[topic.id] ?? "message"} /></span>
                   <strong>{topicText(topic.id, topic.title_ru)}</strong>
                   <small>{topic.phrase_count}<span>{t(" неизученных")}</span></small>
                 </button>
               ))}
-              <button className={premiumActive ? "android-topic android-topic--add" : "android-topic android-topic--premium"} type="button" disabled={!premiumActive} onClick={() => { interruptVoice(); setContentForm("topic"); }}>
-                <span className="topic__icon"><Icon name="plus" /></span>
-                <strong>{t("+ добавить тему")}</strong>{!premiumActive && <PremiumBadge />}
-              </button>
-              <button className={premiumActive ? "android-topic android-topic--add" : "android-topic android-topic--premium"} type="button" disabled={!premiumActive} onClick={() => { interruptVoice(); setContentForm("phrase"); }}>
-                <span className="topic__icon"><Icon name="plus" /></span>
-                <strong>{t("+ добавить фразу")}</strong>{!premiumActive && <PremiumBadge />}
-              </button>
             </div>
 
-            {renderContentForm()}
             {(startupState === "fallback" || backendState === "offline") && <div className="android-error" role="alert">{t(startupState === "fallback" ? error : "Нет подключения к сервису.")} <button type="button" onClick={retryCatalog}>{t("Повторить загрузку")}</button></div>}
           </section>
 
@@ -1037,20 +1010,13 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                 <span className="review-topic__count">{reviewPhraseCount}</span>
               </button>
               {topics.map((topic) => (
-                <button className={selectedTopic === topic.id && !customTopic ? "topic desktop-topic-card is-selected" : "topic desktop-topic-card"} key={topic.id} type="button" onClick={() => selectTopic(topic.id)}>
+                <button className={`topic desktop-topic-card${selectedTopic === topic.id && !customTopic ? " is-selected" : ""}${premiumActive && topic.is_custom ? " topic--personal" : ""}`} key={topic.id} type="button" onClick={() => selectTopic(topic.id)}>
                   <span className={`topic__icon topic__icon--${topicIcons[topic.id] ?? "message"}`}><Icon name={topicIcons[topic.id] ?? "message"} /></span>
                   <span className="topic__copy"><strong>{topicText(topic.id, topic.title_ru)}</strong></span>
                   <span className="topic__unlearned"><strong>{topic.phrase_count}</strong><small>{t("неизученных")}</small></span>
                 </button>
               ))}
-              <button className={premiumActive ? "desktop-topic-card" : "desktop-topic-card desktop-topic-card--premium"} type="button" disabled={!premiumActive} onClick={() => { interruptVoice(); setContentForm("topic"); }}>
-                <span className="topic__icon"><Icon name="plus" /></span><strong>{t("+ добавить тему")}</strong>{!premiumActive && <PremiumBadge />}
-              </button>
-              <button className={premiumActive ? "desktop-topic-card" : "desktop-topic-card desktop-topic-card--premium"} type="button" disabled={!premiumActive} onClick={() => { interruptVoice(); setContentForm("phrase"); }}>
-                <span className="topic__icon"><Icon name="plus" /></span><strong>{t("+ добавить фразу")}</strong>{!premiumActive && <PremiumBadge />}
-              </button>
             </div>
-            {renderContentForm()}
             <div className="topics-panel__note"><Icon name="message" /><span>{t("Каждый короткий разговор делает речь увереннее.")}</span></div>
           </aside>
 
