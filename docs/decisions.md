@@ -779,3 +779,7 @@ Runtime `69ff666` опубликован через PR #143: сначала back
 ## 24.10.2026 — выпуск 1.39 завершён
 
 Общий PR #145 merged на `35dfddc`; web Ready/production, alias/SHA/API и 20 production mock browser scenarios подтверждены. APK 1.39/code49 собран production-командой, подпись/API/OTP/SharePlugin/assets/Downloads и GitHub tag/digest/обратная загрузка проверены. Сервер уже соответствовал опубликованному main и не перевыпускался. Основная папка сохранена в recovery `506afa7` и обновлена, завершённые worktree синхронизируются после doc-only follow-up. Физическая приёмка/Google Play отдельно. [Отчёт](android-1.39-release.md).
+
+## 24.10.2026 — отдельный раздел Premium
+
+Навигация desktop/mobile/shared Android получила раздел Premium между статистикой и настройками. Доступ к UI по access_tier=premium или admin, прежний owner-scoped API каталога сохранён. Переиспользованы формы и менеджер удаления; режим browseTopics показывает полный счётчик и только исходный текст выбранной темы. Список на домашнем экране использует общий topics state/API, включая новые личные темы после reload. Предложение free содержит 100 повторений и disabled покупку; платёжный механизм и серверные лимиты этим срезом не меняются. [Проверки/публикация](premium-tab-2026-10-24.md).

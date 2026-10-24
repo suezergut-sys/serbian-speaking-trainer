@@ -22,6 +22,7 @@ import { useMobileLayout } from "./useMobileLayout";
 import { SettingsView } from "./SettingsView";
 import { CustomContentManager } from "./CustomContentManager";
 import { CustomContentForm } from "./CustomContentForm";
+import { PremiumView } from "./PremiumView";
 import { PremiumBadge } from "./PremiumBadge";
 import { WordHintToken } from "./WordHintToken";
 import { isSourceWord, splitSourcePhrase } from "./sourceWords";
@@ -36,7 +37,7 @@ import "./styles.css";
 
 type BackendState = "checking" | "online" | "offline";
 type VoiceState = "idle" | "connecting" | "recording" | "transcribing" | "error";
-type AppView = "practice" | "statistics" | "settings" | "admin";
+type AppView = "practice" | "statistics" | "premium" | "settings" | "admin";
 type StartupState = "loading" | "ready" | "fallback";
 const transcriptionBreakMessage = "Проблемы с работой внешней моделью. Сделайте перерыв и вернитесь к обучению позже";
 
@@ -261,7 +262,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const isNative = Capacitor.isNativePlatform();
   const { compact, shell: mobileShellRef } = useMobileLayout(startupState !== "loading" && !isNative);
   const mobileLayout = isNative || compact;
-  const visiblePanel = !isNative && view !== "practice" ? view === "statistics" ? 2 : 3 : androidPanel;
+  const visiblePanel = !isNative && view !== "practice" ? view === "statistics" ? 2 : view === "premium" ? 3 : 4 : androidPanel;
 
   useEffect(() => { startUiTiming("topics"); }, []);
   useEffect(() => {
@@ -482,7 +483,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     if (panel !== 1) interruptVoice();
     setAndroidPanel(panel);
     if (!isNative) {
-      setView(panel === 2 ? "statistics" : panel === 3 ? "settings" : "practice");
+      setView(panel === 2 ? "statistics" : panel === 3 ? "premium" : panel === 4 ? "settings" : "practice");
       return;
     }
     if (!pager) return;
@@ -546,7 +547,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   function showView(next: AppView) {
     if (next !== "practice") interruptVoice();
     setView(next);
-    if (!isNative) setAndroidPanel(next === "statistics" ? 2 : next === "settings" || next === "admin" ? 3 : 1);
+    if (!isNative) setAndroidPanel(next === "statistics" ? 2 : next === "premium" ? 3 : next === "settings" || next === "admin" ? 4 : 1);
   }
 
   async function finishVoice() {
@@ -822,8 +823,18 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     });
   }
 
+  const premiumActive = account.access_tier === "premium" || account.role === "admin";
+
+  const premiumPanel = <PremiumView active={premiumActive} topics={topics} alphabet={alphabet}
+      onTopicCreated={topic => setTopics(current => [...current.filter(item => item.id !== topic.id), topic])}
+      onChanged={refreshCustomContent} onDeleted={topicId => {
+        interruptVoice(); resetTraining(); setView("premium");
+        if (topicId) { setTopics(current => current.filter(topic => topic.id !== topicId)); if (selectedTopic === topicId) setSelectedTopic(undefined); }
+        refreshCustomContent();
+      }} />;
+
   function renderContentForm() {
-    if (account.role !== "admin") return null;
+    if (!premiumActive) return null;
     return <>
       <button className="custom-content-manage-button" type="button" onClick={() => { interruptVoice(); setContentForm("manage"); }}>{t("Свои темы и фразы")}</button>
       {contentForm === "manage" ? <CustomContentManager topics={topics} alphabet={alphabet} onClose={() => setContentForm(undefined)} onDeleted={topicId => {
@@ -902,7 +913,8 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
             <button type="button" aria-label={t("Темы")} aria-current={visiblePanel === 0 ? "page" : undefined} onClick={() => showAndroidPanel(0)}><Icon name="home" /></button>
             <button type="button" aria-label={t("Тренировка")} aria-current={visiblePanel === 1 ? "page" : undefined} onClick={() => showAndroidPanel(1)}><Icon name="mic" /></button>
             <button type="button" aria-label={t("Статистика")} aria-current={visiblePanel === 2 ? "page" : undefined} onClick={() => showAndroidPanel(2)}><Icon name="chart" /></button>
-            <button type="button" aria-label={t("Настройки")} aria-current={visiblePanel === 3 ? "page" : undefined} onClick={() => showAndroidPanel(3)}><Icon name="settings" /></button>
+            <button className={premiumActive ? "premium-nav premium-nav--active" : "premium-nav"} type="button" aria-label={t("Премиум")} aria-current={visiblePanel === 3 ? "page" : undefined} onClick={() => showAndroidPanel(3)}><PremiumBadge /></button>
+            <button type="button" aria-label={t("Настройки")} aria-current={visiblePanel === 4 ? "page" : undefined} onClick={() => showAndroidPanel(4)}><Icon name="settings" /></button>
           </nav>
         </header>
 
@@ -938,13 +950,13 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                   <small>{topic.phrase_count}<span>{t(" неизученных")}</span></small>
                 </button>
               ))}
-              <button className={account.role === "admin" ? "android-topic android-topic--add" : "android-topic android-topic--premium"} type="button" disabled={account.role !== "admin"} onClick={() => { interruptVoice(); setContentForm("topic"); }}>
+              <button className={premiumActive ? "android-topic android-topic--add" : "android-topic android-topic--premium"} type="button" disabled={!premiumActive} onClick={() => { interruptVoice(); setContentForm("topic"); }}>
                 <span className="topic__icon"><Icon name="plus" /></span>
-                <strong>{t("+ добавить тему")}</strong>{account.role !== "admin" && <PremiumBadge />}
+                <strong>{t("+ добавить тему")}</strong>{!premiumActive && <PremiumBadge />}
               </button>
-              <button className={account.role === "admin" ? "android-topic android-topic--add" : "android-topic android-topic--premium"} type="button" disabled={account.role !== "admin"} onClick={() => { interruptVoice(); setContentForm("phrase"); }}>
+              <button className={premiumActive ? "android-topic android-topic--add" : "android-topic android-topic--premium"} type="button" disabled={!premiumActive} onClick={() => { interruptVoice(); setContentForm("phrase"); }}>
                 <span className="topic__icon"><Icon name="plus" /></span>
-                <strong>{t("+ добавить фразу")}</strong>{account.role !== "admin" && <PremiumBadge />}
+                <strong>{t("+ добавить фразу")}</strong>{!premiumActive && <PremiumBadge />}
               </button>
             </div>
 
@@ -976,8 +988,11 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
             {visiblePanel === 2 && <DeferredPanel load={loadStatistics} panelProps={{ alphabet, page: statisticsPage, onPageChange: setStatisticsPage }} label={t("статистику")} />}
 
           </section>
-          <section className="android-page android-settings-page" hidden={!isNative && visiblePanel !== 3} aria-label={t("Настройки приложения")}>
-            {!isNative && view === "admin" ? <><button className="mobile-admin-link" type="button" onClick={() => showAndroidPanel(3)}>{t("← Настройки")}</button><DeferredPanel load={loadAdminUsers} panelProps={{}} label={t("пользователей")} /></> : <>
+          <section className="android-page android-premium-page" hidden={!isNative && visiblePanel !== 3}>
+            {visiblePanel === 3 && premiumPanel}
+          </section>
+          <section className="android-page android-settings-page" hidden={!isNative && visiblePanel !== 4} aria-label={t("Настройки приложения")}>
+            {!isNative && view === "admin" ? <><button className="mobile-admin-link" type="button" onClick={() => showAndroidPanel(4)}>{t("← Настройки")}</button><DeferredPanel load={loadAdminUsers} panelProps={{}} label={t("пользователей")} /></> : <>
             <SettingsView alphabet={alphabet} onAlphabetChange={changeAlphabet} account={account} onSignOut={onSignOut} assistanceEnabled={assistanceEnabled} assistanceSaving={assistanceSaving} assistanceError={assistanceError} onAssistanceChange={enabled => { interruptVoice(); void changeAssistance(enabled); }} />
             {!isNative && account.role === "admin" && <button className="mobile-admin-link" type="button" onClick={() => setView("admin")}>{t("Пользователи")}</button>}
             </>}
@@ -999,6 +1014,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
         <nav className="main-nav" aria-label={t("Основная навигация")}>
           <button className={view === "practice" ? "is-active" : ""} type="button" onClick={() => showView("practice")}><Icon name="home" />{t("Практика")}</button>
           <button className={view === "statistics" ? "is-active" : ""} type="button" onClick={() => showView("statistics")}><Icon name="chart" />{t("Статистика")}</button>
+          <button className={`premium-nav${premiumActive ? " premium-nav--active" : ""}${view === "premium" ? " is-active" : ""}`} type="button" aria-label={t("Премиум")} onClick={() => showView("premium")}><PremiumBadge />{t("Премиум")}</button>
           <button className={view === "settings" ? "is-active" : ""} type="button" onClick={() => showView("settings")}><Icon name="settings" />{t("Настройки")}</button>
           {account.role === "admin" && !Capacitor.isNativePlatform() && <button className={view === "admin" ? "is-active" : ""} type="button" onClick={() => showView("admin")}><Icon name="settings" />{t("Пользователи")}</button>}
         </nav>
@@ -1010,7 +1026,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
 
 
-      {view === "admin" ? <DeferredPanel key="admin" load={loadAdminUsers} panelProps={{}} label={t("пользователей")} /> : view === "statistics" ? <DeferredPanel key="statistics" load={loadStatistics} panelProps={{ alphabet, page: statisticsPage, onPageChange: setStatisticsPage }} label={t("статистику")} /> : view === "settings" ? <SettingsView alphabet={alphabet} onAlphabetChange={changeAlphabet} account={account} onSignOut={onSignOut} assistanceEnabled={assistanceEnabled} assistanceSaving={assistanceSaving} assistanceError={assistanceError} onAssistanceChange={enabled => { interruptVoice(); void changeAssistance(enabled); }} /> : (
+      {view === "admin" ? <DeferredPanel key="admin" load={loadAdminUsers} panelProps={{}} label={t("пользователей")} /> : view === "statistics" ? <DeferredPanel key="statistics" load={loadStatistics} panelProps={{ alphabet, page: statisticsPage, onPageChange: setStatisticsPage }} label={t("статистику")} /> : view === "premium" ? premiumPanel : view === "settings" ? <SettingsView alphabet={alphabet} onAlphabetChange={changeAlphabet} account={account} onSignOut={onSignOut} assistanceEnabled={assistanceEnabled} assistanceSaving={assistanceSaving} assistanceError={assistanceError} onAssistanceChange={enabled => { interruptVoice(); void changeAssistance(enabled); }} /> : (
         <main className="workspace">
           <aside className="topics-panel panel">
             <div className="panel-heading"><h2>{t("Темы для практики")}</h2><p>{t("Выберите ситуацию и начните разговор на сербском языке")}</p></div>
@@ -1027,11 +1043,11 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                   <span className="topic__unlearned"><strong>{topic.phrase_count}</strong><small>{t("неизученных")}</small></span>
                 </button>
               ))}
-              <button className={account.role === "admin" ? "desktop-topic-card" : "desktop-topic-card desktop-topic-card--premium"} type="button" disabled={account.role !== "admin"} onClick={() => { interruptVoice(); setContentForm("topic"); }}>
-                <span className="topic__icon"><Icon name="plus" /></span><strong>{t("+ добавить тему")}</strong>{account.role !== "admin" && <PremiumBadge />}
+              <button className={premiumActive ? "desktop-topic-card" : "desktop-topic-card desktop-topic-card--premium"} type="button" disabled={!premiumActive} onClick={() => { interruptVoice(); setContentForm("topic"); }}>
+                <span className="topic__icon"><Icon name="plus" /></span><strong>{t("+ добавить тему")}</strong>{!premiumActive && <PremiumBadge />}
               </button>
-              <button className={account.role === "admin" ? "desktop-topic-card" : "desktop-topic-card desktop-topic-card--premium"} type="button" disabled={account.role !== "admin"} onClick={() => { interruptVoice(); setContentForm("phrase"); }}>
-                <span className="topic__icon"><Icon name="plus" /></span><strong>{t("+ добавить фразу")}</strong>{account.role !== "admin" && <PremiumBadge />}
+              <button className={premiumActive ? "desktop-topic-card" : "desktop-topic-card desktop-topic-card--premium"} type="button" disabled={!premiumActive} onClick={() => { interruptVoice(); setContentForm("phrase"); }}>
+                <span className="topic__icon"><Icon name="plus" /></span><strong>{t("+ добавить фразу")}</strong>{!premiumActive && <PremiumBadge />}
               </button>
             </div>
             {renderContentForm()}
