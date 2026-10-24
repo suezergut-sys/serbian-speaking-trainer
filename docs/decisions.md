@@ -775,3 +775,7 @@ Runtime `69ff666` опубликован через PR #143: сначала back
 ## 24.10.2026 — включение накопленного PR #60
 
 В общий выпуск включены не только runtime доработки, но и незавершённые правила сопровождения PR #60: проверка main/origin, сохранение уникальной работы, финальная синхронизация неактивных копий и различение runtime/doc-only SHA. Старые recovery snapshots остаются архивом, а не источником production-кода. [Доказательства](workspace-consistency-checkpoint.md).
+
+## 24.10.2026 — выпуск 1.39 завершён
+
+Общий PR #145 merged на `35dfddc`; web Ready/production, alias/SHA/API и 20 production mock browser scenarios подтверждены. APK 1.39/code49 собран production-командой, подпись/API/OTP/SharePlugin/assets/Downloads и GitHub tag/digest/обратная загрузка проверены. Сервер уже соответствовал опубликованному main и не перевыпускался. Основная папка сохранена в recovery `506afa7` и обновлена, завершённые worktree синхронизируются после doc-only follow-up. Физическая приёмка/Google Play отдельно. [Отчёт](android-1.39-release.md).
