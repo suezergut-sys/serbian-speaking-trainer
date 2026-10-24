@@ -15,7 +15,7 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
     await page.route('**/api/**', async route => {
       const request = route.request(), path = new URL(request.url()).pathname;
       let body;
-      if (path === '/api/auth/me') body = { id: 'premium-user', role: 'user', access_tier: tier, email: 'premium@example.invalid', assistance_enabled: false, daily_usage: { used: 0, limit: tier === 'free' ? 20 : null, remaining: tier === 'free' ? 20 : null } };
+      if (path === '/api/auth/me') body = { id: 'premium-user', role: 'user', access_tier: tier, email: 'premium@example.invalid', assistance_enabled: false, daily_usage: { used: 0, limit: tier === 'free' ? 20 : 100, remaining: tier === 'free' ? 20 : 100 } };
       else if (path === '/api/auth/me/preferences') body = { assistance_enabled: false };
       else if (path === '/api/topics' && request.method() === 'POST') { body = { ...topics[0], id: 'custom-test', title_ru: request.postDataJSON().title_ru, phrase_count: 0, custom_phrase_count: 0, is_custom: true }; topics.push(body); }
       else if (path === '/api/topics') body = topics;

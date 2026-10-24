@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     admin_emails: str = "suezergut@gmail.com"
     debug_admin_email: str = "suezergut@gmail.com"
     free_daily_phrase_limit: int = Field(default=20, ge=1, le=1000)
+    premium_daily_phrase_limit: int = Field(default=100, ge=1, le=1000)
     auth_timeout_seconds: float = Field(default=5, gt=0, le=30)
     auth_max_retries: int = Field(default=1, ge=0, le=3)
 

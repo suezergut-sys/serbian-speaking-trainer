@@ -38,3 +38,15 @@ it.each(["ru", "en"] as const)("separates account details, sign out and deletion
   expect(within(deletion).getByRole("link", { name: en ? "Request account and data deletion" : "Запросить удаление аккаунта и данных" })).toHaveAttribute("href", "/delete-account");
   expect(screen.queryByText(/По умолчанию выключено|Off by default/)).not.toBeInTheDocument();
 });
+
+
+it.each(["ru", "en"] as const)("shows the premium daily allowance from the API (%s)", language => {
+  setLanguage(language);
+  render(<SettingsView alphabet="latin" onAlphabetChange={() => {}} account={{
+    id: "premium-user", email: "premium@example.invalid", display_name: null, avatar_url: null,
+    role: "user", access_tier: "premium", registered_at: "2026-10-24", last_active_at: "2026-10-24",
+    daily_usage: { used: 99, limit: 100, remaining: 1, resets_at: "2026-10-25T00:00:00Z" },
+  }} />);
+  expect(screen.getByText(language === "ru" ? "1 из 100 фраз осталось" : "1 of 100 phrases remaining")).toBeInTheDocument();
+  expect(screen.queryByText(/без лимита|unlimited/)).not.toBeInTheDocument();
+});

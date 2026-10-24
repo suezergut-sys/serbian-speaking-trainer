@@ -195,7 +195,7 @@ describe("App", () => {
       else if (url === "/api/admin/users") body = [{
         id: "user-1", email: "learner@example.com", display_name: "Ученик", role: "admin",
         access_tier: "free", registered_at: "2026-09-01T10:00:00Z",
-        last_active_at: "2026-09-22T10:00:00Z", phrases_today: 12,
+        last_active_at: "2026-09-22T10:00:00Z", phrases_today: 12, daily_limit: null,
       }];
       else if (url === "/api/review-phrases/prepare" && init?.method === "POST") body = {
         preparation_id: "12345678-1234-1234-1234-123456789012",
