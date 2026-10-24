@@ -36,7 +36,7 @@ Git worktree разделяет историю и refs, но у каждой к�
 - [x] После первой синхронизации: 7/7 HEAD совпадают с origin/main, 7/7 Git status пуст.
 - [x] `pnpm --dir frontend install --frozen-lockfile` и `scripts/check.ps1`: 165 backend/scripts passed, 8 skipped; Node guards 5/5; frontend 116/116; lint, TypeScript и production web build прошли. AI mocked, API budget не использовался. Имеются deprecation warnings зависимостей и предупреждение Vite о chunk >500 kB; проверка завершилась с кодом 0. Android metadata 1.20/code30 подтверждены.
 - [x] Правила закоммичены и отправлены: [PR #60](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/60), GitHub MERGEABLE/CLEAN; настроенных CI checks нет.
-- [ ] Merge PR #60 после разрешения владельца и повторная финальная проверка 7/7 на его merged SHA.
+- [x] 24.10.2026: содержимое перенесено в общий PR #145 по команде владельца, PR #60 закрыт как superseded; исходное число 7 относится к исторической проверке.
 
 Этот change касается сопровождения и документации, не меняет runtime и не требует нового web deploy или APK. Состояние выпуска 1.20 и его ручной приёмки остаётся в [доказательствах релиза](android-1.20-release.md).
 
@@ -45,4 +45,4 @@ Git worktree разделяет историю и refs, но у каждой к�
 Исторический PR #60 перенесён в общий PR #145 с сохранением актуальных AGENTS и версии 1.39/code49. Проверены 12 рабочих копий: 11 чистые, основная содержит уже опубликованные изменения и подготовленный email/ShareApp набор. Других активных локальных чатов проекта не обнаружено.
 
 - [x] Новые пользовательские изменения основной папки включены в релиз после сравнения с origin/main; архивные recovery-ветки не сливаются.
-- [ ] После релиза сохранить recovery snapshot основной папки и обновить 12 копий до финального origin/main.
+- [x] Recovery snapshot `506afa7` сохранён/pushed; основная папка обновлена main, 11 остальных копий проверены/синхронизированы. После doc-only merge выполняется повторная финальная проверка 12/12; [доказательства](android-1.39-release.md).

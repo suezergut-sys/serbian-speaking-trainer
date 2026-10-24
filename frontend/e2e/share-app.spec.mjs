@@ -4,10 +4,10 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
   test(`share settings ${language} ${layout}`, async ({ page }) => {
     const en = language === 'en';
     await page.setViewportSize({ width: layout === 'desktop' ? 1366 : 320, height: 852 });
-    await page.addInitScript(({ language, native }) => {
+    await page.addInitScript(({ language, native, storageKey }) => {
       if (native) window.CapacitorCustomPlatform = { name: 'android' };
       localStorage.setItem('serbotalk.interface-language', language);
-      localStorage.setItem('sb-e2e-auth-auth-token', JSON.stringify({ access_token: 'e2e-local-only', refresh_token: 'e2e-local-only', token_type: 'bearer', expires_at: 4102444800,
+      localStorage.setItem(storageKey, JSON.stringify({ access_token: 'e2e-local-only', refresh_token: 'e2e-local-only', token_type: 'bearer', expires_at: 4102444800,
         user: { id: 'share-test', aud: 'authenticated', role: 'authenticated', email: 'learner@example.invalid', app_metadata: {}, user_metadata: {}, created_at: '2026-10-01T00:00:00Z' } }));
       window.shareTest = { mode: 'pending', calls: [], copied: [] };
       Object.defineProperty(navigator, 'share', { configurable: true, value: data => {
@@ -20,7 +20,7 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
         if (window.shareTest.mode === 'copy-error') throw new Error('Denied');
         window.shareTest.copied.push(text);
       } } });
-    }, { language, native: layout === 'android' });
+    }, { language, native: layout === 'android', storageKey: process.env.LAYOUT_AUTH_STORAGE_KEY ?? 'sb-e2e-auth-auth-token' });
     await page.route('**/api/**', async route => {
       const path = new URL(route.request().url()).pathname;
       let body;
@@ -31,7 +31,7 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
       else throw new Error(`Unexpected API ${path}`);
       await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) });
     });
-    await page.goto('/');
+    await page.goto(process.env.TRAINER_PAGE_PATH ?? '/');
     await page.getByRole('button', { name: en ? 'Settings' : 'Настройки', exact: true }).click();
     const panel = page.getByRole('region', { name: en ? 'Share app' : 'Поделиться приложением', exact: true });
     await panel.scrollIntoViewIfNeeded();
