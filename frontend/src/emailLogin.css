@@ -1,0 +1,12 @@
+.email-login { margin-top: 1rem; color: var(--muted); text-align: left; font-size: .875rem; }
+.email-login summary { color: var(--blue-bright); cursor: pointer; text-align: center; padding: .5rem; }
+.email-login form, .email-login label { display: grid; gap: .6rem; min-width: 0; }
+.email-login form { margin-top: .75rem; }
+.email-login p { margin: .3rem 0; color: var(--muted); line-height: 1.5; overflow-wrap: anywhere; }
+.email-login input, .email-login button { width: 100%; min-width: 0; padding: .75rem; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--text); font: inherit; color-scheme: dark; }
+.email-login button { border-color: var(--blue); cursor: pointer; }
+.email-login button:hover:not(:disabled) { background: var(--blue); color: #020914; }
+.email-login input:disabled, .email-login button:disabled { background: var(--panel); color: var(--muted); border-color: var(--line); opacity: .75; cursor: default; }
+.email-login input:focus-visible, .email-login button:focus-visible, .email-login summary:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; }
+.email-login input:user-invalid { border-color: #ff9eaa; }
+.auth-card .email-login [role="alert"], .email-login [role="alert"] { color: #ff9eaa; }

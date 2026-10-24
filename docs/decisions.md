@@ -758,3 +758,7 @@ Prompts v3 хранятся отдельно для latin/cyrillic; требую
 ## 23.10.2026 — production-публикация личного каталога
 
 Runtime `69ff666` опубликован через PR #143: сначала backend с миграцией a910bc57d302, затем web. Оба Vercel deployments Ready/production/main, aliases подтверждены; release выполнен из чистого git archive, без несвязанных ShareApp/Android правок. [Доказательства](custom-content-limits-2026-10-23.md).
+
+## 24.10.2026 — email OTP через существующий Supabase Auth
+
+Дополнительный вход использует signInWithOtp/verifyOtp и прежнюю Supabase-сессию; backend продолжает удалённо подтверждать email JWT, без изменения ролей и схемы данных. SMTP Resend ограничен поддоменом auth.serbotalk.app, отдельным sending-only ключом и bilingual `{{ .Token }}` шаблонами для signup/magic link. Confirm email сохранён. UI включается явно через VITE_EMAIL_OTP_ENABLED; текущая длина кода в Supabase — 8 цифр, поле допускает 6–10 и передаёт окончательную проверку сервису. Модель/аудио не участвуют. [Доставка, тесты и статусы публикации](email-otp-2026-10-24.md).

@@ -13,6 +13,7 @@ import { initializeAuth, isAuthConfigured, onAuthStateChange, signInWithGoogle, 
 import type { CurrentUser } from "./types/auth";
 import { LegalPage } from "./LegalPage";
 import { ReviewLogin } from "./ReviewLogin";
+import { EmailLogin } from "./EmailLogin";
 import { assistedText } from "./transcriptionAssistance";
 import { transcriptionErrorMessage } from "./transcriptionError";
 import { TranscriptionAssistanceView, type AssistanceDraft } from "./TranscriptionAssistanceView";
@@ -194,7 +195,7 @@ function AuthenticatedApp() {
     <p>{t("Авторизация и загрузка...")}</p>
   </div></main>;
   if (!isAuthConfigured()) return <main className="auth-page"><div className="auth-card panel"><LoginLanguageButton /><h1>{t("Нужна настройка входа")}</h1><p>{t("Добавьте VITE_SUPABASE_URL и VITE_SUPABASE_PUBLISHABLE_KEY в окружение frontend.")}</p></div></main>;
-  if (!hasSession || !account) return <main className="auth-page"><div className="auth-card panel"><LoginLanguageButton /><LoginCopy as="h1" text="Добро пожаловать в SerboTalk" /><LoginCopy as="p" text="Войдите или зарегистрируйтесь с Google, чтобы сохранять свой прогресс на всех устройствах." /><button className="google-sign-in" type="button" onClick={() => void login()}>{t("Войти через Google")}</button><ReviewLogin />{authError && <p className="error" role="alert">{t(authError)}</p>}<nav className="auth-legal" aria-label={t("Правовая информация")}><LoginCopy as="a" href="/privacy" text="Конфиденциальность" /><LoginCopy as="a" href="/terms" text="Условия" /><LoginCopy as="a" href="/delete-account" text="Удаление аккаунта" /></nav></div></main>;
+  if (!hasSession || !account) return <main className="auth-page"><div className="auth-card panel"><LoginLanguageButton /><LoginCopy as="h1" text="Добро пожаловать в SerboTalk" /><LoginCopy as="p" text="Войдите или зарегистрируйтесь, чтобы сохранять свой прогресс на всех устройствах." /><button className="google-sign-in" type="button" onClick={() => void login()}>{t("Войти через Google")}</button><EmailLogin /><ReviewLogin />{authError && <p className="error" role="alert">{t(authError)}</p>}<nav className="auth-legal" aria-label={t("Правовая информация")}><LoginCopy as="a" href="/privacy" text="Конфиденциальность" /><LoginCopy as="a" href="/terms" text="Условия" /><LoginCopy as="a" href="/delete-account" text="Удаление аккаунта" /></nav></div></main>;
   return <TrainerApp key={account.id} account={account} onAccountChange={setAccount} onSignOut={() => void signOut()} />;
 }
 
