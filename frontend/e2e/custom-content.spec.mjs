@@ -36,19 +36,21 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
     });
     await page.goto(process.env.TRAINER_PAGE_PATH ?? '/');
     if (layout === 'mobile') await page.getByRole('button', { name: language === 'ru' ? 'Темы' : 'Topics', exact: true }).click();
-    const addTopic = page.getByRole('button', { name: language === 'ru' ? '+ добавить тему' : '+ add topic', exact: true });
+    await expect(page.getByRole('button', { name: /добавить тему|add topic/ })).toHaveCount(0);
+    await page.getByRole('button', { name: language === 'ru' ? 'Премиум' : 'Premium', exact: true }).click();
+    const addTopic = page.getByRole('button', { name: language === 'ru' ? 'Создать тему' : 'Create topic', exact: true });
     await expect(addTopic).toBeEnabled();
     await addTopic.click();
     await page.getByLabel(language === 'ru' ? 'Название темы' : 'Topic name').fill('Моя тема');
     await page.getByRole('button', { name: language === 'ru' ? 'Сохранить тему' : 'Save topic', exact: true }).click();
     await expect(page.getByText(language === 'ru' ? 'Тема сохранена.' : 'Topic saved.', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: language === 'ru' ? 'Закрыть' : 'Close', exact: true }).click();
-    await page.getByRole('button', { name: language === 'ru' ? '+ добавить фразу' : '+ add phrase', exact: true }).click();
+    await page.getByRole('button', { name: language === 'ru' ? 'Создать фразу' : 'Create phrase', exact: true }).click();
     await page.getByLabel(language === 'ru' ? 'Фраза на русском языке' : 'Phrase in Russian').fill(prepared.source_ru);
     await page.getByRole('button', { name: language === 'ru' ? 'Подготовить перевод' : 'Prepare translation', exact: true }).click();
     await expect(page.getByText(prepared.canonical_sr, { exact: true })).toBeVisible();
     await page.getByRole('combobox').selectOption('custom-test');
-    const form = page.locator('.custom-content-form');
+    const form = page.getByRole('form', { name: language === 'ru' ? 'Добавить фразу' : 'Add phrase' });
     for (const control of await form.locator('input, select, button').all()) {
       await expect(control).toHaveCSS('color', 'rgb(234, 242, 255)');
       expect(await control.evaluate(element => getComputedStyle(element).backgroundColor)).not.toBe('rgb(255, 255, 255)');
@@ -59,8 +61,9 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
     await page.getByRole('button', { name: language === 'ru' ? 'Сохранить фразу' : 'Save phrase', exact: true }).click();
     await expect(page.getByText(language === 'ru' ? 'Фраза сохранена.' : 'Phrase saved.', { exact: true })).toBeVisible();
     expect(saved).toBe(true);
-    await expect(page.getByRole('button', { name: /Моя тема/ })).toContainText('1');
-    await page.getByRole('button', { name: language === 'ru' ? 'Удалить свои фразы или темы' : 'Delete your phrases or topics', exact: true }).click();
+    await page.getByRole('button', { name: language === 'ru' ? 'Закрыть' : 'Close', exact: true }).click();
+    await expect(page.locator('.premium-page').getByRole('button', { name: /Моя тема/ })).toContainText('1');
+    await page.locator('.premium-page').getByRole('button', { name: /Моя тема/ }).click();
     await expect(page.locator('.custom-content-manager').getByText(prepared.source_ru, { exact: true })).toBeVisible();
     await page.getByRole('button', { name: language === 'ru' ? 'Удалить фразу' : 'Delete phrase', exact: true }).click();
     await page.getByRole('button', { name: language === 'ru' ? 'Отмена' : 'Cancel', exact: true }).click();
@@ -75,6 +78,6 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
     await page.screenshot({ path: `../artifacts/custom-content/${language}-${layout}-delete.png` });
     await page.getByRole('button', { name: language === 'ru' ? 'Подтвердить удаление' : 'Confirm deletion', exact: true }).click();
     await expect(page.getByText(language === 'ru' ? 'Тема и все её фразы удалены.' : 'The topic and all its phrases have been deleted.', { exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Моя тема/ })).toHaveCount(0);
+    await expect(page.locator('.premium-page').getByRole('button', { name: /Моя тема/ })).toHaveCount(0);
   });
 }

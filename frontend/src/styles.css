@@ -1003,3 +1003,6 @@ button { cursor: pointer; background: var(--panel); }
   .android-header nav button, .mobile-web-shell .android-header nav button { width: 38px; }
   .premium-page .custom-content-item { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Owner-only custom topics keep a thin gold border in every home-card state. */
+.android-topic.topic--personal, .desktop-topic-card.topic--personal { border: 1px solid var(--gold); }

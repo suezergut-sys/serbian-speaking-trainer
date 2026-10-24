@@ -347,44 +347,45 @@ describe("App", () => {
     render(<App />);
     if (layout === "mobile") fireEvent.click(await screen.findByRole("button", { name: "Темы" }));
     await screen.findByRole("button", { name: /В банке/ });
-    const addTopic = screen.getByRole("button", { name: /добавить тему/ });
-    expect(addTopic).toBeEnabled();
-    expect(addTopic.querySelector('[aria-label="Премиум"]')).not.toBeInTheDocument();
-    fireEvent.click(addTopic);
+    expect(screen.queryByRole("button", { name: /добавить тему|добавить фразу/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Премиум" }));
+    fireEvent.click(screen.getByRole("button", { name: "Создать тему" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Название темы" }), { target: { value: "Поговорить с арендодателем" } });
     fireEvent.click(screen.getByText("Сохранить тему"));
     await screen.findByText("Тема сохранена.");
-    expect(screen.getByRole("button", { name: /Поговорить с арендодателем/ })).toBeInTheDocument();
     fireEvent.click(screen.getByText("Закрыть"));
-    fireEvent.click(screen.getByRole("button", { name: /Поговорить с арендодателем/ }));
-    if (layout === "mobile") fireEvent.click(screen.getByRole("button", { name: "Темы" }));
-    fireEvent.click(screen.getByRole("button", { name: /добавить фразу/ }));
+    fireEvent.click(screen.getByRole("button", { name: layout === "desktop" ? "Практика" : "Темы" }));
+    expect(screen.getByRole("button", { name: /Поговорить с арендодателем/ })).toHaveClass("topic--personal");
+    fireEvent.click(screen.getByRole("button", { name: "Премиум" }));
+    fireEvent.click(screen.getByRole("button", { name: "Создать фразу" }));
     expect(screen.getAllByLabelText("Фраза на русском языке")).toHaveLength(1);
   });
 
-  it.each([false, true])("places disabled premium topic and phrase cards inside the mobile topic grid (native=%s)", async (native) => {
+  it.each(["free", "premium"])("marks only personal home topics for %s users", async tier => {
+    const base = mockApi();
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const response = await base(input, init);
+      if (input.toString() === "/api/auth/me") return { ok: true, json: async () => ({ ...await response.json(), access_tier: tier }) };
+      if (input.toString() === "/api/topics") return { ok: true, json: async () => [...await response.json(), { id: "personal-topic", title_ru: "Моя тема", description_ru: "", is_custom: true, phrase_count: 1, custom_phrase_count: 1, likely_intents: [], suggested_vocabulary: [] }] };
+      return response;
+    }));
+    render(<App />);
+    const personal = await screen.findByRole("button", { name: /Моя тема/ });
+    expect(personal.classList.contains("topic--personal")).toBe(tier === "premium");
+    expect(screen.getByRole("button", { name: /В банке/ })).not.toHaveClass("topic--personal");
+    expect(screen.queryByRole("button", { name: /добавить тему|добавить фразу/ })).not.toBeInTheDocument();
+  });
+
+  it.each([false, true])("keeps creation controls off the mobile home screen (native=%s)", async native => {
     vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(native);
     if (!native) vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
-    const fetchMock = mockApi();
-    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("fetch", mockApi());
     const { container } = render(<App />);
     await screen.findByRole("heading", { name: "Я хочу открыть счёт." });
     if (!native) fireEvent.click(screen.getByRole("button", { name: "Темы" }));
-    const addTopic = screen.getByRole("button", { name: /добавить тему/ });
-    const addPhrase = screen.getByRole("button", { name: /добавить фразу/ });
-    expect(addTopic).toBeDisabled();
-    expect(addPhrase).toBeDisabled();
-    expect(addTopic.querySelector('[aria-label="Премиум"]')).toBeInTheDocument();
-    expect(addPhrase.querySelector('[aria-label="Премиум"]')).toBeInTheDocument();
-    expect(addTopic.parentElement).toBe(addPhrase.parentElement);
-    expect(addTopic.parentElement).toHaveClass("android-topic-list");
-    expect(container.querySelector(".android-topics-page details")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("Своя тема")).not.toBeInTheDocument();
-    fireEvent.click(addTopic);
-    expect(fetchMock.mock.calls.some(([url, init]) => url.toString().endsWith("/api/topics") && init?.method === "POST")).toBe(false);
-    fireEvent.click(addPhrase);
-    expect(screen.queryByLabelText("Новая фраза для повторения")).not.toBeInTheDocument();
-    expect(fetchMock.mock.calls.some(([url, init]) => url.toString().includes("/api/review-phrases") && init?.method === "POST")).toBe(false);
+    expect(container.querySelectorAll(".android-topic-list > button")).toHaveLength(2);
+    expect(screen.queryByRole("button", { name: /добавить тему|добавить фразу|Свои темы и фразы/ })).not.toBeInTheDocument();
+    expect(container.querySelector(".custom-content-form")).toBeNull();
   });
 
   it.each([false, true])("uses the remotely synced %s preference for native STT after resume", async (initial) => {
@@ -539,7 +540,7 @@ describe("App", () => {
 
     expect(await screen.findByRole("heading", { name: "Темы для практики" })).toBeInTheDocument();
     expect(screen.getByText("Пока нет фраз для тренировки. Добавьте фразу или создайте тему.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /добавить тему/ })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /добавить тему/ })).not.toBeInTheDocument();
     expect(fetchMock.mock.calls.some(([url]) => url.toString() === "/api/sessions/start")).toBe(false);
   });
 
@@ -1400,20 +1401,15 @@ describe("App", () => {
     const { container } = render(<App />);
     await screen.findByRole("button", { name: /В банке/ });
     const grid = container.querySelector(".desktop-topic-grid")!;
-    expect(grid.querySelectorAll(".desktop-topic-card").length).toBeGreaterThanOrEqual(4);
-    for (const name of [/добавить тему/, /добавить фразу/]) {
-      const button = screen.getByRole("button", { name });
-      expect(button).toBeDisabled();
-      expect(button.querySelector('[role="img"]')).toHaveAccessibleName("Премиум");
-      fireEvent.click(button);
-    }
+    expect(grid.querySelectorAll(".desktop-topic-card")).toHaveLength(2);
+    expect(screen.queryByRole("button", { name: /добавить тему|добавить фразу|Свои темы и фразы/ })).not.toBeInTheDocument();
     expect(container.querySelector(".topic-action")).toBeNull();
     expect(fetchMock.mock.calls.some(([url, init]) => init?.method === "POST" && ["/api/topics", "/api/review-phrases", "/api/review-phrases/prepare"].includes(url.toString()))).toBe(false);
     fireEvent.click(screen.getByRole("button", { name: "Настройки" }));
     fireEvent.click(screen.getByRole("radio", { name: "English" }));
     fireEvent.click(screen.getByRole("button", { name: "Practice" }));
-    expect(screen.getByRole("button", { name: /add topic/ })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /add phrase/ })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /add topic/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /add phrase/ })).not.toBeInTheDocument();
   });
 
   it.each([false, true])("keeps only explanation and corrections inside analysis (native=%s)", async (native) => {

@@ -27,14 +27,7 @@ for (const [native, width] of [[false, 320], [false, 390], [true, 393]]) {
     await page.evaluate(() => localStorage.setItem('sb-e2e-auth-auth-token', JSON.stringify({ access_token: 'e2e-local-only', refresh_token: 'e2e-local-only', token_type: 'bearer', expires_in: 31536000, expires_at: 4102444800, user: { id: 'cards-user', aud: 'authenticated', role: 'authenticated', email: 'learner@example.invalid', app_metadata: {}, user_metadata: {}, created_at: '2026-10-01T00:00:00Z' } })));
     await page.goto('/');
     await page.getByRole('button', { name: 'Темы', exact: true }).click();
-    const topic = page.getByRole('button', { name: /добавить тему/ });
-    const phrase = page.getByRole('button', { name: /добавить фразу/ });
-    await expect(topic).toBeDisabled();
-    await expect(phrase).toBeDisabled();
-    await expect(topic.locator('strong')).toHaveCSS('white-space', 'normal');
-    await expect(phrase.locator('strong')).toHaveCSS('white-space', 'normal');
-    await expect(topic.getByRole('img', { name: 'Премиум' })).toHaveCSS('color', 'rgb(242, 189, 90)');
-    await expect(phrase.getByRole('img', { name: 'Премиум' })).toHaveCSS('color', 'rgb(242, 189, 90)');
+    await expect(page.getByRole('button', { name: /добавить тему|добавить фразу/ })).toHaveCount(0);
     const boxes = await page.locator('.android-topic-list > button').evaluateAll(elements => elements.map(element => {
       const box = element.getBoundingClientRect(); return { left: box.left, top: box.top, width: box.width, height: box.height };
     }));
