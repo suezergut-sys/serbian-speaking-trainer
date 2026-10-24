@@ -23,10 +23,10 @@ describe("Android microphone permissions", () => {
 });
 
 describe("Android release metadata", () => {
-  it("keeps the 1.38 product version and required APK filename aligned", () => {
-    expect(packageJson.version).toBe("1.38.0");
-    expect(androidBuild).toContain("versionCode 48");
-    expect(androidBuild).toContain('versionName "1.38"');
-    expect(androidBuild).toContain('outputFileName = "SerboTalk-andorid16-1.38.apk"');
+  it("keeps the 1.39 product version and required APK filename aligned", () => {
+    expect(packageJson.version).toBe("1.39.0");
+    expect(androidBuild).toContain("versionCode 49");
+    expect(androidBuild).toContain('versionName "1.39"');
+    expect(androidBuild).toContain('outputFileName = "SerboTalk-andorid16-1.39.apk"');
   });
 });

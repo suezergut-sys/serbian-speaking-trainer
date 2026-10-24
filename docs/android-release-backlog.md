@@ -1,5 +1,26 @@
 # Android-релизы и проверки
 
+## 24.10.2026 — согласован перенос всего набора в 1.39/code49
+
+- [x] Владелец согласовал выпуск всех накопленных изменений и отдельно номер 1.39/code49. Email/ShareApp/личный каталог/регрессии RU/EN и Android-layout проверены. [Доказательства](android-1.39-release.md).
+- [x] Production sync/build 1.39/code49, packaged API/assets/OTP/SharePlugin/signature и Downloads проверены.
+- [ ] Публикация APK в GitHub.
+- [ ] Физическая проверка входа, share и речи.
+
+
+## 24.10.2026 — вход по коду на email (следующий релиз)
+
+- [x] Общий RU/EN компонент и Android-layout browser проверки подготовлены; Resend/Supabase SMTP работают. [Доказательства](email-otp-2026-10-24.md).
+- [x] По команде владельца выполнены production Android build/sync 1.39/code49 с `VITE_EMAIL_OTP_ENABLED=true`; packaged API/OTP/assets/signature проверены.
+- [ ] Проверка настоящего кода, Google-входа и восстановления сессии на физическом телефоне.
+
+
+## 22.10.2026 — поделиться приложением (следующий релиз)
+
+- [x] Общие настройки RU/EN: публичная ссылка serbotalk.app, системное меню через Capacitor Share, копирование и ручной fallback. Component и browser Android-layout проверки; [доказательства](share-app-checkpoint-2026-10-22.md).
+- [x] По команде владельца production build/sync 1.39/code49 зарегистрировал SharePlugin и включил общий UI; metadata/API/assets/signature проверены.
+- [ ] Физически проверить меню Android, выбор получателя/отмену, clipboard и читаемость RU/EN. Публикация Google Play/изменение описаний отдельно.
+
 ## 21.10.2026 — квадратные награды
 
 - [x] Общий UI: квадратные внешние рамки всех наград, ещё +15% размера, ограничение доступной шириной/высотой, центр и RU/EN.
@@ -584,6 +605,7 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 - [x] Полный клиентский бэклог после 1.36 перенесён в production cloud APK 1.37/code47; gpt-4o-transcribe назначена общей env-моделью backend. [Выпуск](android-1.37-release.md).
 - [x] Web 1.37 READY и GitHub v1.37 опубликованы; tag/digest/size/обратная загрузка и production smoke проверены. [Выпуск](android-1.37-release.md).
 - [ ] Физическая приёмка 1.37.
+
 
 ## 23.10.2026 — личные темы и фразы администратора
 

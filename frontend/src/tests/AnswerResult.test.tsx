@@ -2,6 +2,8 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { AnswerResult } from "../AnswerResult";
 import type { Attempt } from "../types/training";
+import { setLanguage } from "../i18n";
+import { displaySerbian, type SerbianAlphabet } from "../serbianScript";
 
 const attempt: Attempt = {
   id: "attempt-1", exercise_id: "exercise-1", transcript_sr: "Račun želim otovrim.",
@@ -17,7 +19,36 @@ const attempt: Attempt = {
 };
 
 describe("AnswerResult", () => {
-  afterEach(cleanup);
+  afterEach(() => { cleanup(); setLanguage("ru"); });
+  for (const language of ["ru", "en"] as const) {
+    for (const alphabet of ["latin", "cyrillic"] as const satisfies readonly SerbianAlphabet[]) {
+      it(`preserves unreported Da and marks the reported word order (${language}, ${alphabet})`, () => {
+        setLanguage(language);
+        const answer = "Sednemo Napolju. Da, naravno. Baš lepo je vreme.";
+        const issues = [
+          { ...attempt.analysis.issues[0], evidence: "Sednemo", correction: "Da sednemo" },
+          { ...attempt.analysis.issues[0], evidence: "Baš lepo je", correction: "baš je lepo" },
+        ];
+        render(<AnswerResult answer={answer} alphabet={alphabet} attempt={{ ...attempt, analysis: {
+          ...attempt.analysis, corrected_sr: "Da sednemo napolju? — Može, naravno, baš je lepo vreme.", issues,
+        } }} />);
+        expect(Array.from(document.querySelectorAll("mark"), mark => mark.textContent))
+          .toEqual([displaySerbian("lepo", alphabet), displaySerbian("je", alphabet)]);
+        expect(document.querySelector(".result-phrase__text")).toHaveTextContent(displaySerbian(answer, alphabet));
+      });
+
+      it(`marks Da when analysis explicitly reports Da → Može (${language}, ${alphabet})`, () => {
+        setLanguage(language);
+        const issues = [{ ...attempt.analysis.issues[0], evidence: "Da", correction: "Može" }];
+        render(<AnswerResult answer="Sednemo Napolju. Da, naravno. Baš lepo je vreme." alphabet={alphabet}
+          attempt={{ ...attempt, analysis: { ...attempt.analysis, issues } }} />);
+        const marks = document.querySelectorAll("mark");
+        expect(marks).toHaveLength(1);
+        expect(marks[0]).toHaveTextContent(displaySerbian("Da", alphabet));
+        expect(marks[0]).toHaveAttribute("title", displaySerbian("Može", alphabet));
+      });
+    }
+  }
   it("marks only evidence explicitly reported in validated analysis", () => {
     render(<AnswerResult answer={attempt.transcript_sr} attempt={attempt} />);
     expect(screen.queryByText("Фраза на русском")).not.toBeInTheDocument();

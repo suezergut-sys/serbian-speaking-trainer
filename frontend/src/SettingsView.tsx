@@ -5,6 +5,7 @@ import { ModelDebugSettings } from "./ModelDebugSettings";
 import { TranscriptionModelSettings } from "./TranscriptionModelSettings";
 import { version } from "../package.json";
 import { FeedbackSettings } from "./FeedbackSettings";
+import { ShareAppSettings } from "./ShareAppSettings";
 import { setRewardPreference, useRewardPreference } from "./rewardPreferences";
 
 export function SettingsView({ alphabet, onAlphabetChange, account, onSignOut, assistanceEnabled = false, assistanceSaving = false, assistanceError, onAssistanceChange }: {
@@ -45,6 +46,7 @@ export function SettingsView({ alphabet, onAlphabetChange, account, onSignOut, a
       <label><input type="checkbox" role="switch" checked={sounds} onChange={event => setRewardPreference("sounds", event.target.checked)} />{t("Звуки успеха")}</label>
       <label><input type="checkbox" role="switch" checked={animations} onChange={event => setRewardPreference("animations", event.target.checked)} />{t("Анимации успеха")}</label>
     </fieldset>
+    <ShareAppSettings />
     <FeedbackSettings />
     {account?.role === "admin" && account.can_debug_models && <><TranscriptionModelSettings key={`transcription-${account.id}`} /><ModelDebugSettings key={account.id} /></>}
     {account && <><section className="settings-profile panel" aria-labelledby="settings-account-title">

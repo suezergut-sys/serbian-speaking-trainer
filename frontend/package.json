@@ -1,7 +1,7 @@
 {
   "name": "serbian-speaking-trainer-frontend",
   "private": true,
-  "version": "1.38.0",
+  "version": "1.39.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -21,6 +21,7 @@
     "@capacitor/app": "^8.1.1",
     "@capacitor/browser": "^8.0.4",
     "@capacitor/core": "^8.5.2",
+    "@capacitor/share": "8.0.3",
     "@supabase/supabase-js": "^2.116.0",
     "react": "latest",
     "react-dom": "latest"
