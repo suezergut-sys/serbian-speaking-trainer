@@ -13,7 +13,14 @@
 - [x] 12/12 Playwright mock scenarios RU/EN × desktop/mobile 320/shared Android 393 × free/premium. Создание темы → домашний экран → reload → создание/сохранение фразы → список без перевода → удаление/счётчик → настройки; цвета короны и геометрия.
 - [x] Component tests: предложение без запроса каталога, выбор между двумя темами, отсутствие переводов, подтверждение и обновление счётчика, retry загрузки. Синтетические данные, AI не вызывается.
 - [x] Финальный scripts/check.ps1: 377 backend/scripts passed, 8 skipped; 5 Node guards; 304 frontend tests; lint, TypeScript и production build прошли.
-- [ ] PR/merge и web Ready/alias/SHA, production browser checks.
+- [x] [PR #147](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/147) merged; runtime 50c8e2ac7483b1210cecfa7d57e22e2c2ef3308a. Web Ready/production/main: dpl_8SRLJ18BWjKAzBd8oYiN89npdnAq, [deployment](https://serbian-speaking-trainer-gk8q6swvr-suezerguts-projects.vercel.app), alias serbotalk.app и SHA подтверждены Vercel API. Git integration отсутствует, использован принятый CLI workflow из чистого git archive.
+- [x] Production HTTP /, /app, /privacy, /terms, /api/health: 200; anonymous topics/custom-phrases: 401. Все 12/12 production browser mock scenarios на настоящем bundle прошли; данные/auth синтетические, AI и личный каталог production не затронуты.
+- [x] В существующей авторизованной Chrome-сессии владельца: вкладка Premium, золотая корона, тема СПОРТ с одной фразой, исходник без перевода и кнопка удаления видимы. На домашнем экране тема также присутствует; её счётчик неизученных отдельно равен 0. Реальные фразы не создавались/удалялись. Проверено 24.10.2026, 20:55 МСК.
 - [ ] Физическая приёмка на устройстве — после отдельной команды на будущий Android-релиз.
 
-Android sync/build/APK и версии не менялись: 1.39/code49. Доказательства вне Git: artifacts/premium-tab-quality.log, premium-tab-browser.log, premium-tab/*.png. Статусы production дополняются после выпуска.
+Android sync/build/APK и версии не менялись: 1.39/code49. Доказательства вне Git: artifacts/premium-tab-quality.log, premium-tab-browser.log, premium-tab/*.png. Production опубликован. Дополнительные evidence: premium-tab-deployment-api.json, premium-tab-production-http.json, premium-tab-production-browser.log, premium-tab/production-owner.png.
+
+## Рабочие копии
+
+- [x] Основная папка main обновлена fast-forward; 11 завершённых detached worktree проверены чистыми и синхронизированы с опубликованными исходниками. Ветки сохранены, новых recovery-веток не потребовалось; прежняя codex/recovery-before-139-20261024 остаётся архивом.
+- [x] Доказательства выпуска идут отдельным doc-only follow-up: runtime deployment остаётся на 50c8e2a, APK 1.39/code49 не меняется. После merge документации выполняется повторная проверка 12 HEAD и git status; локальный итог — artifacts/premium-tab-worktrees-final.json.

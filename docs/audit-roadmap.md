@@ -894,5 +894,5 @@
 - [x] Реализация RU/EN: вкладка и crown, free-offer/disabled BUY, premium/admin creation и topic-filtered исходники/удаление, домашние личные темы/reload. [Доказательства](premium-tab-2026-10-24.md).
 - [x] 12 browser mock scenarios desktop/mobile/shared Android, component regressions без AI.
 - [x] Финальный quality gate: 377 backend/scripts, 5 Node guards, 304 frontend tests, lint/typecheck/build.
-- [ ] Web-публикация: статусы в документе доказательств.
+- [x] Web опубликован через PR #147, runtime 50c8e2a, Vercel Ready/alias/SHA подтверждены; HTTP и 12 production browser mock scenarios прошли, авторизованный каталог владельца проверен. [Доказательства](premium-tab-2026-10-24.md).
 - [ ] Android production build/sync и физическая приёмка — отдельная команда.
