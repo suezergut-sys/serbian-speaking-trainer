@@ -194,13 +194,17 @@ class UserService:
             self.db.execute(update(model).where(column == LEGACY_USER_ID).values({column.key: user_id}))
         self.db.execute(delete(User).where(User.id == LEGACY_USER_ID))
 
+    def daily_limit(self, user: User) -> int | None:
+        if user.role == "admin":
+            return None
+        return self.settings.premium_daily_phrase_limit if user.access_tier == "premium" else self.settings.free_daily_phrase_limit
+
     def usage(self, user: User, now: datetime | None = None) -> DailyUsageResponse:
         current = now or datetime.now(timezone.utc)
         start = datetime.combine(current.date(), time.min, tzinfo=timezone.utc)
         end = start + timedelta(days=1)
         used = self.users.count_attempts_between(user.id, start, end)
-        unlimited = user.role == "admin" or user.access_tier == "premium"
-        limit = None if unlimited else self.settings.free_daily_phrase_limit
+        limit = self.daily_limit(user)
         return DailyUsageResponse(
             used=used,
             limit=limit,
@@ -231,6 +235,7 @@ class UserService:
                 id=user.id, email=user.email, display_name=user.display_name, role=user.role,
                 access_tier=user.access_tier, registered_at=user.registered_at,
                 last_active_at=user.last_active_at, phrases_today=counts.get(user.id, 0),
+                daily_limit=self.daily_limit(user),
             )
             for user in self.users.list_real_users()
         ]

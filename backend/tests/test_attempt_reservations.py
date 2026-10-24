@@ -155,12 +155,17 @@ def test_ai_wait_releases_sqlite_writer_and_reserves_slot(database_engine, reque
     assert not isinstance(outcome.get("first"), Exception), outcome.get("first")
 
 
-def test_inflight_daily_slot_is_retryable_then_actual_limit(database_engine) -> None:
+@pytest.mark.parametrize("tier", ["free", "premium"])
+def test_inflight_daily_slot_is_retryable_then_actual_limit(database_engine, tier) -> None:
     engine = database_engine
     user_id, exercises = _setup(engine, length=2)
     settings = get_settings()
-    old_limit = settings.free_daily_phrase_limit
-    settings.free_daily_phrase_limit = 1
+    setting_name = f"{tier}_daily_phrase_limit"
+    old_limit = getattr(settings, setting_name)
+    setattr(settings, setting_name, 1)
+    with Session(engine) as db:
+        db.get(User, user_id).access_tier = tier
+        db.commit()
     ai = HeldAI()
     outcome: dict[str, object] = {}
 
@@ -200,7 +205,7 @@ def test_inflight_daily_slot_is_retryable_then_actual_limit(database_engine) -> 
     finally:
         ai.release.set()
         worker.join(timeout=8)
-        settings.free_daily_phrase_limit = old_limit
+        setattr(settings, setting_name, old_limit)
 
 
 def test_expired_lease_retry_fences_old_worker(database_engine) -> None:

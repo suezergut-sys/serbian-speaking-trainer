@@ -68,3 +68,4 @@ class AdminUserResponse(BaseModel):
     registered_at: datetime
     last_active_at: datetime
     phrases_today: int
+    daily_limit: int | None

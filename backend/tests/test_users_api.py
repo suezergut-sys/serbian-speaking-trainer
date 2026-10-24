@@ -266,12 +266,16 @@ def test_protected_routes_require_bearer_authentication(api_client: TestClient) 
         app.dependency_overrides[get_current_user] = override
 
 
-@pytest.mark.parametrize("used", [10, 19, 20])
-def test_free_user_is_limited_to_twenty_attempts_per_utc_day(
-    used: int,
+@pytest.mark.parametrize(("tier", "limit", "used"), [("free", 20, n) for n in (10, 19, 20)] + [("premium", 100, n) for n in (99, 100, 101)])
+def test_user_daily_attempt_limit_per_utc_day(
+    tier: str, limit: int, used: int,
     api_client: TestClient,
     db_session: Session,
 ) -> None:
+    user = db_session.get(User, LEGACY_USER_ID)
+    assert user is not None
+    user.access_tier = tier
+    db_session.flush()
     session = api_client.post("/api/sessions", json={"topic_id": "cafe"}).json()
     exercise = api_client.post(f"/api/sessions/{session['id']}/next-exercise").json()
     stored_exercise = db_session.get(Exercise, exercise["id"])
@@ -288,19 +292,19 @@ def test_free_user_is_limited_to_twenty_attempts_per_utc_day(
         "/api/attempts",
         json={"exercise_id": exercise["id"], "transcript_sr": canonical},
     )
-    if used < 20:
+    if used < limit:
         assert response.status_code == 201
         usage = response.json()["daily_usage"]
-        assert usage["limit"] == 20
+        assert usage["limit"] == limit
         assert usage["used"] == used + 1
-        assert usage["remaining"] == 20 - used - 1
+        assert usage["remaining"] == limit - used - 1
         return
     assert response.status_code == 429
     assert response.json()["detail"] == "Daily phrase limit reached"
 
     user = db_session.get(User, LEGACY_USER_ID)
     assert user is not None
-    assert UserService(db_session).usage(user, now=now + timedelta(days=1)).remaining == 20
+    assert UserService(db_session).usage(user, now=now + timedelta(days=1)).remaining == limit
     user.role = "admin"
     db_session.flush()
     assert api_client.post(
@@ -332,3 +336,21 @@ def test_user_cannot_open_another_users_session(api_client: TestClient, db_sessi
 def test_free_daily_limit_defaults_to_twenty(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("FREE_DAILY_PHRASE_LIMIT", raising=False)
     assert Settings(_env_file=None).free_daily_phrase_limit == 20
+
+
+def test_premium_limit_default_and_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("PREMIUM_DAILY_PHRASE_LIMIT", raising=False)
+    assert Settings(_env_file=None).premium_daily_phrase_limit == 100
+    monkeypatch.setenv("PREMIUM_DAILY_PHRASE_LIMIT", "73")
+    assert Settings(_env_file=None).premium_daily_phrase_limit == 73
+
+
+def test_admin_list_reports_actual_tier_limits(api_client: TestClient, db_session: Session) -> None:
+    admin = db_session.get(User, LEGACY_USER_ID)
+    admin.role = "admin"
+    db_session.add_all([User(id="premium-limit", email="premium@example.test", role="user", access_tier="premium"), User(id="free-limit", email="free@example.test", role="user", access_tier="free")])
+    db_session.flush()
+    rows = {row["id"]: row for row in api_client.get("/api/admin/users").json()}
+    assert rows[admin.id]["daily_limit"] is None
+    assert rows["premium-limit"]["daily_limit"] == 100
+    assert rows["free-limit"]["daily_limit"] == 20

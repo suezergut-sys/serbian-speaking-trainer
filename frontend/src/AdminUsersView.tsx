@@ -31,9 +31,9 @@ export function AdminUsersView() {
           <thead><tr><th>{t("Аккаунт")}</th><th>{t("Роль")}</th><th>{t("Регистрация")}</th><th>{t("Последняя активность")}</th><th>{t("Фраз сегодня")}</th></tr></thead>
           <tbody>{users.map((user) => <tr key={user.id}>
             <td><strong>{user.display_name || t("Без имени")}</strong><br/><small>{user.email}</small></td>
-            <td>{t(user.role === "admin" ? "Администратор" : "Пользователь")}</td>
+            <td>{t(user.role === "admin" ? "Администратор" : user.access_tier === "premium" ? "Премиум пользователь" : "Пользователь")}</td>
             <td>{t(formatDate(user.registered_at))}</td><td>{t(formatDate(user.last_active_at))}</td>
-            <td>{t(user.role === "admin" || user.access_tier === "premium" ? `${user.phrases_today} · без лимита` : `${user.phrases_today} / 10`)}</td>
+            <td>{t(user.daily_limit === null ? `${user.phrases_today} · без лимита` : `${user.phrases_today} / ${user.daily_limit}`)}</td>
           </tr>)}</tbody>
         </table></div>}
     </section>

@@ -787,3 +787,7 @@ Runtime `69ff666` опубликован через PR #143: сначала back
 ## 24.10.2026 — домашние карточки личных тем
 
 После выделения Premium в отдельный раздел домашние shortcuts и устаревшие встроенные формы удалены. Личные owner-scoped темы остаются на home; при premium/admin добавляется общий CSS class с 1 px gold border, сохраняющийся при выборе/hover. Создание и удаление доступны через PremiumView. Новых строк/серверных контрактов нет. [Проверки](premium-home-2026-10-24.md).
+
+## 24.10.2026 — ограниченный Premium
+
+Владелец подтвердил условия Premium 100 попыток/сутки и назначение четырём существующим аккаунтам. UserService.daily_limit возвращает env premium limit (default100), free(default20) или None для admin; existing reservation/UTC/reset расход сохраняются. Admin list возвращает additive daily_limit без N+1; UI показывает локализованную premium-роль, сохраняя role=user в БД. Без миграций и Android build. [Проверки и публикация](premium-100-2026-10-24.md).

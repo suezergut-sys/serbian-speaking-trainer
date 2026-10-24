@@ -32,4 +32,5 @@ export interface AdminUser {
   registered_at: string;
   last_active_at: string;
   phrases_today: number;
+  daily_limit: number | null;
 }
