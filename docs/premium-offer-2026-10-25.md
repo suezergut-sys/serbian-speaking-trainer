@@ -15,8 +15,9 @@
 
 ## Выпуск
 
-- [ ] PR/merge и web Ready/production SHA/alias.
-- [ ] Production browser verification на serbotalk.app/app.
+- [x] [PR #157](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/157) merged; runtime `aaaa90b0879d3d4eb648380558632c763a102ab3`. Web deployment `dpl_9uTAkdAfHKJSQDeWKMyG2EXNDb45` Ready/production/main; [deployment](https://serbian-speaking-trainer-mt57hjpl5-suezerguts-projects.vercel.app), serbotalk.app alias и SHA подтверждены Vercel API. Чистый git archive + принятый CLI workflow, backend не перевыпускался.
+- [x] HTTP landing/app/API health и packaged WebP → 200; anonymous topics → 401. Local evidence: artifacts/premium-offer/{deployment.json,production-http.json,deploy.log}.
+- [x] 20/20 production browser scenarios на https://serbotalk.app/app: 12 Premium (RU/EN, free/active, desktop/mobile/shared Android) и 8 настроек (RU/EN desktop/mobile/320px/shared Android). Реальные опубликованные assets, synthetic API/auth без production writes/AI; проверены decoded WebP, цена/лимиты и контраст/геометрия кнопки. Local evidence: artifacts/premium-offer/production-browser.log, artifacts/premium-tab/*.png и artifacts/settings-cards/*.png.
 - [ ] Отдельно запрошенный APK и физическая Android-приёмка.
 
 ## Иллюстрация
@@ -26,5 +27,7 @@
 Итоговый промпт:
 
 > Use case: product illustration. Asset type: small illustration under the one-time price on SerboTalk's dark navy Premium page. Primary request: exactly two elegant ivory ceramic cups of coffee on matching saucers, one espresso and one cappuccino with simple latte art, sitting side by side with gently curling steam. Style: polished warm editorial 3D still life, tasteful, friendly, realistic ceramic materials, subtle golden warm highlights; clear readable silhouettes at 240px wide. Composition: centered wide pair, three-quarter view, both cups and saucers fully visible, no extra objects. Genuine transparent background, no colored backdrop, no border. No text, no letters, no prices, no logos, no watermark.
+
+Финальная синхронизация после merge документации: основная папка main=origin/main и 11 чистых detached worktree на том же SHA. Прежние ветки, включая codex/recovery-android-experiments-20261003, codex/recovery-before-139-20261024 и codex/recovery-primary-20261003, сохранены; новых recovery не потребовалось. Финальный снимок HEAD/status всех 12 копий: artifacts/premium-offer/worktrees-final.json (дублирован для settings evidence). Runtime остаётся aaaa90b; документальный follow-up не требует повторного deploy/APK.
 
 Автотесты не обращаются к OpenAI. Создание иллюстрации выполнено отдельным встроенным ImageGen по запросу пользователя и не использует backend API budget приложения.
