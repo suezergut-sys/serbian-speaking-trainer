@@ -451,8 +451,8 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const currentTopic = session?.topic ?? selectedTopicData;
   const isReviewMode = session?.topic.id === "review-phrases";
   const phraseTopicTitle = isReviewMode
-    ? `${t("Фразы для повторения")}${exercise?.topic_title_ru ? ` / ${topicText(exercise.topic_id, exercise.topic_title_ru)}` : ""}`
-    : currentTopic ? topicText(currentTopic.id, currentTopic.title_ru) : "";
+    ? `${t("Фразы для повторения")}${exercise?.topic_title_ru ? ` / ${topicText(exercise.topic_id, exercise.topic_title_ru, topics.find(topic => topic.id === exercise.topic_id)?.title_en)}` : ""}`
+    : currentTopic ? topicText(currentTopic.id, currentTopic.title_ru, currentTopic.title_en) : "";
   const voiceBusy = voiceState === "connecting" || voiceState === "recording" || voiceState === "transcribing";
 
   const stopVoice = useCallback(() => {
@@ -928,7 +928,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
               {topics.map((topic) => (
                 <button className={`android-topic${selectedTopic === topic.id && !customTopic ? " is-selected" : ""}${premiumActive && topic.is_custom ? " topic--personal" : ""}`} key={topic.id} type="button" onClick={() => { selectTopic(topic.id); showAndroidPanel(1); }}>
                   <span className={`topic__icon topic__icon--${topicIcons[topic.id] ?? "message"}`}><Icon name={topicIcons[topic.id] ?? "message"} /></span>
-                  <strong>{topicText(topic.id, topic.title_ru)}</strong>
+                  <strong>{topicText(topic.id, topic.title_ru, topic.title_en)}</strong>
                   <small>{topic.phrase_count}<span>{t(" неизученных")}</span></small>
                 </button>
               ))}
@@ -948,7 +948,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
             ) : !session ? (
               <div className="android-training-start">
                 <span className="topic__icon"><Icon name={topicIcons[currentTopic?.id ?? ""] ?? "message"} size={26} /></span>
-                <h1>{customTopic.trim() || (currentTopic ? topicText(currentTopic.id, currentTopic.title_ru) : t("Выберите тему"))}</h1>
+                <h1>{customTopic.trim() || (currentTopic ? topicText(currentTopic.id, currentTopic.title_ru, currentTopic.title_en) : t("Выберите тему"))}</h1>
                 {!isNative && <button className="android-primary" type="button" onClick={returnToTopics}>{t("Выбрать тему")}</button>}
                 {error && <p className="android-error" role="alert">{t(error)}</p>}
               </div>
@@ -1012,7 +1012,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
               {topics.map((topic) => (
                 <button className={`topic desktop-topic-card${selectedTopic === topic.id && !customTopic ? " is-selected" : ""}${premiumActive && topic.is_custom ? " topic--personal" : ""}`} key={topic.id} type="button" onClick={() => selectTopic(topic.id)}>
                   <span className={`topic__icon topic__icon--${topicIcons[topic.id] ?? "message"}`}><Icon name={topicIcons[topic.id] ?? "message"} /></span>
-                  <span className="topic__copy"><strong>{topicText(topic.id, topic.title_ru)}</strong></span>
+                  <span className="topic__copy"><strong>{topicText(topic.id, topic.title_ru, topic.title_en)}</strong></span>
                   <span className="topic__unlearned"><strong>{topic.phrase_count}</strong><small>{t("неизученных")}</small></span>
                 </button>
               ))}
@@ -1031,7 +1031,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
             ) : !session ? (
               <div className="welcome-card panel">
                 <div className="welcome-card__glow"/><span className="welcome-card__icon"><Icon name={topicIcons[currentTopic?.id ?? ""] ?? "message"} size={32} /></span>
-                <p className="kicker">{t("Выбранная ситуация")}</p><h2>{customTopic.trim() || (currentTopic ? topicText(currentTopic.id, currentTopic.title_ru) : t("Выберите тему"))}</h2>
+                <p className="kicker">{t("Выбранная ситуация")}</p><h2>{customTopic.trim() || (currentTopic ? topicText(currentTopic.id, currentTopic.title_ru, currentTopic.title_en) : t("Выберите тему"))}</h2>
                 <p>{t(selectedTopicData?.phrase_count === 0 ? "Тема пока пустая. Добавьте в неё фразы — автоматической генерации не будет." : currentTopic?.description_ru || "Темы загрузятся после подключения к backend.")}</p>
                 {(startupState === "fallback" || backendState === "offline") && <button className="answer-submit" type="button" onClick={retryCatalog}>{t("Повторить загрузку")}</button>}
                 <div className="welcome-card__steps"><span><b>1</b>{t(" Получите фразу")}</span><span><b>2</b>{t(" Ответьте голосом")}</span><span><b>3</b>{t(" Разберите результат")}</span></div>

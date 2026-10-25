@@ -791,3 +791,7 @@ Runtime `69ff666` опубликован через PR #143: сначала back
 ## 24.10.2026 — ограниченный Premium
 
 Владелец подтвердил условия Premium 100 попыток/сутки и назначение четырём существующим аккаунтам. UserService.daily_limit возвращает env premium limit (default100), free(default20) или None для admin; existing reservation/UTC/reset расход сохраняются. Admin list возвращает additive daily_limit без N+1; UI показывает локализованную premium-роль, сохраняя role=user в БД. Без миграций и Android build. [Проверки и публикация](premium-100-2026-10-24.md).
+
+## 25.10.2026 — названия личных тем RU/EN
+
+Сохраняем title_ru/title_en, переводим при create через отдельную Pydantic-схему и версионированный prompt на existing env text model. Actual source language определяет сохранение исходника; interface language только hint. Duplicate/original-based ID и owner quota прежние; AI до account write-lock, повторная проверка после. Перевод не выполняется на GET/переключении и не backfill старых тем. Additive API и nullable migration 6ccb82f56983; downgrade защищён от потери переводов. [Проверки/выпуск](bilingual-topic-titles-2026-10-25.md).

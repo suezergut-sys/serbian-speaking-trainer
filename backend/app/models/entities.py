@@ -201,6 +201,7 @@ class TopicPreset(Base):
     id: Mapped[str] = mapped_column(String(80), primary_key=True)
     owner_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     title_ru: Mapped[str] = mapped_column(String(160))
+    title_en: Mapped[str | None] = mapped_column(String(160), nullable=True)
     description_ru: Mapped[str] = mapped_column(Text)
     intents_json: Mapped[list[str]] = mapped_column(JSON, default=list)
     vocabulary_json: Mapped[list[str]] = mapped_column(JSON, default=list)

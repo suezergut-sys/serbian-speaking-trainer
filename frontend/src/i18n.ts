@@ -38,7 +38,8 @@ export function getLocale(): string { return getLanguage() === "en" ? "en-GB" : 
 const dictionary: Record<string, string> = messages;
 const phraseTranslations = new Map(phrases.map(phrase => [phrase.source_ru, phrase.source_en]));
 const presetTopicIds = new Set(["misc", "general", "review-phrases", ...phrases.map(phrase => phrase.id.slice(0, -3))]);
-export function topicText(id: string | null | undefined, text: string): string {
+export function topicText(id: string | null | undefined, text: string, englishTitle?: string | null): string {
+  if (getLanguage() === "en" && englishTitle) return englishTitle;
   return id == null || presetTopicIds.has(id) ? t(text) : text;
 }
 export function localizedPhrase(source: string): { source: string; hints: Phrase["word_hints"] } {

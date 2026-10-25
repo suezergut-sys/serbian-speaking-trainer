@@ -2,11 +2,14 @@ from __future__ import annotations
 
 from hashlib import sha256
 
+from pydantic import ValidationError
+
 from app.models import TopicPreset
 from app.repositories import TopicPresetRepository, UserRepository
 from app.repositories.custom_content import CustomContentRepository
 from app.services.custom_content_policy import CustomContentError, MAX_CUSTOM_TOPICS
 from app.schemas import CreateTopicRequest, TopicContext, TopicListItem
+from app.schemas.topics import TopicTitleTranslation
 from app.services.ai_adapter import AIServiceError, StructuredAIProvider
 
 
@@ -26,6 +29,7 @@ class TopicService:
             TopicListItem(
                 id=topic.id,
                 title_ru=topic.title_ru,
+                title_en=topic.title_en,
                 description_ru=topic.description_ru,
                 likely_intents=topic.intents_json,
                 suggested_vocabulary=topic.vocabulary_json,
@@ -37,27 +41,42 @@ class TopicService:
         ]
 
     def create_custom(self, request: CreateTopicRequest) -> TopicListItem:
-        UserRepository(self.repository.session).lock(self.repository.user_id)
         title = " ".join(request.title_ru.split())
         topic_id = self._custom_id(title, self.repository.user_id)
         topic = self.repository.get_visible(topic_id)
         if topic is None:
             if CustomContentRepository(self.repository.session, self.repository.user_id).topic_count() >= MAX_CUSTOM_TOPICS:
                 raise CustomContentError("custom_topic_limit")
+            try:
+                translated = TopicTitleTranslation.model_validate(self.ai.translate_topic_title(title))
+            except (AIServiceError, ValidationError) as exc:
+                raise CustomContentError("topic_translation_unavailable", status=503) from exc
+            # The AI call happens before acquiring the account write lock.
+            UserRepository(self.repository.session).lock(self.repository.user_id)
+            topic = self.repository.get_visible(topic_id)
+            if topic is not None:
+                return self._list_item(topic)
+            if CustomContentRepository(self.repository.session, self.repository.user_id).topic_count() >= MAX_CUSTOM_TOPICS:
+                raise CustomContentError("custom_topic_limit")
             topic = self.repository.add(
                 TopicPreset(
                     id=topic_id,
                     owner_user_id=self.repository.user_id,
-                    title_ru=title,
+                    title_ru=title if translated.source_language == "ru" else translated.translated_title,
+                    title_en=translated.translated_title if translated.source_language == "ru" else title,
                     description_ru="Пользовательская тема без фраз.",
                     intents_json=[],
                     vocabulary_json=[],
                     is_custom=True,
                 )
             )
+        return self._list_item(topic)
+
+    def _list_item(self, topic: TopicPreset) -> TopicListItem:
         return TopicListItem(
             id=topic.id,
             title_ru=topic.title_ru,
+            title_en=topic.title_en,
             description_ru=topic.description_ru,
             likely_intents=topic.intents_json,
             suggested_vocabulary=topic.vocabulary_json,
@@ -114,6 +133,7 @@ class TopicService:
             id=topic.id,
             source="custom" if topic.is_custom else "preset",
             title_ru=topic.title_ru,
+            title_en=topic.title_en,
             description_ru=topic.description_ru,
             likely_intents=topic.intents_json,
             suggested_vocabulary=topic.vocabulary_json,

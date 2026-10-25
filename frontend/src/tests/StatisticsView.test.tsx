@@ -212,3 +212,16 @@ it('ignores a late phrase result from a previously selected topic', async () => 
   await act(async () => finish(phrases('Старая тема')));
   expect(screen.queryByRole('heading', { name: 'Старая тема' })).not.toBeInTheDocument();
 });
+
+
+it.each(['ru', 'en'] as const)('uses bilingual custom titles for filter and group (%s)', async language => {
+  setLanguage(language);
+  vi.mocked(fetchPhraseTopics).mockResolvedValue([{topic_id:'custom-topic',topic_title:'Моя тема',topic_title_en:'My topic',phrase_count:1}]);
+  const result = phrases('Моя тема');
+  result.groups[0].topic_id = 'custom-topic';
+  result.groups[0].topic_title_en = 'My topic';
+  vi.mocked(fetchPhraseStatistics).mockResolvedValue(result);
+  render(<StatisticsView page="phrases" />);
+  expect(await screen.findByRole('heading',{name:language==='ru'?'Моя тема':'My topic'})).toBeInTheDocument();
+  expect(screen.getByRole('combobox',{name:language==='ru'?'Тема':'Topic'})).toHaveTextContent(language==='ru'?'Моя тема':'My topic');
+});

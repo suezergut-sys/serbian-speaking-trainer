@@ -9,6 +9,7 @@ from openai import OpenAI
 
 from app.config import Settings, get_settings
 from app.schemas import AnswerAnalysis, ExerciseGenerationResult, PhrasePreparation, TopicContext
+from app.schemas.topics import TopicTitleTranslation
 from app.schemas.transcriptions import TranscriptionAssistanceAnalysis
 from app.schemas.attempts import ExplainedAnswerAnalysis
 from app.request_metrics import measure_ai_call
@@ -25,6 +26,8 @@ class AIServiceError(RuntimeError):
 class StructuredAIProvider(Protocol):
     @property
     def is_available(self) -> bool: ...
+
+    def translate_topic_title(self, text: str) -> TopicTitleTranslation: ...
 
     def normalize_topic(self, text: str) -> TopicContext: ...
 
@@ -76,6 +79,13 @@ class OpenAIStructuredProvider:
                 max_retries=self.settings.openai_max_retries,
             )
         return self._client
+
+    def translate_topic_title(self, text: str) -> TopicTitleTranslation:
+        return self._parse(
+            prompt_name="topic_title_translation_v1.md",
+            payload={"title": text, "interface_language": interface_language.get()},
+            schema=TopicTitleTranslation,
+        )
 
     def normalize_topic(self, text: str) -> TopicContext:
         payload = {"user_topic_ru": text, "target_level": "A2"}
@@ -143,7 +153,7 @@ class OpenAIStructuredProvider:
         *,
         prompt_name: str,
         payload: dict[str, object],
-        schema: type[TopicContext] | type[ExerciseGenerationResult] | type[AnswerAnalysis] | type[ExplainedAnswerAnalysis] | type[PhrasePreparation] | type[TranscriptionAssistanceAnalysis],
+        schema: type[TopicTitleTranslation] | type[TopicContext] | type[ExerciseGenerationResult] | type[AnswerAnalysis] | type[ExplainedAnswerAnalysis] | type[PhrasePreparation] | type[TranscriptionAssistanceAnalysis],
     ):
         try:
             instructions = load_prompt(prompt_name)

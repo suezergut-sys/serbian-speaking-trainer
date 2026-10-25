@@ -108,3 +108,12 @@ it("keeps compound words intact and corrects the reported lexical hints", () => 
   expect(localizedPhrase(journey.source_ru).hints.take?.translation_sr).toBe("traje");
   expect(sourceWords("Нови-Сада и two-room")).toEqual(["Нови-Сада", "и", "two-room"]);
 });
+
+
+it("selects saved bilingual custom titles and preserves legacy fallback", () => {
+  setLanguage("en");
+  expect(topicText("custom-one", "Мои путешествия", "My travels")).toBe("My travels");
+  expect(topicText("custom-old", "Старая тема", null)).toBe("Старая тема");
+  setLanguage("ru");
+  expect(topicText("custom-one", "Мои путешествия", "My travels")).toBe("Мои путешествия");
+});

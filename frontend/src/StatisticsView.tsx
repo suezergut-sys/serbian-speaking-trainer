@@ -70,7 +70,7 @@ function PhraseList({ alphabet, topicId }: { alphabet: SerbianAlphabet; topicId:
     {statistics.total === 0 ? <p className="empty-phrases">{t("Фразы появятся после первой проверенной попытки.")}</p> : <>
       <div className="phrase-groups">
         {statistics.groups.map((group) => <section className="phrase-group" key={group.topic_id ?? "custom"}>
-          <h3>{topicText(group.topic_id, group.topic_title)}</h3>
+          <h3>{topicText(group.topic_id, group.topic_title, group.topic_title_en)}</h3>
           <div className="phrase-table-wrap"><table className="phrase-table">
             <thead><tr><th>{t("Фраза на русском")}</th><th>{t("Фраза на сербском")}</th><th>{t("Попытки")}</th><th>{t("Статус")}</th><th>{t("Следующий повтор")}</th></tr></thead>
             <tbody>{group.phrases.map((phrase) => <tr key={phrase.id}>
@@ -110,7 +110,7 @@ function PhrasesPage({ alphabet }: { alphabet: SerbianAlphabet }) {
   if (!topics.length) return <div className="statistics-state panel">{t("Фразы появятся после первой проверенной попытки.")}</div>;
   return <>
     <label className="phrase-topic-control panel">{t("Тема")}<select aria-label={t("Тема")} value={selectedTopic} onChange={event => setSelectedTopic(event.target.value)}>
-        {topics.map(topic => <option key={topic.topic_id ?? "unassigned"} value={topic.topic_id ?? "unassigned"}>{topicText(topic.topic_id, topic.topic_title)} · {topic.phrase_count}</option>)}
+        {topics.map(topic => <option key={topic.topic_id ?? "unassigned"} value={topic.topic_id ?? "unassigned"}>{topicText(topic.topic_id, topic.topic_title, topic.topic_title_en)} · {topic.phrase_count}</option>)}
       </select>
     </label>
     <PhraseList key={selectedTopic} alphabet={alphabet} topicId={selectedTopic} />

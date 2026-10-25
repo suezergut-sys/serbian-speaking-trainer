@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CustomContentForm } from "../CustomContentForm";
 import { setLanguage } from "../i18n";
-import { addReviewPhrase, createTopic, prepareReviewPhrase } from "../api/training";
+import { BackendError, addReviewPhrase, createTopic, prepareReviewPhrase } from "../api/training";
 
 vi.mock("../api/training", async importOriginal => ({ ...await importOriginal<typeof import("../api/training")>(), addReviewPhrase: vi.fn(), createTopic: vi.fn(), prepareReviewPhrase: vi.fn() }));
 const topic = { id: "custom-1", title_ru: "Своя тема", description_ru: "", likely_intents: [], suggested_vocabulary: [], is_custom: true, phrase_count: 0 };
@@ -64,7 +64,7 @@ describe("administrator custom content", () => {
     expect(screen.getByText("Сохранить тему")).toBeDisabled();
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "  Своя   тема  " } });
     fireEvent.click(screen.getByText("Сохранить тему"));
-    expect(screen.getByText("Сохраняем…")).toBeDisabled();
+    expect(screen.getByText("Переводим название…")).toBeDisabled();
     expect(screen.getByText("Закрыть")).toBeDisabled();
     finish(topic);
     await screen.findByText("Тема сохранена.");
@@ -99,4 +99,20 @@ describe("administrator custom content", () => {
     expect(screen.getByText("Создать свою тему")).toBeInTheDocument();
   });
 
+});
+
+
+it.each(["ru", "en"] as const)("keeps the topic draft after translation failure and retries (%s)", async language => {
+  setLanguage(language);
+  const created = vi.fn();
+  vi.mocked(createTopic).mockRejectedValueOnce(new BackendError(503, {code: "topic_translation_unavailable"})).mockResolvedValueOnce({...topic, title_en: "My topic"});
+  render(<CustomContentForm mode="topic" topics={[]} alphabet="latin" onTopicCreated={created} onPhraseSaved={vi.fn()} onClose={vi.fn()} />);
+  fireEvent.change(screen.getByRole("textbox"), {target:{value:"Своя тема"}});
+  fireEvent.click(screen.getByRole("button", {name:language === "ru" ? "Сохранить тему" : "Save topic"}));
+  expect(await screen.findByRole("alert")).toHaveTextContent(language === "ru" ? "Не удалось перевести название темы. Тема не сохранена." : "Could not translate the topic title. The topic was not saved.");
+  expect(screen.getByRole("textbox")).toHaveValue("Своя тема");
+  expect(created).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", {name:language === "ru" ? "Сохранить тему" : "Save topic"}));
+  await screen.findByText(language === "ru" ? "Тема сохранена." : "Topic saved.");
+  expect(created).toHaveBeenCalledWith(expect.objectContaining({title_en:"My topic"}));
 });
