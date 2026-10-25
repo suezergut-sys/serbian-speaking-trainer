@@ -1,5 +1,13 @@
 # План улучшений по аудиту SerboTalk
 
+## 25.10.2026 — предложение Premium до активации
+
+- [x] RU/EN shared UI: большая золотая корона, точные лимиты, компактная кнопка, однократный платёж 5 евро, две чашки кофе и пояснение об API OpenAI. Активный Premium и disabled покупки сохранены. [Доказательства](premium-offer-2026-10-25.md).
+- [x] 5 component / 12 browser scenarios RU/EN × desktop/mobile/shared Android × free/premium; screenshot review desktop и 320px.
+- [x] Полный quality gate: 393 backend/scripts, 317 frontend, 5 Node guards, lint/typecheck/production build.
+- [ ] Публикация web с production-проверкой.
+- [ ] Будущий отдельно запрошенный APK и физическая Android-приёмка.
+
 ## 25.10.2026 — карточки настроек
 
 - [x] Реализация общего RU/EN UI: парные выборы, адаптивные 3/2+1 действия, флаги, колокольчик, смысловые SVG и официальный OpenAI icon. Клавиатура, состояния сохранения/ошибки и admin-доступ сохранены. [Проверки и выпуск](settings-cards-2026-10-25.md).

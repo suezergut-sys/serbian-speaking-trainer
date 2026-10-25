@@ -11,15 +11,22 @@ afterEach(() => { cleanup(); vi.resetAllMocks(); setLanguage("ru"); });
 it.each(["ru", "en"] as const)("shows the offer without fetching private content (%s)", language => {
   setLanguage(language);
   render(<PremiumView {...props} active={false} />);
-  expect(screen.getByRole("heading", { name: language === "ru" ? "ПРЕМИУМ" : "PREMIUM" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: language === "ru" ? "Премиум" : "Premium" })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: language === "ru" ? "КУПИТЬ" : "BUY" })).toBeDisabled();
   expect(screen.getAllByRole("listitem")).toHaveLength(3);
+  expect(screen.getByText(language === "ru" ? "До 5 личных тем" : "Up to 5 personal topics")).toBeInTheDocument();
+  expect(screen.getByText(language === "ru" ? "До 30 фраз в каждой теме — 150 своих фраз всего" : "Up to 30 phrases per topic — 150 custom phrases in total")).toBeInTheDocument();
+  expect(screen.getByText(language === "ru" ? "Однократный платёж 5 евро" : "One-time payment of 5 euros")).toBeInTheDocument();
+  expect(screen.getByRole("img", { name: language === "ru" ? "Две чашки кофе" : "Two cups of coffee" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: language === "ru" ? "Почему платно?" : "Why is it paid?" })).toBeInTheDocument();
+  expect(screen.getByText(language === "ru" ? "Приложение использует API-вызовы внешней модели OpenAI." : "The app makes API calls to an external OpenAI model.")).toBeInTheDocument();
   expect(fetchCustomPhrases).not.toHaveBeenCalled();
 });
 it.each(["ru", "en"] as const)("filters topics, hides translations and updates count after confirmed deletion (%s)", async language => {
   setLanguage(language);
   vi.mocked(fetchCustomPhrases).mockResolvedValue(phrases);
   render(<PremiumView {...props} active />);
+  expect(screen.queryByText(/Однократный платёж|One-time payment/)).not.toBeInTheDocument();
   const first = await screen.findByRole("button", { name: /Личная тема 1/ });
   await screen.findByText(language === "ru" ? "Выберите тему, чтобы увидеть фразы." : "Select a topic to see its phrases.");
   expect(screen.queryByText(phrases[0].source_ru)).not.toBeInTheDocument();
