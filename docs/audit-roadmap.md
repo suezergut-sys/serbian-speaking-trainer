@@ -5,7 +5,7 @@
 - [x] RU/EN shared UI: большая золотая корона, точные лимиты, компактная кнопка, однократный платёж 5 евро, две чашки кофе и пояснение об API OpenAI. Активный Premium и disabled покупки сохранены. [Доказательства](premium-offer-2026-10-25.md).
 - [x] 5 component / 12 browser scenarios RU/EN × desktop/mobile/shared Android × free/premium; screenshot review desktop и 320px.
 - [x] Полный quality gate: 393 backend/scripts, 317 frontend, 5 Node guards, lint/typecheck/production build.
-- [ ] Публикация web с production-проверкой.
+- [x] Web через PR #157: runtime aaaa90b, Ready/production/main; alias/SHA, HTTP app/image/API и 20/20 production browser scenarios Premium/settings подтверждены. [Выпуск](premium-offer-2026-10-25.md).
 - [ ] Будущий отдельно запрошенный APK и физическая Android-приёмка.
 
 ## 25.10.2026 — карточки настроек
