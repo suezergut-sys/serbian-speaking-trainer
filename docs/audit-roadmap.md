@@ -916,6 +916,6 @@
 
 - [x] Перевод/валидация при create, хранение RU/EN, migration 6ccb82f56983 и защищённый downgrade; title helper/все экраны/legacy fallback. [Доказательства](bilingual-topic-titles-2026-10-25.md).
 - [x] 393 backend/scripts, 9 skipped, 5 Node guards; 315 frontend tests; lint/typecheck/build; 12 browser scenarios RU/EN; отдельный live AI smoke RU↔EN без DB writes.
-- [ ] Backend migration/deploy и web-публикация, production-проверки.
+- [x] PR #153, runtime 1d8d8fa: backend/web Ready/alias/SHA, migration 6ccb82f56983 и Supabase version/schema подтверждены; HTTP и 12 production browser scenarios, авторизованная EN форма/legacy fallback проверены. [Доказательства](bilingual-topic-titles-2026-10-25.md).
 - [x] Реальный AI adapter проверен двумя техническими названиями RU↔EN, не в автотестах.
 - [ ] Физический Android — отдельная приёмка следующего APK.
