@@ -3,6 +3,7 @@ import type { DailyUsage } from "./auth";
 export type TopicListItem = {
   id: string;
   title_ru: string;
+  title_en?: string | null;
   description_ru: string;
   likely_intents: string[];
   suggested_vocabulary: string[];

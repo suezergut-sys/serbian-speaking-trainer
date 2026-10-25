@@ -637,3 +637,8 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 
 - [x] Общий клиент использует API daily_usage.limit=100; роль Premium user/Премиум пользователь и server limit в общей админке RU/EN. [Доказательства](premium-100-2026-10-24.md).
 - [ ] Физически проверить остаток/429/сброс UTC после backend-публикации; APK 1.39/code49 не пересобирается. Новый текст войдёт в следующий отдельно запрошенный Android build/sync (админка в native не экспонируется).
+
+## 25.10.2026 — названия личных тем на двух языках
+
+- [x] Общий клиент: title_en + RU fallback в home/Premium/phrase selector/exercise/statistics, RU/EN translation loading/help/error/retry. [Доказательства](bilingual-topic-titles-2026-10-25.md).
+- [ ] По отдельной команде перенести через production Android build/sync; физически проверить ввод RU/EN, переключение и reload, selector/keyboard, ошибку/повтор и старые темы. APK 1.39/code49 прежний; backend-compatible старый APK пока не использует title_en.

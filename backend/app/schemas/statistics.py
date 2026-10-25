@@ -35,6 +35,7 @@ class PhraseStatisticsItem(BaseModel):
 class PhraseStatisticsGroup(BaseModel):
     topic_id: str | None = None
     topic_title: str
+    topic_title_en: str | None = None
     phrases: list[PhraseStatisticsItem]
 
 
@@ -49,4 +50,5 @@ class PhraseStatisticsResponse(BaseModel):
 class PhraseStatisticsTopic(BaseModel):
     topic_id: str | None = None
     topic_title: str
+    topic_title_en: str | None = None
     phrase_count: int = Field(ge=0)

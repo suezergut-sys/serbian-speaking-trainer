@@ -70,17 +70,17 @@ export function CustomContentManager({ topics, alphabet, onDeleted, onClose, bro
     </div>}
     {topics.filter(topic => topic.is_custom).map(topic => <div className="custom-content-item" key={topic.id}>
       {browseTopics ? <button className="premium-topic" type="button" aria-pressed={selectedTopic === topic.id} disabled={busy || Boolean(confirmation)} onClick={() => { setSelectedTopic(topic.id); setMessage(""); }}>
-        <strong>{topicText(topic.id, topic.title_ru)}</strong>
+        <strong>{topicText(topic.id, topic.title_ru, topic.title_en)}</strong>
         <span>{t("Фраз: ")}{loading ? topic.custom_phrase_count ?? 0 : phrases.filter(phrase => phrase.topic_id === topic.id).length}</span>
-      </button> : <><strong>{topicText(topic.id, topic.title_ru)}</strong><span>{topic.custom_phrase_count ?? phrases.filter(phrase => phrase.topic_id === topic.id).length} / 30</span></>}
-      <button type="button" disabled={busy || Boolean(confirmation)} onClick={() => setConfirmation({ kind: "topic", id: topic.id, title: topic.title_ru })}>{t("Удалить тему")}</button>
+      </button> : <><strong>{topicText(topic.id, topic.title_ru, topic.title_en)}</strong><span>{topic.custom_phrase_count ?? phrases.filter(phrase => phrase.topic_id === topic.id).length} / 30</span></>}
+      <button type="button" disabled={busy || Boolean(confirmation)} onClick={() => setConfirmation({ kind: "topic", id: topic.id, title: topicText(topic.id, topic.title_ru, topic.title_en) })}>{t("Удалить тему")}</button>
     </div>)}
     {!loading && phrases.length === 0 && <p>{t("Своих фраз пока нет.")}</p>}
     {browseTopics && !selectedTopic && phrases.length > 0 && <p>{t("Выберите тему, чтобы увидеть фразы.")}</p>}
     {browseTopics && selectedTopic && !loading && !phrases.some(phrase => phrase.topic_id === selectedTopic) && <p>{t("В этой теме пока нет своих фраз.")}</p>}
     {phrases.filter(phrase => !browseTopics || phrase.topic_id === selectedTopic).map(phrase => <div className="custom-content-item" key={phrase.id}>
       <strong>{phrase.source_ru}</strong>
-      {!browseTopics && <><span>{displaySerbian(phrase.canonical_sr, alphabet)}</span><small>{topicText(phrase.topic_id, phrase.topic_title ?? "")}</small></>}
+      {!browseTopics && <><span>{displaySerbian(phrase.canonical_sr, alphabet)}</span><small>{topicText(phrase.topic_id, phrase.topic_title ?? "", topics.find(topic => topic.id === phrase.topic_id)?.title_en)}</small></>}
       <button type="button" disabled={busy || Boolean(confirmation)} onClick={() => setConfirmation({ kind: "phrase", id: phrase.id, title: phrase.source_ru })}>{t("Удалить фразу")}</button>
     </div>)}
   </section>;

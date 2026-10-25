@@ -911,3 +911,11 @@
 - [x] PR #151, runtime 82edc87; backend/web Ready/alias/SHA, production env100, HTTP/schema и 22 browser checks прошли. [Доказательства](premium-100-2026-10-24.md).
 - [x] Ровно четыре заданных аккаунта назначены/подтверждены premium в Supabase; настоящий admin UI показывает всем Premium user и 0 / 100, история/расход сохранены.
 - [ ] Android sync/build/физическая приёмка — отдельные статусы.
+
+## 25.10.2026 — двуязычные названия личных тем
+
+- [x] Перевод/валидация при create, хранение RU/EN, migration 6ccb82f56983 и защищённый downgrade; title helper/все экраны/legacy fallback. [Доказательства](bilingual-topic-titles-2026-10-25.md).
+- [x] 393 backend/scripts, 9 skipped, 5 Node guards; 315 frontend tests; lint/typecheck/build; 12 browser scenarios RU/EN; отдельный live AI smoke RU↔EN без DB writes.
+- [ ] Backend migration/deploy и web-публикация, production-проверки.
+- [x] Реальный AI adapter проверен двумя техническими названиями RU↔EN, не в автотестах.
+- [ ] Физический Android — отдельная приёмка следующего APK.

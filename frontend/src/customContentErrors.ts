@@ -5,6 +5,7 @@ export const phraseLimitMessage = "Достигнут лимит: 30 фраз в
 export function customContentError(error: unknown, fallback: string): string {
   if (!(error instanceof BackendError)) return fallback;
   const messages: Record<string, string> = {
+    topic_translation_unavailable: "Не удалось перевести название темы. Тема не сохранена. Повторите попытку.",
     custom_topic_limit: topicLimitMessage,
     custom_phrase_limit: phraseLimitMessage,
     custom_total_phrase_limit: "Достигнут лимит: 150 своих фраз. Удалите свою фразу, чтобы добавить новую.",

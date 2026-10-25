@@ -21,6 +21,21 @@ from testlab import (
 )
 
 
+def test_pre_title_translation_schema_upgrades_preserving_users(tmp_path):
+    engine = create_engine(f"sqlite:///{(tmp_path / 'pre-titles.sqlite3').as_posix()}")
+    try:
+        _alembic(engine, "upgrade", "a910bc57d302")
+        with engine.connect() as connection:
+            users = connection.execute(text("SELECT id FROM users ORDER BY id")).all()
+        bootstrap_testlab_database(engine)
+        bootstrap_testlab_database(engine)
+        with engine.connect() as connection:
+            assert "title_en" in {column["name"] for column in inspect(connection).get_columns("topic_presets")}
+            assert connection.execute(text("SELECT id FROM users ORDER BY id")).all() == users
+    finally:
+        engine.dispose()
+
+
 def credentials() -> Credentials:
     return Credentials(email=EMAIL, password="test-only-password-that-is-never-logged", jwt_secret="test-only-signing-secret-that-is-long-enough")
 

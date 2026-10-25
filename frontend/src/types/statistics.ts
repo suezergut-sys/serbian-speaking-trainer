@@ -34,8 +34,9 @@ export type PhraseStatistics = {
   groups: Array<{
     topic_id: string | null;
     topic_title: string;
+    topic_title_en?: string | null;
     phrases: PhraseStatisticsItem[];
   }>;
 };
 
-export type PhraseStatisticsTopic = { topic_id: string | null; topic_title: string; phrase_count: number };
+export type PhraseStatisticsTopic = { topic_id: string | null; topic_title: string; topic_title_en?: string | null; phrase_count: number };

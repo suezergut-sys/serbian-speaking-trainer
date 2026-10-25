@@ -75,8 +75,8 @@ class StatisticsService:
         )
 
     def phrase_topics(self) -> list[PhraseStatisticsTopic]:
-        return [PhraseStatisticsTopic(topic_id=topic_id, topic_title=title, phrase_count=count)
-                for topic_id, title, count in self.review_phrases.statistics_topics()]
+        return [PhraseStatisticsTopic(topic_id=topic_id, topic_title=title, topic_title_en=title_en, phrase_count=count)
+                for topic_id, title, title_en, count in self.review_phrases.statistics_topics()]
 
     def phrases(self, *, page: int, page_size: str, topic_id: str | None = None) -> PhraseStatisticsResponse:
         total = self.review_phrases.count_for_statistics(topic_id)
@@ -88,11 +88,11 @@ class StatisticsService:
 
         groups: list[PhraseStatisticsGroup] = []
         group_by_key: dict[tuple[str | None, str], PhraseStatisticsGroup] = {}
-        for phrase, topic_title in rows:
+        for phrase, topic_title, title_en in rows:
             key = (phrase.topic_id, topic_title)
             group = group_by_key.get(key)
             if group is None:
-                group = PhraseStatisticsGroup(topic_id=phrase.topic_id, topic_title=topic_title, phrases=[])
+                group = PhraseStatisticsGroup(topic_id=phrase.topic_id, topic_title=topic_title, topic_title_en=title_en, phrases=[])
                 group_by_key[key] = group
                 groups.append(group)
             group.phrases.append(

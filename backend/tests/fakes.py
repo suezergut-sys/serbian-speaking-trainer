@@ -1,6 +1,7 @@
 from collections.abc import Callable
 
 from app.schemas import AnswerAnalysis, ExerciseGenerationResult, PhrasePreparation, TopicContext, TranscriptionResponse
+from app.schemas.topics import TopicTitleTranslation
 from app.schemas.transcriptions import TranscriptionAssistanceAnalysis
 
 
@@ -25,6 +26,9 @@ class FakeAIProvider:
     @property
     def is_available(self) -> bool:
         return self._available
+
+    def translate_topic_title(self, text: str) -> TopicTitleTranslation:
+        return TopicTitleTranslation(source_language="ru", translated_title="Custom topic")
 
     def normalize_topic(self, text: str) -> TopicContext:
         if self.topic_result is None:

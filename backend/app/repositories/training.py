@@ -226,15 +226,15 @@ class ReviewPhraseRepository(Repository[ReviewPhrase]):
             self.session.flush()
         return due
 
-    def statistics_topics(self) -> list[tuple[str | None, str, int]]:
+    def statistics_topics(self) -> list[tuple[str | None, str, str | None, int]]:
         from app.models import TopicPreset
         title = func.coalesce(TopicPreset.title_ru, "Свои фразы")
-        statement = (select(ReviewPhrase.topic_id, title, func.count())
+        statement = (select(ReviewPhrase.topic_id, title, TopicPreset.title_en, func.count())
             .outerjoin(TopicPreset, and_(TopicPreset.id == ReviewPhrase.topic_id,
                 or_(TopicPreset.owner_user_id.is_(None), TopicPreset.owner_user_id == self.user_id)))
             .where(ReviewPhrase.user_id == self.user_id)
-            .group_by(ReviewPhrase.topic_id, title).order_by(title, ReviewPhrase.topic_id))
-        return [(topic_id, str(topic_title), int(count)) for topic_id, topic_title, count in self.session.execute(statement)]
+            .group_by(ReviewPhrase.topic_id, title, TopicPreset.title_en).order_by(title, ReviewPhrase.topic_id))
+        return [(topic_id, str(topic_title), title_en, int(count)) for topic_id, topic_title, title_en, count in self.session.execute(statement)]
 
     def _statistics_filter(self, topic_id: str | None):
         if topic_id == "unassigned":
@@ -252,12 +252,12 @@ class ReviewPhraseRepository(Repository[ReviewPhrase]):
         limit: int | None,
         offset: int,
         topic_id: str | None = None,
-    ) -> list[tuple[ReviewPhrase, str]]:
+    ) -> list[tuple[ReviewPhrase, str, str | None]]:
         from app.models import TopicPreset
 
         topic_title = func.coalesce(TopicPreset.title_ru, "Свои фразы")
         statement = (
-            select(ReviewPhrase, topic_title)
+            select(ReviewPhrase, topic_title, TopicPreset.title_en)
             .outerjoin(TopicPreset, and_(
                 TopicPreset.id == ReviewPhrase.topic_id,
                 or_(TopicPreset.owner_user_id.is_(None), TopicPreset.owner_user_id == self.user_id),
@@ -269,7 +269,7 @@ class ReviewPhraseRepository(Repository[ReviewPhrase]):
         )
         if limit is not None:
             statement = statement.limit(limit)
-        return [(row[0], str(row[1])) for row in self.session.execute(statement).all()]
+        return [(row[0], str(row[1]), row[2]) for row in self.session.execute(statement).all()]
 
     def list_mastered_between(self, start: datetime, end: datetime) -> list[datetime]:
         statement = (
