@@ -40,13 +40,26 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
     const inactiveColor = await crown.evaluate(element => getComputedStyle(element).color);
     await premium.click();
     const content = page.locator('.premium-page');
-    await expect(content.getByRole('heading', { name: ru ? 'ПРЕМИУМ' : 'PREMIUM' })).toBeVisible();
+    await expect(content.getByRole('heading', { name: tier === 'free' ? ru ? 'Премиум' : 'Premium' : ru ? 'ПРЕМИУМ' : 'PREMIUM', exact: true })).toBeVisible();
     const selectedColor = await crown.evaluate(element => getComputedStyle(element).color);
     expect(selectedColor).not.toBe(inactiveColor);
     await expect(crown).toHaveCSS('color', tier === 'premium' ? 'rgb(242, 189, 90)' : layout === 'desktop' ? 'rgb(64, 164, 255)' : 'rgb(102, 186, 255)');
     if (tier === 'free') {
       await expect(content.getByRole('button', { name: ru ? 'КУПИТЬ' : 'BUY' })).toBeDisabled();
       await expect(content.getByText(ru ? '100 повторений в день' : '100 repetitions per day')).toBeVisible();
+      await expect(content.getByText(ru ? 'До 5 личных тем' : 'Up to 5 personal topics')).toBeVisible();
+      await expect(content.getByText(ru ? 'До 30 фраз в каждой теме — 150 своих фраз всего' : 'Up to 30 phrases per topic — 150 custom phrases in total')).toBeVisible();
+      const coffee = content.getByRole('img', { name: ru ? 'Две чашки кофе' : 'Two cups of coffee' });
+      await expect.poll(() => coffee.evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
+      const offer = content.locator('.premium-offer');
+      const buyBox = await content.getByRole('button', { name: ru ? 'КУПИТЬ' : 'BUY' }).boundingBox();
+      const offerBox = await offer.boundingBox();
+      expect(buyBox.width).toBeLessThan(offerBox.width * .7);
+      expect(Math.abs(buyBox.x + buyBox.width / 2 - (offerBox.x + offerBox.width / 2))).toBeLessThan(2);
+      await expect(content.locator('.premium-offer__hero svg')).toHaveCSS('color', 'rgb(242, 189, 90)');
+      await expect(content.getByText(ru ? 'Однократный платёж 5 евро' : 'One-time payment of 5 euros')).toBeVisible();
+      await expect(content.getByRole('heading', { name: ru ? 'Почему платно?' : 'Why is it paid?' })).toBeVisible();
+      expect(await offer.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
       expect(privateLoads).toBe(0);
     } else {
       await content.getByRole('button', { name: ru ? 'Создать тему' : 'Create topic', exact: true }).click();

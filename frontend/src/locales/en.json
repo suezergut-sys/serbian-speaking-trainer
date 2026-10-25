@@ -543,5 +543,11 @@
   "Переводим название…": "Translating the title…",
   "Название автоматически переводится на русский и английский.": "The title is automatically translated into Russian and English.",
   "Не удалось перевести название темы. Тема не сохранена. Повторите попытку.": "Could not translate the topic title. The topic was not saved. Please try again.",
-  "Язык интерфейса и исходных фраз": "Interface and source language"
+  "Язык интерфейса и исходных фраз": "Interface and source language",
+  "До 5 личных тем": "Up to 5 personal topics",
+  "До 30 фраз в каждой теме — 150 своих фраз всего": "Up to 30 phrases per topic — 150 custom phrases in total",
+  "Однократный платёж 5 евро": "One-time payment of 5 euros",
+  "Две чашки кофе": "Two cups of coffee",
+  "Почему платно?": "Why is it paid?",
+  "Приложение использует API-вызовы внешней модели OpenAI.": "The app makes API calls to an external OpenAI model."
 }
