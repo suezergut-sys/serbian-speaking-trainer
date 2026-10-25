@@ -7,6 +7,27 @@ import { setLanguage } from "../i18n";
 
 afterEach(() => { cleanup(); setLanguage("ru"); });
 
+it.each(["ru", "en"] as const)("keeps card selections and native switches accessible in %s", language => {
+  setLanguage(language);
+  const alphabetChange = vi.fn();
+  const assistanceChange = vi.fn();
+  const view = render(<SettingsView alphabet="latin" onAlphabetChange={alphabetChange} assistanceEnabled onAssistanceChange={assistanceChange} />);
+  const languageGroup = screen.getByRole("group", { name: language === "ru" ? "Язык интерфейса и исходных фраз" : "Interface and source language" });
+  expect(within(languageGroup).getByRole("radio", { name: language === "ru" ? "Русский" : "English" })).toBeChecked();
+  fireEvent.click(within(languageGroup).getByRole("radio", { name: language === "ru" ? "English" : "Русский" }));
+  const nextEn = language === "ru";
+  expect(screen.getByRole("heading", { name: nextEn ? "Settings" : "Настройки" })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("radio", { name: new RegExp(nextEn ? "Cyrillic" : "Кириллица") }));
+  expect(alphabetChange).toHaveBeenCalledWith("cyrillic");
+  const hints = screen.getByRole("switch", { name: nextEn ? "Gentle transcription hints" : "Мягкие подсказки при распознавании" });
+  fireEvent.click(hints);
+  expect(assistanceChange).toHaveBeenCalledWith(false);
+  view.rerender(<SettingsView alphabet="cyrillic" onAlphabetChange={alphabetChange} assistanceEnabled assistanceSaving />);
+  expect(screen.getByRole("radio", { name: new RegExp(nextEn ? "Cyrillic" : "Кириллица") })).toBeChecked();
+  expect(screen.getByRole("switch", { name: nextEn ? "Gentle transcription hints" : "Мягкие подсказки при распознавании" })).toBeDisabled();
+  expect(screen.getByRole("status")).toHaveTextContent(nextEn ? "Saving preference…" : "Сохраняем настройку…");
+});
+
 it("shows the current Android release number in settings", () => {
   render(<SettingsView alphabet="latin" onAlphabetChange={() => {}} />);
   const androidBuild = readFileSync(resolve(process.cwd(), "android/app/build.gradle"), "utf-8");

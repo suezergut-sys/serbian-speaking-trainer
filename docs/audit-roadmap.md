@@ -1,5 +1,12 @@
 # План улучшений по аудиту SerboTalk
 
+## 25.10.2026 — карточки настроек
+
+- [x] Реализация общего RU/EN UI: парные выборы, адаптивные 3/2+1 действия, флаги, колокольчик, смысловые SVG и официальный OpenAI icon. Клавиатура, состояния сохранения/ошибки и admin-доступ сохранены. [Проверки и выпуск](settings-cards-2026-10-25.md).
+- [x] 8/8 browser scenarios RU/EN desktop/mobile/320px/shared Android-layout; component checks настроек и дочерних форм.
+- [ ] Публикация web и проверка production.
+- [ ] Android: перенос в будущий отдельно запрошенный APK и физическая приёмка.
+
 ## 24.10.2026 — общий релиз web и Android 1.39
 
 - [x] Собраны email OTP, ShareApp, личный каталог из опубликованного web и накопленные регрессии/документы; номер 1.39/code49 подтверждён. 377 backend/scripts, 299 frontend, 5 Node guards и 20 browser scenarios. [Доказательства](android-1.39-release.md).

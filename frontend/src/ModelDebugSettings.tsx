@@ -1,3 +1,4 @@
+import { SettingsIcon } from "./SettingsIcon";
 import { t } from "./i18n";
 import { useEffect, useRef, useState } from "react";
 import { fetchModelDebug, updateModelDebug } from "./api/users";
@@ -42,12 +43,15 @@ export function ModelDebugSettings() {
     }
   }
 
-  return <section className="assistance-settings panel" aria-label={t("Режим отладки")}>
-    <label><input type="checkbox" role="switch" checked={enabled} disabled={busy || !loaded} onChange={event => void change(event.target.checked)} />{t(" Режим отладки")}</label>
+  return <section className="assistance-settings settings-section settings-card" aria-label={t("Режим отладки")}>
+    <SettingsIcon name="debug" />
+    <div className="settings-card__copy">
+    <label className="settings-toggle"><strong>{t("Режим отладки")}</strong><input type="checkbox" role="switch" checked={enabled} disabled={busy || !loaded} onChange={event => void change(event.target.checked)} /></label>
     <p>{t("Сохранять в БД запросы и ответы моделей вашего аккаунта, точное время, длительность и аудио для диагностики распознавания.")}</p>
     <small>{t("Временно хранятся последние 20 аудиозаписей. При выключении все логи и аудио удаляются из БД.")}</small>
     {busy && <p role="status">{t("Сохраняем или загружаем режим отладки…")}</p>}
     {error && <p role="alert">{t(error)}</p>}
     {!busy && !loaded && <button className="debug-retry-button" type="button" onClick={() => { setBusy(true); setError(undefined); setReload(value => value + 1); }}>{t("Повторить загрузку")}</button>}
+    </div>
   </section>;
 }

@@ -13,6 +13,9 @@
   --line: rgba(61, 143, 221, .3);
   --panel: rgba(5, 18, 37, .84);
   --gold: #f2bd5a;
+  --settings-success: #64dfb8;
+  --settings-secondary: #b4a1ff;
+  --settings-error: #ff9eaa;
   --reward-background: #07162a;
   --workspace-width: 1020px;
   --workspace-gutter: clamp(1rem, 1.4vw, 1.5rem);
@@ -1006,3 +1009,70 @@ button { cursor: pointer; background: var(--panel); }
 
 /* Owner-only custom topics keep a thin gold border in every home-card state. */
 .android-topic.topic--personal, .desktop-topic-card.topic--personal { border: 1px solid var(--gold); }
+
+/* Shared settings cards: desktop, mobile web and the Android layout. */
+.settings-page { width: min(980px, 100%); }
+.settings-page .settings-section { min-width: 0; margin: 0 0 1.5rem; padding: 0; border: 0; background: transparent; color: var(--text); }
+.settings-page .settings-section > h2, .settings-page .settings-section legend { margin: 0 0 .75rem; padding: 0; color: var(--text); font-size: 1rem; font-weight: 700; }
+.settings-page .settings-section > p { margin: 0 0 .85rem; color: var(--muted); font-size: .8rem; line-height: 1.5; }
+.settings-page .alphabet-settings { display: block; }
+.settings-card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .85rem; min-width: 0; }
+.settings-page .settings-card { position: relative; display: flex; align-items: flex-start; gap: .85rem; min-width: 0; margin: 0; padding: 1.15rem; border: 1px solid var(--line); border-radius: 15px; background: var(--panel); color: var(--text); text-align: left; font: inherit; }
+.settings-page .settings-card strong { font-size: .9rem; font-weight: 650; line-height: 1.4; }
+.settings-page .settings-card__copy { display: block; flex: 1; min-width: 0; margin: 0; }
+.settings-page .settings-card__copy small, .settings-page .settings-card p, .settings-page .settings-card small { display: block; margin: .5rem 0 0; color: var(--muted); font-size: .8rem; line-height: 1.5; overflow-wrap: anywhere; }
+.settings-page .settings-card__copy strong { display: block; color: var(--text); }
+.settings-page .settings-icon { display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; margin: 0; border-radius: 12px; background: color-mix(in srgb, var(--blue) 14%, transparent); color: var(--blue-bright); }
+.settings-icon svg { width: 28px; height: 28px; overflow: hidden; }
+.settings-page .settings-icon--ru svg, .settings-page .settings-icon--en svg { width: 30px; height: 21px; border-radius: 3px; }
+.settings-page .settings-icon__letters { margin: 0; color: inherit; font-size: 1.3rem; font-weight: 650; }
+.settings-page .settings-icon--bell { color: var(--gold); background: color-mix(in srgb, var(--gold) 13%, transparent); }
+.settings-page .settings-icon--celebrate, .settings-page .settings-icon--debug { color: var(--settings-success); background: color-mix(in srgb, var(--settings-success) 9%, transparent); }
+.settings-page .settings-icon--openai { background: transparent; }
+.settings-page .settings-icon--feedback, .settings-page .settings-icon--share { color: var(--settings-secondary); background: color-mix(in srgb, var(--settings-secondary) 9%, transparent); }
+.settings-page label.settings-choice { flex-wrap: nowrap; align-items: center; padding-right: 2.8rem; cursor: pointer; }
+.settings-page .settings-choice input[type=radio] { position: absolute; width: 1px; height: 1px; opacity: 0; margin: 0; }
+.settings-page .settings-choice .settings-choice__check { position: absolute; right: .85rem; top: .85rem; margin: 0; color: var(--cyan); font-size: 1rem; font-weight: 700; visibility: hidden; }
+.settings-page .settings-choice:has(input:checked) { background: color-mix(in srgb, var(--blue) 10%, var(--panel)); border-color: var(--cyan); box-shadow: inset 0 0 24px color-mix(in srgb, var(--blue) 7%, transparent); }
+.settings-page .settings-choice:has(input:checked) .settings-choice__check { visibility: visible; }
+.settings-page .settings-choice:has(input:focus-visible) { outline: 2px solid var(--cyan); outline-offset: 3px; }
+.settings-page .settings-toggle { display: flex; align-items: center; justify-content: space-between; flex-wrap: nowrap; gap: .7rem; padding: 0; border: 0; border-radius: 0; background: transparent; cursor: pointer; }
+.settings-page .settings-toggle strong { flex: 1; min-width: 0; }
+.settings-page .settings-toggle input[role=switch] { appearance: none; flex: 0 0 40px; width: 40px; height: 24px; margin: 0; border: 1px solid var(--muted); border-radius: 20px; background: var(--panel); color: var(--text); background-image: radial-gradient(circle at 11px 50%, var(--text) 8px, transparent 9px); cursor: pointer; }
+.settings-page .settings-toggle input[role=switch]:checked { background-color: var(--blue); border-color: var(--blue-bright); background-image: radial-gradient(circle at 27px 50%, var(--text) 8px, transparent 9px); }
+.settings-page .settings-toggle input[role=switch]:disabled { opacity: .55; cursor: wait; }
+.settings-page .settings-toggle input:focus-visible, .settings-page .settings-action:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+.settings-page label.settings-reward { padding: 1.15rem; border: 1px solid var(--line); border-radius: 15px; background: var(--panel); }
+.settings-page .settings-action { align-items: center; width: 100%; min-height: 88px; cursor: pointer; }
+.settings-page .settings-action:hover:not(:disabled), .settings-page .settings-choice:hover { border-color: var(--blue-bright); }
+.settings-page .settings-action:disabled { background: var(--panel); color: var(--muted); cursor: wait; opacity: .65; }
+.settings-page .share-app-settings__actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.settings-page .settings-url label { margin: 0; font-size: .8rem; }
+.settings-page .settings-url input { margin-top: .35rem; padding: .45rem; font: inherit; font-size: .75rem; }
+.settings-page .settings-url .settings-icon { flex-basis: 32px; width: 32px; height: 32px; }
+.settings-page .settings-url .settings-icon svg { width: 22px; height: 22px; }
+.settings-page .settings-admin-grid { margin-bottom: 1.5rem; align-items: stretch; }
+.settings-page .settings-admin-grid > .settings-card { margin: 0; }
+.settings-page > .assistance-settings.settings-card { margin-bottom: 1.5rem; }
+.settings-page .settings-profile { margin-bottom: 1rem; }
+.settings-page .settings-admin-grid h2 { margin: 0 0 .75rem; font-size: .9rem; }
+.settings-page .settings-card [role=alert], .settings-page .settings-section > [role=alert] { color: var(--settings-error); }
+.settings-page .settings-card [role=status], .settings-page .settings-section > [role=status] { color: var(--text); }
+.settings-page .feedback-settings form { margin-top: .85rem; }
+@media (max-width: 640px) {
+  .settings-card-grid { gap: .65rem; }
+  .settings-page .settings-card { gap: .65rem; padding: .9rem; }
+  .settings-page label.settings-choice { flex-direction: column; align-items: flex-start; justify-content: flex-start; padding: .9rem; padding-right: 1.7rem; min-height: 112px; }
+  .settings-page .settings-choice .settings-card__copy { flex: none; }
+  .settings-page .settings-choice .settings-card__copy small { margin: .35rem 0 0; font-size: .75rem; }
+  .settings-page label.settings-reward { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-content: start; gap: .75rem .35rem; padding: .9rem; }
+  .settings-page .settings-reward > strong { grid-column: 1 / -1; grid-row: 2; }
+  .settings-page .settings-reward > input { grid-column: 2; grid-row: 1; }
+  .settings-page .settings-reward .settings-icon { width: 38px; height: 38px; }
+  .settings-page .share-app-settings__actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .settings-page .share-app-settings .settings-action { flex-direction: column; align-items: flex-start; }
+  .settings-page .settings-url { grid-column: 1 / -1; align-items: center; }
+  .settings-page .settings-admin-grid { grid-template-columns: minmax(0, 1fr); }
+  .android-settings-page .settings-page .alphabet-settings { padding: 0; }
+  .android-settings-page .settings-page .alphabet-settings label span { flex-basis: auto; margin-left: 0; }
+}

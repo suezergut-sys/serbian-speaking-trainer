@@ -1,3 +1,4 @@
+import { SettingsIcon } from "./SettingsIcon";
 import { useEffect, useRef, useState } from "react";
 import { fetchTranscriptionModels, updateTranscriptionModel, type TranscriptionModelSettings as ModelSettings } from "./api/users";
 import { t } from "./i18n";
@@ -41,7 +42,9 @@ export function TranscriptionModelSettings() {
     }
   }
 
-  return <section className="transcription-model-settings panel" aria-labelledby="transcription-model-title">
+  return <section className="transcription-model-settings settings-section settings-card" aria-labelledby="transcription-model-title">
+    <SettingsIcon name="openai" />
+    <div className="settings-card__copy">
     <h2 id="transcription-model-title">{t("Эксперимент: распознавание речи")}</h2>
     <p>{t("Модель меняется только для вашего аккаунта и следующих записей. Отладку включать необязательно.")}</p>
     <label htmlFor="transcription-model">{t("Модель распознавания")}</label>
@@ -53,5 +56,6 @@ export function TranscriptionModelSettings() {
     {busy && <p role="status">{t("Загружаем или сохраняем модель…")}</p>}
     {error && <p role="alert">{t(error)}</p>}
     {!busy && !settings && <button type="button" onClick={() => { setBusy(true); setError(undefined); setReload(value => value + 1); }}>{t("Повторить загрузку")}</button>}
+    </div>
   </section>;
 }
