@@ -1,3 +1,4 @@
+import { SettingsIcon } from "./SettingsIcon";
 import { t, useLanguage, setLanguage } from "./i18n";
 import type { CurrentUser } from "./types/auth";
 import type { SerbianAlphabet } from "./serbianScript";
@@ -23,32 +24,41 @@ export function SettingsView({ alphabet, onAlphabetChange, account, onSignOut, a
   const animations = useRewardPreference("animations");
   return <main className="settings-page">
     <header className="settings-heading"><h1>{t("Настройки")}</h1><span className="settings-version" aria-label={t("Версия приложения")}>v.{t(version.split(".").slice(0, 2).join("."))}</span></header>
-    <fieldset className="alphabet-settings panel language-settings">
-      <legend>{language === "en" ? "Interface and source language" : "Язык интерфейса и исходных фраз"}</legend>
-      <label><input type="radio" name="interface-language" value="ru" checked={language === "ru"} onChange={() => setLanguage("ru")} /> Русский</label>
-      <label><input type="radio" name="interface-language" value="en" checked={language === "en"} onChange={() => setLanguage("en")} /> English</label>
+    <fieldset className="alphabet-settings language-settings settings-section">
+      <legend>{t("Язык интерфейса и исходных фраз")}</legend>
+      <div className="settings-card-grid">
+        <label className="settings-card settings-choice"><SettingsIcon name="ru" /><strong>Русский</strong><input type="radio" name="interface-language" value="ru" checked={language === "ru"} onChange={() => setLanguage("ru")} /><span className="settings-choice__check" aria-hidden="true">✓</span></label>
+        <label className="settings-card settings-choice"><SettingsIcon name="en" /><strong>English</strong><input type="radio" name="interface-language" value="en" checked={language === "en"} onChange={() => setLanguage("en")} /><span className="settings-choice__check" aria-hidden="true">✓</span></label>
+      </div>
     </fieldset>
-    <fieldset className="alphabet-settings panel">
+    <fieldset className="alphabet-settings settings-section">
       <legend>{t("Алфавит сербского языка")}</legend>
       <p>{t("Выберите, как показывать сербские фразы, переводы слов и результаты проверки.")}</p>
-      <label><input type="radio" name="serbian-alphabet" value="latin" checked={alphabet === "latin"} onChange={() => onAlphabetChange("latin")} />{t(" Латиница ")}<span>Želim da otvorim račun.</span></label>
-      <label><input type="radio" name="serbian-alphabet" value="cyrillic" checked={alphabet === "cyrillic"} onChange={() => onAlphabetChange("cyrillic")} />{t(" Кириллица ")}<span>{t("Желим да отворим рачун.")}</span></label>
+      <div className="settings-card-grid">
+        <label className="settings-card settings-choice"><SettingsIcon name="latin" /><span className="settings-card__copy"><strong>{t("Латиница")}</strong><small>Želim da otvorim račun.</small></span><input type="radio" name="serbian-alphabet" value="latin" checked={alphabet === "latin"} onChange={() => onAlphabetChange("latin")} /><span className="settings-choice__check" aria-hidden="true">✓</span></label>
+        <label className="settings-card settings-choice"><SettingsIcon name="cyrillic" /><span className="settings-card__copy"><strong>{t("Кириллица")}</strong><small>Желим да отворим рачун.</small></span><input type="radio" name="serbian-alphabet" value="cyrillic" checked={alphabet === "cyrillic"} onChange={() => onAlphabetChange("cyrillic")} /><span className="settings-choice__check" aria-hidden="true">✓</span></label>
+      </div>
     </fieldset>
-    <section className="assistance-settings panel">
-      <label><input type="checkbox" role="switch" disabled={assistanceSaving} checked={assistanceEnabled} onChange={event => onAssistanceChange?.(event.target.checked)} />{t(" Мягкие подсказки при распознавании")}</label>
-      <p>{t("Сравнивать каждую расшифровку с эталоном и допустимыми переводами, предлагая близкие варианты возможных искажений распознавания. Все изменения применяются только после вашего подтверждения.")}</p>
-      {assistanceSaving && <p role="status">{t("Сохраняем настройку…")}</p>}
-      {assistanceError && <p role="alert">{t(assistanceError)}</p>}
+    <section className="assistance-settings settings-section settings-card" aria-label={t("Мягкие подсказки при распознавании")}>
+      <SettingsIcon name="hints" />
+      <div className="settings-card__copy">
+        <label className="settings-toggle"><strong>{t("Мягкие подсказки при распознавании")}</strong><input type="checkbox" role="switch" disabled={assistanceSaving} checked={assistanceEnabled} onChange={event => onAssistanceChange?.(event.target.checked)} /></label>
+        <p>{t("Сравнивать каждую расшифровку с эталоном и допустимыми переводами, предлагая близкие варианты возможных искажений распознавания. Все изменения применяются только после вашего подтверждения.")}</p>
+        {assistanceSaving && <p role="status">{t("Сохраняем настройку…")}</p>}
+        {assistanceError && <p role="alert">{t(assistanceError)}</p>}
+      </div>
     </section>
-    <fieldset className="alphabet-settings panel reward-settings">
+    <fieldset className="alphabet-settings reward-settings settings-section">
       <legend>{t("Награды за успехи")}</legend>
       <p>{t("Звоночек за 100% и золотая награда за 20 повторений за день. Настройки сохраняются на этом устройстве.")}</p>
-      <label><input type="checkbox" role="switch" checked={sounds} onChange={event => setRewardPreference("sounds", event.target.checked)} />{t("Звуки успеха")}</label>
-      <label><input type="checkbox" role="switch" checked={animations} onChange={event => setRewardPreference("animations", event.target.checked)} />{t("Анимации успеха")}</label>
+      <div className="settings-card-grid">
+        <label className="settings-card settings-toggle settings-reward"><SettingsIcon name="bell" /><strong>{t("Звуки успеха")}</strong><input type="checkbox" role="switch" checked={sounds} onChange={event => setRewardPreference("sounds", event.target.checked)} /></label>
+        <label className="settings-card settings-toggle settings-reward"><SettingsIcon name="celebrate" /><strong>{t("Анимации успеха")}</strong><input type="checkbox" role="switch" checked={animations} onChange={event => setRewardPreference("animations", event.target.checked)} /></label>
+      </div>
     </fieldset>
     <ShareAppSettings />
     <FeedbackSettings />
-    {account?.role === "admin" && account.can_debug_models && <><TranscriptionModelSettings key={`transcription-${account.id}`} /><ModelDebugSettings key={account.id} /></>}
+    {account?.role === "admin" && account.can_debug_models && <div className="settings-admin-grid settings-card-grid"><TranscriptionModelSettings key={`transcription-${account.id}`} /><ModelDebugSettings key={account.id} /></div>}
     {account && <><section className="settings-profile panel" aria-labelledby="settings-account-title">
       <h2 id="settings-account-title">{t("Аккаунт")}</h2>
       <div className="settings-profile__details">

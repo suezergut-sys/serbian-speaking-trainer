@@ -1,3 +1,4 @@
+import { SettingsIcon } from "./SettingsIcon";
 import { useRef, useState } from "react";
 import { Capacitor } from "@capacitor/core";
 import { Share } from "@capacitor/share";
@@ -41,15 +42,14 @@ export function ShareAppSettings() {
   }
 
   const busy = state === "sharing" || state === "copying";
-  return <section className="share-app-settings panel" aria-labelledby="share-app-title">
+  return <section className="share-app-settings settings-section" aria-labelledby="share-app-title">
     <h2 id="share-app-title">{t("Поделиться приложением")}</h2>
     <p>{t("Пригласите друзей практиковать сербский. Ссылка открывает SerboTalk в браузере.")}</p>
-    <div className="share-app-settings__actions">
-      <button type="button" disabled={busy} onClick={() => void perform()}>{t("Поделиться")}</button>
-      <button type="button" disabled={busy} onClick={() => void perform(true)}>{t("Скопировать ссылку")}</button>
+    <div className="share-app-settings__actions settings-card-grid">
+      <button className="settings-card settings-action" type="button" disabled={busy} onClick={() => void perform()}><SettingsIcon name="share" /><strong>{t("Поделиться")}</strong></button>
+      <button className="settings-card settings-action" type="button" disabled={busy} onClick={() => void perform(true)}><SettingsIcon name="link" /><strong>{t("Скопировать ссылку")}</strong></button>
+      <div className="settings-card settings-url"><SettingsIcon name="link" /><div className="settings-card__copy"><label htmlFor="share-app-url">{t("Ссылка на приложение")}</label><input id="share-app-url" type="url" readOnly value={publicAppUrl} onFocus={event => event.currentTarget.select()} /></div></div>
     </div>
-    <label htmlFor="share-app-url">{t("Ссылка на приложение")}</label>
-    <input id="share-app-url" type="url" readOnly value={publicAppUrl} onFocus={event => event.currentTarget.select()} />
     {busy && <p role="status">{t(state === "sharing" ? "Открываем меню отправки…" : "Копируем ссылку…")}</p>}
     {state === "copied" && <p role="status">{t("Ссылка скопирована.")}</p>}
     {state === "error" && <p role="alert">{t("Не удалось поделиться или скопировать ссылку. Вы можете скопировать её вручную из поля выше.")}</p>}

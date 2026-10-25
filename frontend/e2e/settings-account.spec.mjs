@@ -18,6 +18,7 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
       if (path === '/api/auth/me') body = { id: 'settings-user', email: 'maxim.sumin.long.address@example.invalid', display_name: 'Maksim Sumin', role: 'admin', can_debug_models: true, access_tier: 'free', daily_usage: { used: 4, limit: null, remaining: null, resets_at: '2026-10-16T00:00:00Z' } };
       else if (path === '/api/auth/me/preferences') body = { assistance_enabled: false };
       else if (path === '/api/topics') body = [];
+      else if (path === '/api/custom-phrases') body = [];
       else if (path === '/api/review-phrases/summary') body = { phrase_count: 0 };
       else if (path === '/api/admin/model-debug/transcription') {
         if (route.request().method() === 'PATCH') selectedModel = route.request().postDataJSON().model;
@@ -33,6 +34,43 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
     });
     await page.goto('/');
     await page.getByRole('button', { name: en ? 'Settings' : 'Настройки', exact: true }).click();
+    const settings = page.locator('.settings-page');
+    const languages = settings.locator('.language-settings');
+    await expect(languages.locator('.settings-icon--ru svg')).toBeVisible();
+    await expect(languages.locator('.settings-icon--en svg')).toBeVisible();
+    const choices = languages.locator('.settings-choice');
+    const firstChoice = await choices.nth(0).boundingBox();
+    const secondChoice = await choices.nth(1).boundingBox();
+    expect(Math.abs(firstChoice.y - secondChoice.y)).toBeLessThan(2);
+    expect(secondChoice.x).toBeGreaterThan(firstChoice.x);
+    // Hidden native radios retain keyboard selection and the selected card ring.
+    await languages.getByRole('radio', { name: en ? 'English' : 'Русский', exact: true }).focus();
+    await page.keyboard.press(en ? 'ArrowLeft' : 'ArrowRight');
+    await expect(settings.getByRole('heading', { name: en ? 'Настройки' : 'Settings', exact: true })).toBeVisible();
+    await page.keyboard.press(en ? 'ArrowRight' : 'ArrowLeft');
+    await expect(settings.getByRole('heading', { name: en ? 'Settings' : 'Настройки', exact: true })).toBeVisible();
+    const alphabet = settings.getByRole('radio', { name: en ? /Cyrillic/ : /Кириллица/ });
+    await alphabet.locator('..').click();
+    await expect(alphabet).toBeChecked();
+    await expect(settings.locator('.settings-icon--bell svg')).toBeVisible();
+    await expect(settings.locator('.settings-icon--celebrate svg')).toBeVisible();
+    const sounds = settings.getByRole('switch', { name: en ? 'Success sounds' : 'Звуки успеха' });
+    const soundsBefore = await sounds.isChecked();
+    await sounds.click();
+    expect(await sounds.isChecked()).toBe(!soundsBefore);
+    await sounds.click();
+    const logo = settings.locator('.settings-icon--openai img');
+    await expect(logo).toBeVisible();
+    await expect.poll(() => logo.evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
+    for (const card of await settings.locator('.settings-card').all()) {
+      expect(await card.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+    }
+    const actionBoxes = await settings.locator('.share-app-settings__actions > *').evaluateAll(elements => elements.map(el => ({ x: el.getBoundingClientRect().x, y: el.getBoundingClientRect().y })));
+    expect(Math.abs(actionBoxes[0].y - actionBoxes[1].y)).toBeLessThan(2);
+    if (layout === 'desktop') expect(Math.abs(actionBoxes[1].y - actionBoxes[2].y)).toBeLessThan(2);
+    else expect(actionBoxes[2].y).toBeGreaterThan(actionBoxes[1].y);
+    await mkdir('../artifacts/settings-cards', { recursive: true });
+    await settings.screenshot({ path: `../artifacts/settings-cards/${language}-${layout}.png` });
     const account = page.getByRole('region', { name: en ? 'Account' : 'Аккаунт', exact: true });
     await expect(account.getByText('Maksim Sumin')).toBeVisible();
     await expect(account.getByText('maxim.sumin.long.address@example.invalid')).toBeVisible();

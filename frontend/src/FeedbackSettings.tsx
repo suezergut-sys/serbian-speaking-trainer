@@ -1,3 +1,4 @@
+import { SettingsIcon } from "./SettingsIcon";
 import { useEffect, useRef, useState } from "react";
 import { sendFeedback, transcribeFeedback } from "./api/training";
 import { t } from "./i18n";
@@ -85,9 +86,9 @@ export function FeedbackSettings() {
   }
 
   const busy = state !== "idle";
-  return <section className="feedback-settings panel" aria-labelledby="feedback-settings-title">
+  return <section className="feedback-settings settings-section" aria-labelledby="feedback-settings-title">
     <h2 id="feedback-settings-title">{t("Оставить обратную связь")}</h2>
-    {!open && <button type="button" onClick={() => { setOpen(true); setSent(false); setError(false); }}>{t("Написать или записать отзыв")}</button>}
+    {!open && <button className="settings-card settings-action" type="button" onClick={() => { setOpen(true); setSent(false); setError(false); }}><SettingsIcon name="feedback" /><strong>{t("Написать или записать отзыв")}</strong></button>}
     {sent && <p role="status">{t("Спасибо! Обратная связь отправлена.")}</p>}
     {open && <form onSubmit={event => { event.preventDefault(); void submit(); }}>
       <label htmlFor="feedback-content">{t("Ваша обратная связь")}</label>

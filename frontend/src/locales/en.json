@@ -542,5 +542,6 @@
   "Премиум пользователь": "Premium user",
   "Переводим название…": "Translating the title…",
   "Название автоматически переводится на русский и английский.": "The title is automatically translated into Russian and English.",
-  "Не удалось перевести название темы. Тема не сохранена. Повторите попытку.": "Could not translate the topic title. The topic was not saved. Please try again."
+  "Не удалось перевести название темы. Тема не сохранена. Повторите попытку.": "Could not translate the topic title. The topic was not saved. Please try again.",
+  "Язык интерфейса и исходных фраз": "Interface and source language"
 }
