@@ -4,7 +4,7 @@
 
 - [x] Реализация общего RU/EN UI: парные выборы, адаптивные 3/2+1 действия, флаги, колокольчик, смысловые SVG и официальный OpenAI icon. Клавиатура, состояния сохранения/ошибки и admin-доступ сохранены. [Проверки и выпуск](settings-cards-2026-10-25.md).
 - [x] 8/8 browser scenarios RU/EN desktop/mobile/320px/shared Android-layout; component checks настроек и дочерних форм.
-- [ ] Публикация web и проверка production.
+- [x] Web опубликован через PR #155: runtime f285c6f, Vercel Ready/production; alias/SHA, 8/8 production browser scenarios и авторизованный Chrome RU/EN подтверждены. Полный gate: 393 backend/scripts, 317 frontend, 5 Node guards, lint/typecheck/build. [Доказательства](settings-cards-2026-10-25.md).
 - [ ] Android: перенос в будущий отдельно запрошенный APK и физическая приёмка.
 
 ## 24.10.2026 — общий релиз web и Android 1.39

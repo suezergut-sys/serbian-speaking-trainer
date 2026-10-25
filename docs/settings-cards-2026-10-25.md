@@ -16,8 +16,10 @@
 
 ## Публикация и устройства
 
-- [ ] GitHub PR/merge.
-- [ ] Web deployment Ready, production alias/SHA и браузерная проверка опубликованного интерфейса.
+- [x] [PR #155](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/155) merged; runtime SHA `f285c6f19c7a9f2ca3fbec606208d055572a9194`. GitHub checks отсутствуют; локальный quality gate завершён.
+- [x] Web deployment `dpl_FSie133r6cmwgfuvPpBMSvGNZ74x` Ready/production/main. [Deployment](https://serbian-speaking-trainer-drgp6mhfo-suezerguts-projects.vercel.app), alias `serbotalk.app` и runtime SHA подтверждены Vercel API. CLI использовал чистый git archive; backend не перевыпускался.
+- [x] 25.10.2026: HTTP `/`, `/app`, `/privacy`, `/api/health` → 200; anonymous `/api/topics` → 401. 8/8 production browser scenarios RU/EN × desktop/mobile/320px/shared Android на реальном bundle `https://serbotalk.app/app`, synthetic auth/API, без production writes и AI. Тест учитывает `/app` в production base URL.
+- [x] В существующей авторизованной Chrome-сессии после reload подтверждены карточки/навигация, RU↔EN, текущая версия 1.39, фактический список моделей и загруженная отладка. Модель/отладка не изменялись, отзыв не отправлялся. Local evidence: artifacts/settings-design/{deployment-api.json,production-http.json,production-browser.log,production-settings-ru.png}, production screenshots в artifacts/settings-cards/*.png.
 - [ ] Будущий отдельно запрошенный APK и физическая Android-приёмка.
 
-Автотесты используют synthetic auth/API и не вызывают OpenAI. Backend, схема и окружение не менялись. Production deploy только frontend по принятому CLI workflow из чистого git archive. Основная папка и 11 дополнительных worktree изначально чистые на 59019eb; recovery не потребовалась. Итоговая синхронизация фиксируется после публикации.
+Автотесты используют synthetic auth/API и не вызывают OpenAI. Backend, схема и окружение не менялись. Production deploy только frontend по принятому CLI workflow из чистого git archive. Основная папка и 11 дополнительных worktree изначально чистые на 59019eb; recovery не потребовалась. После merge evidence-only follow-up все неактивные чистые detached worktree обновляются до итогового main; прежние ветки сохранены. Recovery-ветки codex/recovery-android-experiments-20261003, codex/recovery-before-139-20261024 и codex/recovery-primary-20261003 сохранены; новых не создавалось. Финальный снимок 12 HEAD/status/main/origin — artifacts/settings-design/worktrees-final.json. Runtime deployment остаётся на f285c6f, следующий commit содержит только документы и production URL теста; повторный deploy/APK не требуется.

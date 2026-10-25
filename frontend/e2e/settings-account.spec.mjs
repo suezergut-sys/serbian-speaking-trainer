@@ -32,7 +32,7 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
       } else throw new Error(`Unexpected API: ${path}`);
       await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
     });
-    await page.goto('/');
+    await page.goto(process.env.TESTLAB_BASE_URL ? new URL(process.env.TESTLAB_BASE_URL).pathname : '/');
     await page.getByRole('button', { name: en ? 'Settings' : 'Настройки', exact: true }).click();
     const settings = page.locator('.settings-page');
     const languages = settings.locator('.language-settings');
