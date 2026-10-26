@@ -57,3 +57,9 @@ Premium принадлежит аккаунту SerboTalk. Пользовате�
 Проверены 26.10.2026: [политика платежей Google Play](https://support.google.com/googleplay/android-developer/answer/9858738?hl=en), [интеграция Billing и жизненный цикл покупки](https://developer.android.com/google/play/billing/integrate), [серверная проверка и защита от повторного использования](https://developer.android.com/google/play/billing/security). Перед реализацией повторно сверить актуальные требования и API; региональные исключения не включать автоматически в платёжный сценарий SerboTalk.
 
 Дополнительный quality gate: `pnpm lint`, `pnpm exec eslint src`, `pnpm build` (typecheck + production build), `git diff --check` — успешно. Vite сообщает о chunk >500 kB, как и в предыдущем выпуске. Backend-тесты повторно не запускались: backend/API/БД не менялись. Это проверка разделения клиента, а не Google Play Billing или реальной оплаты.
+
+## Публикация и рабочие копии
+
+Изменения сохранены и отправлены на GitHub: исходный commit `e84864e`, [PR #166](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/166), ветка `codex/premium-payment-channels`. PR открыт, mergeable; GitHub checks не настроены/не опубликованы (проверено 26.10.2026). Merge и production deploy не выполнялись. Этот документ дополняется отдельным commit только с доказательствами, без повторной сборки.
+
+До начала все 12 зарегистрированных копий были чистыми на `f76716bc33822056b0359f9cd5c1f1ede2dc4294`. После сохранения PR основная папка возвращается на main/origin/main того же SHA; остальные копии остаются на нём. Recovery-ветки в этой задаче не создавались, чужих изменений не было. Финальный контроль всех копий выполняется после push доказательств.

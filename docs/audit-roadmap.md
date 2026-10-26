@@ -987,3 +987,4 @@
 - [ ] Merge и production-публикация текущего разделения UI.
 - [ ] Отдельно разрешённые Android sync/build и физическая приёмка. 1.40/code50 прежние.
 - [x] 26.10.2026: 343 component tests, 18 browser scenarios RU/EN desktop/mobile/native, визуальная проверка обеих native-локалей, lint/typecheck/production build и diff-check успешны. [Подробности](premium-payment-channels.md).
+- [x] Сохранено/pushed в [PR #166](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/166), runtime commit `e84864e`; PR открыт, merge/production не выполнялись. GitHub checks отсутствуют, локальные проверки выше успешны.
