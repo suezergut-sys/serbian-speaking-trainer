@@ -16,7 +16,7 @@ from app.db.base import Base
 from app.db.session import create_database_engine
 from app.models import Attempt, AttemptRequest, Exercise, LearnerSkill, Skill, TrainingSession, User
 from app.repositories import TrainingSessionRepository
-from app.schemas import AnswerAnalysis, CreateAttemptRequest
+from app.schemas import AnswerAnalysis, AnswerIssue, CreateAttemptRequest
 from app.services.attempt_service import AttemptInProgressError, AttemptService, DailyLimitExceededError
 from app.services.exercise_generator import ExerciseGenerator
 from app.services.session_service import SessionPendingError
@@ -29,7 +29,10 @@ class HeldAI(FakeAIProvider):
             verdict="mostly_correct", semantic_score=0.8, grammar_score=0.8,
             lexical_score=0.8, naturalness_score=0.8, fluency_score=1,
             corrected_sr="Dobar dan.", short_feedback_ru="Почти верно.",
-            detailed_feedback_ru="Проверьте ответ.", issues=[],
+            detailed_feedback_ru="Проверьте ответ.", issues=[AnswerIssue(
+                type="meaning", skill_key=None, severity=0.5, confidence=1,
+                evidence="Ne znam.", correction="Dobar dan.",
+            )],
         ))
         self.entered = threading.Event()
         self.release = threading.Event()

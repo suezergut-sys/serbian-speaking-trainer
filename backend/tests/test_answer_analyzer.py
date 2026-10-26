@@ -425,7 +425,8 @@ def test_analyzer_keeps_feedback_consistent_with_canonical_variant() -> None:
         short_feedback_ru="Лучше использовать pokupiću.",
         detailed_feedback_ru="В этом контексте pokupiću звучит естественнее, чем канонический вариант.",
         accepted_alternatives=[],
-        issues=[],
+        issues=[AnswerIssue(type="grammar", skill_key=None, severity=0.2, confidence=0.9,
+                            evidence="uzecu", correction="uzeću")],
         demonstrated_skills=[],
     )
     analyzer = AnswerAnalyzer(FakeAIProvider(available=True, analysis_result=model_result))
@@ -443,4 +444,110 @@ def test_analyzer_keeps_feedback_consistent_with_canonical_variant() -> None:
     assert result.corrected_sr == canonical
     assert "pokupiću" not in result.short_feedback_ru
     assert "pokupiću" not in result.detailed_feedback_ru
-    assert "корректен и естественен" in result.detailed_feedback_ru
+    assert "uzecu" in result.detailed_feedback_ru
+    assert "uzeću" in result.detailed_feedback_ru
+
+
+@pytest.mark.parametrize("targets", [[], [{"key": "intent.greeting"}]])
+@pytest.mark.parametrize("issue_type,transcript,evidence,correction,canonical", [
+    ("grammar", "Imam jednu karta.", "karta", "kartu", "Imam jednu kartu."),
+    ("vocabulary", "Želim da kupim stan.", "kupim", "iznajmim", "Želim da iznajmim stan."),
+    ("meaning", "Dolazim danas.", "danas", "sutra", "Dolazim sutra."),
+])
+def test_feedback_outside_curriculum_is_preserved_without_invented_skills(
+    targets, issue_type, transcript, evidence, correction, canonical,
+) -> None:
+    issue = AnswerIssue(type=issue_type, skill_key=None, severity=0.4, confidence=0.9,
+                        evidence=evidence, correction=correction, explanation_ru="Исправьте значение или форму.")
+    model = AnswerAnalysis(
+        verdict="mostly_correct", semantic_score=0.8, grammar_score=0.8,
+        lexical_score=0.8, naturalness_score=0.8, fluency_score=1,
+        corrected_sr=canonical, short_feedback_ru="Есть ошибка.", detailed_feedback_ru="Проверьте ответ.",
+        issues=[issue], demonstrated_skills=[DemonstratedSkill(skill_key="invented", result="strong", confidence=1)],
+    )
+    ai = FakeAIProvider(available=True, analysis_result=model)
+    result = AnswerAnalyzer(ai).analyze(
+        source_ru="Задание", transcript_sr=transcript, canonical_sr=canonical,
+        intended_sr_variants=[canonical], target_skills=targets,
+        timing=CreateAttemptRequest(exercise_id="exercise", transcript_sr=transcript),
+    )
+    assert ai.analysis_calls == 1
+    assert result.verdict == "mostly_correct"
+    assert result.issues == [issue]
+    assert {skill.skill_key for skill in result.demonstrated_skills} == {item["key"] for item in targets}
+
+
+@pytest.mark.parametrize("targets", [[], [{"key": "grammar.present"}]])
+def test_unknown_issue_skill_is_still_rejected(targets) -> None:
+    model = AnswerAnalysis(
+        verdict="mostly_correct", semantic_score=0.8, grammar_score=0.8,
+        lexical_score=0.8, naturalness_score=0.8, fluency_score=1,
+        corrected_sr="Dolazim sutra.", short_feedback_ru="Есть ошибка.", detailed_feedback_ru="Проверьте ответ.",
+        issues=[AnswerIssue(type="meaning", skill_key="invented", severity=0.4, confidence=0.9,
+                            evidence="danas", correction="sutra")],
+    )
+    ai = FakeAIProvider(available=True, analysis_result=model)
+    with pytest.raises(AnalysisUnavailableError):
+        AnswerAnalyzer(ai).analyze(
+            source_ru="Я приду завтра.", transcript_sr="Dolazim danas.",
+            intended_sr_variants=["Dolazim sutra."], target_skills=targets,
+            timing=CreateAttemptRequest(exercise_id="exercise", transcript_sr="Dolazim danas."),
+        )
+    assert ai.analysis_calls == 2
+
+
+def test_no_targets_does_not_allow_unexplained_lower_grade() -> None:
+    model = AnswerAnalysis(
+        verdict="mostly_correct", semantic_score=0.8, grammar_score=0.8,
+        lexical_score=0.8, naturalness_score=0.8, fluency_score=1,
+        corrected_sr="Dolazim sutra.", short_feedback_ru="Есть ошибка.", detailed_feedback_ru="Проверьте ответ.",
+    )
+    ai = FakeAIProvider(available=True, analysis_result=model)
+    with pytest.raises(AnalysisUnavailableError):
+        AnswerAnalyzer(ai).analyze(
+            source_ru="Я приду завтра.", transcript_sr="Dolazim danas.",
+            intended_sr_variants=["Dolazim sutra."], target_skills=[],
+            timing=CreateAttemptRequest(exercise_id="exercise", transcript_sr="Dolazim danas."),
+        )
+    assert ai.analysis_calls == 2
+
+
+@pytest.mark.parametrize("verdict,evidence,correction,severity", [
+    ("correct", "danas", "sutra", 0.5),
+    ("mostly_correct", "nonexistent", "sutra", 0.5),
+    ("mostly_correct", "danas", "danas", 0.5),
+    ("mostly_correct", "danas", "sutra", 0),
+])
+def test_unbound_feedback_still_requires_consistent_verdict_and_real_evidence(verdict, evidence, correction, severity) -> None:
+    model = AnswerAnalysis(
+        verdict=verdict, semantic_score=0.8, grammar_score=0.8,
+        lexical_score=0.8, naturalness_score=0.8, fluency_score=1,
+        corrected_sr="Dolazim sutra.", short_feedback_ru="Проверьте ответ.", detailed_feedback_ru="Проверьте ответ.",
+        issues=[AnswerIssue(type="meaning", skill_key=None, severity=severity, confidence=1,
+                            evidence=evidence, correction=correction)],
+    )
+    ai = FakeAIProvider(available=True, analysis_result=model)
+    with pytest.raises(AnalysisUnavailableError):
+        AnswerAnalyzer(ai).analyze(
+            source_ru="Я приду завтра.", transcript_sr="Dolazim danas.",
+            intended_sr_variants=["Dolazim sutra."], target_skills=[],
+            timing=CreateAttemptRequest(exercise_id="exercise", transcript_sr="Dolazim danas."),
+        )
+    assert ai.analysis_calls == 2
+
+
+def test_personal_phrase_can_still_accept_a_valid_alternative_without_highlights() -> None:
+    model = AnswerAnalysis(
+        verdict="correct", semantic_score=1, grammar_score=1, lexical_score=1,
+        naturalness_score=1, fluency_score=1, corrected_sr="Želim kafu.",
+        short_feedback_ru="Верно.", detailed_feedback_ru="Оба варианта допустимы.", issues=[],
+    )
+    ai = FakeAIProvider(available=True, analysis_result=model)
+    result = AnswerAnalyzer(ai).analyze(
+        source_ru="Я хочу кофе.", transcript_sr="Hoću kafu.",
+        canonical_sr="Želim kafu.", intended_sr_variants=["Želim kafu."], target_skills=[],
+        timing=CreateAttemptRequest(exercise_id="exercise", transcript_sr="Hoću kafu."),
+    )
+    assert ai.analysis_calls == 1
+    assert result.verdict == "correct"
+    assert result.issues == result.demonstrated_skills == []

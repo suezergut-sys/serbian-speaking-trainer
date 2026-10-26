@@ -101,7 +101,7 @@ class AnswerAnalyzer:
         for issue in analysis.issues:
             evidence = cls._normalize(issue.evidence)
             if (
-                issue.skill_key not in target_keys
+                (issue.skill_key is not None and issue.skill_key not in target_keys)
                 or issue.severity <= 0
                 or not evidence
                 or f" {evidence} " not in transcript_words
@@ -110,14 +110,7 @@ class AnswerAnalyzer:
                 return False
         if analysis.verdict == "correct" and analysis.issues:
             return False
-        if (
-            analysis.verdict != "correct"
-            and not analysis.issues
-            and (
-                target_keys
-                or cls._normalize(analysis.corrected_sr) == cls._normalize(transcript_sr)
-            )
-        ):
+        if analysis.verdict != "correct" and not analysis.issues:
             return False
         return True
 

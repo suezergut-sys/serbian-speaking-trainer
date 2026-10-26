@@ -22,6 +22,18 @@ describe("AnswerResult", () => {
   afterEach(() => { cleanup(); setLanguage("ru"); });
   for (const language of ["ru", "en"] as const) {
     for (const alphabet of ["latin", "cyrillic"] as const satisfies readonly SerbianAlphabet[]) {
+      it(`marks errors without a curriculum skill (${language}, ${alphabet})`, () => {
+        setLanguage(language);
+        const issue = { ...attempt.analysis.issues[0], skill_key: null, evidence: "otovrim", correction: "otvorim" };
+        render(<AnswerResult answer={attempt.transcript_sr} alphabet={alphabet}
+          attempt={{ ...attempt, analysis: { ...attempt.analysis, issues: [issue], demonstrated_skills: [] } }} />);
+        const marks = document.querySelectorAll("mark");
+        expect(marks).toHaveLength(1);
+        expect(marks[0]).toHaveTextContent(displaySerbian("otovrim", alphabet));
+        expect(marks[0]).toHaveAttribute("title", displaySerbian("otvorim", alphabet));
+        expect(document.querySelector(".result-phrase__text")).toHaveTextContent(displaySerbian(attempt.transcript_sr, alphabet));
+      });
+
       it(`preserves unreported Da and marks the reported word order (${language}, ${alphabet})`, () => {
         setLanguage(language);
         const answer = "Sednemo Napolju. Da, naravno. Baš lepo je vreme.";
