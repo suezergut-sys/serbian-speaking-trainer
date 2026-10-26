@@ -51,7 +51,9 @@
 - [x] Итоговый backend/scripts quality gate: 430 passed, 9 skipped (изолированная PostgreSQL test DB недоступна), 62.00s. 18 payment/API/concurrency/migration tests входят в итоговый набор. Старый downgrade-тест проверяет сохранность User.id, а не ORM с колонками будущей схемы.
 - [x] Локальная owner-approved конфигурация проверена Pydantic: все методы доступны, ALTA EUR/RSD используют отдельные снимки. Внешние платежи и production DB при проверке не вызывались.
 - Ограничения проверок: PostgreSQL concurrency/live-платежи не проверялись; build выдаёт существующее предупреждение о JS chunk >500 kB, pytest — deprecation warnings.
-- [ ] Публикация PR/CI.
+- [x] Исходники опубликованы: [PR #162](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/162), source SHA `b7e06b193224ccd6f85cd9ec665c14cd4412389b`. PR MERGEABLE. GitHub Actions workflows: 0; statusCheckRollup пуст — удалённый CI не заявляется как пройденный.
+- [x] Исходная основная папка и 11 остальных worktree проверены чистыми; main/origin/main `4aeb1def92c52b81d9da64082b26288d215ea4d0`. После публикации основной checkout возвращается на этот main, финальная проверка повторяется. Recovery/WIP-ветки не требовались. Код новой функции хранится в ветке PR до согласованного merge.
+- Этот последующий commit обновляет только документацию; APK/deploy ради него не выполняются.
 - [ ] Merge, production deployment/миграция и production-приёмка.
 - [x] Получены реквизиты/суммы и окончательное правило немедленного доступа; локальная ignored .env заполнена.
 - [ ] Перенос MANUAL_PAYMENTS в production environment при согласованном выпуске.

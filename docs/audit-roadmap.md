@@ -6,7 +6,8 @@
 - [x] Модель/Alembic/API/service/repository, owner-scoped заявки, идемпотентность и сериализация; по окончательному указанию владельца «Я оплатил» сразу выдаёт предварительный Premium, подтверждение/отклонение с отзывом — только admin.
 - [x] 339 frontend component tests, lint/typecheck/production build, 18 browser scenarios RU/EN desktop/320px/shared Android-layout, 5 Node guards; visual review RU/EN. [Доказательства и настройка](manual-premium-payments-2026-10-26.md).
 - [x] Финальный backend/scripts quality gate: 430 passed, 9 skipped (isolated PostgreSQL test DB unavailable); 18 payment/API/concurrency/migration tests, безопасный downgrade и upgrade старого testlab проверены.
-- [ ] Публикация PR, CI, merge и проверка production — отдельные шаги.
+- [x] Код и доказательства отправлены в [PR #162](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/162), source `b7e06b1`, PR MERGEABLE; GitHub Actions workflows отсутствуют, check rollup пуст.
+- [ ] Согласованный merge, backend environment, production-миграция/deploy и проверка production — отдельные шаги.
 - [x] Получены суммы/реквизиты; окончательное правило — немедленный Premium после сообщения, настройка сохранена в ignored backend .env.
 - [ ] Настройка production environment и приёмка владельцем с реальным поступлением.
 - [ ] Android-релиз по отдельной команде; 1.40/code50 не меняется.
