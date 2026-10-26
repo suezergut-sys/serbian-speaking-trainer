@@ -2,6 +2,8 @@
 
 ## 26.10.2026 — отдельные каналы оплаты Premium
 
+Подробная [инструкция владельцу по Google Play Console](docs/google-play-premium-console-guide.md): профиль продавца и банк, разовый товар, цены/страны, Google Cloud API, license testers, RTDN и приёмка. Настройки аккаунта по этой инструкции ещё не выполнялись; Billing не подключён.
+
 Согласован бессрочный Premium за 5 EUR с общим доступом аккаунта в web и Android. Web сохраняет собственную оплату; для покупок внутри Android предусмотрена отдельная реализация Google Play Billing. В исходниках native UI ручная web-форма отключена, пока Billing не подключён. Сам Billing ещё не реализован; платёжный профиль и товар Play Console пока не готовы. APK 1.40/code50 не менялся. [Контракт, настройка и статусы](docs/premium-payment-channels.md).
 
 ## 26.10.2026 — Telegram о заявке Premium
