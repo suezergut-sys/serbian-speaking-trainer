@@ -15,7 +15,11 @@
 - [x] 30 целевых payment/notification tests passed, все отправки Telegram и AI mocked.
 - [x] Локальная конфигурация Telegram и sensitive production keys присутствуют; значения не выводились и не коммитились, получатель не менялся.
 - [x] Финальный backend/scripts quality gate: 435 passed, 9 skipped (isolated PostgreSQL test DB unavailable), 70.08s.
-- [ ] PR/merge, backend build и READY/production alias/source SHA.
-- [ ] Ручная тестовая доставка в существующий Telegram-канал владельца без создания реальной заявки/оплаты.
+- [x] [PR #164](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/164) merged. Backend runtime SHA `0da638215c36bd06aa840d0662841745464c03cc`; deployment `dpl_GHJTTCgf1H4oTtKVEgizL6dXA7Ay`, [URL](https://serbian-speaking-trainer-mhx74ae1h-suezerguts-projects.vercel.app), READY/production/main. Production alias `serbian-speaking-trainer-api.vercel.app` и meta.gitCommitSha подтверждены. Build/seed завершены, новых миграций нет.
+- [x] Через production web rewrite API health — 200; anonymous payments/options и admin/payments — 401. Runtime error log rows: 0 за проверенный интервал. Backend-only изменение; frontend остаётся на проверенном fceb203, не развёртывался повторно.
+- [x] Доказательства metadata/HTTP находятся в ignored `artifacts/premium-payment-telegram/release-checks.json`; секреты и chat ID в них не входят.
+- [x] Ручная тестовая доставка: настоящий sender и after-commit hook, synthetic User/PaymentRequest в SQLite in-memory, явный префикс «ТЕСТ УВЕДОМЛЕНИЯ — реальной оплаты и production-заявки нет». Telegram вернул ok; повторный report не отправил дубль. Production аккаунты/оплаты не менялись.
 - [ ] Приёмка настоящей заявки владельцем отдельно от синтетических проверок.
 - [x] Web bundle, Android 1.40/code50, Capacitor и APK не менялись. Backend-уведомления доступны клиентам через общий API без нового APK.
+
+После фиксации документации выполняется финальная синхронизация всех 12 чистых worktree с origin/main и запись `artifacts/premium-payment-telegram/worktrees-final.json`. Активная чужая работа проекта не переключается, прежние ветки сохраняются; recovery/WIP не требовались. Последующий documentation-only main отделён от backend runtime SHA выше и не требует повторного deploy/APK.
