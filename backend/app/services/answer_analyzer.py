@@ -2,14 +2,13 @@ from __future__ import annotations
 
 from difflib import SequenceMatcher
 
-from pydantic import ValidationError
-
 from app.config import Settings, get_settings
 from app.db.topic_phrases_en import TOPIC_PHRASES_EN
 from app.schemas import AnswerAnalysis, AnswerIssue, CreateAttemptRequest, DemonstratedSkill
 from app.services.ai_adapter import AIServiceError, StructuredAIProvider
 from app.services.serbian_text import normalized_serbian_words, serbian_latin_for_evaluation
 from app.services.interface_language import interface_language
+from app.services.serbian_standard import is_ekavian_candidate, validate_generated_serbian
 
 
 class AnalysisUnavailableError(RuntimeError):
@@ -32,6 +31,11 @@ class AnswerAnalyzer:
         canonical_sr: str | None = None,
     ) -> AnswerAnalysis:
         target_keys = list(dict.fromkeys(skill["key"] for skill in target_skills))
+        # A stale dialect-contaminated snapshot must not become a perfect-answer
+        # shortcut or be reapplied after the model returns an Ekavian correction.
+        if canonical_sr and not is_ekavian_candidate(canonical_sr):
+            canonical_sr = None
+        intended_sr_variants = [variant for variant in intended_sr_variants if is_ekavian_candidate(variant)]
         acceptable_variants = list(dict.fromkeys([
             *([canonical_sr] if canonical_sr else []), *intended_sr_variants,
         ]))
@@ -44,7 +48,7 @@ class AnswerAnalyzer:
             ),
             None,
         )
-        if exact_variant is not None:
+        if exact_variant is not None and is_ekavian_candidate(exact_variant):
             return self._exact_match(exact_variant, acceptable_variants, target_keys, timing)
 
         if not self.ai.is_available:
@@ -65,9 +69,11 @@ class AnswerAnalyzer:
                         timings=self._timing_payload(timing),
                     )
                 )
-            except (AIServiceError, ValidationError) as exc:
+                validate_generated_serbian(analysis)
+            except (AIServiceError, ValueError) as exc:
                 raise AnalysisUnavailableError from exc
-            if self._response_is_grounded(analysis, evaluation_transcript, target_keys):
+            if (self._response_is_grounded(analysis, evaluation_transcript, target_keys)
+                    and (analysis.verdict != "correct" or is_ekavian_candidate(evaluation_transcript))):
                 break
         else:
             raise AnalysisUnavailableError

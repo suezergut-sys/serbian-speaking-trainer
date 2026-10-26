@@ -15,6 +15,7 @@ from app.schemas.attempts import ExplainedAnswerAnalysis
 from app.request_metrics import measure_ai_call
 from app.services.model_debug import capture_model_call
 from app.services.interface_language import interface_language
+from app.services.serbian_standard import validate_generated_serbian
 
 PROMPTS_DIR = Path(__file__).resolve().parents[1] / "prompts"
 
@@ -159,6 +160,7 @@ class OpenAIStructuredProvider:
             instructions = load_prompt(prompt_name)
             if prompt_name == "answer_analyzer_v4.md" and interface_language.get() == "en":
                 instructions += "\n\n" + load_prompt("feedback_language_en_v1.md")
+            instructions += "\n\n" + load_prompt("serbian_ekavica_v1.md")
             input_json = json.dumps(payload, ensure_ascii=False)
             with capture_model_call(prompt_name, self.settings.openai_text_model or "", {
                 "model": self.settings.openai_text_model, "instructions": instructions,
@@ -181,7 +183,9 @@ class OpenAIStructuredProvider:
             parsed = response.output_parsed
             if parsed is None:
                 raise AIServiceError("OpenAI returned no structured output")
-            return schema.model_validate(parsed)
+            result = schema.model_validate(parsed)
+            validate_generated_serbian(result)
+            return result
         except AIServiceError:
             raise
         except Exception as exc:
