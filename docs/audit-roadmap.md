@@ -5,8 +5,9 @@
 - [x] After-commit уведомление через существующий канал владельца: аккаунт/номер/страна/способ/суммы, факт включения Premium, поступление ещё не подтверждено.
 - [x] 30 целевых payment/notification tests: no notification до commit, rollback/retry, DI API, сбой отправки, отсутствующая конфигурация и одновременные report без дублей. [Доказательства](premium-payment-telegram-2026-10-26.md).
 - [x] Полный backend/scripts gate: 435 passed, 9 skipped.
-- [ ] PR/merge и production backend release.
-- [ ] Тестовая доставка владельцу; настоящая заявка проверяется отдельно.
+- [x] [PR #164](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/164) merged, backend READY/production/main на `0da6382`; aliases/SHA/HTTP/auth/runtime logs проверены, build/seed успешны. Frontend остаётся fceb203, APK не менялся. [Доказательства](premium-payment-telegram-2026-10-26.md).
+- [x] Telegram принял одно явно помеченное тестовое уведомление после commit локальной in-memory заявки, повтор не отправил дубль; production данные не менялись.
+- [ ] Настоящая заявка проверяется владельцем отдельно.
 - [x] Frontend/Android не меняются: это backend-уведомление, APK/sync не выполняются.
 
 ## 26.10.2026 — ручная оплата бессрочного Premium
