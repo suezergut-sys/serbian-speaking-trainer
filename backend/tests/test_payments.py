@@ -35,6 +35,104 @@ def report_data():
     return {"paid_at": datetime.now(timezone.utc).isoformat(), "amount": "500.00", "transaction_id": "synthetic-id"}
 
 
+def payment_notification_settings():
+    return Settings(_env_file=None, manual_payments=configured(), telegram_bot_token="synthetic-token", telegram_chat_id="test-chat")
+
+
+def test_payment_report_notifies_only_after_commit_once(db_session, monkeypatch):
+    from app.services import notifications
+    sent = []
+    monkeypatch.setattr(notifications, "send_notification", lambda settings, text: sent.append(text))
+    settings = payment_notification_settings()
+    service = PaymentService(db_session, settings.manual_payments, settings)
+    user = db_session.get(User, LEGACY_USER_ID)
+    payment = service.create(user, PaymentChoice(country="russia", method="sbp"))
+    db_session.commit()
+    assert sent == []  # Merely selecting payment details is not a payment report.
+    service.report(user, payment.id, PaymentReport.model_validate({**report_data(), "amount": "499.00"}))
+    assert user.access_tier == "premium"
+    assert sent == []
+    db_session.commit()
+    assert len(sent) == 1
+    assert user.email in sent[0] and payment.id in sent[0]
+    assert "Россия" in sent[0] and "СБП" in sent[0]
+    assert "К оплате: 500.00 RUB" in sent[0]
+    assert "Пользователь указал: 499.00 RUB" in sent[0]
+    assert "Premium включён сразу" in sent[0]
+    assert "Поступление денег ещё не подтверждено" in sent[0]
+    assert "+70000000000" not in sent[0] and "synthetic-id" not in sent[0]
+    service.report(user, payment.id, PaymentReport.model_validate(report_data()))
+    db_session.commit()
+    user.role = "admin"
+    db_session.commit()
+    service.decide(user, payment.id, PaymentDecision(status="confirmed"))
+    db_session.commit()
+    assert len(sent) == 1
+
+
+def test_payment_notification_rollback_and_retry(db_session, monkeypatch):
+    from app.services import notifications
+    sent = []
+    monkeypatch.setattr(notifications, "send_notification", lambda settings, text: sent.append(text))
+    settings = payment_notification_settings()
+    service = PaymentService(db_session, settings.manual_payments, settings)
+    user = db_session.get(User, LEGACY_USER_ID)
+    payment = service.create(user, PaymentChoice(country="russia", method="sbp"))
+    db_session.commit()
+    service.report(user, payment.id, PaymentReport.model_validate(report_data()))
+    db_session.rollback()
+    db_session.commit()
+    assert sent == []
+    assert user.access_tier == "free"
+    service.report(user, payment.id, PaymentReport.model_validate(report_data()))
+    db_session.commit()
+    assert len(sent) == 1 and user.access_tier == "premium"
+
+
+def test_payment_notification_api_uses_injected_settings(payment_api, db_session, monkeypatch):
+    from app.services import notifications
+    sent = []
+    monkeypatch.setattr(notifications, "send_notification", lambda settings, text: sent.append(text))
+    app.dependency_overrides[get_settings] = payment_notification_settings
+    created = payment_api.post("/api/payments", json={"country": "serbia", "method": "alta"}).json()
+    response = payment_api.post(f'/api/payments/{created["id"]}/report', json=report_data())
+    assert response.status_code == 200
+    assert sent == []  # The fixture's DB override leaves the transaction to the test.
+    db_session.commit()
+    assert len(sent) == 1 and "ALTA Banka" in sent[0] and "RSD" in sent[0]
+    assert "000-test" not in sent[0]
+
+
+def test_failed_telegram_delivery_does_not_undo_payment_or_premium(db_session, monkeypatch):
+    from app.services import notifications
+    attempts = []
+    def fail(settings, text):
+        attempts.append(text)
+        return False
+    monkeypatch.setattr(notifications, "send_notification", fail)
+    settings = payment_notification_settings()
+    service = PaymentService(db_session, settings.manual_payments, settings)
+    user = db_session.get(User, LEGACY_USER_ID)
+    payment = service.create(user, PaymentChoice(country="other", method="paypal"))
+    service.report(user, payment.id, PaymentReport.model_validate(report_data()))
+    db_session.commit()
+    assert user.access_tier == "premium" and payment.status == "awaiting_review"
+    service.report(user, payment.id, PaymentReport.model_validate(report_data()))
+    db_session.commit()
+    assert len(attempts) == 1
+
+
+def test_unconfigured_telegram_does_not_queue_notification(db_session):
+    settings = Settings(_env_file=None, manual_payments=configured())
+    service = PaymentService(db_session, settings.manual_payments, settings)
+    user = db_session.get(User, LEGACY_USER_ID)
+    payment = service.create(user, PaymentChoice(country="russia", method="sbp"))
+    service.report(user, payment.id, PaymentReport.model_validate(report_data()))
+    assert not db_session.info.get("telegram_notifications")
+    db_session.commit()
+    assert user.access_tier == "premium"
+
+
 def test_missing_partial_settings_disable_methods(db_session):
     svc = PaymentService(db_session, PaymentConfig())
     assert not any(item["available"] for item in svc.options()["methods"].values())
@@ -200,7 +298,10 @@ def test_reject_unsafe_paypal_url(url):
         PaymentConfig.model_validate(config)
 
 
-def test_concurrent_create_report_and_confirm(tmp_path):
+def test_concurrent_create_report_and_confirm(tmp_path, monkeypatch):
+    from app.services import notifications
+    sent = []
+    monkeypatch.setattr(notifications, "send_notification", lambda settings, text: sent.append(text))
     from app.db.base import Base
     from app.db.session import create_database_engine
     engine = create_database_engine(f"sqlite:///{(tmp_path / 'payments.db').as_posix()}")
@@ -216,7 +317,8 @@ def test_concurrent_create_report_and_confirm(tmp_path):
                 with Session(engine) as db:
                     user = db.get(User, "admin" if stage == "confirm" else "payer")
                     barrier.wait(timeout=5)
-                    svc = PaymentService(db, configured())
+                    settings = payment_notification_settings()
+                    svc = PaymentService(db, settings.manual_payments, settings)
                     if stage == "create":
                         payment = svc.create(user, PaymentChoice(country="russia", method="sbp"))
                     elif stage == "report":
@@ -233,5 +335,6 @@ def test_concurrent_create_report_and_confirm(tmp_path):
         with Session(engine) as db:
             assert db.scalar(select(func.count()).select_from(PaymentRequest)) == 1
             assert db.get(User, "payer").access_tier == "premium"
+        assert len(sent) == 1
     finally:
         engine.dispose()
