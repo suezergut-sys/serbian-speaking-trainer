@@ -610,5 +610,8 @@
   "Premium включается сразу после сообщения об оплате.": "Premium activates immediately after you report payment.",
   "Администратор проверит и подтвердит ваш платёж, а пока вы можете пользоваться всеми Premium-функциями без ограничений.": "The administrator will verify and confirm your payment. Meanwhile, you can use all Premium features without restrictions.",
   "Условия активации ещё не настроены. Оплата пока недоступна.": "The activation terms have not been configured yet. Payment is currently unavailable.",
-  "Способ недоступен: реквизиты или условия активации ещё не настроены.": "Unavailable: payment details or activation terms have not been configured."
+  "Способ недоступен: реквизиты или условия активации ещё не настроены.": "Unavailable: payment details or activation terms have not been configured.",
+  "Купить через Google Play": "Buy with Google Play",
+  "Покупки через Google Play пока недоступны.": "Google Play purchases are not available yet.",
+  "Если Premium уже активирован, войдите в тот же аккаунт SerboTalk.": "If Premium is already active, sign in to the same SerboTalk account."
 }

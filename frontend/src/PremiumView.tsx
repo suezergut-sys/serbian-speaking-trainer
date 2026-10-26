@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Capacitor } from "@capacitor/core";
 import { CustomContentForm } from "./CustomContentForm";
 import { CustomContentManager } from "./CustomContentManager";
 import { t } from "./i18n";
@@ -18,6 +19,7 @@ export function PremiumView({ active, topics, alphabet, onTopicCreated, onChange
   const [catalogVersion, setCatalogVersion] = useState(0);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [paymentReported, setPaymentReported] = useState(false);
+  const native = Capacitor.isNativePlatform();
   return <section className="premium-page" aria-label={t("Премиум")}>
     {!active ? <div className="premium-offer panel">
       <header className="premium-offer__hero"><PremiumBadge /><h1>{t("Премиум")}</h1></header>
@@ -26,9 +28,15 @@ export function PremiumView({ active, topics, alphabet, onTopicCreated, onChange
         <li>{t("До 5 личных тем")}</li>
         <li>{t("До 30 фраз в каждой теме — 150 своих фраз всего")}</li>
       </ul>
-      <button type="button" onClick={() => setPaymentOpen(true)} aria-expanded={paymentOpen}>{t("КУПИТЬ")}</button>
-      {paymentOpen && <PaymentForm onGranted={async () => { setPaymentReported(true); await onPaymentReported?.(); }} onClose={() => { setPaymentOpen(false); document.querySelector<HTMLButtonElement>(".premium-offer > button")?.focus(); }} />}
-      <p className="premium-offer__price">{t("Однократный платёж 5 евро")}</p>
+      {native ? <>
+        <button type="button" disabled aria-describedby="play-billing-status">{t("Купить через Google Play")}</button>
+        <p id="play-billing-status" role="status">{t("Покупки через Google Play пока недоступны.")}</p>
+        <p>{t("Если Premium уже активирован, войдите в тот же аккаунт SerboTalk.")}</p>
+      </> : <>
+        <button type="button" onClick={() => setPaymentOpen(true)} aria-expanded={paymentOpen}>{t("КУПИТЬ")}</button>
+        {paymentOpen && <PaymentForm onGranted={async () => { setPaymentReported(true); await onPaymentReported?.(); }} onClose={() => { setPaymentOpen(false); document.querySelector<HTMLButtonElement>(".premium-offer > button")?.focus(); }} />}
+        <p className="premium-offer__price">{t("Однократный платёж 5 евро")}</p>
+      </>}
       <img className="premium-offer__coffee" src={twoCoffees} alt={t("Две чашки кофе")} width="768" height="512" />
       <footer className="premium-offer__why"><h2>{t("Почему платно?")}</h2><p>{t("Приложение использует API-вызовы внешней модели OpenAI.")}</p></footer>
     </div> : <>

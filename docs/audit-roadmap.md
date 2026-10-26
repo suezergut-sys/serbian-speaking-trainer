@@ -978,3 +978,20 @@
 - [x] PR #153, runtime 1d8d8fa: backend/web Ready/alias/SHA, migration 6ccb82f56983 и Supabase version/schema подтверждены; HTTP и 12 production browser scenarios, авторизованная EN форма/legacy fallback проверены. [Доказательства](bilingual-topic-titles-2026-10-25.md).
 - [x] Реальный AI adapter проверен двумя техническими названиями RU↔EN, не в автотестах.
 - [ ] Физический Android — отдельная приёмка следующего APK.
+
+## 26.10.2026 — разные реализации оплаты web и Android
+
+- [x] Владелец согласовал общий аккаунтный Premium, бессрочный продукт 5 EUR и отдельные web/Google Play каналы; контракт сохранён в AGENTS.md, README и decisions. [Доказательства и оставшиеся этапы](premium-payment-channels.md).
+- [x] Исходники общего клиента RU/EN: web сохраняет ручную форму; native не показывает её, реквизиты, внешнюю кассу и web-цену. При отсутствии Billing покупки недоступны; действующий Premium продолжает работать по аккаунту.
+- [ ] Play Console и полная Billing-интеграция: adapter, backend API, данные/миграция, проверка/acknowledgement, восстановление и возвраты/RTDN.
+- [ ] Merge и production-публикация текущего разделения UI.
+- [ ] Отдельно разрешённые Android sync/build и физическая приёмка. 1.40/code50 прежние.
+- [x] 26.10.2026: 343 component tests, 18 browser scenarios RU/EN desktop/mobile/native, визуальная проверка обеих native-локалей, lint/typecheck/production build и diff-check успешны. [Подробности](premium-payment-channels.md).
+- [x] Сохранено/pushed в [PR #166](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/166), runtime commit `e84864e`; PR открыт, merge/production не выполнялись. GitHub checks отсутствуют, локальные проверки выше успешны.
+
+## 26.10.2026 — инструкция настройки Google Play Premium
+
+- [x] Подготовлена подробная инструкция владельцу: merchant profile/выплаты, бессрочный товар 5 EUR, Buy purchase option, страны/цены, Developer API/сервисная учётная запись, безопасное подключение credentials, license testers, тестовый трек, RTDN и возвраты. Официальные источники сверены 26.10.2026. [Инструкция и доказательства](google-play-premium-console-guide.md), [PR #166](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/166).
+- [x] Проверены локальные ссылки, отсутствие смешения actual/proposed ID и git diff --check. Только документация; runtime-тесты/build повторно не требуются.
+- [ ] Фактические действия владельца в Play Console/Cloud, merchant/bank verification, создание товара; в этой задаче аккаунты не менялись.
+- [ ] Реализация/тестирование Billing, отдельная Android-сборка и production-публикация.

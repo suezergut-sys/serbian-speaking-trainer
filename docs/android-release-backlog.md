@@ -673,3 +673,10 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 
 - [x] Общий клиент: title_en + RU fallback в home/Premium/phrase selector/exercise/statistics, RU/EN translation loading/help/error/retry. [Доказательства](bilingual-topic-titles-2026-10-25.md).
 - [ ] По отдельной команде перенести через production Android build/sync; физически проверить ввод RU/EN, переключение и reload, selector/keyboard, ошибку/повтор и старые темы. APK 1.39/code49 прежний; backend-compatible старый APK пока не использует title_en.
+
+## 26.10.2026 — отдельная Android-оплата Google Play
+
+- [x] В исходниках RU/EN отделён native-канал: ручная web-форма/реквизиты/PayPal и web-цена не показываются. Общий аккаунтный Premium сохраняется. [Контракт и статусы](premium-payment-channels.md).
+- [ ] Создать и проверить отдельный Google Play Billing adapter, серверную проверку/восстановление/возвраты и товар бессрочного Premium с базовой ценой 5 EUR; покупки пока отключены.
+- [ ] Включить в следующий отдельно согласованный production Android sync/build; проверить Play-тестовые покупки, pending/cancelled, восстановление, возврат, web → Android и Android → web на одном аккаунте в RU/EN.
+- [ ] Физическая приёмка. APK 1.40/code50 и package version в этой задаче не менялись.
