@@ -13,7 +13,7 @@ router = APIRouter(tags=["payments"])
 
 def service(response: Response, db: Session = Depends(get_db), settings: Settings = Depends(get_settings)) -> PaymentService:
     response.headers["Cache-Control"] = "no-store"
-    return PaymentService(db, settings.manual_payments)
+    return PaymentService(db, settings.manual_payments, settings)
 
 
 def run(action):

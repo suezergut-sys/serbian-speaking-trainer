@@ -2,11 +2,13 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
+from app.config import Settings, get_settings
 from app.models import User
 from app.models.payments import PaymentRequest
 from app.repositories.payments import PaymentRepository
 from app.repositories.users import UserRepository
 from app.schemas.payments import PaymentChoice, PaymentConfig, PaymentDecision, PaymentReport
+from app.services.notifications import notify_after_commit
 
 COUNTRY_METHODS = {"russia": ["sbp", "paypal"], "serbia": ["alta", "paypal"], "other": ["paypal"]}
 
@@ -17,8 +19,9 @@ class PaymentError(Exception):
 
 
 class PaymentService:
-    def __init__(self, db: Session, config: PaymentConfig):
+    def __init__(self, db: Session, config: PaymentConfig, settings: Settings | None = None):
         self.db, self.config = db, config
+        self.settings = settings or get_settings()
         self.repo = PaymentRepository(db)
         self.users = UserRepository(db)
 
@@ -84,6 +87,16 @@ class PaymentService:
             user.access_tier, user.premium_payment_id = "premium", payment.id
             payment.provisional_granted_at = datetime.now(timezone.utc)
         self.db.flush()
+        country = {"russia": "Россия", "serbia": "Сербия", "other": "Другая страна"}[payment.country]
+        method = {"sbp": "СБП", "alta": "ALTA Banka", "paypal": "PayPal"}[payment.method]
+        access = "Premium включён сразу" if payment.provisional_granted_at else "Premium уже был активен"
+        notify_after_commit(self.db, self.settings, user.email,
+            f"сообщил об оплате Premium в SerboTalk.\n"
+            f"Заявка: {payment.id}\nСтрана: {country}\nСпособ: {method}\n"
+            f"К оплате: {payment.details['amount']} {payment.details['currency']}\n"
+            f"Пользователь указал: {payment.reported_amount} {payment.details['currency']}\n"
+            f"{access}; заявка ожидает проверки.\n"
+            "Поступление денег ещё не подтверждено.\nПроверить заявку: https://serbotalk.app/app")
         return payment
 
     def cancel(self, user: User, payment_id: str) -> PaymentRequest:
