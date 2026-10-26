@@ -45,7 +45,7 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
     expect(selectedColor).not.toBe(inactiveColor);
     await expect(crown).toHaveCSS('color', tier === 'premium' ? 'rgb(242, 189, 90)' : layout === 'desktop' ? 'rgb(64, 164, 255)' : 'rgb(102, 186, 255)');
     if (tier === 'free') {
-      await expect(content.getByRole('button', { name: ru ? 'КУПИТЬ' : 'BUY' })).toBeDisabled();
+      await expect(content.getByRole('button', { name: ru ? 'КУПИТЬ' : 'BUY' })).toBeEnabled();
       await expect(content.getByText(ru ? '100 повторений в день' : '100 repetitions per day')).toBeVisible();
       await expect(content.getByText(ru ? 'До 5 личных тем' : 'Up to 5 personal topics')).toBeVisible();
       await expect(content.getByText(ru ? 'До 30 фраз в каждой теме — 150 своих фраз всего' : 'Up to 30 phrases per topic — 150 custom phrases in total')).toBeVisible();

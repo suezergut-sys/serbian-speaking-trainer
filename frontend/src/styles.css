@@ -1100,3 +1100,31 @@ button { cursor: pointer; background: var(--panel); }
   .android-settings-page .settings-page .alphabet-settings { padding: 0; }
   .android-settings-page .settings-page .alphabet-settings label span { flex-basis: auto; margin-left: 0; }
 }
+.payment-form { width: 100%; min-width: 0; margin-block: 1rem; padding: 1rem; text-align: left; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 16px; }
+.payment-form header { display: flex; gap: 1rem; align-items: flex-start; justify-content: space-between; }
+.payment-form h2 { font-size: 1.1rem; margin-top: 0; }
+.payment-form p, .payment-form strong, .payment-form small { overflow-wrap: anywhere; }
+.payment-form button, .payment-form input, .payment-form select { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: .65rem; min-height: 44px; }
+.payment-form button { margin: .25rem; }
+.payment-form input, .payment-form select { width: 100%; min-width: 0; color-scheme: dark; }
+.payment-form option { background: var(--reward-background); color: var(--text); }
+.payment-form input:disabled, .payment-form select:disabled, .payment-form button:disabled { background: var(--panel); color: var(--muted); cursor: default; opacity: .65; }
+.payment-form :is(button, input, select, a):focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+.payment-form input:invalid:not(:placeholder-shown):focus { border-color: var(--settings-error); }
+.payment-form [role="alert"] { color: var(--settings-error); }
+.payment-form a { color: var(--blue-bright); }
+.payment-form label, .payment-form form { display: grid; gap: .5rem; }
+.payment-form form { margin-top: 1rem; }
+.payment-methods { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: .75rem; margin-block: 1rem; }
+.payment-form .payment-method { display: grid; justify-items: center; gap: .5rem; width: 100%; height: auto; min-height: 155px; margin: 0; text-align: center; }
+.payment-form .payment-method[aria-pressed="true"] { border-color: var(--gold); }
+.payment-logo { display: grid; place-items: center; width: 150px; height: 56px; padding: 8px; border-radius: 8px; background: #fff; }
+.payment-logo img { display: block; width: 134px; height: 40px; max-width: 100%; max-height: 40px; object-fit: contain; }
+.payment-methods small, .payment-note { display: block; color: var(--muted); font-size: .85rem; }
+.payment-value { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .3rem .75rem; padding-block: .6rem; border-bottom: 1px solid var(--line); }
+.payment-value > span, .payment-value > small { grid-column: 1 / -1; color: var(--muted); font-size: .85rem; }
+.payment-value > strong { user-select: text; white-space: pre-wrap; }
+.payment-instructions { white-space: pre-wrap; }
+.payment-admin-request { padding-block: 1rem; border-bottom: 1px solid var(--line); }
+.payment-admin-request h3 { font-size: 1rem; }
+@media (max-width: 420px) { .payment-form { padding: .75rem; } .payment-form header { flex-wrap: wrap; } .payment-value { grid-template-columns: minmax(0, 1fr); } .payment-value button { justify-self: start; } }

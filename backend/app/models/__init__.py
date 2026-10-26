@@ -1,3 +1,4 @@
+from .payments import PaymentRequest
 from .entities import (
     ModelDebugLog,
     ModelDebugSetting,
@@ -19,6 +20,7 @@ from .entities import (
 )
 
 __all__ = [
+    "PaymentRequest",
     "ModelDebugLog",
     "ModelDebugSetting",
     "Attempt",

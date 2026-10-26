@@ -294,6 +294,7 @@ class User(Base):
     avatar_url: Mapped[str | None] = mapped_column(Text)
     role: Mapped[str] = mapped_column(String(20), default="user", index=True)
     access_tier: Mapped[str] = mapped_column(String(40), default="free", index=True)
+    premium_payment_id: Mapped[str | None] = mapped_column(String(36))
     assistance_enabled: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     registered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     last_active_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, index=True)

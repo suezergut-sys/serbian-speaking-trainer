@@ -22,7 +22,7 @@ it.each(["ru", "en"] as const)("shows the offer without fetching private content
   setLanguage(language);
   render(<PremiumView {...props} active={false} />);
   expect(screen.getByRole("heading", { name: language === "ru" ? "Премиум" : "Premium" })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: language === "ru" ? "КУПИТЬ" : "BUY" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: language === "ru" ? "КУПИТЬ" : "BUY" })).toBeEnabled();
   expect(screen.getAllByRole("listitem")).toHaveLength(3);
   expect(screen.getByText(language === "ru" ? "До 5 личных тем" : "Up to 5 personal topics")).toBeInTheDocument();
   expect(screen.getByText(language === "ru" ? "До 30 фраз в каждой теме — 150 своих фраз всего" : "Up to 30 phrases per topic — 150 custom phrases in total")).toBeInTheDocument();

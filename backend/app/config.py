@@ -5,6 +5,7 @@ from typing import Literal
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from app.schemas.transcription_settings import TranscriptionModelOption
+from app.schemas.payments import PaymentConfig
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 PROJECT_ROOT = BACKEND_ROOT.parent
@@ -18,6 +19,7 @@ class Settings(BaseSettings):
     )
 
     app_env: str = "development"
+    manual_payments: PaymentConfig = Field(default_factory=PaymentConfig)
     database_url: str = "sqlite:///./data/serbian_trainer.db"
     cors_allowed_origin_regex: str = (
         r"https://serbian-speaking-trainer(?:-[a-z0-9-]+)?\.vercel\.app"
