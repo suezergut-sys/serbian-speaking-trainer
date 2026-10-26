@@ -8,6 +8,16 @@ const topics = [1, 2].map(id => ({ id: `custom-${id}`, title_ru: `Личная �
 const phrases = topics.map((topic, i) => ({ id: `p${i}`, topic_id: topic.id, topic_title: topic.title_ru, source_ru: `Мой оригинал ${i}`, canonical_sr: `Moj prevod ${i}`, best_score: 0, attempts: 0, perfect_streak: 0, status: "new", created_at: "2026-10-24" }));
 const props = { topics, alphabet: "latin" as const, onTopicCreated: vi.fn(), onChanged: vi.fn(), onDeleted: vi.fn() };
 afterEach(() => { cleanup(); vi.resetAllMocks(); setLanguage("ru"); });
+it.each(["ru", "en"] as const)("sorts compact personal cards by the displayed title (%s)", async language => {
+  setLanguage(language);
+  vi.mocked(fetchCustomPhrases).mockResolvedValue([]);
+  const unsorted = [{ ...topics[0], title_ru: "Язык", title_en: "Animals" }, { ...topics[1], title_ru: "Автомобиль", title_en: "Travel" }];
+  const { container } = render(<PremiumView {...props} topics={unsorted} active />);
+  await screen.findByText(language === "ru" ? "Своих фраз пока нет." : "No custom phrases yet.");
+  expect(Array.from(container.querySelectorAll(".premium-catalog-grid .premium-topic strong"), node => node.textContent))
+    .toEqual(language === "ru" ? ["Автомобиль", "Язык"] : ["Animals", "Travel"]);
+  expect(unsorted[0].title_ru).toBe("Язык");
+});
 it.each(["ru", "en"] as const)("shows the offer without fetching private content (%s)", language => {
   setLanguage(language);
   render(<PremiumView {...props} active={false} />);

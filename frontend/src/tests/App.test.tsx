@@ -373,8 +373,36 @@ describe("App", () => {
     const personal = await screen.findByRole("button", { name: /Моя тема/ });
     expect(personal.classList.contains("topic--personal")).toBe(tier === "premium");
     expect(screen.getByRole("button", { name: /В банке/ })).not.toHaveClass("topic--personal");
+    expect(screen.queryByRole("separator", { name: "Личные темы" }) !== null).toBe(tier === "premium");
     expect(screen.queryByRole("button", { name: /добавить тему|добавить фразу/ })).not.toBeInTheDocument();
   });
+
+  for (const language of ["ru", "en"] as const) for (const layout of ["desktop", "mobile", "android"] as const) {
+    it(`groups personal topics below presets in visible-language order (${language}, ${layout})`, async () => {
+      localStorage.setItem("serbotalk.interface-language", language);
+      vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(layout === "android");
+      if (layout === "mobile") vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
+      const base = mockApi();
+      const personal = (id: string, title_ru: string, title_en: string) => ({ id, title_ru, title_en, description_ru: "", is_custom: true, phrase_count: 1, likely_intents: [], suggested_vocabulary: [] });
+      vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const response = await base(input, init);
+        const path = new URL(input.toString(), "https://test.invalid").pathname;
+        if (path === "/api/auth/me") return { ok: true, json: async () => ({ ...await response.json(), access_tier: "premium" }) };
+        if (path === "/api/topics") return { ok: true, json: async () => [personal("custom-z", "Язык", "Animals"), ...await response.json(), personal("custom-a", "Автомобиль", "Travel")] };
+        return response;
+      }));
+      const { container } = render(<App />);
+      if (layout !== "desktop") fireEvent.click(await screen.findByRole("button", { name: language === "ru" ? "Темы" : "Topics" }));
+      await screen.findByRole("button", { name: language === "ru" ? /Автомобиль/ : /Travel/ });
+      const grid = container.querySelector(layout === "desktop" ? ".desktop-topic-grid" : ".android-topic-list")!;
+      expect(Array.from(grid.querySelectorAll(".topic--personal strong")).map(item => item.textContent).filter(text => !/^\d+$/.test(text ?? "")))
+        .toEqual(language === "ru" ? ["Автомобиль", "Язык"] : ["Animals", "Travel"]);
+      const divider = grid.querySelector("hr")!;
+      expect(divider).toHaveAccessibleName(language === "ru" ? "Личные темы" : "Personal topics");
+      expect(divider.previousElementSibling).not.toHaveClass("topic--personal");
+      expect(divider.nextElementSibling).toHaveClass("topic--personal");
+    });
+  }
 
   it.each([false, true])("keeps creation controls off the mobile home screen (native=%s)", async native => {
     vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(native);

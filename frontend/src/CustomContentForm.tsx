@@ -4,13 +4,14 @@ import { t, topicText } from "./i18n";
 import { displaySerbian, type SerbianAlphabet } from "./serbianScript";
 import type { PreparedReviewPhrase, TopicListItem } from "./types/training";
 import { customContentError, phraseLimitMessage, topicLimitMessage } from "./customContentErrors";
+import { sortedPersonalTopics } from "./personalTopics";
 
 export function CustomContentForm({ mode, topics, selectedTopic, alphabet, onTopicCreated, onPhraseSaved, onClose, onManage, onCreateTopic }: {
   mode: "topic" | "phrase"; topics: TopicListItem[]; selectedTopic?: string; alphabet: SerbianAlphabet;
   onTopicCreated: (topic: TopicListItem) => void; onPhraseSaved: () => void; onClose: () => void;
   onManage?: () => void; onCreateTopic?: () => void;
 }) {
-  const ownTopics = topics.filter(topic => topic.is_custom);
+  const ownTopics = sortedPersonalTopics(topics);
   const [text, setText] = useState("");
   const [topicId, setTopicId] = useState(ownTopics.find(topic => topic.id === selectedTopic)?.id ?? ownTopics[0]?.id ?? "");
   const [prepared, setPrepared] = useState<PreparedReviewPhrase>();

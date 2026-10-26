@@ -1,5 +1,5 @@
 import { t, useLanguage, setLanguage, getLanguage, getLocale, localizedPhrase, topicText } from "./i18n";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 import type { Session } from "@supabase/supabase-js";
@@ -22,6 +22,7 @@ import { useMobileLayout } from "./useMobileLayout";
 import { SettingsView } from "./SettingsView";
 import { PremiumView } from "./PremiumView";
 import { PremiumBadge } from "./PremiumBadge";
+import { sortedPersonalTopics } from "./personalTopics";
 import { WordHintToken } from "./WordHintToken";
 import { isSourceWord, splitSourcePhrase } from "./sourceWords";
 import { hasUnexpectedLetterScript, displaySerbian, displaySerbianInRussianText, readSerbianAlphabet, saveSerbianAlphabet, toSerbianLatin, type SerbianAlphabet } from "./serbianScript";
@@ -821,6 +822,9 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   }
 
   const premiumActive = account.access_tier === "premium" || account.role === "admin";
+  const mainTopics = premiumActive ? topics.filter(topic => !topic.is_custom) : topics;
+  const personalTopics = premiumActive ? sortedPersonalTopics(topics) : [];
+  const orderedTopics = [...mainTopics, ...personalTopics];
 
   const premiumPanel = <PremiumView active={premiumActive} topics={topics} alphabet={alphabet}
       onTopicCreated={topic => setTopics(current => [...current.filter(item => item.id !== topic.id), topic])}
@@ -925,13 +929,14 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                 <strong>{t("Повторение")}</strong>
                 <small>{reviewPhraseCount}<span>{t("к повторению")}</span></small>
               </button>
-              {topics.map((topic) => (
-                <button className={`android-topic${selectedTopic === topic.id && !customTopic ? " is-selected" : ""}${premiumActive && topic.is_custom ? " topic--personal" : ""}`} key={topic.id} type="button" onClick={() => { selectTopic(topic.id); showAndroidPanel(1); }}>
+              {orderedTopics.map((topic, index) => <Fragment key={topic.id}>
+                {premiumActive && topic.is_custom && index === mainTopics.length && <hr className="topics-divider" aria-label={t("Личные темы")} />}
+                <button className={`android-topic${selectedTopic === topic.id && !customTopic ? " is-selected" : ""}${premiumActive && topic.is_custom ? " topic--personal" : ""}`} type="button" onClick={() => { selectTopic(topic.id); showAndroidPanel(1); }}>
                   <span className={`topic__icon topic__icon--${topicIcons[topic.id] ?? "message"}`}><Icon name={topicIcons[topic.id] ?? "message"} /></span>
                   <strong>{topicText(topic.id, topic.title_ru, topic.title_en)}</strong>
                   <small>{topic.phrase_count}<span>{t(" неизученных")}</span></small>
                 </button>
-              ))}
+              </Fragment>)}
             </div>
 
             {(startupState === "fallback" || backendState === "offline") && <div className="android-error" role="alert">{t(startupState === "fallback" ? error : "Нет подключения к сервису.")} <button type="button" onClick={retryCatalog}>{t("Повторить загрузку")}</button></div>}
@@ -1009,13 +1014,14 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
                 <span className="topic__copy"><strong>{t("Фразы для повторения")}</strong><small className="sr-only">{t(reviewPhraseCount ? `${reviewPhraseCount} требуют практики` : "Список пока пуст")}</small></span>
                 <span className="review-topic__count">{reviewPhraseCount}</span>
               </button>
-              {topics.map((topic) => (
-                <button className={`topic desktop-topic-card${selectedTopic === topic.id && !customTopic ? " is-selected" : ""}${premiumActive && topic.is_custom ? " topic--personal" : ""}`} key={topic.id} type="button" onClick={() => selectTopic(topic.id)}>
+              {orderedTopics.map((topic, index) => <Fragment key={topic.id}>
+                {premiumActive && topic.is_custom && index === mainTopics.length && <hr className="topics-divider" aria-label={t("Личные темы")} />}
+                <button className={`topic desktop-topic-card${selectedTopic === topic.id && !customTopic ? " is-selected" : ""}${premiumActive && topic.is_custom ? " topic--personal" : ""}`} type="button" onClick={() => selectTopic(topic.id)}>
                   <span className={`topic__icon topic__icon--${topicIcons[topic.id] ?? "message"}`}><Icon name={topicIcons[topic.id] ?? "message"} /></span>
                   <span className="topic__copy"><strong>{topicText(topic.id, topic.title_ru, topic.title_en)}</strong></span>
                   <span className="topic__unlearned"><strong>{topic.phrase_count}</strong><small>{t("неизученных")}</small></span>
                 </button>
-              ))}
+              </Fragment>)}
             </div>
             <div className="topics-panel__note"><Icon name="message" /><span>{t("Каждый короткий разговор делает речь увереннее.")}</span></div>
           </aside>

@@ -1,5 +1,15 @@
 # План улучшений по аудиту SerboTalk
 
+## 26.10.2026 — личные темы, Premium и общий релиз
+
+- [x] Домашний каталог Premium/admin: основные темы, тонкий разделитель, личные темы в два столбца по отображаемому названию RU/EN.
+- [x] Компактные карточки действий, тем и фраз в Premium, сохранены формы, квоты и подтверждение удаления. [Доказательства](premium-topic-cards-2026-10-26.md).
+- [x] Quality gate: 411 backend/scripts, 329 frontend, 5 Node guards, lint/typecheck/production build; RU/EN 18 Premium/grouping + 18 result + 8 settings browser scenarios. [Доказательства](premium-topic-cards-2026-10-26.md).
+- [ ] PR/merge и production frontend/backend с исправлением анализа личных фраз из PR #159.
+- [x] Отдельное согласование версии владельцем: 1.40 / code50.
+- [ ] Production APK со всем накопленным набором, проверка и публикация.
+- [ ] Физическая приёмка Android.
+
 ## 26.10.2026 — ошибки фраз без учебных навыков
 
 - [x] Разделены языковые замечания и учебные цели: nullable skill_key, сохранение ErrorEvent без skill_id, prompt v4, строгая проверка evidence/verdict и прежний запрет неизвестных ключей. [Доказательства](untargeted-answer-issues-2026-10-26.md).
