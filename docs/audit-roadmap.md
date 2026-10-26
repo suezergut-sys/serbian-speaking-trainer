@@ -1,5 +1,15 @@
 # План улучшений по аудиту SerboTalk
 
+## 26.10.2026 — Ekavica во всём учебном материале
+
+- [x] AGENTS.md, общий versioned prompt, проверка generated output и защита от загрязнённого канона; RU/EN, latinica/ćirilica, дословный transcript. [Доказательства](ekavica-standard-2026-10-26.md).
+- [x] Аудит 2001 production-записи: 210 общих фраз, 78 повторений (8 личных), 1127 упражнений, 507 сессий, 1 preparation receipt, 78 слов. Исправлена одна личная фраза `dvije → dve` и пять exercise snapshots; повторное применение 0/0.
+- [x] 78 целевых tests, полный backend/scripts 459 passed/9 skipped, 5 Node guards; AI mocked.
+- [x] Финальный frontend gate: 339 tests, lint/typecheck/production build passed.
+- [ ] Отправка PR — ссылка в документе выше.
+- [ ] Разрешённый merge и backend deployment; реальная речевая приёмка отдельно.
+- [x] Android 1.40/code50 и APK не менялись; серверное правило не требует новой сборки.
+
 ## 26.10.2026 — Telegram о платёжной заявке и Premium
 
 - [x] After-commit уведомление через существующий канал владельца: аккаунт/номер/страна/способ/суммы, факт включения Premium, поступление ещё не подтверждено.
