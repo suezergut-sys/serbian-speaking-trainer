@@ -7,7 +7,8 @@
 - [x] 78 целевых tests, полный backend/scripts 459 passed/9 skipped, 5 Node guards; AI mocked.
 - [x] Финальный frontend gate: 339 tests, lint/typecheck/production build passed.
 - [x] Код/правила/проверки отправлены в [PR #167](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/167), source `2753fb1`; Actions workflows отсутствуют, локальный quality gate успешен.
-- [ ] Разрешённый merge и backend deployment; реальная речевая приёмка отдельно.
+- [x] После явного разрешения владельца PR #167 merged; backend READY/production/main на runtime `7470be6`, alias/SHA/build/seed/health/auth/runtime logs проверены. Авторизованный production web загружает личный каталог с исправленной фразой. [Выпуск](ekavica-standard-2026-10-26.md).
+- [ ] Реальная речевая приёмка с AI отдельно; проверки не расходовали API budget.
 - [x] Android 1.40/code50 и APK не менялись; серверное правило не требует новой сборки.
 
 ## 26.10.2026 — Telegram о платёжной заявке и Premium

@@ -62,12 +62,31 @@
 - [x] Код и доказательства отправлены в [PR #167](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/167),
   source SHA `2753fb178b282d1c7350c8db26d678ba343d2575`. GitHub Actions workflows
   отсутствуют, check rollup пуст; проверки выполнены локально.
-- [ ] Код/prompt в production backend: требуется разрешённый merge и deployment.
+- [x] После явного разрешения владельца [PR #167](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/167)
+  merged; runtime SHA `7470be69fb016fa3fb9c493d65aaf97a98c47613`. Backend deployment
+  `dpl_BDLbQy1fTDLTBguqh4VefXUoo1HF`, [deployment URL](https://serbian-speaking-trainer-m9hely17p-suezerguts-projects.vercel.app),
+  READY/production/main. API metadata подтверждают SHA и production alias
+  `serbian-speaking-trainer-api.vercel.app`. Git integration link=null, использован
+  принятый CLI workflow из чистого git archive runtime SHA. Build/seed успешны.
+- [x] Прямой API health и web rewrite health — 200; topics/custom-phrases/
+  review-phrases/admin model-debug без авторизации — 401. Runtime error rows: 0
+  за проверенный интервал. Доказательства: ignored `artifacts/ekavica/deployment-verified.json`,
+  `http-checks.json`, `runtime-errors.jsonl`.
+- [x] Production `https://serbotalk.app/app` проверен в существующей сессии Chrome:
+  «Backend готов», общие/личные темы, Premium, форма подготовки и список личных
+  фраз, включая исправленную. Ничего не создавалось/удалялось, AI-подготовка
+  не отправлялась. Frontend остаётся на ранее проверенном runtime `fceb203`;
+  клиент не менялся и отдельно не развёртывался.
+- [x] После deployment повторная проверка БД: 210 общих канонов, исправленный
+  личный канон сохранён, `dvije` в review/exercise данных отсутствует.
 - [ ] Ручная приёмка реальной речи после deployment; автоматические проверки
   не используют платные запросы OpenAI.
 - [x] Android 1.40/code50, package.json, Capacitor и APK не менялись. Серверное
   правило после deployment будет общим для существующих web/Android-клиентов.
 
 Main до изменения: `f76716bc33822056b0359f9cd5c1f1ede2dc4294`. Все 12 копий были
-чистыми на этом SHA; recovery/WIP не требовались. Код публикуется отдельным PR,
-основная папка возвращается на чистый main, остальные копии не переключаются.
+чистыми на этом SHA; recovery/WIP не требовались. После фиксации документации
+основная папка обновляется до origin/main, завершённые detached worktree — до
+того же SHA; прежние ветки сохраняются. Финальная проверка всех копий записывается
+в ignored `artifacts/ekavica/worktrees-final.json`. Последующий documentation-only
+main отличается от runtime SHA и не требует повторного backend deploy или APK.
