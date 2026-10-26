@@ -1,13 +1,39 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { PremiumView } from "../PremiumView";
+import { Capacitor } from "@capacitor/core";
+import { paymentRequest } from "../api/payments";
 import { fetchCustomPhrases, deleteCustomPhrase } from "../api/training";
 import { setLanguage } from "../i18n";
 vi.mock("../api/training", () => ({ fetchCustomPhrases: vi.fn(), deleteCustomPhrase: vi.fn(), deleteCustomTopic: vi.fn() }));
+vi.mock("@capacitor/core", () => ({ Capacitor: { isNativePlatform: vi.fn(() => false) } }));
+vi.mock("../api/payments", () => ({ paymentRequest: vi.fn() }));
 const topics = [1, 2].map(id => ({ id: `custom-${id}`, title_ru: `Личная тема ${id}`, is_custom: true, description_ru: "", phrase_count: 0, custom_phrase_count: 1, likely_intents: [], suggested_vocabulary: [] }));
 const phrases = topics.map((topic, i) => ({ id: `p${i}`, topic_id: topic.id, topic_title: topic.title_ru, source_ru: `Мой оригинал ${i}`, canonical_sr: `Moj prevod ${i}`, best_score: 0, attempts: 0, perfect_streak: 0, status: "new", created_at: "2026-10-24" }));
 const props = { topics, alphabet: "latin" as const, onTopicCreated: vi.fn(), onChanged: vi.fn(), onDeleted: vi.fn() };
 afterEach(() => { cleanup(); vi.resetAllMocks(); setLanguage("ru"); });
+it.each(["ru", "en"] as const)("never exposes manual payments or the web price in native Android (%s)", language => {
+  setLanguage(language);
+  vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true);
+  render(<PremiumView {...props} active={false} />);
+  const buy = screen.getByRole("button", { name: language === "ru" ? "Купить через Google Play" : "Buy with Google Play" });
+  expect(buy).toBeDisabled();
+  fireEvent.click(buy);
+  expect(screen.getByRole("status")).toHaveTextContent(language === "ru" ? "Покупки через Google Play пока недоступны." : "Google Play purchases are not available yet.");
+  expect(screen.queryByText(/Однократный платёж|One-time payment/)).not.toBeInTheDocument();
+  expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+  expect(screen.queryByRole("link")).not.toBeInTheDocument();
+  expect(paymentRequest).not.toHaveBeenCalled();
+});
+it.each(["ru", "en"] as const)("uses the existing account Premium in Android without another purchase (%s)", async language => {
+  setLanguage(language);
+  vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true);
+  vi.mocked(fetchCustomPhrases).mockResolvedValue([]);
+  render(<PremiumView {...props} active />);
+  expect(await screen.findByRole("button", { name: language === "ru" ? "Создать тему" : "Create topic" })).toBeEnabled();
+  expect(screen.queryByText(/Google Play/)).not.toBeInTheDocument();
+  expect(paymentRequest).not.toHaveBeenCalled();
+});
 it.each(["ru", "en"] as const)("sorts compact personal cards by the displayed title (%s)", async language => {
   setLanguage(language);
   vi.mocked(fetchCustomPhrases).mockResolvedValue([]);
