@@ -4,7 +4,7 @@
 
 Кнопка «КУПИТЬ» открывает общую для web/Android-layout форму RU/EN. Пользователь явно выбирает страну: Россия → СБП/PayPal, Сербия → ALTA/PayPal, другая → PayPal. Смена страны отменяет неоплаченную заявку и сбрасывает метод. Для отправленной на проверку заявки изменение страны/метода заблокировано.
 
-Стоимость — 5 EUR однократно, бессрочно; для СБП/ALTA суммы задаёт владелец. До настройки обязательных реквизитов, инструкций на обоих языках и условий активации соответствующий способ отключён. Владелец передал реквизиты: СБП 5000 RUB, ALTA 5 EUR или 550 RSD с разными счетами, PayPal 5 EUR. Значения сохранены только в ignored backend `.env`; в Git их нет. Production environment ещё не изменён. Автоматического определения страны, проверки поступлений и платёжных API нет.
+Стоимость — 5 EUR однократно, бессрочно; для СБП/ALTA суммы задаёт владелец. До настройки обязательных реквизитов, инструкций на обоих языках и условий активации соответствующий способ отключён. Владелец передал реквизиты: СБП 5000 RUB, ALTA 5 EUR или 550 RSD с разными счетами, PayPal 5 EUR. Значения сохранены только в ignored backend `.env`; в Git их нет. Production MANUAL_PAYMENTS подключён к backend как sensitive environment variable; frontend постоянных секретов не получает. Автоматического определения страны, проверки поступлений и платёжных API нет.
 
 Заявка создаётся при выборе доступного метода; её UUID служит уникальным номером и идентификатором для сверки. Сохраняется неизменяемая копия выданных реквизитов, инструкций и условий доступа. Пользователь копирует поля, переводит деньги и сообщает дату/время, сумму и необязательный идентификатор. Дата вводится в часовом поясе устройства, передаётся с UTC offset и сохраняется в UTC. Заявленная сумма может отличаться от ожидаемой: решение принимает администратор по фактическому поступлению.
 
@@ -54,8 +54,22 @@
 - [x] Исходники опубликованы: [PR #162](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/162), source SHA `b7e06b193224ccd6f85cd9ec665c14cd4412389b`. PR MERGEABLE. GitHub Actions workflows: 0; statusCheckRollup пуст — удалённый CI не заявляется как пройденный.
 - [x] Исходная основная папка и 11 остальных worktree проверены чистыми; main/origin/main `4aeb1def92c52b81d9da64082b26288d215ea4d0`. После публикации основной checkout возвращается на этот main, финальная проверка повторяется. Recovery/WIP-ветки не требовались. Код новой функции хранится в ветке PR до согласованного merge.
 - Этот последующий commit обновляет только документацию; APK/deploy ради него не выполняются.
-- [ ] Merge, production deployment/миграция и production-приёмка.
+- [x] Владелец разрешил публикацию; PR #162 merged, runtime/source SHA `fceb2036a1bc02ebdf84072c7339c7697f5112f2`.
 - [x] Получены реквизиты/суммы и окончательное правило немедленного доступа; локальная ignored .env заполнена.
-- [ ] Перенос MANUAL_PAYMENTS в production environment при согласованном выпуске.
+- [x] MANUAL_PAYMENTS перенесён в production backend как sensitive; значения не печатались и не коммитились.
 - [ ] Проверка реального поступления/подтверждения и отзыва на согласованных аккаунтах.
 - [ ] Будущий Android-релиз по отдельной команде; APK 1.40/code50 не меняется.
+
+## Production-проверка 26.10.2026
+
+- [x] Backend `dpl_7VmfX5w1a11pbHn1fgmnEB2E29hJ`, [deployment](https://serbian-speaking-trainer-jp9bw862q-suezerguts-projects.vercel.app), alias `serbian-speaking-trainer-api.vercel.app`: READY / production / main, meta.gitCommitSha = runtime SHA.
+- [x] Frontend `dpl_5Vu7LdhUfYCZGKVp8eVJTosLShSW`, [deployment](https://serbian-speaking-trainer-ggdhfk3ey-suezerguts-projects.vercel.app), aliases `serbotalk.app` и `serbian-speaking-trainer.vercel.app`: READY / production / main, тот же runtime SHA.
+- [x] У обоих проектов Git integration отсутствует (`link=null`); использован существующий CLI workflow `vercel deploy --prod --yes --cwd backend`, затем frontend. Не запускались deployments ради последующих documentation-only commits.
+- [x] Backend build применил PostgreSQL Alembic `6ccb82f56983 -> 7db9f01a2201` и завершил idempotent seed без новых элементов каталога.
+- [x] Production root/app/privacy/terms/API health: HTTP 200; anonymous auth/me/payments/options/payments/admin/payments: HTTP 401. Production OpenAPI содержит payment/report/admin маршруты и provisional_granted_at.
+- [x] На опубликованной web-сборке 18/18 изолированных Playwright scenarios: RU/EN × desktop/320px/shared Android-layout, 6 оплат и 12 Premium free/active. Синтетическая сессия и mocked API; реальные платежи, пользователи и их Premium в production не изменялись. Проверены ALTA EUR/RSD, копирование/fallback, keyboard, немедленный UI доступ после отчёта без reload и сохранение доступа после reload. Это проверка production frontend, а не end-to-end проверка настоящей оплаты.
+- [x] Runtime error logs для этих deployments за проверенный интервал: 0 backend / 0 frontend. Доказательства metadata/HTTP: `artifacts/manual-payments-production/release-checks.json`, synthetic screenshots — в той же локальной папке (вне Git).
+- [ ] Проверка в настоящем аккаунте: браузерное управление сначала дважды не подключилось к существующей вкладке, затем защитой остановлена Computer Use-сессия, поскольку текущий URL Windows-браузера не удалось достоверно определить. Ограничение не обходилось; обычный OAuth, реальные реквизиты в авторизованной форме, отправка настоящей заявки и административное решение остаются ручной приёмкой.
+- [ ] Реальное поступление денег и подтверждение/отзыв владельцем.
+- [x] Перед финальной синхронизацией все 12 копий чистые, активной чужой работы проекта не обнаружено. После публикации документации повторяется проверка и перевод неактивных копий на окончательный origin/main. Прежние ветки сохранены; recovery/WIP не требовались. Финальный audit хранится в `artifacts/manual-payments-production/worktrees-final.json`; SHA runtime выше отделён от последующего documentation-only main.
+- [ ] Отдельный Android-релиз и физическая приёмка по команде владельца; APK 1.40/code50 не пересобирался.
