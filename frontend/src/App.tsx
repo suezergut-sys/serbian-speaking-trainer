@@ -827,6 +827,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const orderedTopics = [...mainTopics, ...personalTopics];
 
   const premiumPanel = <PremiumView active={premiumActive} topics={topics} alphabet={alphabet}
+      onPaymentReported={async () => { const updated = await fetchCurrentUser(); onAccountChange(updated); refreshCustomContent(); }}
       onTopicCreated={topic => setTopics(current => [...current.filter(item => item.id !== topic.id), topic])}
       onChanged={refreshCustomContent} onDeleted={topicId => {
         interruptVoice(); resetTraining(); setView("premium");

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 
 import { fetchAdminUsers } from "./api/users";
 import type { AdminUser } from "./types/auth";
+import { AdminPaymentsView } from "./AdminPaymentsView";
 
 function formatDate(value: string): string {
   return new Intl.DateTimeFormat(getLocale(), {
@@ -37,5 +38,6 @@ export function AdminUsersView() {
           </tr>)}</tbody>
         </table></div>}
     </section>
+    <AdminPaymentsView />
   </main>;
 }

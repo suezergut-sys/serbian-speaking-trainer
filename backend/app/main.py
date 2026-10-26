@@ -1,4 +1,5 @@
 import logging
+from app.api.payments import router as payments_router
 from time import perf_counter
 
 from fastapi import Depends, FastAPI, Request
@@ -86,6 +87,7 @@ async def record_request_timing(request: Request, call_next):
     return response
 
 app.include_router(feedback_router, prefix="/api")
+app.include_router(payments_router, prefix="/api")
 app.include_router(health_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
 app.include_router(model_debug_router, prefix="/api")

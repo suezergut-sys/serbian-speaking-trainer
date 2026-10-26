@@ -328,7 +328,8 @@ def bootstrap_testlab_database(engine: Engine) -> None:
 
     del _entities
     current = _metadata_shape(Base.metadata)
-    pre_title_translation = {name: set(columns) for name, columns in current.items()}
+    pre_payments = {name: frozenset(columns - {"premium_payment_id"}) if name == "users" else columns for name, columns in current.items() if name != "payment_requests"}
+    pre_title_translation = {name: set(columns) for name, columns in pre_payments.items()}
     pre_title_translation["topic_presets"].discard("title_en")
     pre_title_translation = {name: frozenset(columns) for name, columns in pre_title_translation.items()}
     pre_phrase_preparation = {name: columns for name, columns in pre_title_translation.items() if name != "phrase_preparation_receipts"}
@@ -368,6 +369,12 @@ def bootstrap_testlab_database(engine: Engine) -> None:
             _alembic(engine, "stamp", head)
         elif stamped_revision != head:
             raise RuntimeError("Refusing current-shaped testlab database with an unexpected Alembic revision")
+        return
+
+    if shape == pre_payments:
+        if stamped_revision != "6ccb82f56983":
+            raise RuntimeError("Refusing pre-payment schema with unexpected Alembic revision")
+        _alembic(engine, "upgrade", "head")
         return
 
     if shape == pre_title_translation:

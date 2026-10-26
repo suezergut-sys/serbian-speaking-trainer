@@ -167,7 +167,8 @@ def test_migration_upgrade_repeat_and_downgrade(tmp_path):
             command.upgrade(config, "head")
             command.downgrade(config, "f42b8c012d33")
         with Session(engine) as db:
-            assert db.get(User, "maxim") is not None
+            # The downgraded schema intentionally predates current User columns.
+            assert db.scalar(select(User.id).where(User.id == "maxim")) == "maxim"
     finally:
         engine.dispose()
 

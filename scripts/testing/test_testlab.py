@@ -21,6 +21,21 @@ from testlab import (
 )
 
 
+def test_pre_payment_schema_upgrades_preserving_users(tmp_path):
+    engine = create_engine(f"sqlite:///{(tmp_path / 'pre-payments.sqlite3').as_posix()}")
+    try:
+        _alembic(engine, "upgrade", "6ccb82f56983")
+        with engine.connect() as connection:
+            users = connection.execute(text("SELECT id FROM users ORDER BY id")).all()
+        bootstrap_testlab_database(engine)
+        bootstrap_testlab_database(engine)
+        with engine.connect() as connection:
+            assert "payment_requests" in inspect(connection).get_table_names()
+            assert connection.execute(text("SELECT id FROM users ORDER BY id")).all() == users
+    finally:
+        engine.dispose()
+
+
 def test_pre_title_translation_schema_upgrades_preserving_users(tmp_path):
     engine = create_engine(f"sqlite:///{(tmp_path / 'pre-titles.sqlite3').as_posix()}")
     try:
