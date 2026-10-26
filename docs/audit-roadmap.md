@@ -5,7 +5,7 @@
 - [x] Разделены языковые замечания и учебные цели: nullable skill_key, сохранение ErrorEvent без skill_id, prompt v4, строгая проверка evidence/verdict и прежний запрет неизвестных ключей. [Доказательства](untargeted-answer-issues-2026-10-26.md).
 - [x] 19 component tests, включая RU/EN × два алфавита; 18 browser scenarios desktop/mobile/shared Android-layout с подсветкой замечаний без ключа навыка.
 - [x] Полный quality gate: 411 backend/scripts passed, 9 skipped; 321 frontend, 5 Node guards, lint/typecheck/production build. [Доказательства](untargeted-answer-issues-2026-10-26.md).
-- [ ] Публикация GitHub PR.
+- [x] Изменения и доказательства отправлены в [PR #159](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/159), source commit `479ab62`.
 - [ ] Merge, production deploy и production-приёмка — отдельно от реализации.
 - [ ] Отдельно запрошенный APK и физическая Android-приёмка.
 
