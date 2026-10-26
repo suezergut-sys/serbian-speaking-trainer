@@ -48,7 +48,7 @@ export type StartedTraining = {
 
 export type AnswerIssue = {
   type: "grammar" | "vocabulary" | "naturalness" | "pronunciation" | "fluency" | "meaning";
-  skill_key: string;
+  skill_key: string | null;
   severity: number;
   confidence: number;
   evidence: string;

@@ -76,6 +76,8 @@ class LearnerModelService:
         current_time = now or datetime.now(timezone.utc)
         issues_by_key: dict[str, float] = {}
         for issue in analysis.issues:
+            if issue.skill_key is None:
+                continue
             weighted = issue.severity * issue.confidence
             issues_by_key[issue.skill_key] = max(issues_by_key.get(issue.skill_key, 0.0), weighted)
 

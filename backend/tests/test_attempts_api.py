@@ -1,19 +1,60 @@
 from fastapi.testclient import TestClient
 from uuid import uuid4
+import pytest
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user
 from app.main import app
-from app.models import Attempt, AttemptRequest, ErrorEvent, Exercise, LearnerSkill, ReviewPhrase, User
+from app.models import Attempt, AttemptRequest, ErrorEvent, Exercise, LearnerSkill, ReviewPhrase, Skill, User
 from app.schemas import AnswerAnalysis, AnswerIssue
 from app.services.ai_adapter import AIServiceError, get_ai_provider
-from tests.fakes import FakeAIProvider
+from tests.fakes import FakeAIProvider, create_custom_phrase
 
 
 def _exercise(api_client: TestClient) -> dict:
     training_session = api_client.post("/api/sessions", json={"topic_id": "cafe"}).json()
     return api_client.post(f"/api/sessions/{training_session['id']}/next-exercise").json()
+
+
+@pytest.mark.parametrize("language", ["ru", "en"])
+def test_personal_topic_error_without_skills_is_saved_and_replayed(api_client: TestClient, db_session: Session, language: str) -> None:
+    topic = api_client.post("/api/topics", json={"title_ru": "Личные планы"}).json()
+    phrase = create_custom_phrase(api_client, {
+        "source_ru": "Я приду завтра.", "canonical_sr": "Dolazim sutra.", "topic_id": topic["id"],
+    })
+    assert phrase.status_code == 201
+    exercise = api_client.post("/api/sessions/start", json={"topic_id": topic["id"]}).json()["exercise"]
+    assert exercise["targeted_skills"] == []
+    skill_count = db_session.scalar(select(func.count()).select_from(Skill))
+    reason = "Слово означает «сегодня», а задание говорит о завтрашнем дне." if language == "ru" else "The word means today, but the task refers to tomorrow."
+    issue = AnswerIssue(type="meaning", skill_key=None, severity=0.5, confidence=1,
+                        evidence="danas", correction="sutra", explanation_ru=reason)
+    model = AnswerAnalysis(
+        verdict="mostly_correct", semantic_score=0.7, grammar_score=1, lexical_score=0.7,
+        naturalness_score=1, fluency_score=1, corrected_sr="Dolazim sutra.",
+        short_feedback_ru=reason, detailed_feedback_ru=reason, issues=[issue],
+    )
+    ai = FakeAIProvider(available=True, analysis_result=model)
+    app.dependency_overrides[get_ai_provider] = lambda: ai
+    request = {"exercise_id": exercise["id"], "transcript_sr": "Dolazim danas.", "client_request_id": str(uuid4())}
+    response = api_client.post("/api/attempts", json=request, headers={"X-Interface-Language": language})
+    assert response.status_code == 201, response.json()
+    result = response.json()
+    assert result["analysis"]["verdict"] == "mostly_correct"
+    assert result["analysis"]["issues"] == [issue.model_dump()]
+    assert result["analysis"]["demonstrated_skills"] == result["learner_updates"] == []
+    assert result["overall_score"] < 1
+    assert api_client.post("/api/attempts", json=request).json() == result
+    assert ai.analysis_calls == 1
+    db_session.expire_all()
+    stored = db_session.get(Attempt, result["id"])
+    assert stored.analysis_json["issues"] == [issue.model_dump()]
+    event = db_session.scalar(select(ErrorEvent).where(ErrorEvent.attempt_id == stored.id))
+    assert event.skill_id is None
+    assert event.evidence_json == {"evidence": "danas", "correction": "sutra"}
+    assert db_session.scalar(select(func.count()).select_from(Skill)) == skill_count
+    assert db_session.scalar(select(func.count()).select_from(LearnerSkill)) == 0
 
 
 def test_submit_correct_text_attempt(api_client: TestClient, db_session: Session) -> None:

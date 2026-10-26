@@ -8,6 +8,7 @@ from app.schemas import AnswerAnalysis, AnswerIssue, CreateAttemptRequest
 from app.schemas.attempts import ExplainedAnswerAnalysis
 from app.services.ai_adapter import AIServiceError, OpenAIStructuredProvider
 from app.services.answer_analyzer import AnswerAnalyzer
+from app.services.interface_language import interface_language
 from tests.fakes import FakeAIProvider
 
 
@@ -38,6 +39,26 @@ def test_new_ai_contract_requires_reason_but_stored_legacy_issues_are_readable()
     assert parse.call_args.kwargs["model"] == "env-model"
     assert "не снижай оценки ради совпадения" in parse.call_args.kwargs["instructions"]
     assert AnswerAnalysis.model_validate(analysis(issue).model_dump()).issues[0].explanation_ru is None
+
+
+@pytest.mark.parametrize("language", ["ru", "en"])
+def test_ai_contract_accepts_explained_errors_without_curriculum_keys(language):
+    model = analysis(dict(type="grammar", skill_key=None, severity=.2, confidence=.9,
+                          evidence="poprave", correction="popravi", explanation_ru="Use the singular imperative."))
+    provider = OpenAIStructuredProvider(Settings(openai_api_key="mock-secret", openai_text_model="env-model"))
+    parse = Mock(return_value=SimpleNamespace(output_parsed=model.model_dump()))
+    provider._client = SimpleNamespace(responses=SimpleNamespace(parse=parse))
+    token = interface_language.set(language)
+    try:
+        result = provider.analyze_answer(source_ru="Исправь ответ.", transcript_sr="poprave odgovor",
+                                        canonical_sr="popravi odgovor", intended_sr_variants=[], target_skills=[], timings={})
+    finally:
+        interface_language.reset(token)
+    assert result.issues[0].skill_key is None
+    assert result.issues[0].explanation_ru
+    assert "skill_key: null" in parse.call_args.kwargs["instructions"]
+    if language == "en":
+        assert "English" in parse.call_args.kwargs["instructions"]
 
 
 @pytest.mark.parametrize("issue_type,evidence,correction,explanation", [
