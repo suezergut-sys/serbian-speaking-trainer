@@ -6,7 +6,7 @@
 - [x] Аудит 2001 production-записи: 210 общих фраз, 78 повторений (8 личных), 1127 упражнений, 507 сессий, 1 preparation receipt, 78 слов. Исправлена одна личная фраза `dvije → dve` и пять exercise snapshots; повторное применение 0/0.
 - [x] 78 целевых tests, полный backend/scripts 459 passed/9 skipped, 5 Node guards; AI mocked.
 - [x] Финальный frontend gate: 339 tests, lint/typecheck/production build passed.
-- [ ] Отправка PR — ссылка в документе выше.
+- [x] Код/правила/проверки отправлены в [PR #167](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/167), source `2753fb1`; Actions workflows отсутствуют, локальный quality gate успешен.
 - [ ] Разрешённый merge и backend deployment; реальная речевая приёмка отдельно.
 - [x] Android 1.40/code50 и APK не менялись; серверное правило не требует новой сборки.
 

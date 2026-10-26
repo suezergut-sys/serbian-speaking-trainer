@@ -59,6 +59,9 @@
 - [x] Общий `scripts/check.ps1` завершился успешно: дополнительно 339 frontend
   tests, ESLint, TypeScript и production build passed. UI/Android source не менялся.
 - [x] Production data repair применён и повторно проверен отдельно от кода.
+- [x] Код и доказательства отправлены в [PR #167](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/167),
+  source SHA `2753fb178b282d1c7350c8db26d678ba343d2575`. GitHub Actions workflows
+  отсутствуют, check rollup пуст; проверки выполнены локально.
 - [ ] Код/prompt в production backend: требуется разрешённый merge и deployment.
 - [ ] Ручная приёмка реальной речи после deployment; автоматические проверки
   не используют платные запросы OpenAI.
