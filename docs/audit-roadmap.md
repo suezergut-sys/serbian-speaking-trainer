@@ -5,9 +5,9 @@
 - [x] Домашний каталог Premium/admin: основные темы, тонкий разделитель, личные темы в два столбца по отображаемому названию RU/EN.
 - [x] Компактные карточки действий, тем и фраз в Premium, сохранены формы, квоты и подтверждение удаления. [Доказательства](premium-topic-cards-2026-10-26.md).
 - [x] Quality gate: 411 backend/scripts, 329 frontend, 5 Node guards, lint/typecheck/production build; RU/EN 18 Premium/grouping + 18 result + 8 settings browser scenarios. [Доказательства](premium-topic-cards-2026-10-26.md).
-- [ ] PR/merge и production frontend/backend с исправлением анализа личных фраз из PR #159.
+- [x] PR #160 merged, production frontend/backend Ready на `4adbe2f` с #159; 26 production browser scenarios и реальный аккаунт RU/EN проверены. [Выпуск](android-1.40-release.md).
 - [x] Отдельное согласование версии владельцем: 1.40 / code50.
-- [ ] Production APK со всем накопленным набором, проверка и публикация.
+- [x] Production APK 1.40/code50 со всем накопленным набором: API/assets/metadata/подпись/Downloads/GitHub latest/digest/обратная загрузка проверены. [Выпуск](android-1.40-release.md).
 - [ ] Физическая приёмка Android.
 
 ## 26.10.2026 — ошибки фраз без учебных навыков
@@ -16,8 +16,8 @@
 - [x] 19 component tests, включая RU/EN × два алфавита; 18 browser scenarios desktop/mobile/shared Android-layout с подсветкой замечаний без ключа навыка.
 - [x] Полный quality gate: 411 backend/scripts passed, 9 skipped; 321 frontend, 5 Node guards, lint/typecheck/production build. [Доказательства](untargeted-answer-issues-2026-10-26.md).
 - [x] Изменения и доказательства отправлены в [PR #159](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/159), source commit `479ab62`.
-- [ ] Merge, production deploy и production-приёмка — отдельно от реализации.
-- [ ] Отдельно запрошенный APK и физическая Android-приёмка.
+- [x] PR #159 merged и опубликован в backend/web `4adbe2f`, nullable-контракт production OpenAPI и browser-подсветка подтверждены; включён в APK 1.40. [Выпуск](android-1.40-release.md).
+- [ ] Реальная речь/live AI-приёмка и физическая Android-проверка.
 
 ## 25.10.2026 — предложение Premium до активации
 
@@ -25,14 +25,16 @@
 - [x] 5 component / 12 browser scenarios RU/EN × desktop/mobile/shared Android × free/premium; screenshot review desktop и 320px.
 - [x] Полный quality gate: 393 backend/scripts, 317 frontend, 5 Node guards, lint/typecheck/production build.
 - [x] Web через PR #157: runtime aaaa90b, Ready/production/main; alias/SHA, HTTP app/image/API и 20/20 production browser scenarios Premium/settings подтверждены. [Выпуск](premium-offer-2026-10-25.md).
-- [ ] Будущий отдельно запрошенный APK и физическая Android-приёмка.
+- [x] Включено в опубликованный APK 1.40/code50. [Выпуск](android-1.40-release.md).
+- [ ] Физическая Android-приёмка.
 
 ## 25.10.2026 — карточки настроек
 
 - [x] Реализация общего RU/EN UI: парные выборы, адаптивные 3/2+1 действия, флаги, колокольчик, смысловые SVG и официальный OpenAI icon. Клавиатура, состояния сохранения/ошибки и admin-доступ сохранены. [Проверки и выпуск](settings-cards-2026-10-25.md).
 - [x] 8/8 browser scenarios RU/EN desktop/mobile/320px/shared Android-layout; component checks настроек и дочерних форм.
 - [x] Web опубликован через PR #155: runtime f285c6f, Vercel Ready/production; alias/SHA, 8/8 production browser scenarios и авторизованный Chrome RU/EN подтверждены. Полный gate: 393 backend/scripts, 317 frontend, 5 Node guards, lint/typecheck/build. [Доказательства](settings-cards-2026-10-25.md).
-- [ ] Android: перенос в будущий отдельно запрошенный APK и физическая приёмка.
+- [x] Включено в опубликованный APK 1.40/code50. [Выпуск](android-1.40-release.md).
+- [ ] Физическая Android-приёмка.
 
 ## 24.10.2026 — общий релиз web и Android 1.39
 
