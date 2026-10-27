@@ -1003,6 +1003,7 @@
 
 - [x] Владелец отдельно согласовал 1.41/code51. Android free — только оплата на сайте; RU/EN, Browser.open, состояние ошибки и сохранение paid-каталога проверены. Рублёвая цена вынесена в nested env override 500.00 без раскрытия закрытых реквизитов. [Доказательства](android-1.41-release.md).
 - [x] `pnpm android:cloud-apk` 1.41/code51, metadata/API/11 assets/Browser/Share/signature/SHA256 и Downloads проверены; 120 финальных App/Android tests passed. [Доказательства](android-1.41-release.md).
-- [ ] Публикация APK и финальные доказательства выпуска.
-- [ ] Web/backend production, исправление ожидающей оплаты заявки и финальная синхронизация всех рабочих копий.
+- [x] PR #171 merged, GitHub v1.41 latest опубликован; digest, обратная загрузка APK и tag на `c4f33b2` проверены. [Доказательства](android-1.41-release.md).
+- [x] Web/backend production Ready на `c4f33b2`; ожидающая оплаты заявка исправлена на 500.00 RUB, повторный apply 0, отменённая сохранена. HTTP 200/401 и runtime errors=0. [Доказательства](android-1.41-release.md).
+- [x] 11 неактивных worktree чистые и синхронизированы с runtime SHA; после documentation-only PR повторяется финальная сверка всех 12 копий с origin/main. Исторические ветки сохранены, recovery не потребовались. [Доказательства](android-1.41-release.md).
 - [ ] Физическая приёмка устройства/браузера/возврата после реальной оплаты — отдельно.
