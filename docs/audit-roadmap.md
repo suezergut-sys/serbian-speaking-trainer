@@ -1012,5 +1012,6 @@
 ## 27.10.2026 — мягкие подсказки на первом входе
 
 - [x] Для нового профиля подсказки включены при первом входе web/Android; существующий выбор сохранён. 30 backend tests, 14 shared UI tests RU/EN и production web build/typecheck passed. [Доказательства](default-soft-hints-2026-10-27.md).
-- [ ] Commit/push/PR — статус в документе доказательств; merge/production отдельно.
+- [x] Commit/push и [PR #174](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/174), MERGEABLE/CLEAN, checks не назначены. [Доказательства](default-soft-hints-2026-10-27.md).
+- [ ] Merge/production backend — отдельно.
 - [ ] Ручная production-приёмка первого входа в web и текущем Android APK после backend-публикации. Новый Android sync/build не требуется.
