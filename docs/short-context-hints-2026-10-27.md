@@ -94,7 +94,16 @@
   для конструкций (12), независимый preset EN/RU (6). Скриншоты
   `artifacts/context-hints/screens/*.png`; тёмный мобильный RU-layout просмотрен.
   5 Node resilience guards passed. Android build/sync не запускались.
-- [ ] Commit/push/PR и конечная проверка всех рабочих копий.
+- [x] Исходники/tests/docs отправлены: `c7f740362a9941cf7f964d59b148de874a0d6ba8`,
+  [PR #169](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/169).
+  GitHub подтверждает MERGEABLE/CLEAN; remote CI checks для ветки отсутствуют,
+  локальные результаты перечислены выше. Следующий commit только фиксирует
+  доказательства и не является новым runtime/deploy/APK.
+- [x] Основная папка проверена на main = origin/main =
+  `fedf24967492e5fbfcd32a8bc0e9d808a8a61d8e`, все 12 рабочих копий чистые на
+  этом SHA. После документационного push проверка повторяется; свидетельство
+  хранится в ignored `artifacts/context-hints/worktrees-final.json`.
+  Ветка реализации сохранена/pushed, recovery-ветки не требовались.
 - [ ] Production web/backend/data verification и ручная приёмка владельца.
 - [x] Android 1.40/code50 и package version не менялись; sync/APK не выполнялись.
   Групповое отображение старого APK потребует отдельно разрешённого Android-релиза;
