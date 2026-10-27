@@ -989,3 +989,11 @@
 - [x] PR #153, runtime 1d8d8fa: backend/web Ready/alias/SHA, migration 6ccb82f56983 и Supabase version/schema подтверждены; HTTP и 12 production browser scenarios, авторизованная EN форма/legacy fallback проверены. [Доказательства](bilingual-topic-titles-2026-10-25.md).
 - [x] Реальный AI adapter проверен двумя техническими названиями RU↔EN, не в автотестах.
 - [ ] Физический Android — отдельная приёмка следующего APK.
+
+## 27.10.2026 — аудит коротких контекстных подсказок
+
+- [x] Проверены все 210 preset-фраз в RU/EN и 9 личных фраз; подготовлены короткие фрагменты, canonical guards, versioned prompts, общий клиент/API и безопасный backfill. [Доказательства и отдельные статусы](short-context-hints-2026-10-27.md).
+- [x] 469 backend tests, 9 skipped; 344 frontend tests; 18 browser scenarios; Node guards, lint/typecheck/build. [Результаты](short-context-hints-2026-10-27.md).
+- [ ] Публикация PR и финальная чистота рабочих копий — результаты в документе.
+- [ ] Merge/production web/backend/data verification и ручная приёмка.
+- [ ] Android build/устройство — только по отдельной команде; backlog обновлён.

@@ -678,3 +678,9 @@ APK 1.17/code27, native assets и package version в этом срезе не м
 
 - [x] Общий клиент: title_en + RU fallback в home/Premium/phrase selector/exercise/statistics, RU/EN translation loading/help/error/retry. [Доказательства](bilingual-topic-titles-2026-10-25.md).
 - [ ] По отдельной команде перенести через production Android build/sync; физически проверить ввод RU/EN, переключение и reload, selector/keyboard, ошибку/повтор и старые темы. APK 1.39/code49 прежний; backend-compatible старый APK пока не использует title_en.
+
+## 27.10.2026 — короткие смысловые подсказки
+
+- [x] Общий клиент и API: короткие конструкции, скрытие слов без соответствия в каноне, один штраф на фрагмент, RU/EN, source_hints при переключении языка. [Аудит](short-context-hints-2026-10-27.md).
+- [ ] По отдельной команде включить в Android-релиз; проверить на устройстве перенос строк, tooltip, latinica/ćirilica, RU/EN, повтор сохранения и один штраф. Старый APK 1.40 не умеет собирать групповые ключи в кнопку.
+- [x] Android sync/build и повышение версии не выполнялись; 1.40/code50 сохранены.

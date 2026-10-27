@@ -2,10 +2,11 @@ from dataclasses import dataclass
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.db.topic_phrases import TOPIC_PHRASES
 from app.db.topic_phrase_hints import TOPIC_PHRASE_HINTS
-from app.models import Exercise, Skill, TopicPhrase, TopicPreset
+from app.models import Exercise, ReviewPhrase, Skill, TopicPhrase, TopicPreset
 from app.repositories import SkillRepository, TopicPhraseRepository, TopicPresetRepository
 
 
@@ -124,9 +125,19 @@ def seed_catalog(session: Session) -> tuple[int, int, int]:
                 setattr(phrase, key, value)
 
     phrase_hints = {item.id: TOPIC_PHRASE_HINTS[item.id] for item in TOPIC_PHRASES}
+    catalog = {item.id: item for item in TOPIC_PHRASES}
+    for phrase in session.scalars(select(ReviewPhrase)):
+        item = catalog.get(phrase.topic_phrase_id)
+        if (item and phrase.source_ru == item.source_ru
+                and next(iter(phrase.intended_sr_variants_json), "") == item.canonical_sr
+                and phrase.word_hints_json != phrase_hints[item.id]):
+            phrase.word_hints_json = phrase_hints[item.id]
+            flag_modified(phrase, "updated_at")
     for exercise in session.scalars(select(Exercise)):
         topic_phrase_id = exercise.generation_meta_json.get("topic_phrase_id")
-        if topic_phrase_id in phrase_hints:
+        item = catalog.get(topic_phrase_id)
+        canonical = exercise.target_hints_json.get("canonical_sr") or next(iter(exercise.target_hints_json.get("intended_sr_variants", [])), "")
+        if item and exercise.source_ru == item.source_ru and canonical in ("", item.canonical_sr):
             exercise.target_hints_json = {
                 **exercise.target_hints_json,
                 "word_hints": phrase_hints[topic_phrase_id],

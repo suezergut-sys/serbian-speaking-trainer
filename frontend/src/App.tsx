@@ -24,7 +24,7 @@ import { PremiumView } from "./PremiumView";
 import { PremiumBadge } from "./PremiumBadge";
 import { sortedPersonalTopics } from "./personalTopics";
 import { WordHintToken } from "./WordHintToken";
-import { isSourceWord, splitSourcePhrase } from "./sourceWords";
+import { splitHintFragments } from "./sourceWords";
 import { hasUnexpectedLetterScript, displaySerbian, displaySerbianInRussianText, readSerbianAlphabet, saveSerbianAlphabet, toSerbianLatin, type SerbianAlphabet } from "./serbianScript";
 import { AnswerResult } from "./AnswerResult";
 import { RewardOverlay } from "./RewardOverlay";
@@ -807,8 +807,8 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     } catch {
       if (flowEpochRef.current === epoch && hintEpochRef.current === hintEpoch) setError(
         wordHintsRef.current[normalized]
-          ? `Перевод слова «${word}» показан, но сохранение не удалось. Нажмите на слово ещё раз, чтобы повторить.`
-          : `Для слова «${word}» перевод пока недоступен. Нажмите на слово ещё раз, чтобы повторить.`,
+          ? `Подсказка для «${word}» показана, но сохранение не удалось. Нажмите ещё раз, чтобы повторить.`
+          : `Подсказка для «${word}» пока недоступна. Нажмите ещё раз, чтобы повторить.`,
       );
     } finally {
       if (hintRequestsRef.current.get(requestKey) === controller) hintRequestsRef.current.delete(requestKey);
@@ -836,16 +836,18 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       }} />;
 
   function renderPhrase() {
-    const localized = localizedPhrase(exercise?.source_ru ?? "");
+    const localized = localizedPhrase(exercise?.source_ru ?? "", exercise?.source_en !== null);
+    // Preset EN keys switch immediately with the displayed source language.
+    // Personal phrases keep their own source and use only server-validated hints.
+    const hints: Record<string, { translation_sr: string; note?: string } | undefined> = Object.keys(localized.hints).length ? localized.hints : Object.fromEntries(
+      (exercise?.source_hints ?? exercise?.word_hints ?? []).map(hint => [hint.word_ru.toLocaleLowerCase("ru-RU"), hint]));
     return <h2 id="exercise-title" className="interactive-phrase" aria-label={exercise ? localized.source : t("Готовим фразу…")}>
-      {exercise ? splitSourcePhrase(localized.source).map((part, index) => {
-        if (!isSourceWord(part)) return <span key={index}>{part}</span>;
-        const localHint = Object.hasOwn(localized.hints, part.toLowerCase()) ? localized.hints[part.toLowerCase()] : undefined;
+      {exercise ? splitHintFragments(localized.source, Object.keys(hints)).map((part, index) => {
+        const localHint = Object.hasOwn(hints, part.toLocaleLowerCase("ru-RU")) ? hints[part.toLocaleLowerCase("ru-RU")] : undefined;
         const word = part;
         const normalized = word.toLocaleLowerCase("ru-RU");
-        const hasHint = localHint || exercise.word_hints?.some(hint => hint.word_ru.toLocaleLowerCase("ru-RU") === normalized);
-        if (!hasHint && !/[А-Яа-яЁё]/.test(part)) return <span key={index}>{part}</span>;
-        return <WordHintToken key={`${part}-${index}`} word={part} used={Boolean(wordHints[normalized])} disabled={checking || Boolean(attempt)} onDismiss={() => setActiveHint(undefined)} active={activeHint === normalized && (mobileLayout ? visiblePanel === 1 : view === "practice")} translation={wordHints[normalized] ? [displaySerbian(localHint?.translation_sr ?? wordHints[normalized].translation_sr, alphabet), localHint?.note ? t(localHint.note) : ""].filter(Boolean).join(" · ") : t("Загружаем…")} onClick={() => void showWordHint(word, localHint ? { word_ru: word, translation_sr: localHint.translation_sr } : undefined)} />;
+        if (!localHint) return <span key={index}>{part}</span>;
+        return <WordHintToken key={`${part}-${index}`} word={part} used={Boolean(wordHints[normalized])} disabled={checking || Boolean(attempt)} onDismiss={() => setActiveHint(undefined)} active={activeHint === normalized && (mobileLayout ? visiblePanel === 1 : view === "practice")} translation={wordHints[normalized] ? [displaySerbian(wordHints[normalized].translation_sr, alphabet), localHint.note ? t(localHint.note) : ""].filter(Boolean).join(" · ") : t("Загружаем…")} onClick={() => void showWordHint(word, { word_ru: word, translation_sr: localHint.translation_sr })} />;
       }) : t("Готовим фразу…")}
     </h2>;
   }

@@ -21,7 +21,7 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
       else if (path === '/api/auth/me/preferences') body = { assistance_enabled: false };
       else if (path === '/api/topics') body = [topic];
       else if (path === '/api/review-phrases/summary') body = { phrase_count: 0 };
-      else if (path === '/api/sessions/start') body = { session: { id: 's1', status: 'active', requested_length: 10, completed_count: 0, topic: { ...topic, source: 'preset' } }, exercise: { id: 'e1', source_ru: current.source_ru, word_hints: [], targeted_skills: [], expected_level: 'A2', difficulty: 1 } };
+      else if (path === '/api/sessions/start') body = { session: { id: 's1', status: 'active', requested_length: 10, completed_count: 0, topic: { ...topic, source: 'preset' } }, exercise: { id: 'e1', source_ru: current.source_ru, word_hints: [{ word_ru: 'когда', translation_sr: 'Kada' }, { word_ru: 'лучше', translation_sr: 'najbolje' }, { word_ru: 'покупать', translation_sr: 'kupiti' }], targeted_skills: [], expected_level: 'A2', difficulty: 1 } };
       else if (path.endsWith('/word-hints')) {
         const word = route.request().postDataJSON().word;
         saved.push(word);
@@ -36,26 +36,26 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
     const phrase = page.locator('.interactive-phrase:visible');
     await expect(phrase).toHaveAttribute('aria-label', en ? current.source_en : current.source_ru);
     if (en) {
-      const expected = current.source_en.match(/[a-z]+(?:[-'’][a-z]+)*/gi).filter(word => !['a', 'an', 'the'].includes(word.toLowerCase()));
-      expect(await phrase.getByRole('button').allTextContents()).toEqual(expected);
+      expect((await phrase.getByRole('button').allTextContents()).map(s => s.toLowerCase()).sort()).toEqual(Object.keys(current.word_hints).sort());
       await expect(phrase.getByRole('button', { name: 'the', exact: true })).toHaveCount(0);
+      await expect(phrase.getByRole('button', { name: 'time', exact: true })).toHaveCount(0);
       await phrase.getByRole('button', { name: 'is', exact: true }).click();
       await expect(page.getByRole('status').filter({ hasText: /^je$/ })).toBeVisible();
     }
-    for (const [word, translation] of en ? [['best', 'najbolje'], ['time', 'vreme'], ['buy', 'kupiti']] : [['Когда', 'Kada'], ['лучше', 'najbolje'], ['покупать', 'kupiti']]) {
+    for (const [word, translation] of en ? [['best', 'najbolje'], ['cheap', 'jeftine'], ['to buy', 'kupiti']] : [['Когда', 'Kada'], ['лучше', 'najbolje'], ['покупать', 'kupiti']]) {
       await phrase.getByRole('button', { name: word, exact: true }).click();
       await expect(page.locator('.word-tooltip')).toContainText(translation);
       await expect(phrase.getByRole('button', { name: word, exact: true })).toHaveClass(/is-used/);
     }
     await expect.poll(() => saved.length).toBe(en ? 4 : 3);
-    expect(saved).toEqual(en ? ['is', 'best', 'time', 'buy'] : ['Когда', 'лучше', 'покупать']);
+    expect(saved).toEqual(en ? ['is', 'best', 'cheap', 'to buy'] : ['Когда', 'лучше', 'покупать']);
     await mkdir('../artifacts/english-hints', { recursive: true });
     await page.screenshot({ path: `../artifacts/english-hints/${language}-${layout}.png` });
     if (en) {
       current = catalog.find(item => item.id === 'job-interview-05');
       await page.reload();
       await expect(phrase).toHaveAttribute('aria-label', current.source_en);
-      for (const word of ['What', 'duties', 'will', 'new', 'employee', 'have']) await expect(phrase.getByRole('button', { name: word, exact: true })).toBeVisible();
+      for (const word of ['What', 'duties', 'new', 'employee', 'have']) await expect(phrase.getByRole('button', { name: word, exact: true })).toBeVisible();
       await phrase.getByRole('button', { name: 'have', exact: true }).click();
       await expect(page.locator('.word-tooltip')).toHaveText('imati');
     }

@@ -134,8 +134,8 @@ def test_model_cannot_silently_accept_known_ijekavian_answer():
     assert ai.analysis_calls == 2
 
 
-@pytest.mark.parametrize("prompt", ["exercise_generator.md", "answer_analyzer_v4.md", "topic_normalizer.md",
-                                    "phrase_preparation_v2.md", "transcription_assistance_v3.md"])
+@pytest.mark.parametrize("prompt", ["exercise_generator_v2.md", "answer_analyzer_v4.md", "topic_normalizer.md",
+                                    "phrase_preparation_v3.md", "transcription_assistance_v3.md"])
 def test_every_structured_operation_loads_shared_policy(prompt):
     provider = OpenAIStructuredProvider(Settings(openai_api_key="mock", openai_text_model="env-model"))
     parse = Mock(return_value=SimpleNamespace(output_parsed=PhrasePreparation(intended_sr_variants=["Dve kafe."])))

@@ -22,8 +22,9 @@ from app.schemas import (
 from app.repositories.custom_content import CustomContentRepository
 from app.services.custom_content_policy import CustomContentError, MAX_TOPIC_PHRASES, MAX_CUSTOM_PHRASES
 from app.services.ai_adapter import AIServiceError, StructuredAIProvider
-from app.services.word_hints import all_word_hints, word_hints_for_language
+from app.services.word_hints import all_word_hints, word_hints_for_language, resolve_hint
 from app.services.interface_language import interface_language
+from app.services.hint_alignment import aligned_word_hints
 
 CORRECT_SCORE_THRESHOLD = 0.95
 CORRECT_STREAK_TO_MASTER = 3
@@ -75,6 +76,8 @@ class ReviewService:
         variants = [" ".join(value.split()) for value in preparation.intended_sr_variants]
         if not variants or any(not value or len(value) > 300 for value in variants):
             raise PhrasePreparationUnavailableError
+        preparation.word_hints = [WordHint.model_validate(item) for item in aligned_word_hints(
+            source, variants[0], [hint.model_dump() for hint in preparation.word_hints])]
         now = datetime.now(timezone.utc)
         receipt = PhrasePreparationReceipt(user_id=self.user_id, source_ru=source,
             preparation_json=PhrasePreparation(intended_sr_variants=variants, word_hints=preparation.word_hints).model_dump(),
@@ -249,18 +252,19 @@ class ReviewService:
             self._record_word_hint(exercise, word, all_languages=True)
 
     def _record_word_hint(self, exercise: Exercise, word: str, *, all_languages: bool = False) -> WordHintResponse:
-        normalized = normalize_ru(word)
         stored = list(exercise.target_hints_json.get("word_hints", []))
-        selected = (all_word_hints(exercise.source_ru, stored) if all_languages
-                    else word_hints_for_language(exercise.source_ru, stored))
-        hints = [WordHint.model_validate(item) for item in selected]
-        hint = next((item for item in hints if normalize_ru(item.word_ru) == normalized), None)
+        canonical = exercise.target_hints_json.get("canonical_sr") or next(iter(exercise.target_hints_json.get("intended_sr_variants", [])), "")
+        selected = (all_word_hints(exercise.source_ru, stored, canonical) if all_languages
+                    else word_hints_for_language(exercise.source_ru, stored, canonical))
+        resolved = resolve_hint(selected, word)
+        hint = WordHint.model_validate(resolved) if resolved else None
         if hint is None and interface_language.get() == "en":
             # APK 1.32 and older English clients still submit legacy Russian keys.
-            hint = next((WordHint.model_validate(item) for item in stored
-                         if normalize_ru(item["word_ru"]) == normalized), None)
+            fallback = resolve_hint(all_word_hints(exercise.source_ru, stored, canonical), word)
+            hint = WordHint.model_validate(fallback) if fallback else None
         if hint is None:
             raise WordHintNotFoundError(word)
+        normalized = normalize_ru(hint.word_ru)
         already_revealed = list(exercise.generation_meta_json.get("revealed_hint_words", []))
         if normalized in already_revealed:
             return WordHintResponse(word_ru=hint.word_ru, translation_sr=hint.translation_sr)

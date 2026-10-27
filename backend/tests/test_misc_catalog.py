@@ -11,6 +11,7 @@ from app.db.misc_phrases import MISC_PHRASES
 from app.db.seed import seed_catalog
 from app.db.session import create_database_engine
 from app.models import TopicPhrase
+from app.services.hint_alignment import aligned_word_hints
 
 
 def test_misc_catalog_is_substantial_and_uses_conversational_expressions():
@@ -20,8 +21,8 @@ def test_misc_catalog_is_substantial_and_uses_conversational_expressions():
         assert len(phrase["canonical_sr"].split()) >= 7
         for translation in phrase["hints_en"].values():
             assert not re.search(r"[А-Яа-яЁё]", translation)
-    assert MISC_PHRASES[0]["hints_en"]["of"] == "mnogo"
-    assert MISC_PHRASES[7]["hints_en"]["know"] == "javiću ti"
+    assert "of" not in MISC_PHRASES[0]["hints_en"]
+    assert MISC_PHRASES[7]["hints_en"]["i'll let you know"] == "javiću ti"
     assert MISC_PHRASES[21]["hints_en"]["lunch"] == "ručka"
     combined = " ".join(p["canonical_sr"] for p in MISC_PHRASES)
     for expression in ("Svejedno mi je", "Nemam pojma", "Nema veze", "Ma daj", "Nema šanse", "Čujemo se", "Sve po starom"):
@@ -36,9 +37,7 @@ def test_misc_session_uses_persisted_bilingual_catalog_without_ai(api_client, db
     phrase = next(p for p in MISC_PHRASES if p["source_ru"] == exercise["source_ru"])
     assert phrase["canonical_sr"]
     assert exercise["word_hints"]
-    pattern = r"[a-z]+(?:[-'’][a-z]+)*" if language == "en" else r"[а-яё]+"
-    words = set(re.findall(pattern, phrase[f"source_{language}"].lower())) - ({"a", "an", "the"} if language == "en" else set())
-    assert words <= {hint["word_ru"].lower() for hint in exercise["word_hints"]}
+    assert aligned_word_hints(phrase[f"source_{language}"], phrase["canonical_sr"], exercise["word_hints"]) == exercise["word_hints"]
 
 
 def test_position_migration_seed_repeat_and_safe_downgrade(tmp_path):
