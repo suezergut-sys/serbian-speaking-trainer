@@ -998,3 +998,11 @@
 - [x] PR #169 merged; backend/web Ready на `f1d90be`, production-каталог и 9 личных карточек исправлены; связанные snapshots обновлены, повторный apply 0/0/0. Настоящий аккаунт RU/EN, 18 production browser scenarios, HTTP/OpenAPI и runtime errors=0 проверены. [Доказательства](short-context-hints-2026-10-27.md).
 - [ ] Приёмка владельцем на следующих учебных ответах; реальная речь/AI-проверка в этом выпуске не запускались.
 - [ ] Android build/устройство — только по отдельной команде; backlog обновлён.
+
+## 27.10.2026 — Android 1.41 и рублёвая цена
+
+- [x] Владелец отдельно согласовал 1.41/code51. Android free — только оплата на сайте; RU/EN, Browser.open, состояние ошибки и сохранение paid-каталога проверены. Рублёвая цена вынесена в nested env override 500.00 без раскрытия закрытых реквизитов. [Доказательства](android-1.41-release.md).
+- [x] `pnpm android:cloud-apk` 1.41/code51, metadata/API/11 assets/Browser/Share/signature/SHA256 и Downloads проверены; 120 финальных App/Android tests passed. [Доказательства](android-1.41-release.md).
+- [ ] Публикация APK и финальные доказательства выпуска.
+- [ ] Web/backend production, исправление ожидающей оплаты заявки и финальная синхронизация всех рабочих копий.
+- [ ] Физическая приёмка устройства/браузера/возврата после реальной оплаты — отдельно.

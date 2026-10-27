@@ -521,6 +521,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
 
   useEffect(() => {
     let active = true;
+    const accountRequests = new Map<AbortController, number>();
     const onVisibilityChange = () => {
       if (active && document.visibilityState === "hidden") interruptVoice();
     };
@@ -529,7 +530,19 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     if (isNative) {
       void CapacitorApp.addListener("appStateChange", ({ isActive }) => {
         if (active && !isActive) interruptVoice();
-        if (active && isActive) void refreshAssistance();
+        if (active && isActive) {
+          void refreshAssistance();
+          const epoch = ++accountRefreshEpochRef.current;
+          const controller = new AbortController();
+          const timeout = window.setTimeout(() => controller.abort(), 10_000);
+          accountRequests.set(controller, timeout);
+          void fetchCurrentUser(controller.signal).then(updated => {
+            if (active && accountRefreshEpochRef.current === epoch) onAccountChange(updated);
+          }).catch(() => undefined).finally(() => {
+            window.clearTimeout(timeout);
+            accountRequests.delete(controller);
+          });
+        }
       }).then((listener) => {
         if (active) nativeListener = listener;
         else void listener.remove().catch(() => undefined);
@@ -539,8 +552,13 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       active = false;
       document.removeEventListener("visibilitychange", onVisibilityChange);
       if (nativeListener) void nativeListener.remove().catch(() => undefined);
+      for (const [controller, timeout] of accountRequests) {
+        window.clearTimeout(timeout);
+        controller.abort();
+      }
+      accountRequests.clear();
     };
-  }, [interruptVoice, isNative, refreshAssistance]);
+  }, [interruptVoice, isNative, refreshAssistance, onAccountChange]);
 
   function showView(next: AppView) {
     if (next !== "practice") interruptVoice();

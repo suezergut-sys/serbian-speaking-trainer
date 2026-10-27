@@ -7,6 +7,8 @@ import type { TopicListItem } from "./types/training";
 import { PremiumBadge } from "./PremiumBadge";
 import twoCoffees from "./assets/premium/two-coffees.webp";
 import { PaymentForm } from "./PaymentForm";
+import { Capacitor } from "@capacitor/core";
+import { AndroidPremiumPayment } from "./AndroidPremiumPayment";
 
 export function PremiumView({ active, topics, alphabet, onTopicCreated, onChanged, onDeleted, onPaymentReported }: {
   active: boolean; topics: TopicListItem[]; alphabet: SerbianAlphabet;
@@ -19,7 +21,7 @@ export function PremiumView({ active, topics, alphabet, onTopicCreated, onChange
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [paymentReported, setPaymentReported] = useState(false);
   return <section className="premium-page" aria-label={t("Премиум")}>
-    {!active ? <div className="premium-offer panel">
+    {!active ? Capacitor.getPlatform() === "android" ? <AndroidPremiumPayment /> : <div className="premium-offer panel">
       <header className="premium-offer__hero"><PremiumBadge /><h1>{t("Премиум")}</h1></header>
       <ul>
         <li>{t("100 повторений в день")}</li>

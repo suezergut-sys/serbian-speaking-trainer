@@ -834,3 +834,8 @@ Runtime `69ff666` опубликован через PR #143: сначала back
 - Новый первый канон проверяется Pydantic; preparation/generation prompts отделены и версионированы. Семантическую корректность нельзя доказать проверкой вхождения: проведён отдельный аудит 420 preset-наборов и 9 личных наборов. Личные тексты остаются в ignored artifacts.
 - Additive `source_en` и `source_hints` отделяют проверенную preset-локализацию от личного исходника, сохраняют словарь при смене языка. Fragment key используется и для POST, и для idempotent learning/penalty. Сохранённые каноны, попытки и прогресс не пересчитываются.
 - Для production backfill — явная maintenance-команда с dry-run, точными source/canonical/ID guards, транзакцией и частным rollback journal; не скрытый платный AI-вызов на GET. [Аудит и выпуск](short-context-hints-2026-10-27.md).
+
+## 27.10.2026 — Android Premium через сайт и вложенные платёжные env
+
+- Free Android показывает только сообщение и HTTPS-кнопку публичного сайта через Capacitor Browser, с RU/EN loading/error/retry. Внутри Android не монтируется PaymentForm и не запрашиваются платёжные API. Active Premium/admin сохраняют каталог; web продолжает ручную оплату. Возврат native в foreground обновляет аккаунт под abort/timeout/epoch guard, чтобы увидеть купленный на сайте Premium.
+- В Settings включён стандартный env_nested_delimiter="__": `MANUAL_PAYMENTS__METHODS__SBP__AMOUNT=500.00` меняет только сумму СБП поверх закрытого JSON с реквизитами. Прочие методы/данные неизменны, Pydantic/Decimal остаются обязательными. Неоплаченная заявка со старой суммой исправляется отдельно под точными guards; история отмен/сообщённых платежей не пересчитывается. [Выпуск 1.41](android-1.41-release.md).

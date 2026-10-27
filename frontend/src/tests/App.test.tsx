@@ -141,6 +141,29 @@ describe("App", () => {
     expect(fetchMock.mock.calls.filter(([url]) => url.toString().endsWith("/word-hints"))).toHaveLength(1);
   });
 
+  it("refreshes Premium after returning to Android from the payment website", async () => {
+    vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(true);
+    vi.spyOn(Capacitor, "getPlatform").mockReturnValue("android");
+    let paid = false;
+    const baseFetch = mockApi();
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const result = await baseFetch(input, init);
+      if (input.toString().endsWith("/api/auth/me")) return { ...result, json: async () => ({
+        ...await result.json(), role: "user", access_tier: paid ? "premium" : "free",
+      }) };
+      return result;
+    }));
+    render(<App />);
+    await screen.findByRole("heading", { name: "Я хочу открыть счёт." });
+    fireEvent.click(screen.getByRole("button", { name: "Премиум" }));
+    expect(screen.getByRole("button", { name: "https://serbotalk.app/" })).toBeInTheDocument();
+    await waitFor(() => expect(nativeAppEvents.listener).toBeDefined());
+    paid = true;
+    await act(async () => { nativeAppEvents.listener?.({ isActive: true }); });
+    expect(await screen.findByRole("button", { name: "Создать тему" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "https://serbotalk.app/" })).not.toBeInTheDocument();
+  });
+
   afterEach(() => {
     cleanup();
     window.history.replaceState({}, "", "/");
