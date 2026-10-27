@@ -71,7 +71,8 @@ def test_native_preference_patch_cors(api_client):
 
 
 @pytest.mark.parametrize("enabled", [True, False])
-def test_saved_preference_survives_restart_login_and_release_bootstrap(tmp_path, monkeypatch, enabled):
+@pytest.mark.parametrize("first_client", ["SerboTalk Web", "SerboTalk/1.41 Android"])
+def test_saved_preference_survives_restart_login_and_release_bootstrap(tmp_path, monkeypatch, enabled, first_client):
     """Use fresh DB connections and real auth sync, rather than a cached fixture user."""
     database_url = f"sqlite+pysqlite:///{(tmp_path / 'profile.db').as_posix()}"
     root = Path(__file__).resolve().parents[1]
@@ -95,7 +96,10 @@ def test_saved_preference_survives_restart_login_and_release_bootstrap(tmp_path,
             config.attributes["connection"] = connection
             command.upgrade(config, "head")
         with TestClient(app) as client:
-            client.headers.update({"Authorization": "Bearer mocked-token", "User-Agent": "SerboTalk/1.23 Android"})
+            client.headers.update({"Authorization": "Bearer mocked-token", "User-Agent": first_client})
+            # The first authenticated visit creates a profile with assistance enabled.
+            assert client.get("/api/auth/me").json()["assistance_enabled"] is True
+            assert client.get("/api/auth/me/preferences").json() == {"assistance_enabled": True}
             # Start with the opposite value so both explicit true and false are tested.
             assert client.patch("/api/auth/me/preferences", json={"assistance_enabled": not enabled}).status_code == 200
             assert client.patch("/api/auth/me/preferences", json={"assistance_enabled": enabled}).json() == {"assistance_enabled": enabled}
@@ -124,3 +128,16 @@ def test_saved_preference_survives_restart_login_and_release_bootstrap(tmp_path,
         app.dependency_overrides.clear()
         app.dependency_overrides.update(previous_overrides)
         engine.dispose()
+
+
+@pytest.mark.parametrize("enabled", [True, False])
+def test_first_login_default_preserves_existing_choice(db_session, enabled):
+    service = UserService(db_session)
+    identity = AuthenticatedIdentity("new-learner", "new-learner@example.invalid", "Learner", None)
+    user = service.sync(identity)
+    assert user.assistance_enabled is True
+    service.update_preferences(user, enabled)
+    db_session.expire_all()
+    refreshed = service.sync(AuthenticatedIdentity(identity.id, identity.email, "Updated name", None))
+    assert refreshed.assistance_enabled is enabled
+    assert refreshed.display_name == "Updated name"

@@ -155,6 +155,7 @@ class UserService:
                 avatar_url=identity.avatar_url,
                 role=role,
                 access_tier="free",
+                assistance_enabled=True,
                 registered_at=now,
                 last_active_at=now,
             ))
