@@ -1007,3 +1007,10 @@
 - [x] Web/backend production Ready на `c4f33b2`; ожидающая оплаты заявка исправлена на 500.00 RUB, повторный apply 0, отменённая сохранена. HTTP 200/401 и runtime errors=0. [Доказательства](android-1.41-release.md).
 - [x] 11 неактивных worktree чистые и синхронизированы с runtime SHA; после documentation-only PR повторяется финальная сверка всех 12 копий с origin/main. Исторические ветки сохранены, recovery не потребовались. [Доказательства](android-1.41-release.md).
 - [ ] Физическая приёмка устройства/браузера/возврата после реальной оплаты — отдельно.
+
+
+## 27.10.2026 — мягкие подсказки на первом входе
+
+- [x] Для нового профиля подсказки включены при первом входе web/Android; существующий выбор сохранён. 30 backend tests, 14 shared UI tests RU/EN и production web build/typecheck passed. [Доказательства](default-soft-hints-2026-10-27.md).
+- [ ] Commit/push/PR — статус в документе доказательств; merge/production отдельно.
+- [ ] Ручная production-приёмка первого входа в web и текущем Android APK после backend-публикации. Новый Android sync/build не требуется.
