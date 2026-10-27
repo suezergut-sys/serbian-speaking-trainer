@@ -19,8 +19,8 @@ from app.services.answer_analyzer import AnswerAnalyzer
 from app.services.serbian_text import has_unexpected_letter_script
 from app.services.session_service import SessionCompletedError, SessionUnavailableError
 from app.services.learner_model import LearnerModelService
-from app.services.review_service import ReviewService, normalize_ru
-from app.services.word_hints import all_word_hints
+from app.services.review_service import ReviewService
+from app.services.word_hints import all_word_hints, resolve_hint
 from app.services.auth_service import UserService
 from app.models import User
 from app.repositories.transcriptions import TranscriptionReceiptRepository
@@ -236,12 +236,11 @@ class AttemptService:
         intended_variants = reserved.intended_variants
         catalog = {skill.key: skill for skill in self.skills.list(limit=500)}
         base_score = self.analyzer.overall_score(analysis)
-        available_hints = {
-            normalize_ru(item.get("word_ru", ""))
-            for item in all_word_hints(exercise.source_ru, list(exercise.target_hints_json.get("word_hints", [])))
-        }
+        available_hints = all_word_hints(exercise.source_ru, list(exercise.target_hints_json.get("word_hints", [])),
+            exercise.target_hints_json.get("canonical_sr") or next(iter(exercise.target_hints_json.get("intended_sr_variants", [])), ""))
         hinted_words = list(dict.fromkeys(
-            word.strip() for word in request.hinted_words if normalize_ru(word) in available_hints
+            hint["word_ru"]
+            for word in request.hinted_words if (hint := resolve_hint(available_hints, word)) is not None
         ))
         self.review.record_revealed_words(exercise, hinted_words)
         hint_penalty = self.review.hint_penalty(hinted_words)

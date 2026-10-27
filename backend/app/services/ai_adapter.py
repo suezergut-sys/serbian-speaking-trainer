@@ -8,7 +8,7 @@ from typing import Protocol
 from openai import OpenAI
 
 from app.config import Settings, get_settings
-from app.schemas import AnswerAnalysis, ExerciseGenerationResult, PhrasePreparation, TopicContext
+from app.schemas import AnswerAnalysis, ExerciseGenerationResult, PhrasePreparation, TopicContext, WordHint
 from app.schemas.topics import TopicTitleTranslation
 from app.schemas.transcriptions import TranscriptionAssistanceAnalysis
 from app.schemas.attempts import ExplainedAnswerAnalysis
@@ -16,6 +16,7 @@ from app.request_metrics import measure_ai_call
 from app.services.model_debug import capture_model_call
 from app.services.interface_language import interface_language
 from app.services.serbian_standard import validate_generated_serbian
+from app.services.hint_alignment import aligned_word_hints
 
 PROMPTS_DIR = Path(__file__).resolve().parents[1] / "prompts"
 
@@ -111,7 +112,7 @@ class OpenAIStructuredProvider:
             "retry_reason": retry_reason,
         }
         return self._parse(
-            prompt_name="exercise_generator.md",
+            prompt_name="exercise_generator_v2.md",
             payload=payload,
             schema=ExerciseGenerationResult,
         )
@@ -144,7 +145,7 @@ class OpenAIStructuredProvider:
 
     def prepare_phrase(self, *, source_ru: str, canonical_sr: str | None = None) -> PhrasePreparation:
         return self._parse(
-            prompt_name="phrase_preparation_v2.md",
+            prompt_name="phrase_preparation_v3.md",
             payload={"source_ru": source_ru, "canonical_sr": canonical_sr, "target_level": "A2"},
             schema=PhrasePreparation,
         )
@@ -185,6 +186,13 @@ class OpenAIStructuredProvider:
                 raise AIServiceError("OpenAI returned no structured output")
             result = schema.model_validate(parsed)
             validate_generated_serbian(result)
+            if isinstance(result, (PhrasePreparation, ExerciseGenerationResult)):
+                canonical = next(iter(result.intended_sr_variants), "")
+                if payload.get("canonical_sr") and canonical != payload["canonical_sr"]:
+                    raise AIServiceError("Canonical answer changed during hint preparation")
+                source = str(payload.get("source_ru", getattr(result, "source_ru", "")))
+                result.word_hints = [WordHint.model_validate(item) for item in aligned_word_hints(
+                    source, canonical, [hint.model_dump() for hint in result.word_hints])]
             return result
         except AIServiceError:
             raise

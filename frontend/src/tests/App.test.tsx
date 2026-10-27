@@ -115,6 +115,32 @@ describe("App", () => {
     expect(fetchMock.mock.calls.filter(([url]) => url.toString().endsWith("/sessions/start"))).toHaveLength(1);
   });
 
+  it.each([false, true])("renders a short nonliteral personal hint as one button (native=%s)", async native => {
+    vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(native);
+    const baseFetch = mockApi();
+    const hints = [{ word_ru: "мне не с кем", translation_sr: "nemam s kim" }, { word_ru: "поговорить", translation_sr: "da pričam" }];
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (input.toString().endsWith("/word-hints")) return { ok: true, json: async () => ({ ...hints[0], is_learning: true }) };
+      const response = await baseFetch(input, init);
+      if (input.toString().endsWith("/sessions/start")) {
+        const body = await response.json();
+        return { ...response, json: async () => ({ ...body, exercise: { ...body.exercise,
+          source_ru: "Мне не с кем поговорить.", source_en: null, source_hints: hints, word_hints: hints } }) };
+      }
+      return response;
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
+    expect(screen.queryByRole("button", { name: /^Мне$/ })).not.toBeInTheDocument();
+    const fragment = await screen.findByRole("button", { name: /^Мне не с кем$/ });
+    fireEvent.click(fragment);
+    expect(await screen.findByText("nemam s kim")).toBeInTheDocument();
+    expect(fragment).toHaveClass("is-used");
+    expect(screen.getByRole("button", { name: "поговорить" })).not.toHaveClass("is-used");
+    expect(fetchMock.mock.calls.filter(([url]) => url.toString().endsWith("/word-hints"))).toHaveLength(1);
+  });
+
   afterEach(() => {
     cleanup();
     window.history.replaceState({}, "", "/");
@@ -1683,7 +1709,7 @@ describe("App", () => {
     render(<App />);
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
     fireEvent.click(await screen.findByRole("button", { name: "хочу" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Нажмите на слово ещё раз");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Нажмите ещё раз");
     const answer = await recordAnswer();
     fireEvent.change(answer, { target: { value: "Moj odgovor" } });
     fireEvent.click(screen.getByRole("button", { name: "хочу" }));
@@ -1979,15 +2005,15 @@ describe("App", () => {
       input.toString().endsWith("/word-hints") ? pendingHint : baseFetch(input, init)));
     render(<App />);
     fireEvent.click(await screen.findByRole("button", { name: /В банке/ }));
-    fireEvent.click(await screen.findByRole("button", { name: "открыть" }));
-    expect(screen.getByText("Загружаем…")).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole("button", { name: "хочу" }));
+    expect(screen.getByText("želim")).toBeInTheDocument();
     await recordAnswer();
     fireEvent.click(screen.getByRole("button", { name: "Проверить ответ" }));
     expect(await screen.findByText("Верно")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Следующая фраза/ }));
-    const nextWord = await screen.findByRole("button", { name: "открыть" });
+    const nextWord = await screen.findByRole("button", { name: "хочу" });
     await act(async () => { settleHint(outcome === "result"
-      ? { ok: true, status: 200, json: async () => ({ word_ru: "открыть", translation_sr: "otvoriti", is_learning: true }) }
+      ? { ok: true, status: 200, json: async () => ({ word_ru: "хочу", translation_sr: "želim", is_learning: true }) }
       : { ok: false, status: 503, json: async () => ({ detail: "unavailable" }) }); });
     expect(nextWord).not.toHaveClass("is-used");
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();

@@ -36,6 +36,8 @@ class ExerciseResponse(BaseModel):
     id: str
     session_id: str
     source_ru: str
+    source_en: str | None = None
+    source_hints: list[WordHint] = Field(default_factory=list, max_length=30)
     targeted_skills: list[str]
     expected_level: Literal["A2"] = "A2"
     difficulty: float

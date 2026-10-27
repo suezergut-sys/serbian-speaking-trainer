@@ -42,8 +42,8 @@ export function topicText(id: string | null | undefined, text: string, englishTi
   if (getLanguage() === "en" && englishTitle) return englishTitle;
   return id == null || presetTopicIds.has(id) ? t(text) : text;
 }
-export function localizedPhrase(source: string): { source: string; hints: Phrase["word_hints"] } {
-  const phrase = getLanguage() === "en" ? phrases.find(item => item.source_ru === source) : undefined;
+export function localizedPhrase(source: string, allowPresetTranslation = true): { source: string; hints: Phrase["word_hints"] } {
+  const phrase = allowPresetTranslation && getLanguage() === "en" ? phrases.find(item => item.source_ru === source) : undefined;
   return { source: phrase?.source_en ?? source, hints: phrase?.word_hints ?? {} };
 }
 const templates = Object.entries(dictionary).filter(([key]) => key.includes("{0}"))

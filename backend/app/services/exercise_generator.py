@@ -21,7 +21,8 @@ from app.repositories import (
     TrainingSessionRepository,
 )
 from app.schemas import ExerciseGenerationResult, ExerciseResponse
-from app.services.word_hints import word_hints_for_language
+from app.services.word_hints import word_hints_for_language, preset_english_source
+from app.services.hint_alignment import aligned_word_hints
 from app.services.ai_adapter import AIServiceError, StructuredAIProvider
 from app.services.review_service import ReviewQueueEmptyError
 from app.services.scheduler import Scheduler
@@ -247,6 +248,10 @@ class ExerciseGenerator:
         }
 
     def _review_exercise(self, session_id: str, payload: dict, request_id: str | None = None) -> ExerciseResponse:
+        # A resumed session may contain an older snapshot of corrected hints.
+        current = self.review_phrases.get_owned(str(payload["id"]))
+        if current is not None:
+            payload = self._review_payload(current)
         target_keys = list(payload.get("targeted_skill_keys", []))
         catalog = {skill.key: skill for skill in self.skills.list(limit=500)}
         entity = self._save_exercise(
@@ -289,15 +294,18 @@ class ExerciseGenerator:
     def _response(self, entity: Exercise) -> ExerciseResponse:
         topic_id = entity.generation_meta_json.get("topic_id")
         topic = self.topics.get_visible(topic_id) if topic_id and entity.generation_meta_json.get("review_phrase_id") else None
+        canonical = entity.target_hints_json.get("canonical_sr") or next(iter(entity.target_hints_json.get("intended_sr_variants", [])), "")
         return ExerciseResponse(
             topic_id=topic_id,
             topic_title_ru=topic.title_ru if topic else None,
             id=entity.id,
             session_id=entity.session_id,
             source_ru=entity.source_ru,
+            source_en=preset_english_source(entity.source_ru, canonical),
+            source_hints=aligned_word_hints(entity.source_ru, canonical, list(entity.target_hints_json.get("word_hints", []))),
             targeted_skills=list(entity.generation_meta_json.get("targeted_skill_keys", [])),
             difficulty=float(entity.generation_meta_json.get("difficulty", 0.5)),
-            word_hints=word_hints_for_language(entity.source_ru, list(entity.target_hints_json.get("word_hints", []))),
+            word_hints=word_hints_for_language(entity.source_ru, list(entity.target_hints_json.get("word_hints", [])), canonical),
         )
 
     def _generate(

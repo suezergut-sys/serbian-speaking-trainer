@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 import { getLanguage, getLocale, localizedPhrase, setLanguage, t, topicText } from "../i18n";
 import phrases from "../locales/phrases.en.json";
 import messages from "../locales/en.json";
-import { sourceWords } from "../sourceWords";
+import { sourceWords, splitHintFragments } from "../sourceWords";
 import { SettingsView } from "../SettingsView";
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); setLanguage("ru"); localStorage.clear(); });
@@ -62,12 +62,15 @@ it("keeps a complete English catalog tied to all 210 canonical Serbian phrases a
     expect(phrase.source_en).not.toMatch(/[А-Яа-яЁё]/);
     expect(t(phrase.source_ru)).toBe(phrase.source_en);
     expect(Object.keys(localizedPhrase(phrase.source_ru).hints).length).toBeGreaterThan(0);
-    const requiredWords = [...new Set(sourceWords(phrase.source_en).map(word => word.toLowerCase()))].filter(word => !["a", "an", "the"].includes(word));
-    expect(requiredWords.filter(word => !Object.hasOwn(phrase.word_hints, word)), phrase.id).toEqual([]);
+    expect(splitHintFragments(phrase.source_en, Object.keys(phrase.word_hints)).join("")).toBe(phrase.source_en);
     for (const [word, hint] of Object.entries(phrase.word_hints)) {
       expect(phrase.source_en.toLowerCase()).toContain(word);
       expect(hint).not.toHaveProperty("word_ru");
       expect(hint.translation_sr.trim()).not.toBe("");
+      expect(sourceWords(word).length).toBeLessThanOrEqual(4);
+      const target = sourceWords(hint.translation_sr).join(" ").toLowerCase();
+      expect(` ${sourceWords(phrase.canonical_sr).join(" ").toLowerCase()} `).toContain(` ${target} `);
+      expect(sourceWords(hint.translation_sr).length).toBeLessThanOrEqual(5);
       if ("note" in hint && typeof hint.note === "string") {
         expect(messages).toHaveProperty(hint.note);
         expect(t(hint.note)).not.toBe(hint.note);
@@ -76,6 +79,8 @@ it("keeps a complete English catalog tied to all 210 canonical Serbian phrases a
   }
   setLanguage("ru");
   expect(localizedPhrase(phrases[0].source_ru)).toEqual({ source: phrases[0].source_ru, hints: {} });
+  setLanguage("en");
+  expect(localizedPhrase(phrases[0].source_ru, false)).toEqual({ source: phrases[0].source_ru, hints: {} });
 });
 
 it("keeps the choice active if browser storage is blocked", () => {
@@ -91,11 +96,11 @@ it("keeps compound words intact and corrects the reported lexical hints", () => 
   const vacation = phrases.find(phrase => phrase.id === "vacation-10")!;
   const hints = localizedPhrase(vacation.source_ru).hints;
   expect(hints.best?.translation_sr).toBe("najbolje");
-  expect(hints.time?.translation_sr).toBe("vreme");
-  expect(hints.buy?.translation_sr).toBe("kupiti");
+  expect(hints.time).toBeUndefined();
+  expect(hints["to buy"]?.translation_sr).toBe("kupiti");
   expect(hints.is?.translation_sr).toBe("je");
   const job = phrases.find(phrase => phrase.id === "job-interview-01")!;
-  expect(localizedPhrase(job.source_ru).hints.i?.translation_sr).toBe("ja");
+  expect(localizedPhrase(job.source_ru).hints.i).toBeUndefined();
   expect(localizedPhrase(job.source_ru).hints.work?.translation_sr).toBe("Radim");
   const bank = phrases.find(phrase => phrase.id === "bank-07")!;
   expect(sourceWords(bank.source_en)).toContain("bank's");
@@ -104,7 +109,8 @@ it("keeps compound words intact and corrects the reported lexical hints", () => 
   expect(sourceWords(flat.source_en)).toContain("two-room");
   expect(localizedPhrase(flat.source_ru).hints["two-room"]?.translation_sr).toBe("dvosoban");
   const journey = phrases.find(phrase => phrase.id === "transport-06")!;
-  expect(localizedPhrase(journey.source_ru).hints.long?.translation_sr).toBe("Koliko");
+  expect(localizedPhrase(journey.source_ru).hints["how long"]?.translation_sr).toBe("Koliko");
+  expect(localizedPhrase(journey.source_ru).hints.long).toBeUndefined();
   expect(localizedPhrase(journey.source_ru).hints.take?.translation_sr).toBe("traje");
   expect(sourceWords("Нови-Сада и two-room")).toEqual(["Нови-Сада", "и", "two-room"]);
 });
