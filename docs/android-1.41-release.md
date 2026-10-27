@@ -34,10 +34,12 @@
 - [x] Найдены одна awaiting_payment и одна cancelled СБП-заявки по 5000.00 RUB;
   частный snapshot неоплаченной сохранён в ignored
   `artifacts/android-premium-release/unpaid-before-tool.json`.
-- [ ] После backend deployment исправить только ещё не оплаченную заявку с
-  точными ID/статусом/старой суммой и null paid_at/reported_amount. Отменённую
-  и историю оплат не менять; подтвердить повторным чтением и нулевым reapply.
-- [ ] Проверить новые backend/web deployments и фактическую production-сумму.
+- [x] После backend deployment исправлена одна ещё не оплаченная заявка с
+  точными ID/статусом/старой суммой и null paid_at/reported_amount на 500.00 RUB.
+  Повторный apply вернул 0 строк; чтение подтвердило 500.00 awaiting_payment
+  и прежние 5000.00 cancelled. Отменённая заявка и история оплат сохранены.
+- [x] Новые backend/web deployments Ready, scalar env override 500.00 прочитан
+  обратно. Private evidence: `price-env-verified.json`, `price-correction-result.json`.
 
 ## Проверки и выпуск
 
@@ -51,6 +53,13 @@
 - [x] Финальные 120 App/Android/component tests passed, включая получение
   Premium после resume; scoped lint passed. `pnpm android:cloud-apk` завершился
   BUILD SUCCESSFUL, 128 tasks; выполнены build:android и Capacitor sync.
+- [x] Полный финальный frontend suite: 39 files / 349 tests passed. Production
+  web build/typecheck passed. На опубликованном frontend прошли 28 browser
+  scenarios: 12 подсказок, 4 web payment с 500.00 RUB, 12 Premium RU/EN
+  desktop/mobile/Android, включая site button и paid CRUD. API в сценариях
+  mocked, реальная оплата и AI не запускались. В первом production-запуске
+  Premium suite открыл landing из-за отсутствующего TRAINER_PAGE_PATH;
+  повтор с /app прошёл 12/12 без изменений приложения.
 - [x] APK: 1.41/code51/min24/target36; production HTTPS API, 11 dist files
   побайтно совпадают с assets в APK, BrowserPlugin/SharePlugin присутствуют.
   Нет landing/testlab/local transport и строки Google Play в JS; Billing
@@ -61,9 +70,23 @@
   Копия `C:/Users/MSumin/Downloads/SerboTalk-andorid16-1.41.apk` проверена.
   Evidence: ignored `artifacts/android-premium-release/apk-*.{json,txt}`,
   `android-build-final.log`; секретов и аудио в APK/fixtures нет.
-- [ ] Commit/push/PR, web/backend production и GitHub APK release.
-- [ ] Синхронизация основной папки main и всех неактивных worktree, финальная
-  проверка чистоты после коммита доказательств. Исходный main `1f7d494`.
+- [x] Исходники отправлены, [PR #171](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/171)
+  merged, обязательных CI checks нет. Runtime/APK SHA:
+  `c4f33b25b29f0d9f4a070e44f863eb53375d4976`; исходный commit ветки
+  `ef0de3483b1af90cda91209573ec7d11b5c8a84d`, frontend/backend деревья совпадают.
+- [x] Web `dpl_Hpm9xExBbtALcGzdaQpA83As6eUG` и backend
+  `dpl_4Y6nZes5697anCa6DtwuKFdcYNNv` READY/production/main на runtime SHA.
+  Aliases: serbotalk.app и serbian-speaking-trainer-api.vercel.app.
+  HTTP /app и оба /api/health=200, /api/auth/me без авторизации=401;
+  error runtime logs обоих deployments пустые.
+- [x] [GitHub v1.41 latest](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.41)
+  опубликован; tag указывает на runtime SHA. Размер/digest GitHub и обратная
+  загрузка побайтно подтверждают локальный APK. Evidence:
+  `github-release-verified.json`, `http-verified.json`, deployment verified JSON.
+- [x] Все 11 неактивных detached worktree проверены чистыми и переведены с
+  исходного main `1f7d494` на runtime SHA; исторические ветки сохранены,
+  recovery/WIP не требовались. После documentation-only PR основная папка
+  возвращается на main и все 12 копий повторно сверяются с origin/main.
 - [ ] Физическая установка, браузер, реальная оплата и возврат/микрофон на
   телефоне; browser shared Android-layout не заменяет физическую приёмку.
 
