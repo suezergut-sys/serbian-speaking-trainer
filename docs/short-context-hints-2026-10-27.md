@@ -63,11 +63,22 @@
   прогресса и updated_at, сохранение revealed hints и посторонних JSON-полей.
 - [x] Seed обновляет подсказки catalog-linked карточек, а продолжение личной
   сессии берёт актуальную карточку вместо устаревшего embedded snapshot.
-- [ ] Применить частный manifest к production БД после согласованной публикации
-  web/backend; записать количества, повторное чтение и нулевой повторный diff.
-- [ ] Merge и production deployment требуют отдельного разрешения; данные
-  production на этом этапе не изменялись. Исторические attempts/оценки/старые
-  записи открытых слов не переписываются.
+- [x] После явного разрешения владельца 27.10.2026 выполнены merge, выпуск
+  web/backend и перенос данных. Production seed обновил preset-каталог и его
+  копии; частный Pydantic-валидированный manifest применён через Supabase одной
+  SQL-транзакцией с проверками ID/source/canonical/старых hints.
+- [x] SQL обновил 9 личных карточек и 67 связанных exercises, 0 embedded session
+  snapshots (таких снимков в текущих сессиях нет). Первичный dry-run видел 66
+  копий; одна появилась из штатной загрузки настоящего аккаунта до apply и также
+  прошла проверки связи/исходника/канона. Повторный apply дал 0/0/0 изменений.
+- [x] Снимки до/после подтверждают изменение 206 preset-словарей, всех 79 review
+  cards и всех 1166 существовавших exercises; 4 preset-словаря уже совпадали.
+  Дополнительно во время UI-проверки созданы 2 exercises штатным автозапуском.
+  Все 210 preset-словарей и 9 личных совпадают с reviewed manifest; stale preset
+  reviews/exercises и personal exercises — 0/0/0.
+- [x] Backups, SQL, результаты apply/reapply, сравнение и manifest остаются в
+  ignored `artifacts/context-hints/production-*.json`, `production-*.sql`.
+  Исторические attempts/оценки/старые записи открытых слов не переписываются.
 
 Команды сопровождающего (не запускать в автоматических тестах):
 
@@ -104,7 +115,10 @@
   этом SHA. После документационного push проверка повторяется; свидетельство
   хранится в ignored `artifacts/context-hints/worktrees-final.json`.
   Ветка реализации сохранена/pushed, recovery-ветки не требовались.
-- [ ] Production web/backend/data verification и ручная приёмка владельца.
+- [x] Production web/backend/data verification выполнена, включая настоящий
+  аккаунт RU/EN; подробности выпуска ниже.
+- [ ] Приёмка владельцем на своих следующих учебных ответах; настоящая речь
+  и проверка ответа с платным AI-вызовом в этом выпуске не запускались.
 - [x] Android 1.40/code50 и package version не менялись; sync/APK не выполнялись.
   Групповое отображение старого APK потребует отдельно разрешённого Android-релиза;
   проверка общего Android-layout в браузере не означает выпуск APK.
@@ -115,3 +129,40 @@
 
 Частный reviewed manifest SHA256:
 `d05838bac101a43d2ef751876bfbedee07918e5b9db7122599ab068fca8711b4`.
+
+## Production release — 27.10.2026, проверено около 20:26 МСК
+
+- [x] [PR #169](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/169)
+  merged после явного разрешения владельца. Runtime SHA:
+  `f1d90bef26d37216b0e37fe9a74822e49511f8e5`.
+- [x] Backend `dpl_GQ3ygWt4P1wY1oM5feSdSc6wWJZ8`,
+  [deployment](https://serbian-speaking-trainer-6xaqq1v84-suezerguts-projects.vercel.app):
+  READY / production / main, metadata SHA совпадает, alias
+  `serbian-speaking-trainer-api.vercel.app`. Alembic успешен, seed 0/0/0 новых
+  элементов; build завершён. Git integration link=null, применён принятый CLI
+  workflow из чистого git archive runtime SHA с явной commit metadata.
+- [x] Frontend `dpl_4XBT4WDdGafoTNxPZbyV7dkC4emD`,
+  [deployment](https://serbian-speaking-trainer-7m5efto4b-suezerguts-projects.vercel.app):
+  READY / production / main, тот же SHA; aliases `serbotalk.app` и
+  `serbian-speaking-trainer.vercel.app` подтверждены через Vercel API.
+- [x] [Production](https://serbotalk.app/app), direct/rewrite health — HTTP 200;
+  защищённые topics/custom-phrases без авторизации — 401. Production OpenAPI
+  содержит `source_en` и `source_hints`.
+- [x] В настоящей Chrome-сессии владельца проверена именно фраза из обращения:
+  одна кнопка «мне не с кем» и tooltip `nemam s kim`, отдельная «поговорить»,
+  нет самостоятельной кнопки «мне». Повторное открытие в EN не удвоило запись:
+  одна learning entry с hint_count=1; ошибочный `mi` не возвращается.
+  Исходный RU-язык восстановлен, алфавит не менялся. Скриншоты
+  `artifacts/context-hints/production-{ru,en}.png`; console errors=0.
+- [x] На `https://serbotalk.app/app` прошли все 18 изолированных browser
+  scenarios RU/EN × desktop/mobile/shared Android × latin/cyrillic.
+  Synthetic auth и mocked API; это проверка реально опубликованного frontend,
+  без настоящих учебных попыток/аудио/OpenAI-вызовов. Временная копия suite
+  лежит в ignored `frontend/test-results/context-production/`.
+- [x] Runtime error log rows: 0 backend / 0 frontend за интервал проверки.
+  Metadata и HTTP доказательства — `artifacts/context-hints/*-verified.json`,
+  `http-checks.json`, `*-runtime-errors.jsonl`.
+- [x] Последующий commit с этими доказательствами — documentation-only;
+  повторный deploy и Android build для него не выполняются. После его merge
+  main и все завершённые неактивные worktree синхронизируются на новый main SHA;
+  итоговая повторная проверка — `artifacts/context-hints/worktrees-final.json`.

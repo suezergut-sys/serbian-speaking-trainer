@@ -995,5 +995,6 @@
 - [x] Проверены все 210 preset-фраз в RU/EN и 9 личных фраз; подготовлены короткие фрагменты, canonical guards, versioned prompts, общий клиент/API и безопасный backfill. [Доказательства и отдельные статусы](short-context-hints-2026-10-27.md).
 - [x] 469 backend tests, 9 skipped; 344 frontend tests; 18 browser scenarios; Node guards, lint/typecheck/build. [Результаты](short-context-hints-2026-10-27.md).
 - [x] Исходники `c7f7403` отправлены, [PR #169](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/169) MERGEABLE/CLEAN; CI checks не настроены. Все 12 копий чистые на актуальном main `fedf249`, recovery не требовались. [Доказательства](short-context-hints-2026-10-27.md).
-- [ ] Merge/production web/backend/data verification и ручная приёмка.
+- [x] PR #169 merged; backend/web Ready на `f1d90be`, production-каталог и 9 личных карточек исправлены; связанные snapshots обновлены, повторный apply 0/0/0. Настоящий аккаунт RU/EN, 18 production browser scenarios, HTTP/OpenAPI и runtime errors=0 проверены. [Доказательства](short-context-hints-2026-10-27.md).
+- [ ] Приёмка владельцем на следующих учебных ответах; реальная речь/AI-проверка в этом выпуске не запускались.
 - [ ] Android build/устройство — только по отдельной команде; backlog обновлён.
