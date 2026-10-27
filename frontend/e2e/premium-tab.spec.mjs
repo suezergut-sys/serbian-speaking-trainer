@@ -46,12 +46,19 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
     expect(selectedColor).not.toBe(inactiveColor);
     await expect(crown).toHaveCSS('color', tier === 'premium' ? 'rgb(242, 189, 90)' : layout === 'desktop' ? 'rgb(64, 164, 255)' : 'rgb(102, 186, 255)');
     if (tier === 'free' && layout === 'android') {
-      await expect(content.getByText(ru ? 'Оплатить премиум вы можете на сайте' : 'You can pay for Premium on the website')).toBeVisible();
-      await expect(content.getByRole('button', { name: 'https://serbotalk.app/', exact: true })).toBeVisible();
+      await expect(content.getByText(ru ? '100 повторений в день' : '100 repetitions per day')).toBeVisible();
+      await expect(content.getByRole('button', { name: ru ? 'КУПИТЬ НА САЙТЕ' : 'BUY ON WEBSITE', exact: true })).toBeVisible();
       await expect(content.getByRole('button')).toHaveCount(1);
-      await expect(content.locator('.payment-form, .premium-offer, img, ul')).toHaveCount(0);
-      await content.getByRole('button', { name: 'https://serbotalk.app/', exact: true }).click();
-      await expect.poll(() => page.evaluate(() => window.__premiumOpenedUrl)).toBe('https://serbotalk.app/');
+      await expect(content.locator('.premium-offer__hero svg')).toHaveCSS('color', 'rgb(242, 189, 90)');
+      const coffee = content.getByRole('img', { name: ru ? 'Две чашки кофе' : 'Two cups of coffee' });
+      await expect.poll(() => coffee.evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
+      const offer = content.locator('.premium-offer');
+      expect(await offer.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+      await mkdir('../artifacts/android-premium-entry', { recursive: true });
+      await page.screenshot({ path: `../artifacts/android-premium-entry/${language}-android.png` });
+      await expect(content.locator('.payment-form')).toHaveCount(0);
+      await content.getByRole('button', { name: ru ? 'КУПИТЬ НА САЙТЕ' : 'BUY ON WEBSITE', exact: true }).click();
+      await expect.poll(() => page.evaluate(() => window.__premiumOpenedUrl)).toBe('https://serbotalk.app/app?from=android&next=premium');
       expect(privateLoads).toBe(0);
     } else if (tier === 'free') {
       await expect(content.getByRole('button', { name: ru ? 'КУПИТЬ' : 'BUY' })).toBeEnabled();

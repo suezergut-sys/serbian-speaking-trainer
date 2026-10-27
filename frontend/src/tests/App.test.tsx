@@ -62,6 +62,26 @@ import App from "../App";
 import * as auth from "../auth";
 
 describe("App", () => {
+  it.each([false, true])("opens Premium after Android website sign-in (existing session=%s)", async existing => {
+    window.history.replaceState(null, "", "/app?from=android&next=premium");
+    if (!existing) vi.spyOn(auth, "initializeAuth").mockResolvedValue(null);
+    vi.stubGlobal("fetch", mockApi());
+    render(<StrictMode><App /></StrictMode>);
+    if (!existing) {
+      await screen.findByRole("heading", { name: "Добро пожаловать в SerboTalk" });
+      await act(async () => { authEvents.notify?.({ access_token: "test-token" }); });
+    }
+    expect(await screen.findByRole("heading", { name: "Премиум" })).toBeInTheDocument();
+    expect(window.location.search).toBe("");
+    expect(sessionStorage.getItem("serbotalk.android-premium-entry")).toBeNull();
+    cleanup();
+    render(<App />);
+    if (!existing) await act(async () => { authEvents.notify?.({ access_token: "test-token" }); });
+    expect(await screen.findByRole("button", { name: /В банке/ })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Премиум" })).not.toBeInTheDocument();
+    window.history.replaceState(null, "", "/");
+  });
+
   it("switches login language and carries it into settings after authentication", async () => {
     vi.spyOn(auth, "initializeAuth").mockResolvedValue(null);
     vi.stubGlobal("fetch", mockApi());
@@ -156,12 +176,12 @@ describe("App", () => {
     render(<App />);
     await screen.findByRole("heading", { name: "Я хочу открыть счёт." });
     fireEvent.click(screen.getByRole("button", { name: "Премиум" }));
-    expect(screen.getByRole("button", { name: "https://serbotalk.app/" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "КУПИТЬ НА САЙТЕ" })).toBeInTheDocument();
     await waitFor(() => expect(nativeAppEvents.listener).toBeDefined());
     paid = true;
     await act(async () => { nativeAppEvents.listener?.({ isActive: true }); });
     expect(await screen.findByRole("button", { name: "Создать тему" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "https://serbotalk.app/" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "КУПИТЬ НА САЙТЕ" })).not.toBeInTheDocument();
   });
 
   afterEach(() => {

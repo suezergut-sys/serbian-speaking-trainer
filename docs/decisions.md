@@ -839,3 +839,10 @@ Runtime `69ff666` опубликован через PR #143: сначала back
 
 - Free Android показывает только сообщение и HTTPS-кнопку публичного сайта через Capacitor Browser, с RU/EN loading/error/retry. Внутри Android не монтируется PaymentForm и не запрашиваются платёжные API. Active Premium/admin сохраняют каталог; web продолжает ручную оплату. Возврат native в foreground обновляет аккаунт под abort/timeout/epoch guard, чтобы увидеть купленный на сайте Premium.
 - В Settings включён стандартный env_nested_delimiter="__": `MANUAL_PAYMENTS__METHODS__SBP__AMOUNT=500.00` меняет только сумму СБП поверх закрытого JSON с реквизитами. Прочие методы/данные неизменны, Pydantic/Decimal остаются обязательными. Неоплаченная заявка со старой суммой исправляется отдельно под точными guards; история отмен/сообщённых платежей не пересчитывается. [Выпуск 1.41](android-1.41-release.md).
+
+
+## 27.10.2026 — общий Premium offer и одноразовый переход с Android
+
+- Android free использует тот же `.premium-offer`, что и web; различается действие RU/EN «КУПИТЬ НА САЙТЕ» / “BUY ON WEBSITE”. Browser.open ведёт на HTTPS `/app?from=android&next=premium`, непосредственно к входу, с Premium при уже существующей сессии. PaymentForm и платёжные API внутри native не используются.
+- Назначение фиксировано: Premium, без произвольных redirect URL или токенов в ссылке. sessionStorage одной вкладки хранит intent до 30 минут, переживает Google PKCE callback с `code` и очищается после получения аккаунта. Обычный новый вход очищает незавершённый intent; обновление страницы после успешного перехода открывает обычный старт. При отключённом storage переход работает по исходной ссылке, но сохранение назначения через внешнюю Google-авторизацию не гарантируется.
+- Android version/package не меняются, sync/build и физическая приёмка отдельно. [Проверки](android-premium-entry-2026-10-27.md).

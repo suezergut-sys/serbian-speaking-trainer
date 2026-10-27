@@ -1,3 +1,4 @@
+import { rememberPremiumEntry, hasPremiumEntry, clearPremiumEntry } from "./premiumEntry";
 import { t, useLanguage, setLanguage, getLanguage, getLocale, localizedPhrase, topicText } from "./i18n";
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { App as CapacitorApp } from "@capacitor/app";
@@ -175,6 +176,7 @@ function AuthenticatedApp() {
         if (active && lastToken === token) setAuthReady(true);
       }
     };
+    if (!Capacitor.isNativePlatform()) rememberPremiumEntry();
     initializeAuth().then(syncAccount).catch(() => {
       if (active) { setAuthError("Не удалось восстановить вход."); setAuthReady(true); }
     });
@@ -202,7 +204,7 @@ function AuthenticatedApp() {
 function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentUser; onAccountChange: (account: CurrentUser) => void; onSignOut: () => void }) {
   const [backendState, setBackendState] = useState<BackendState>("checking");
   const [startupState, setStartupState] = useState<StartupState>("loading");
-  const [view, setView] = useState<AppView>("practice");
+  const [view, setView] = useState<AppView>(() => !Capacitor.isNativePlatform() && hasPremiumEntry() ? "premium" : "practice");
   const [topics, setTopics] = useState<TopicListItem[]>([]);
   const [selectedTopic, setSelectedTopic] = useState<string>();
   const [customTopic, setCustomTopic] = useState("");
@@ -262,7 +264,10 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const mobileLayout = isNative || compact;
   const visiblePanel = !isNative && view !== "practice" ? view === "statistics" ? 2 : view === "premium" ? 3 : 4 : androidPanel;
 
-  useEffect(() => { startUiTiming("topics"); }, []);
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) clearPremiumEntry();
+    startUiTiming("topics");
+  }, []);
   useEffect(() => {
     if (startupState !== "loading" && topics.length) finishUiTimingWhenVisible("topics", mobileLayout ? ".android-topic-list .android-topic" : ".topics .topic");
   }, [topics, mobileLayout, startupState]);

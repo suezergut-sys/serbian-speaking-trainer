@@ -21,15 +21,15 @@ export function PremiumView({ active, topics, alphabet, onTopicCreated, onChange
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [paymentReported, setPaymentReported] = useState(false);
   return <section className="premium-page" aria-label={t("Премиум")}>
-    {!active ? Capacitor.getPlatform() === "android" ? <AndroidPremiumPayment /> : <div className="premium-offer panel">
+    {!active ? <div className="premium-offer panel">
       <header className="premium-offer__hero"><PremiumBadge /><h1>{t("Премиум")}</h1></header>
       <ul>
         <li>{t("100 повторений в день")}</li>
         <li>{t("До 5 личных тем")}</li>
         <li>{t("До 30 фраз в каждой теме — 150 своих фраз всего")}</li>
       </ul>
-      <button type="button" onClick={() => setPaymentOpen(true)} aria-expanded={paymentOpen}>{t("КУПИТЬ")}</button>
-      {paymentOpen && <PaymentForm onGranted={async () => { setPaymentReported(true); await onPaymentReported?.(); }} onClose={() => { setPaymentOpen(false); document.querySelector<HTMLButtonElement>(".premium-offer > button")?.focus(); }} />}
+      {Capacitor.getPlatform() === "android" ? <AndroidPremiumPayment /> : <button type="button" onClick={() => setPaymentOpen(true)} aria-expanded={paymentOpen}>{t("КУПИТЬ")}</button>}
+      {Capacitor.getPlatform() !== "android" && paymentOpen && <PaymentForm onGranted={async () => { setPaymentReported(true); await onPaymentReported?.(); }} onClose={() => { setPaymentOpen(false); document.querySelector<HTMLButtonElement>(".premium-offer > button")?.focus(); }} />}
       <p className="premium-offer__price">{t("Однократный платёж 5 евро")}</p>
       <img className="premium-offer__coffee" src={twoCoffees} alt={t("Две чашки кофе")} width="768" height="512" />
       <footer className="premium-offer__why"><h2>{t("Почему платно?")}</h2><p>{t("Приложение использует API-вызовы внешней модели OpenAI.")}</p></footer>

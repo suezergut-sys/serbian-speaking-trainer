@@ -1007,3 +1007,12 @@
 - [x] Web/backend production Ready на `c4f33b2`; ожидающая оплаты заявка исправлена на 500.00 RUB, повторный apply 0, отменённая сохранена. HTTP 200/401 и runtime errors=0. [Доказательства](android-1.41-release.md).
 - [x] 11 неактивных worktree чистые и синхронизированы с runtime SHA; после documentation-only PR повторяется финальная сверка всех 12 копий с origin/main. Исторические ветки сохранены, recovery не потребовались. [Доказательства](android-1.41-release.md).
 - [ ] Физическая приёмка устройства/браузера/возврата после реальной оплаты — отдельно.
+
+
+## 27.10.2026 — Premium Android и вход на сайт
+
+- [x] Реализация общего offer RU/EN и фиксированного одноразового перехода после входа, сохранение обычного стартового экрана. [Доказательства](android-premium-entry-2026-10-27.md).
+- [x] Component/unit, browser web/mobile/shared Android-layout, typecheck, production web build и lint. [Результаты](android-premium-entry-2026-10-27.md).
+- [x] Commit/push, [PR #173](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/173), GitHub MERGEABLE/CLEAN; checks не назначены. [Доказательства](android-premium-entry-2026-10-27.md).
+- [ ] Merge и production web — отдельно.
+- [ ] Android sync/build и ручная приёмка устройства — отдельная команда и backlog, 1.41/code51 прежние.
