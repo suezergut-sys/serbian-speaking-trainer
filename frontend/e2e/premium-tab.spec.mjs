@@ -6,6 +6,7 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
     await page.setViewportSize({ width: layout === 'desktop' ? 1366 : layout === 'mobile' ? 320 : 393, height: 844 });
     await page.addInitScript(({ language, layout, storageKey }) => {
       if (layout === 'android') window.CapacitorCustomPlatform = { name: 'android' };
+      if (layout === 'android') window.open = url => { window.__premiumOpenedUrl = String(url); return null; };
       localStorage.setItem('serbotalk.interface-language', language);
       localStorage.setItem(storageKey, JSON.stringify({ access_token: 'synthetic-only', refresh_token: 'synthetic-only', expires_at: 4102444800, token_type: 'bearer', user: { id: 'premium-user', email: 'premium@example.invalid', aud: 'authenticated', role: 'authenticated', app_metadata: {}, user_metadata: {} } }));
     }, { language, layout, storageKey: process.env.LAYOUT_AUTH_STORAGE_KEY ?? 'sb-e2e-auth-auth-token' });
@@ -40,11 +41,19 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
     const inactiveColor = await crown.evaluate(element => getComputedStyle(element).color);
     await premium.click();
     const content = page.locator('.premium-page');
-    await expect(content.getByRole('heading', { name: tier === 'free' ? ru ? 'Премиум' : 'Premium' : ru ? 'ПРЕМИУМ' : 'PREMIUM', exact: true })).toBeVisible();
+    if (tier === 'premium' || layout !== 'android') await expect(content.getByRole('heading', { name: tier === 'free' ? ru ? 'Премиум' : 'Premium' : ru ? 'ПРЕМИУМ' : 'PREMIUM', exact: true })).toBeVisible();
     const selectedColor = await crown.evaluate(element => getComputedStyle(element).color);
     expect(selectedColor).not.toBe(inactiveColor);
     await expect(crown).toHaveCSS('color', tier === 'premium' ? 'rgb(242, 189, 90)' : layout === 'desktop' ? 'rgb(64, 164, 255)' : 'rgb(102, 186, 255)');
-    if (tier === 'free') {
+    if (tier === 'free' && layout === 'android') {
+      await expect(content.getByText(ru ? 'Оплатить премиум вы можете на сайте' : 'You can pay for Premium on the website')).toBeVisible();
+      await expect(content.getByRole('button', { name: 'https://serbotalk.app/', exact: true })).toBeVisible();
+      await expect(content.getByRole('button')).toHaveCount(1);
+      await expect(content.locator('.payment-form, .premium-offer, img, ul')).toHaveCount(0);
+      await content.getByRole('button', { name: 'https://serbotalk.app/', exact: true }).click();
+      await expect.poll(() => page.evaluate(() => window.__premiumOpenedUrl)).toBe('https://serbotalk.app/');
+      expect(privateLoads).toBe(0);
+    } else if (tier === 'free') {
       await expect(content.getByRole('button', { name: ru ? 'КУПИТЬ' : 'BUY' })).toBeEnabled();
       await expect(content.getByText(ru ? '100 повторений в день' : '100 repetitions per day')).toBeVisible();
       await expect(content.getByText(ru ? 'До 5 личных тем' : 'Up to 5 personal topics')).toBeVisible();

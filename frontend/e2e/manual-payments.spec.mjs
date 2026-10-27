@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 
-for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 'android']) {
+for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile']) {
   test(`manual payment ${language} ${layout}`, async ({ page }) => {
     const ru = language === 'ru';
     await page.setViewportSize({ width: layout === 'desktop' ? 1366 : layout === 'mobile' ? 320 : 393, height: 844 });
@@ -51,6 +51,7 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
     await expect(form.getByRole('button', { name: /СБП|SBP/ })).toBeVisible();
     await expect(form.getByRole('button', { name: /PayPal/ })).toBeVisible();
     await form.getByRole('button', { name: /СБП|SBP/ }).click();
+    await expect(form.getByText('500.00 RUB', { exact: true })).toBeVisible();
     await expect(form.getByText('+70000000000')).toBeVisible();
     await form.getByRole('button', { name: ru ? 'Копировать: Телефон получателя' : 'Copy: Recipient phone number' }).click();
     // Browser clipboard may require user permission: manual fallback must remain readable.
