@@ -1013,5 +1013,6 @@
 
 - [x] Реализация общего offer RU/EN и фиксированного одноразового перехода после входа, сохранение обычного стартового экрана. [Доказательства](android-premium-entry-2026-10-27.md).
 - [x] Component/unit, browser web/mobile/shared Android-layout, typecheck, production web build и lint. [Результаты](android-premium-entry-2026-10-27.md).
-- [ ] Публикация PR и CI фиксируются в документе доказательств; merge/production отдельно.
+- [x] Commit/push, [PR #173](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/173), GitHub MERGEABLE/CLEAN; checks не назначены. [Доказательства](android-premium-entry-2026-10-27.md).
+- [ ] Merge и production web — отдельно.
 - [ ] Android sync/build и ручная приёмка устройства — отдельная команда и backlog, 1.41/code51 прежние.
