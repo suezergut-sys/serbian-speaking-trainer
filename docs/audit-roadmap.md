@@ -1,5 +1,10 @@
 # План улучшений по аудиту SerboTalk
 
+## 28.10.2026 — Android 1.42/code52
+
+- [x] Номер отдельно подтверждён; APK и подписанный release AAB собраны, проверены и скопированы в Downloads. 349 tests, 2 metadata tests, lint/typecheck/web build, 5 guards, 24 RU/EN browser scenarios. [Доказательства](android-1.42-release.md).
+- [ ] Merge/публикация версии, загрузка в Google Play и физическая приёмка отдельно.
+
 ## 26.10.2026 — Ekavica во всём учебном материале
 
 - [x] AGENTS.md, общий versioned prompt, проверка generated output и защита от загрязнённого канона; RU/EN, latinica/ćirilica, дословный transcript. [Доказательства](ekavica-standard-2026-10-26.md).
