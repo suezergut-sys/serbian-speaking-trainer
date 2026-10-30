@@ -21,6 +21,20 @@ from testlab import (
 )
 
 
+def test_pre_android_premium_schema_upgrades_preserving_users(tmp_path):
+    engine = create_engine(f"sqlite:///{(tmp_path / 'pre-android.sqlite3').as_posix()}")
+    try:
+        _alembic(engine, "upgrade", "7db9f01a2201")
+        with engine.connect() as connection:
+            users = connection.execute(text("SELECT id FROM users ORDER BY id")).all()
+        bootstrap_testlab_database(engine)
+        with engine.connect() as connection:
+            assert connection.execute(text("SELECT id FROM users ORDER BY id")).all() == users
+            assert "android_premium_granted_at" in {c['name'] for c in inspect(connection).get_columns('users')}
+    finally:
+        engine.dispose()
+
+
 def test_pre_payment_schema_upgrades_preserving_users(tmp_path):
     engine = create_engine(f"sqlite:///{(tmp_path / 'pre-payments.sqlite3').as_posix()}")
     try:

@@ -295,6 +295,7 @@ class User(Base):
     role: Mapped[str] = mapped_column(String(20), default="user", index=True)
     access_tier: Mapped[str] = mapped_column(String(40), default="free", index=True)
     premium_payment_id: Mapped[str | None] = mapped_column(String(36))
+    android_premium_granted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     assistance_enabled: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     registered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     last_active_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, index=True)
@@ -311,3 +312,9 @@ class UserFeedback(Base):
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     content: Mapped[str] = mapped_column(Text)
+
+
+class DeletedAccountMarker(Base):
+    __tablename__ = "deleted_account_markers"
+    identity_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)

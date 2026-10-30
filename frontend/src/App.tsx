@@ -151,6 +151,7 @@ function LoginCopy({ as: Tag, text, href }: { as: "h1" | "p" | "a"; text: keyof 
 }
 
 function AuthenticatedApp() {
+  const [authAttempt, setAuthAttempt] = useState(0);
   const [authReady, setAuthReady] = useState(false);
   const [hasSession, setHasSession] = useState(false);
   const [account, setAccount] = useState<CurrentUser>();
@@ -182,7 +183,7 @@ function AuthenticatedApp() {
       window.setTimeout(() => { void syncAccount(session); }, 0);
     });
     return () => { active = false; unsubscribe(); };
-  }, []);
+  }, [authAttempt]);
 
   async function login() {
     setAuthError(undefined);
@@ -195,6 +196,10 @@ function AuthenticatedApp() {
     <p>{t("Авторизация и загрузка...")}</p>
   </div></main>;
   if (!isAuthConfigured()) return <main className="auth-page"><div className="auth-card panel"><LoginLanguageButton /><h1>{t("Нужна настройка входа")}</h1><p>{t("Добавьте VITE_SUPABASE_URL и VITE_SUPABASE_PUBLISHABLE_KEY в окружение frontend.")}</p></div></main>;
+  if (hasSession && !account && authError) return <main className="auth-page"><div className="auth-card panel"><LoginLanguageButton />
+    <p className="error" role="alert">{t(authError)}</p>
+    <button type="button" onClick={() => { setAuthReady(false); setAuthAttempt(value => value + 1); }}>{t("Повторить загрузку профиля")}</button>
+  </div></main>;
   if (!hasSession || !account) return <main className="auth-page"><div className="auth-card panel"><LoginLanguageButton /><LoginCopy as="h1" text="Добро пожаловать в SerboTalk" /><LoginCopy as="p" text="Войдите или зарегистрируйтесь, чтобы сохранять свой прогресс на всех устройствах." /><button className="google-sign-in" type="button" onClick={() => void login()}>{t("Войти через Google")}</button><EmailLogin /><ReviewLogin />{authError && <p className="error" role="alert">{t(authError)}</p>}<nav className="auth-legal" aria-label={t("Правовая информация")}><LoginCopy as="a" href="/privacy" text="Конфиденциальность" /><LoginCopy as="a" href="/terms" text="Условия" /><LoginCopy as="a" href="/delete-account" text="Удаление аккаунта" /></nav></div></main>;
   return <TrainerApp key={account.id} account={account} onAccountChange={setAccount} onSignOut={() => void signOut()} />;
 }

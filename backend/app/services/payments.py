@@ -126,7 +126,7 @@ class PaymentService:
         if decision.status == "confirmed":
             if owner.access_tier == "free" or owner.premium_payment_id == payment.id:
                 owner.access_tier, owner.premium_payment_id = "premium", payment.id
-        elif payment.provisional_granted_at and owner.premium_payment_id == payment.id:
+        elif payment.provisional_granted_at and owner.premium_payment_id == payment.id and owner.android_premium_granted_at is None:
             owner.access_tier, owner.premium_payment_id = "free", None
         self.db.flush()
         return payment

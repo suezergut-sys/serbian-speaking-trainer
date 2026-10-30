@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, SecretStr
 
@@ -43,6 +44,11 @@ class UserPreferences(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     assistance_enabled: bool = Field(strict=True)
+
+
+class AndroidPremiumClaim(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    platform: Literal["android"]
 
 
 class CurrentUserResponse(BaseModel):

@@ -1,6 +1,7 @@
 import { authenticatedFetch } from "../auth";
 import type { AdminUser, CurrentUser } from "../types/auth";
 import { apiUrl } from "./baseUrl";
+import { Capacitor } from "@capacitor/core";
 
 async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
   const response = await authenticatedFetch(apiUrl(path), { signal });
@@ -8,8 +9,16 @@ async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export function fetchCurrentUser(signal?: AbortSignal): Promise<CurrentUser> {
-  return getJson<CurrentUser>("/api/auth/me", signal);
+export async function fetchCurrentUser(signal?: AbortSignal): Promise<CurrentUser> {
+  if (Capacitor.getPlatform() !== "android") return getJson<CurrentUser>("/api/auth/me", signal);
+  const response = await authenticatedFetch(apiUrl("/api/auth/me/android-premium"), {
+    method: "POST", signal: signal ?? AbortSignal.timeout(15000), cache: "no-store",
+    headers: { "Content-Type": "application/json" }, body: JSON.stringify({ platform: "android" }),
+  });
+  if (!response.ok) throw new Error(`Backend returned ${response.status}`);
+  const account = await response.json() as CurrentUser;
+  if (account.access_tier !== "premium") throw new Error("Android Premium activation failed");
+  return account;
 }
 
 export function fetchAdminUsers(signal?: AbortSignal): Promise<AdminUser[]> {

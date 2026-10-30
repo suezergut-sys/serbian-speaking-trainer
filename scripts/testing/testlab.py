@@ -328,7 +328,8 @@ def bootstrap_testlab_database(engine: Engine) -> None:
 
     del _entities
     current = _metadata_shape(Base.metadata)
-    pre_payments = {name: frozenset(columns - {"premium_payment_id"}) if name == "users" else columns for name, columns in current.items() if name != "payment_requests"}
+    pre_android = {name: frozenset(columns - {"android_premium_granted_at"}) if name == "users" else columns for name, columns in current.items() if name != "deleted_account_markers"}
+    pre_payments = {name: frozenset(columns - {"premium_payment_id"}) if name == "users" else columns for name, columns in pre_android.items() if name != "payment_requests"}
     pre_title_translation = {name: set(columns) for name, columns in pre_payments.items()}
     pre_title_translation["topic_presets"].discard("title_en")
     pre_title_translation = {name: frozenset(columns) for name, columns in pre_title_translation.items()}
@@ -371,6 +372,11 @@ def bootstrap_testlab_database(engine: Engine) -> None:
             raise RuntimeError("Refusing current-shaped testlab database with an unexpected Alembic revision")
         return
 
+    if shape == pre_android:
+        if stamped_revision != "7db9f01a2201":
+            raise RuntimeError("Refusing pre-Android Premium schema with unexpected Alembic revision")
+        _alembic(engine, "upgrade", "head")
+        return
     if shape == pre_payments:
         if stamped_revision != "6ccb82f56983":
             raise RuntimeError("Refusing pre-payment schema with unexpected Alembic revision")

@@ -20,7 +20,7 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
     await page.route('**/api/**', async route => {
       const path = new URL(route.request().url()).pathname;
       let body;
-      if (path === '/api/auth/me') body = { id: 'hint-user', role: 'user', access_tier: 'premium', daily_usage: { used: 0, limit: 100, remaining: 100, resets_at: '2026-10-28T00:00:00Z' } };
+      if ((path === '/api/auth/me' || path === '/api/auth/me/android-premium')) body = { id: 'hint-user', role: 'user', access_tier: 'premium', daily_usage: { used: 0, limit: 100, remaining: 100, resets_at: '2026-10-28T00:00:00Z' } };
       else if (path === '/api/auth/me/preferences') body = { assistance_enabled: false };
       else if (path === '/api/topics') body = [topic];
       else if (path === '/api/review-phrases/summary') body = { phrase_count: 0 };
