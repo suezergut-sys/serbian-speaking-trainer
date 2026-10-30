@@ -238,6 +238,7 @@ class ReviewPhrase(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, default=LEGACY_USER_ID)
     source_ru: Mapped[str] = mapped_column(Text)
+    source_versions_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     source_normalized: Mapped[str] = mapped_column(String(280), index=True)
     intended_sr_variants_json: Mapped[list[str]] = mapped_column(JSON, default=list)
     word_hints_json: Mapped[list[dict[str, str]]] = mapped_column(JSON, default=list)

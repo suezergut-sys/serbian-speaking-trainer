@@ -292,6 +292,10 @@ class ExerciseGenerator:
             raise
 
     def _response(self, entity: Exercise) -> ExerciseResponse:
+        from app.services.source_versions import SourceLanguageService, exercise_source
+        from app.services.interface_language import interface_language
+        versions = SourceLanguageService(self.db, self.ai, self.user_id).ensure(entity)
+        language = interface_language.get()
         topic_id = entity.generation_meta_json.get("topic_id")
         topic = self.topics.get_visible(topic_id) if topic_id and entity.generation_meta_json.get("review_phrase_id") else None
         canonical = entity.target_hints_json.get("canonical_sr") or next(iter(entity.target_hints_json.get("intended_sr_variants", [])), "")
@@ -301,11 +305,14 @@ class ExerciseGenerator:
             id=entity.id,
             session_id=entity.session_id,
             source_ru=entity.source_ru,
-            source_en=preset_english_source(entity.source_ru, canonical),
+            source_en=versions.en if versions else None,
+            source_versions=versions,
+            source_text=exercise_source(entity, language),
+            source_language=language,
             source_hints=aligned_word_hints(entity.source_ru, canonical, list(entity.target_hints_json.get("word_hints", []))),
             targeted_skills=list(entity.generation_meta_json.get("targeted_skill_keys", [])),
             difficulty=float(entity.generation_meta_json.get("difficulty", 0.5)),
-            word_hints=word_hints_for_language(entity.source_ru, list(entity.target_hints_json.get("word_hints", [])), canonical),
+            word_hints=getattr(versions, 'hints_' + language) if versions else word_hints_for_language(entity.source_ru, list(entity.target_hints_json.get("word_hints", [])), canonical),
         )
 
     def _generate(

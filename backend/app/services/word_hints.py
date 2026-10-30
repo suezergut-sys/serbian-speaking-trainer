@@ -32,14 +32,20 @@ def word_hints_for_language(source: str, stored: list[dict[str, str]], canonical
     return aligned_word_hints(source, canonical, stored) if canonical is not None else stored
 
 
-def all_word_hints(source: str, stored: list[dict[str, str]], canonical: str | None = None) -> list[dict[str, str]]:
+def all_word_hints(source: str, stored: list[dict[str, str]], canonical: str | None = None, versions: dict | None = None) -> list[dict[str, str]]:
     # A learner can switch language after opening hints within the same exercise.
     # Validate each submitted word against a real dictionary, never against user text.
     english = english_word_hints(source, canonical) or []
     if canonical is not None:
         stored = aligned_word_hints(source, canonical, stored)
         english = aligned_word_hints(TOPIC_PHRASES_EN.get(source, source), canonical, english)
-    return [*stored, *english]
+    extra = []
+    if versions:
+        from app.services.source_versions import read_versions
+        validated = read_versions(versions, source, canonical or '')
+        if validated is not None:
+            extra = [hint.model_dump() for hint in [*validated.hints_ru, *validated.hints_en]]
+    return [*stored, *english, *extra]
 
 
 def resolve_hint(hints: list[dict[str, str]], key: str) -> dict[str, str] | None:

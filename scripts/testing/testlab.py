@@ -328,7 +328,8 @@ def bootstrap_testlab_database(engine: Engine) -> None:
 
     del _entities
     current = _metadata_shape(Base.metadata)
-    pre_android = {name: frozenset(columns - {"android_premium_granted_at"}) if name == "users" else columns for name, columns in current.items() if name != "deleted_account_markers"}
+    pre_bilingual = {name: frozenset(columns - {"source_versions_json"}) if name == "review_phrases" else columns for name, columns in current.items()}
+    pre_android = {name: frozenset(columns - {"android_premium_granted_at"}) if name == "users" else columns for name, columns in pre_bilingual.items() if name != "deleted_account_markers"}
     pre_payments = {name: frozenset(columns - {"premium_payment_id"}) if name == "users" else columns for name, columns in pre_android.items() if name != "payment_requests"}
     pre_title_translation = {name: set(columns) for name, columns in pre_payments.items()}
     pre_title_translation["topic_presets"].discard("title_en")
@@ -370,6 +371,12 @@ def bootstrap_testlab_database(engine: Engine) -> None:
             _alembic(engine, "stamp", head)
         elif stamped_revision != head:
             raise RuntimeError("Refusing current-shaped testlab database with an unexpected Alembic revision")
+        return
+
+    if shape == pre_bilingual:
+        if stamped_revision != "8fd7172bc955":
+            raise RuntimeError("Refusing pre-bilingual schema with unexpected Alembic revision")
+        _alembic(engine, "upgrade", "head")
         return
 
     if shape == pre_android:

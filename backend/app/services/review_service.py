@@ -22,9 +22,9 @@ from app.schemas import (
 from app.repositories.custom_content import CustomContentRepository
 from app.services.custom_content_policy import CustomContentError, MAX_TOPIC_PHRASES, MAX_CUSTOM_PHRASES
 from app.services.ai_adapter import AIServiceError, StructuredAIProvider
-from app.services.word_hints import all_word_hints, word_hints_for_language, resolve_hint
-from app.services.interface_language import interface_language
+from app.services.word_hints import all_word_hints, resolve_hint
 from app.services.hint_alignment import aligned_word_hints
+from app.services.source_versions import preparation_versions, version_payload, SourceLanguageUnavailableError
 
 CORRECT_SCORE_THRESHOLD = 0.95
 CORRECT_STREAK_TO_MASTER = 3
@@ -70,8 +70,8 @@ class ReviewService:
         if not self.ai.is_available:
             raise PhrasePreparationUnavailableError
         try:
-            preparation = PhrasePreparation.model_validate(self.ai.prepare_phrase(source_ru=source))
-        except (AIServiceError, ValidationError) as exc:
+            preparation = preparation_versions(self.ai, source)
+        except (AIServiceError, ValidationError, SourceLanguageUnavailableError) as exc:
             raise PhrasePreparationUnavailableError from exc
         variants = [" ".join(value.split()) for value in preparation.intended_sr_variants]
         if not variants or any(not value or len(value) > 300 for value in variants):
@@ -80,7 +80,7 @@ class ReviewService:
             source, variants[0], [hint.model_dump() for hint in preparation.word_hints])]
         now = datetime.now(timezone.utc)
         receipt = PhrasePreparationReceipt(user_id=self.user_id, source_ru=source,
-            preparation_json=PhrasePreparation(intended_sr_variants=variants, word_hints=preparation.word_hints).model_dump(),
+            preparation_json=PhrasePreparation(intended_sr_variants=variants, word_hints=preparation.word_hints, source_versions=preparation.source_versions).model_dump(),
             expires_at=now + timedelta(minutes=30))
         CustomContentRepository(self.db, self.user_id).add_receipt(receipt, now)
         return PreparedReviewPhraseResponse(
@@ -89,6 +89,7 @@ class ReviewService:
             canonical_sr=variants[0],
             intended_sr_variants=variants,
             word_hints=preparation.word_hints,
+            source_versions=preparation.source_versions,
         )
 
     def list_phrases(self) -> list[ReviewPhraseResponse]:
@@ -148,6 +149,7 @@ class ReviewService:
                 user_id=self.user_id, source_ru=source, source_normalized=normalize_ru(source),
                 intended_sr_variants_json=preparation.intended_sr_variants,
                 word_hints_json=[hint.model_dump() for hint in preparation.word_hints], topic_id=topic.id,
+                source_versions_json=version_payload(source, preparation.intended_sr_variants[0], preparation.source_versions) if preparation.source_versions else {},
             ))
         receipt.saved_phrase_id = phrase.id
         receipt.saved_topic_id = topic.id
@@ -249,19 +251,16 @@ class ReviewService:
         The caller holds the user lock and includes this in attempt finalization.
         """
         for word in words:
-            self._record_word_hint(exercise, word, all_languages=True)
+            self._record_word_hint(exercise, word)
 
-    def _record_word_hint(self, exercise: Exercise, word: str, *, all_languages: bool = False) -> WordHintResponse:
+    def _record_word_hint(self, exercise: Exercise, word: str) -> WordHintResponse:
         stored = list(exercise.target_hints_json.get("word_hints", []))
         canonical = exercise.target_hints_json.get("canonical_sr") or next(iter(exercise.target_hints_json.get("intended_sr_variants", [])), "")
-        selected = (all_word_hints(exercise.source_ru, stored, canonical) if all_languages
-                    else word_hints_for_language(exercise.source_ru, stored, canonical))
+        # Both dictionaries belong to the same immutable exercise/canonical pair.
+        # This also handles a language change while a hint POST is in flight.
+        selected = all_word_hints(exercise.source_ru, stored, canonical, exercise.target_hints_json.get('source_versions'))
         resolved = resolve_hint(selected, word)
         hint = WordHint.model_validate(resolved) if resolved else None
-        if hint is None and interface_language.get() == "en":
-            # APK 1.32 and older English clients still submit legacy Russian keys.
-            fallback = resolve_hint(all_word_hints(exercise.source_ru, stored, canonical), word)
-            hint = WordHint.model_validate(fallback) if fallback else None
         if hint is None:
             raise WordHintNotFoundError(word)
         normalized = normalize_ru(hint.word_ru)
@@ -311,9 +310,11 @@ class ReviewService:
 
     @staticmethod
     def _phrase_response(item: ReviewPhrase, *, topic_title: str | None) -> ReviewPhraseResponse:
+        from app.services.source_versions import read_versions
         return ReviewPhraseResponse(
             id=item.id,
             source_ru=item.source_ru,
+            source_versions=read_versions(item.source_versions_json or {}, item.source_ru, next(iter(item.intended_sr_variants_json), "")),
             canonical_sr=next(iter(item.intended_sr_variants_json), ""),
             topic_id=item.topic_id,
             topic_title=topic_title,

@@ -1,4 +1,5 @@
-import { t, useLanguage, setLanguage, getLanguage, getLocale, localizedPhrase, topicText } from "./i18n";
+import { t, useLanguage, setLanguage, getLanguage, getLocale, topicText } from "./i18n";
+import { exerciseSource } from "./exerciseSource";
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
@@ -859,13 +860,11 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       }} />;
 
   function renderPhrase() {
-    const localized = localizedPhrase(exercise?.source_ru ?? "", exercise?.source_en !== null);
-    // Preset EN keys switch immediately with the displayed source language.
-    // Personal phrases keep their own source and use only server-validated hints.
-    const hints: Record<string, { translation_sr: string; note?: string } | undefined> = Object.keys(localized.hints).length ? localized.hints : Object.fromEntries(
-      (exercise?.source_hints ?? exercise?.word_hints ?? []).map(hint => [hint.word_ru.toLocaleLowerCase("ru-RU"), hint]));
-    return <h2 id="exercise-title" className="interactive-phrase" aria-label={exercise ? localized.source : t("Готовим фразу…")}>
-      {exercise ? splitHintFragments(localized.source, Object.keys(hints)).map((part, index) => {
+    const localized = exercise ? exerciseSource(exercise) : undefined;
+    const hints: Record<string, { translation_sr: string; note?: string } | undefined> = localized?.hints ?? {};
+    if (exercise && !localized) return null;
+    return <h2 id="exercise-title" className="interactive-phrase" aria-label={localized ? localized.source : t("Готовим фразу…")}>
+      {exercise && localized ? splitHintFragments(localized.source, Object.keys(hints)).map((part, index) => {
         const localHint = Object.hasOwn(hints, part.toLocaleLowerCase("ru-RU")) ? hints[part.toLocaleLowerCase("ru-RU")] : undefined;
         const word = part;
         const normalized = word.toLocaleLowerCase("ru-RU");
@@ -887,6 +886,10 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   }
 
   function renderPractice(compact: boolean) {
+    if (exercise && !exerciseSource(exercise)) return <div className="practice-card panel">
+      <p className="error" role="alert">{t("Фраза на выбранном языке недоступна. Повторите загрузку или выберите другую тему.")}</p>
+      <button type="button" onClick={() => window.location.reload()}>{t("Повторить загрузку")}</button>
+    </div>;
     const answerId = compact ? "android-serbian-answer" : "serbian-answer";
     const done = !isReviewMode && completedCount >= (session?.requested_length ?? 10);
     return <div className={`practice-card exercise-layout${compact ? " android-training-content" : " panel"}`}>

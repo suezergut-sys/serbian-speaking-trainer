@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { deleteCustomPhrase, deleteCustomTopic, fetchCustomPhrases } from "./api/training";
-import { t, topicText } from "./i18n";
+import { t, topicText, getLanguage } from "./i18n";
 import { displaySerbian, type SerbianAlphabet } from "./serbianScript";
 import type { ReviewPhrase, TopicListItem } from "./types/training";
 import { sortedPersonalTopics } from "./personalTopics";
@@ -83,7 +83,7 @@ export function CustomContentManager({ topics, alphabet, onDeleted, onClose, bro
     {browseTopics && selectedTopic && !loading && !phrases.some(phrase => phrase.topic_id === selectedTopic) && <p>{t("В этой теме пока нет своих фраз.")}</p>}
     <div className={browseTopics ? "premium-phrase-grid" : undefined}>
     {phrases.filter(phrase => !browseTopics || phrase.topic_id === selectedTopic).map(phrase => <div className="custom-content-item" key={phrase.id}>
-      <strong>{phrase.source_ru}</strong>
+      <strong>{phrase.source_versions?.[getLanguage()] ?? phrase.source_ru}</strong>
       {!browseTopics && <><span>{displaySerbian(phrase.canonical_sr, alphabet)}</span><small>{topicText(phrase.topic_id, phrase.topic_title ?? "", topics.find(topic => topic.id === phrase.topic_id)?.title_en)}</small></>}
       <button type="button" disabled={busy || Boolean(confirmation)} onClick={() => setConfirmation({ kind: "phrase", id: phrase.id, title: phrase.source_ru })}>{t("Удалить фразу")}</button>
     </div>)}

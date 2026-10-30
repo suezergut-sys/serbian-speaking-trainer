@@ -8,7 +8,7 @@ from sqlalchemy import delete, update
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
-from app.models import Attempt, AttemptRequest, ErrorEvent
+from app.models import Attempt, AttemptRequest, ErrorEvent, Exercise
 from app.repositories import (
     AttemptRepository, AttemptRequestRepository, ErrorEventRepository, ExerciseRepository,
     SkillRepository, TrainingSessionRepository,
@@ -66,6 +66,12 @@ class _Reservation:
 
 
 class AttemptService:
+    @staticmethod
+    def _analysis_source(exercise: Exercise) -> str:
+        from app.services.source_versions import exercise_source
+        from app.services.interface_language import interface_language
+        return exercise_source(exercise, interface_language.get())
+
     def __init__(self, db: Session, ai: StructuredAIProvider, user: User) -> None:
         self.db = db
         self.user = user
@@ -184,7 +190,7 @@ class AttemptService:
             client_supplied=request.client_request_id is not None,
             fencing_token=token,
             exercise_id=exercise.id,
-            source_ru=exercise.source_ru,
+            source_ru=self._analysis_source(exercise),
             canonical_sr=str(canonical_sr) if canonical_sr else None,
             intended_variants=intended_variants,
             target_keys=target_keys,
@@ -237,7 +243,7 @@ class AttemptService:
         catalog = {skill.key: skill for skill in self.skills.list(limit=500)}
         base_score = self.analyzer.overall_score(analysis)
         available_hints = all_word_hints(exercise.source_ru, list(exercise.target_hints_json.get("word_hints", [])),
-            exercise.target_hints_json.get("canonical_sr") or next(iter(exercise.target_hints_json.get("intended_sr_variants", [])), ""))
+            exercise.target_hints_json.get("canonical_sr") or next(iter(exercise.target_hints_json.get("intended_sr_variants", [])), ""), exercise.target_hints_json.get('source_versions'))
         hinted_words = list(dict.fromkeys(
             hint["word_ru"]
             for word in request.hinted_words if (hint := resolve_hint(available_hints, word)) is not None

@@ -205,6 +205,22 @@ describe("App", () => {
     vi.unstubAllGlobals();
   });
 
+  it.each(["ru", "en"])("blocks an untranslated foreign-language exercise instead of asking for an answer (%s)", async language => {
+    localStorage.setItem("serbotalk.interface-language", language);
+    const baseFetch = mockApi();
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const response = await baseFetch(input, init);
+      if (!input.toString().endsWith("/sessions/start")) return response;
+      const body = await response.json();
+      return { ...response, json: async () => ({ ...body, exercise: { ...body.exercise,
+        source_ru: language === "en" ? "Личная фраза без перевода." : "An untranslated private phrase.", source_en: null, source_versions: null } }) };
+    }));
+    render(<App />);
+    expect(await screen.findByText(language === "en" ? "The phrase is unavailable in the selected language. Reload or choose another topic." : "Фраза на выбранном языке недоступна. Повторите загрузку или выберите другую тему.")).toBeInTheDocument();
+    expect(document.querySelector(".interactive-phrase")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Ответить голосом|Answer aloud/ })).not.toBeInTheDocument();
+  });
+
   it("routes native Back from settings to practice, then topics, before exiting", async () => {
     vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(true);
     vi.stubGlobal("fetch", mockApi());
