@@ -6,7 +6,7 @@
 - [x] Проверки: backend 489 passed/9 skipped, frontend 351, browser 24+2; 14 финальных целевых backend tests. [Доказательства](android-1.43-release.md).
 - [x] APK/AAB 1.43/code53 собраны, metadata/production API/assets/подписи проверены, Downloads готовы.
 - [x] Privacy/terms/delete-account RU/EN и operator deletion workflow; synthetic cascade/stale-token/failure/retry tests.
-- [ ] GitHub merge и production backend/web Ready с проверкой миграции.
+- [x] [PR #178](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/178) merged; production backend/web Ready на `f45fada`, миграция `8fd7172bc955`, RLS, public URLs и авторизованный web каталог проверены 30.10.2026.
 - [ ] Карточка RU/EN, screenshots, Data Safety, privacy URL и Alpha53 в Google Play.
 - [ ] Отдельная физическая Android-приёмка и разрешённая live Auth deletion проверка.
 - [ ] Заявка на production access и production rollout — отдельный этап; аудит [30.10](google-play-production-readiness-2026-10-30.md).
