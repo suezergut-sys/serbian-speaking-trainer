@@ -12,7 +12,7 @@ Privacy/terms/delete-account обновлены RU/EN, дата 30.10.2026. Уч
 
 ## Проверки
 
-- [x] Backend/scripts: 489 passed, 9 skipped (PostgreSQL без тестового сервера); AI/Telegram mocked. После выделения deletion repository: 14 целевых tests passed. Дополнительно проверен реальный HTTP adapter удаления через MockTransport: id/email mismatch, invalid payload, повтор 404 и обязательная проверка отсутствия identity; финальный target suite 20 passed без внешних вызовов.
+- [x] Backend/scripts: 489 passed, 9 skipped (PostgreSQL без тестового сервера); AI/Telegram mocked. После выделения deletion repository: 14 целевых tests passed. Дополнительно проверен реальный HTTP adapter удаления через MockTransport: id/email mismatch, invalid payload, повтор 404 и обязательная проверка отсутствия identity; финальный target suite 20 passed без внешних вызовов. Отдельно оба migration tests passed, включая отказ downgrade с активным deletion guard и разрешение после истечения.
 - [x] Frontend: 351 tests/40 files; lint, typecheck, production build. Дополнительная RU/EN регрессия восстановления после сбоя Android grant: App component suite 116 passed; lint/typecheck повторены для добавленных tests. Runtime после APK не менялся.
 - [x] Browser: 24 Premium/context scenarios RU/EN; ещё 2 store/legal scenarios. Снимки — настоящий shared Android UI с синтетическим demo-контентом, 1080×1920, четыре на язык.
 - [x] Production Android pipeline `pnpm android:cloud-apk`; signed Play AAB; packaged API `https://serbian-speaking-trainer-api.vercel.app`, одинаковые 11 assets APK/AAB, Browser/Share plugins, metadata min24/target36/code53/name1.43.
