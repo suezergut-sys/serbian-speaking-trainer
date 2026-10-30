@@ -29,7 +29,12 @@ export type TrainingSession = {
   topic: TopicContext;
 };
 
+export type SourceVersions = { ru: string; en: string; hints_ru: Array<Pick<WordHint, "word_ru" | "translation_sr">>; hints_en: Array<Pick<WordHint, "word_ru" | "translation_sr">> };
+
 export type Exercise = {
+  source_versions?: SourceVersions | null;
+  source_text?: string | null;
+  source_language?: "ru" | "en" | null;
   topic_id?: string | null;
   topic_title_ru?: string | null;
   id: string;
@@ -100,6 +105,7 @@ export type Attempt = {
 };
 
 export type ReviewPhrase = {
+  source_versions?: SourceVersions | null;
   id: string;
   source_ru: string;
   canonical_sr: string;
@@ -117,6 +123,7 @@ export type ReviewSummary = {
 };
 
 export type PreparedReviewPhrase = {
+  source_versions?: SourceVersions | null;
   preparation_id: string;
   source_ru: string;
   canonical_sr: string;

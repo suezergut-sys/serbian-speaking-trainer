@@ -83,7 +83,7 @@ def test_word_limit_boundary_without_calling_ai_for_sixteen_words(api_client: Te
     calls = []
     def prepare(**kwargs):
         calls.append(kwargs)
-        return {"intended_sr_variants": ["Uskoro se vraćam."]}
+        return {"intended_sr_variants": ["Uskoro se vraćam."], "source_versions": {"ru": kwargs["source_ru"], "en": "A synthetic fifteen word phrase."}}
     monkeypatch.setattr(ai, "prepare_phrase", prepare)
     app.dependency_overrides[get_ai_provider] = lambda: ai
     assert api_client.post("/api/review-phrases/prepare", json={"source_ru": "слово " * 15}).status_code == 200

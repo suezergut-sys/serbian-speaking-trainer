@@ -148,7 +148,11 @@ def test_assistance_failure_keeps_transcription_and_reports_unavailable(api_clie
 def test_reference_transcript_skips_assistance_and_receipt(api_client, db_session, language, text):
     exercise_id = _create_exercise(api_client)
     exercise = db_session.get(Exercise, exercise_id)
+    exercise.source_ru = "Я хочу открыть счёт."
+    from app.schemas.exercises import SourceVersions
+    from app.services.source_versions import version_payload
     exercise.target_hints_json = {"canonical_sr": "Želim da otvorim račun.", "intended_sr_variants": ["Hoću da otvorim račun."]}
+    exercise.target_hints_json["source_versions"] = version_payload(exercise.source_ru, "Želim da otvorim račun.", SourceVersions(ru=exercise.source_ru, en="I want to open an account."))
     db_session.commit()
     provider = FakeTranscriptionAssistanceProvider(error=AssertionError("Exact references must skip AI"))
     app.dependency_overrides[get_transcription_assistance_provider] = lambda: provider

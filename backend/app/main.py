@@ -24,12 +24,17 @@ from app.config import get_settings
 from app.request_metrics import start_request_metrics, stop_request_metrics
 from app.services.interface_language import interface_language, parse_interface_language
 from app.services.custom_content_policy import CustomContentError
+from app.services.source_versions import SourceLanguageUnavailableError
 
 settings = get_settings()
 performance_logger = logging.getLogger("app.performance")
 performance_logger.setLevel(logging.INFO)
 
 app = FastAPI(title="Serbian Speaking Trainer API", version="1.4.0")
+
+@app.exception_handler(SourceLanguageUnavailableError)
+async def source_language_unavailable(_request: Request, _exc: SourceLanguageUnavailableError):
+    return JSONResponse({"detail": {"code": "source_language_unavailable", "retryable": True}}, status_code=503)
 
 
 @app.exception_handler(CustomContentError)

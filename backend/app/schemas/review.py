@@ -3,7 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic_core import PydanticCustomError
 
-from app.schemas.exercises import WordHint
+from app.schemas.exercises import WordHint, SourceVersions
 
 
 class CreateReviewPhraseRequest(BaseModel):
@@ -28,6 +28,7 @@ class PrepareReviewPhraseRequest(BaseModel):
 
 
 class PreparedReviewPhraseResponse(BaseModel):
+    source_versions: SourceVersions | None = None
     preparation_id: str
     source_ru: str
     canonical_sr: str
@@ -36,6 +37,7 @@ class PreparedReviewPhraseResponse(BaseModel):
 
 
 class ReviewPhraseResponse(BaseModel):
+    source_versions: SourceVersions | None = None
     id: str
     source_ru: str
     canonical_sr: str

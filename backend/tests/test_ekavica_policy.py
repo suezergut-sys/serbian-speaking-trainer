@@ -38,7 +38,7 @@ def test_preparation_has_common_policy_and_rejects_model_dialect_leakage(languag
     try:
         with pytest.raises(AIServiceError):
             provider.prepare_phrase(source_ru="У меня два кофе.")
-        parse.return_value.output_parsed = PhrasePreparation(intended_sr_variants=["Imam dve kafe."])
+        parse.return_value.output_parsed = PhrasePreparation(intended_sr_variants=["Imam dve kafe."], source_versions={"ru": "У меня два кофе.", "en": "I have two coffees."})
         assert provider.prepare_phrase(source_ru="У меня два кофе.").intended_sr_variants == ["Imam dve kafe."]
     finally:
         interface_language.reset(token)

@@ -90,7 +90,7 @@ def test_new_preparation_prompt_filters_noncanonical_model_hints_and_preserves_c
     from app.services.ai_adapter import OpenAIStructuredProvider, AIServiceError
     provider = OpenAIStructuredProvider(Settings(openai_api_key="mock", openai_text_model="from-env"))
     parse = Mock(return_value=SimpleNamespace(output_parsed=PhrasePreparation(
-        intended_sr_variants=["Nemam s kim da pričam."], word_hints=[
+        intended_sr_variants=["Nemam s kim da pričam."], source_versions={"ru": "Мне не с кем поговорить.", "en": "I have nobody to talk to."}, word_hints=[
             hint("мне", "mi"), hint("мне не с кем", "nemam s kim"), hint("поговорить", "da pričam")])))
     provider._client = SimpleNamespace(responses=SimpleNamespace(parse=parse))
     result = provider.prepare_phrase(source_ru="Мне не с кем поговорить.", canonical_sr="Nemam s kim da pričam.")

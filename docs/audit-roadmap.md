@@ -1,5 +1,14 @@
 # План улучшений по аудиту SerboTalk
 
+## 30.10.2026 — соответствие языка задания интерфейсу
+
+- [x] Read-only аудит210 общих фраз,9 личных и сегодняшнего текстового debug input владельца, без аудио. Причина: локальный EN-каталог переводил общие фразы, личные оставались русскими.
+- [x] Две версии/подсказки в подготовке и кэше, owner/canonical guards, API source_text/source_language, web guard и RU/EN preview. Миграция f0e065fafe11. [Документ](source-language-consistency-2026-10-30.md).
+- [x] Backend508 passed/9skipped, frontend358 и137 targeted, lint/typecheck/build, 8 browser scenarios, migration roundtrip.
+- [ ] GitHub merge и production backend/web.
+- [ ] Backfill9 личных фраз, проверка сохранности канонов/прогресса и реальной web-сессии.
+- [ ] Отдельный Android-релиз и аппаратная приёмка; версия1.43/code53 не меняется.
+
 ## 30.10.2026 — Android 1.43, карточка Play и данные
 
 - [x] Реализация: постоянный Android Premium account-wide, текущие квоты, web-payment без изменения, RU/EN без Android-покупки.
@@ -8,7 +17,7 @@
 - [x] Privacy/terms/delete-account RU/EN и operator deletion workflow; synthetic cascade/stale-token/failure/retry tests.
 - [x] [PR #178](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/178) merged; production backend/web Ready на `f45fada`, миграция `8fd7172bc955`, RLS, public URLs и авторизованный web каталог проверены 30.10.2026.
 - [x] Карточка RU/EN, 4 screenshots на язык, Data Safety, privacy URL и AAB53 в Alpha сохранены; pre-review checks завершились без блокирующих проблем. 30.10.2026, [доказательства](android-1.43-release.md), PR #179.
-- [ ] Подтвердить отправку на модерацию и доступность Alpha53: Console показывала готовность к отправке после подтверждения, затем Computer Use остановлен защитой URL. Отправка/публикация не заявляются выполненными.
+- [x] 30.10.2026 владелец завершил отправку; Console submission№5 «Опубликовано», Alpha53/карточка/Data Safety приняты. Историческая неопределённость закрыта. [Доказательства](source-language-consistency-2026-10-30.md).
 - [ ] Отдельная физическая Android-приёмка и разрешённая live Auth deletion проверка.
 - [ ] Заявка на production access и production rollout — отдельный этап; аудит [30.10](google-play-production-readiness-2026-10-30.md).
 

@@ -1,12 +1,18 @@
 # Android-релизы и проверки
 
+## 30.10.2026 — двуязычные задания (следующий согласованный выпуск)
+
+- [x] Общий клиент выбирает source_versions по текущей локали, отображает независимые hints и блокирует чужой язык. RU/EN web и shared Android browser scenarios прошли. [Доказательства](source-language-consistency-2026-10-30.md).
+- [ ] Backend/web release, существующие личные переводы и реальная production-проверка.
+- [ ] Включить клиент в следующий явно согласованный APK/AAB. 1.43/code53 не пересобирался; старый клиент игнорирует новый EN-текст личных фраз.
+
 ## 30.10.2026 — согласованный 1.43/code53
 
 - [x] Бессрочный Android Premium для нового/существующего аккаунта, включая web. Текущие 100/5×30, web payment flow сохранён. Старое Android-предложение оплаты заменено по указанию владельца.
 - [x] Privacy/terms/delete-account RU/EN и актуальный общий UI включены в APK/AAB. Metadata/API/assets/подписи проверены. [Выпуск](android-1.43-release.md).
 - [x] Backend/web production Ready на `f45fada`, 30.10.2026; APK [v1.43](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.43) опубликован, digest совпадает.
 - [x] Alpha53 AAB и обновлённая карточка Play RU/EN/Data Safety сохранены, pre-review checks завершены.
-- [ ] Подтверждённая отправка и проверка Google: управление Chrome остановлено защитой URL; не считать опубликованным.
+- [x] Владелец завершил отправку: Google принял запрос№5, Alpha53/карточка/Data Safety опубликованы 30.10.2026. Независимо проверено в Console.
 - [ ] Физическая приёмка Android RU/EN, вход нового и web-аккаунта, resume, речь.
 
 ## 26.10.2026 — Ekavica (серверное правило)

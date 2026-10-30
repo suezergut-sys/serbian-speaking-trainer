@@ -48,9 +48,15 @@ class FakeAIProvider:
         return self.analysis_result
 
     def prepare_phrase(self, **_kwargs) -> PhrasePreparation:
-        if self.phrase_result is None:
-            raise AssertionError("Unexpected prepare_phrase call")
-        return self.phrase_result
+        from app.schemas.exercises import SourceVersions
+        source = _kwargs['source_ru']
+        result = self.phrase_result or PhrasePreparation(intended_sr_variants=[_kwargs.get('canonical_sr') or 'Moja fraza.'])
+        if result.source_versions is not None:
+            return result
+        ru = any('а' <= ch.lower() <= 'я' or ch.lower() == 'ё' for ch in source)
+        return result.model_copy(update={'source_versions': SourceVersions(
+            ru=source if ru else 'Мне нужен билет.', en='A prepared personal phrase.' if ru else source,
+            hints_ru=result.word_hints if ru else [], hints_en=[] if ru else result.word_hints)})
 
 
 class FakeTranscriptionProvider:

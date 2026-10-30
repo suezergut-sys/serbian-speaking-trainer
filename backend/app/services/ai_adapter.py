@@ -144,10 +144,11 @@ class OpenAIStructuredProvider:
         )
 
     def prepare_phrase(self, *, source_ru: str, canonical_sr: str | None = None) -> PhrasePreparation:
+        from app.schemas.exercises import BilingualPhrasePreparation
         return self._parse(
-            prompt_name="phrase_preparation_v3.md",
+            prompt_name="phrase_preparation_v4.md",
             payload={"source_ru": source_ru, "canonical_sr": canonical_sr, "target_level": "A2"},
-            schema=PhrasePreparation,
+            schema=BilingualPhrasePreparation,
         )
 
     def _parse(
@@ -184,7 +185,7 @@ class OpenAIStructuredProvider:
             parsed = response.output_parsed
             if parsed is None:
                 raise AIServiceError("OpenAI returned no structured output")
-            result = schema.model_validate(parsed)
+            result = schema.model_validate(parsed.model_dump() if hasattr(parsed, "model_dump") else parsed)
             validate_generated_serbian(result)
             if isinstance(result, (PhrasePreparation, ExerciseGenerationResult)):
                 canonical = next(iter(result.intended_sr_variants), "")
