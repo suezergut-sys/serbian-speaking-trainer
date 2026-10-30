@@ -141,26 +141,28 @@ describe("App", () => {
     expect(fetchMock.mock.calls.filter(([url]) => url.toString().endsWith("/word-hints"))).toHaveLength(1);
   });
 
-  it("refreshes Premium after returning to Android from the payment website", async () => {
+  it("grants Android Premium before showing the trainer and refreshes on resume", async () => {
     vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(true);
     vi.spyOn(Capacitor, "getPlatform").mockReturnValue("android");
-    let paid = false;
+    let claims = 0;
     const baseFetch = mockApi();
     vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const result = await baseFetch(input, init);
-      if (input.toString().endsWith("/api/auth/me")) return { ...result, json: async () => ({
-        ...await result.json(), role: "user", access_tier: paid ? "premium" : "free",
-      }) };
+      const claim = input.toString().endsWith("/api/auth/me/android-premium");
+      const result = await baseFetch(claim ? "/api/auth/me" : input, init);
+      if (claim) { claims += 1; return { ...result, json: async () => ({
+        ...await result.json(), role: "user", access_tier: "premium",
+      }) }; }
       return result;
     }));
     render(<App />);
     await screen.findByRole("heading", { name: "Я хочу открыть счёт." });
     fireEvent.click(screen.getByRole("button", { name: "Премиум" }));
-    expect(screen.getByRole("button", { name: "https://serbotalk.app/" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Создать тему" })).toBeInTheDocument();
+    expect(claims).toBe(1);
     await waitFor(() => expect(nativeAppEvents.listener).toBeDefined());
-    paid = true;
     await act(async () => { nativeAppEvents.listener?.({ isActive: true }); });
     expect(await screen.findByRole("button", { name: "Создать тему" })).toBeInTheDocument();
+    await waitFor(() => expect(claims).toBe(2));
     expect(screen.queryByRole("button", { name: "https://serbotalk.app/" })).not.toBeInTheDocument();
   });
 

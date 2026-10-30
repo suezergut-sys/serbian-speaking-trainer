@@ -7,7 +7,7 @@ from app.schemas import AdminUserResponse, CurrentUserResponse
 from app.api.dependencies import get_current_user, require_admin
 from app.services.auth_service import UserService
 
-from app.schemas.auth import UserPreferences
+from app.schemas.auth import AndroidPremiumClaim, UserPreferences
 from app.schemas.auth import ReviewLoginRequest, ReviewLoginResponse
 from app.config import Settings, get_settings
 from app.services.auth_service import AuthenticationUnavailableError
@@ -43,6 +43,18 @@ def list_users(
     db: Session = Depends(get_db),
 ) -> list[AdminUserResponse]:
     return UserService(db).list_users()
+
+
+@router.post("/auth/me/android-premium", response_model=CurrentUserResponse)
+def claim_android_premium(
+    payload: AndroidPremiumClaim,
+    response: Response,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> CurrentUserResponse:
+    response.headers["Cache-Control"] = "no-store"
+    service = UserService(db)
+    return service.current_response(service.grant_android_premium(user))
 
 
 @router.get("/auth/me/preferences", response_model=UserPreferences)

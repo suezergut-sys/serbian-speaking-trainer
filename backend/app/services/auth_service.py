@@ -140,6 +140,8 @@ class UserService:
         self.users = UserRepository(db)
 
     def sync(self, identity: AuthenticatedIdentity) -> User:
+        from app.services.account_deletion import reject_deleted_identity
+        reject_deleted_identity(self.db, identity.id)
         now = datetime.now(timezone.utc)
         admin_emails = {email.strip().casefold() for email in self.settings.admin_emails.split(",") if email.strip()}
         role = "admin" if identity.email.casefold() in admin_emails else "user"
@@ -199,6 +201,18 @@ class UserService:
         if user.role == "admin":
             return None
         return self.settings.premium_daily_phrase_limit if user.access_tier == "premium" else self.settings.free_daily_phrase_limit
+
+    def grant_android_premium(self, user: User) -> User:
+        # A permanent account benefit, independent of any provisional web payment.
+        # The native client requests it explicitly; this is not Play attestation.
+        locked = self.users.lock(user.id)
+        if locked is None:
+            raise PermissionError("Account is unavailable")
+        if locked.android_premium_granted_at is None:
+            locked.android_premium_granted_at = datetime.now(timezone.utc)
+        locked.access_tier = "premium"
+        self.db.flush()
+        return locked
 
     def usage(self, user: User, now: datetime | None = None) -> DailyUsageResponse:
         current = now or datetime.now(timezone.utc)

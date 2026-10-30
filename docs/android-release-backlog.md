@@ -1,5 +1,12 @@
 # Android-релизы и проверки
 
+## 30.10.2026 — согласованный 1.43/code53
+
+- [x] Бессрочный Android Premium для нового/существующего аккаунта, включая web. Текущие 100/5×30, web payment flow сохранён. Старое Android-предложение оплаты заменено по указанию владельца.
+- [x] Privacy/terms/delete-account RU/EN и актуальный общий UI включены в APK/AAB. Metadata/API/assets/подписи проверены. [Выпуск](android-1.43-release.md).
+- [ ] Backend/web публикация и Alpha53 с обновлённой карточкой Play.
+- [ ] Физическая приёмка Android RU/EN, вход нового и web-аккаунта, resume, речь.
+
 ## 26.10.2026 — Ekavica (серверное правило)
 
 - [x] Production-карточка с `dvije` и пять snapshots исправлены на `dve`; общий каталог проверен. APK 1.40/code50 и Capacitor не меняются.

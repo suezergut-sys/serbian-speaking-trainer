@@ -3,6 +3,7 @@ import { mkdir } from 'node:fs/promises';
 for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 'android']) for (const tier of ['free', 'premium']) {
   test(`premium tab ${language} ${layout} ${tier}`, async ({ page }) => {
     const ru = language === 'ru';
+    const accessTier = layout === 'android' ? 'premium' : tier;
     await page.setViewportSize({ width: layout === 'desktop' ? 1366 : layout === 'mobile' ? 320 : 393, height: 844 });
     await page.addInitScript(({ language, layout, storageKey }) => {
       if (layout === 'android') window.CapacitorCustomPlatform = { name: 'android' };
@@ -16,7 +17,7 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
     await page.route('**/api/**', async route => {
       const request = route.request(), path = new URL(request.url()).pathname;
       let body;
-      if (path === '/api/auth/me') body = { id: 'premium-user', role: 'user', access_tier: tier, email: 'premium@example.invalid', assistance_enabled: false, daily_usage: { used: 0, limit: tier === 'free' ? 20 : 100, remaining: tier === 'free' ? 20 : 100 } };
+      if ((path === '/api/auth/me' || path === '/api/auth/me/android-premium')) body = { id: 'premium-user', role: 'user', access_tier: accessTier, email: 'premium@example.invalid', assistance_enabled: false, daily_usage: { used: 0, limit: accessTier === 'free' ? 20 : 100, remaining: accessTier === 'free' ? 20 : 100 } };
       else if (path === '/api/auth/me/preferences') body = { assistance_enabled: false };
       else if (path === '/api/topics' && request.method() === 'POST') { body = { ...topics[0], id: 'custom-test', title_ru: request.postDataJSON().title_ru, phrase_count: 0, custom_phrase_count: 0, is_custom: true }; topics.push(body); }
       else if (path === '/api/topics') body = topics;
@@ -41,11 +42,11 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
     const inactiveColor = await crown.evaluate(element => getComputedStyle(element).color);
     await premium.click();
     const content = page.locator('.premium-page');
-    if (tier === 'premium' || layout !== 'android') await expect(content.getByRole('heading', { name: tier === 'free' ? ru ? 'Премиум' : 'Premium' : ru ? 'ПРЕМИУМ' : 'PREMIUM', exact: true })).toBeVisible();
+    if (accessTier === 'premium' || layout !== 'android') await expect(content.getByRole('heading', { name: accessTier === 'free' ? ru ? 'Премиум' : 'Premium' : ru ? 'ПРЕМИУМ' : 'PREMIUM', exact: true })).toBeVisible();
     const selectedColor = await crown.evaluate(element => getComputedStyle(element).color);
     expect(selectedColor).not.toBe(inactiveColor);
-    await expect(crown).toHaveCSS('color', tier === 'premium' ? 'rgb(242, 189, 90)' : layout === 'desktop' ? 'rgb(64, 164, 255)' : 'rgb(102, 186, 255)');
-    if (tier === 'free' && layout === 'android') {
+    await expect(crown).toHaveCSS('color', accessTier === 'premium' ? 'rgb(242, 189, 90)' : layout === 'desktop' ? 'rgb(64, 164, 255)' : 'rgb(102, 186, 255)');
+    if (accessTier === 'free' && layout === 'android') {
       await expect(content.getByText(ru ? 'Оплатить премиум вы можете на сайте' : 'You can pay for Premium on the website')).toBeVisible();
       await expect(content.getByRole('button', { name: 'https://serbotalk.app/', exact: true })).toBeVisible();
       await expect(content.getByRole('button')).toHaveCount(1);
@@ -53,7 +54,7 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
       await content.getByRole('button', { name: 'https://serbotalk.app/', exact: true }).click();
       await expect.poll(() => page.evaluate(() => window.__premiumOpenedUrl)).toBe('https://serbotalk.app/');
       expect(privateLoads).toBe(0);
-    } else if (tier === 'free') {
+    } else if (accessTier === 'free') {
       await expect(content.getByRole('button', { name: ru ? 'КУПИТЬ' : 'BUY' })).toBeEnabled();
       await expect(content.getByText(ru ? '100 повторений в день' : '100 repetitions per day')).toBeVisible();
       await expect(content.getByText(ru ? 'До 5 личных тем' : 'Up to 5 personal topics')).toBeVisible();
