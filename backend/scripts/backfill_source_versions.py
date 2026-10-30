@@ -1,5 +1,6 @@
 """Prepare bilingual versions of existing personal phrases; dry run by default."""
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -13,8 +14,14 @@ def main():
     parser.add_argument('--execute', action='store_true')
     args = parser.parse_args()
     if args.env_file:
-        from dotenv import load_dotenv
-        load_dotenv(args.env_file, override=True)
+        from dotenv import dotenv_values
+        values = dotenv_values(args.env_file)
+        required = ['DATABASE_URL'] + (['OPENAI_API_KEY', 'OPENAI_TEXT_MODEL'] if args.execute else [])
+        if any(not (values.get(key) or '').strip() for key in required):
+            parser.error('Operator environment is incomplete or redacted; provide nonempty backend database and AI settings')
+        for key in ['DATABASE_URL', 'OPENAI_API_KEY', 'OPENAI_TEXT_MODEL', 'OPENAI_TIMEOUT_SECONDS', 'OPENAI_MAX_RETRIES']:
+            if values.get(key):
+                os.environ[key] = values[key]
     from sqlalchemy.orm import Session
     from app.db.session import engine
     from app.repositories.source_versions import SourceVersionRepository

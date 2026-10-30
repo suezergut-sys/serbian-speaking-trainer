@@ -5,8 +5,8 @@
 - [x] Read-only аудит210 общих фраз,9 личных и сегодняшнего текстового debug input владельца, без аудио. Причина: локальный EN-каталог переводил общие фразы, личные оставались русскими.
 - [x] Две версии/подсказки в подготовке и кэше, owner/canonical guards, API source_text/source_language, web guard и RU/EN preview. Миграция f0e065fafe11. [Документ](source-language-consistency-2026-10-30.md).
 - [x] Backend508 passed/9skipped, frontend358 и137 targeted, lint/typecheck/build, 8 browser scenarios, migration roundtrip.
-- [ ] GitHub merge и production backend/web.
-- [ ] Backfill9 личных фраз, проверка сохранности канонов/прогресса и реальной web-сессии.
+- [x] PR#180 merged, backend/web Ready на `3195882`; alias/SHA/migration/HTTP проверены30.10.2026. [Доказательства](source-language-consistency-2026-10-30.md).
+- [x] Backfill9/9, исходники/каноны/прогресс подтверждены равенством digests; owner production RU/EN общий/личный сценарий проверен, исходный RU восстановлен. [Доказательства](source-language-consistency-2026-10-30.md).
 - [ ] Отдельный Android-релиз и аппаратная приёмка; версия1.43/code53 не меняется.
 
 ## 30.10.2026 — Android 1.43, карточка Play и данные
