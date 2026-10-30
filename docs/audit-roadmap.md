@@ -7,7 +7,8 @@
 - [x] APK/AAB 1.43/code53 собраны, metadata/production API/assets/подписи проверены, Downloads готовы.
 - [x] Privacy/terms/delete-account RU/EN и operator deletion workflow; synthetic cascade/stale-token/failure/retry tests.
 - [x] [PR #178](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/178) merged; production backend/web Ready на `f45fada`, миграция `8fd7172bc955`, RLS, public URLs и авторизованный web каталог проверены 30.10.2026.
-- [ ] Карточка RU/EN, screenshots, Data Safety, privacy URL и Alpha53 в Google Play.
+- [x] Карточка RU/EN, 4 screenshots на язык, Data Safety, privacy URL и AAB53 в Alpha сохранены; pre-review checks завершились без блокирующих проблем. 30.10.2026, [доказательства](android-1.43-release.md), PR #179.
+- [ ] Подтвердить отправку на модерацию и доступность Alpha53: Console показывала готовность к отправке после подтверждения, затем Computer Use остановлен защитой URL. Отправка/публикация не заявляются выполненными.
 - [ ] Отдельная физическая Android-приёмка и разрешённая live Auth deletion проверка.
 - [ ] Заявка на production access и production rollout — отдельный этап; аудит [30.10](google-play-production-readiness-2026-10-30.md).
 

@@ -29,10 +29,12 @@ APK cert SHA-256 `1329c4638a57777b90429bf0eff9df67c2865bf95ebb8b97f45ef4fad77ead
 
 ## Публикация
 
-- [ ] GitHub PR/merge и актуальный чистый main, синхронизация неактивных worktrees.
+- [x] Runtime [PR #178](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/178) и evidence/tests [PR #179](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/179). Основная и 11 неактивных копий синхронизируются после merge; финальный SHA/чистота проверяются отдельно в отчёте.
 - [x] Backend/web Vercel Ready на `f45fada58ad93e89fa5bfe8a10f78f0b932fb649`, 30.10.2026 11:35–11:43 UTC. Backend `dpl_7G5rwLYyLTYXsnMBrwRRb7sdCaEG`, frontend `dpl_9XoSo4owYmoPdtGXPEDWT4q7UGoi`; API metadata/aliases подтверждены. Alembic head `8fd7172bc955`, grant column и RLS/revokes проверены read-only в production. Health200, OpenAPI claim присутствует, анонимный claim401; `/app`, `/privacy`, `/terms`, `/delete-account` HTTP200. Public privacy/delete страницы открыты в Chrome; настоящая авторизованная сессия владельца загружает каталог/личные темы без ошибки. Supabase advisors: новая marker table intentionally deny-all (INFO no policy), существующий WARN leaked-password protection без изменения.
 - [x] Play: карточка RU/EN, четыре свежих телефонных screenshots на язык, Data Safety и privacy URL сохранены в Console 30.10.2026.
-- [ ] AAB 53 в существующем закрытом Alpha; отправка на проверку. Production access application не отправляется в рамках этого изменения.
+- [x] AAB 53 сохранён в существующем закрытом Alpha с RU/EN release notes; тестировщики, страны и непрерывность теста не менялись.
+- [ ] Отправка семи изменений на модерацию НЕ подтверждена. После успешных предварительных проверок команда отправки и подтверждение нажаты, но Console продолжала показывать «Изменения, ещё не отправленные на проверку» / «Теперь вы можете передать изменения на проверку». Нельзя считать это отправкой или опубликованным Alpha53.
+- [ ] Google approval/доступность Alpha53; production access application отдельно, не подавалась.
 
 Исторические [1.42](android-1.42-release.md) и [аудит Play](google-play-production-readiness-2026-10-30.md) сохранены. Их старое предложение оплаты Android заменено этим решением владельца. Исходный APK/AAB и последующие commits только с доказательствами должны учитываться отдельно; документация не требует пересборки.
 
@@ -43,3 +45,11 @@ APK cert SHA-256 `1329c4638a57777b90429bf0eff9df67c2865bf95ebb8b97f45ef4fad77ead
 Play AAB принят: code53/name1.43, min24/target36, новых исключённых устройств 0 (телефонов12503, планшетов6812). Единственное warning — отсутствующий deobfuscation mapping; `minifyEnabled false`, mapping не генерируется. [Тексты карточки](google-play-store-1.43.md). Data Safety: email OTP добавлен к способам аккаунта, public deletion URL исправлен; audio optional (ввод голосом добровольный), non-ephemeral declaration сохранена из-за admin debug exception; user IDs security purpose дополнен. Finance category Android не добавлена: Android1.43 не собирает payment form; web-payment данные описаны в privacy.
 
 30.10.2026: `adb devices` — физических устройств нет. Поэтому не заявляется реальная аппаратная приёмка или end-to-end grant с телефона. Operator service key не извлекался; ни один реальный аккаунт не удалён.
+
+Production Chrome acceptance: реальная owner-сессия, Settings v1.43, RU→EN, ссылка удаления из Settings, public deletion/privacy EN с датой30October2026 и новым grant/retention текстом; исходный RU восстановлен после проверки. Учебные ответы, микрофон, платежи и настройки отладки не изменялись.
+
+## Остановка управления Console
+
+30.10.2026, после завершения pre-review checks: Computer Use остановлен встроенной защитой — не удалось надёжно определить текущий URL Windows Chrome. Не обходили защиту. Последнее проверенное состояние — все семь изменений сохранены и готовы к отправке; новая запись в submission history не подтверждена. Нужно продолжить отправку из Publishing overview и проверить появление «Изменения на проверке»/новой записи history. До этого Alpha1.42 остаётся предыдущим подтверждённым опубликованным выпуском.
+
+Recovery/WIP не требуются: исходная работа чистая, все изменения этой задачи сохранены в PR178/179; существующие ветки не удаляются. Evidence/test-only commits не требуют пересборки APK или deployment.
