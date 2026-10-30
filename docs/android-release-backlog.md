@@ -4,7 +4,9 @@
 
 - [x] Бессрочный Android Premium для нового/существующего аккаунта, включая web. Текущие 100/5×30, web payment flow сохранён. Старое Android-предложение оплаты заменено по указанию владельца.
 - [x] Privacy/terms/delete-account RU/EN и актуальный общий UI включены в APK/AAB. Metadata/API/assets/подписи проверены. [Выпуск](android-1.43-release.md).
-- [ ] Backend/web публикация и Alpha53 с обновлённой карточкой Play.
+- [x] Backend/web production Ready на `f45fada`, 30.10.2026; APK [v1.43](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.43) опубликован, digest совпадает.
+- [x] Alpha53 AAB и обновлённая карточка Play RU/EN/Data Safety сохранены, pre-review checks завершены.
+- [ ] Подтверждённая отправка и проверка Google: управление Chrome остановлено защитой URL; не считать опубликованным.
 - [ ] Физическая приёмка Android RU/EN, вход нового и web-аккаунта, resume, речь.
 
 ## 26.10.2026 — Ekavica (серверное правило)

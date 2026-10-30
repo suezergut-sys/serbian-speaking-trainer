@@ -166,6 +166,28 @@ describe("App", () => {
     expect(screen.queryByRole("button", { name: "https://serbotalk.app/" })).not.toBeInTheDocument();
   });
 
+  it.each(["ru", "en"])("recovers a failed Android grant without offering payment (%s)", async language => {
+    localStorage.setItem("serbotalk.interface-language", language);
+    vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(true);
+    vi.spyOn(Capacitor, "getPlatform").mockReturnValue("android");
+    const baseFetch = mockApi();
+    let claims = 0;
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (!input.toString().endsWith("/api/auth/me/android-premium")) return baseFetch(input, init);
+      if (++claims === 1) throw new Error("synthetic network outage");
+      const response = await baseFetch("/api/auth/me", init);
+      return { ...response, json: async () => ({ ...await response.json(), role: "user", access_tier: "premium" }) };
+    }));
+    render(<App />);
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    expect(screen.queryByRole("navigation", { name: /Основная навигация|Main navigation/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: language === "ru" ? "Повторить загрузку профиля" : "Retry loading profile" }));
+    fireEvent.click(await screen.findByRole("button", { name: language === "ru" ? "Премиум" : "Premium" }));
+    expect(await screen.findByRole("button", { name: language === "ru" ? "Создать тему" : "Create topic" })).toBeInTheDocument();
+    expect(claims).toBe(2);
+    expect(screen.queryByRole("button", { name: "https://serbotalk.app/" })).not.toBeInTheDocument();
+  });
+
   afterEach(() => {
     cleanup();
     window.history.replaceState({}, "", "/");
