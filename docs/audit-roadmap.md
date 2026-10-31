@@ -4,7 +4,8 @@
 
 - [x] Убраны новые ALTA EUR/RSD оплаты; Россия — СБП/RUB, остальные — PayPal, история и обработка уже оплаченных заявок сохранены.
 - [x] Проверочный вход отключён; Android Google-only, web сохраняет email-код. Номер 1.44/code54 отдельно согласован владельцем. [Доказательства и статусы](android-1.44-release.md).
-- [ ] Полные проверки, APK/AAB, GitHub release, web/backend production и синхронизация копий.
+- [x] 502 backend/9 skips, 358 frontend, 16 browser scenarios, lint/typecheck/build/5 Node guards; APK/AAB metadata/API/assets/подписи и Downloads проверены. [PR #183](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/183), GitHub v1.44 и оба production deployment Ready на `9cb113d`, HTTP и настоящая owner-сессия RU/EN проверены. [Доказательства](android-1.44-release.md).
+- [ ] Финальная фиксация доказательств и синхронизация всех 12 рабочих копий.
 - [ ] Ручная приёмка владельцем и дальнейшая отправка в Google Play отдельно; заявка не отправляется.
 
 ## 30.10.2026 — материалы заявки на production access

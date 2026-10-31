@@ -16,8 +16,8 @@
 - [x] Реализация и целевые регрессии: запрет ALTA при старой конфигурации, защита от повторного create, сохранение/обработка исторической заявки; retired review endpoint; web email / native Google; RU/EN payment UI.
 - [x] Backend/scripts 502 passed / 9 PostgreSQL skips; после удаления старого adapter 27 targeted passed. Frontend 358 tests/39 files (`--maxWorkers=2`), lint/typecheck/build; 5 Node guards; 16 browser scenarios RU/EN по входу, платежам, общим/личным фразам. AI/Auth/Telegram mocked. В первом параллельном с Gradle прогоне два прежних UI-теста завершились по таймауту; полный повтор с двумя workers прошёл без изменения runtime или их assertions. Логи `artifacts/android-1.44-*`.
 - [x] `pnpm android:cloud-apk` и подписанный `build-android-play-aab.ps1`: BUILD SUCCESSFUL. APK/AAB 1.44/code54/min24/target36; production API и HTTPS WebView, все 10 public assets совпали побайтно. Browser/Share plugins присутствуют, testlab/landing/секреты отсутствуют, reviewer API path в bundle отсутствует. Подписи сверены с предыдущим выпуском, bundletool validate/dump прошли. Копии в Downloads побайтно проверены.
-- [ ] Публикация исходников и GitHub APK release.
-- [ ] Обновление web/backend и проверка production.
+- [x] [PR #183](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/183) merged на `9cb113d32b6a24edcfd3303e237334deb0f99af4`. [GitHub v1.44](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.44) содержит APK и AAB; tag/target и server size/digest совпадают с Downloads. Исходный runtime tree APK совпадает с merged SHA, различаются только документы.
+- [x] Backend `dpl_2WRKdm4QZPirWyEUF9kkxSBrN5Bv` и frontend `dpl_4vYzisom4KznPUUzGQBd54Dy38iv` Ready/production/main на `9cb113d`; API metadata и production aliases подтверждены. Health/app/privacy/delete-account HTTP200, anonymous payment options401; старый reviewer endpoint410/no-store, отсутствует в OpenAPI. Runtime error rows: 0/0 за проверенный интервал.
 - [ ] Физическая приёмка владельцем: Google OAuth нового/существующего аккаунта, возврат/перезапуск, Premium, RU/EN общие и личные фразы, микрофон/реальная речь и повторение. Автотесты с mocks эту приёмку не заменяют.
 - [ ] Play Console: актуализация инструкции доступа для Google-входа, загрузка финального AAB, заявка production access и публичный выпуск — отдельное поручение после ручной проверки.
 
@@ -36,3 +36,13 @@ RU: Вход через Google. Улучшена работа русских и 
 EN: Sign in with Google. Improved Russian and English exercises and personal phrases. Includes the latest interface and hint fixes; Premium activates automatically on Android.
 
 Исходный commit проверенного runtime: `08c8da146e54edf03a4ceef6472f6a4ee45fc576`, [PR #183](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/183). После сборки изменялись только доказательства; APK не пересобирается ради документации.
+
+## Production-приёмка 31.10.2026
+
+В Chrome на `https://serbotalk.app/app` настоящая owner-сессия загрузила каталог и настройки v1.44, проверены RU/EN и восстановлен исходный русский. Запись/ответы/платежи не отправлялись, модель и режим отладки не менялись. Доказательство вне Git: `artifacts/android-1.44-production-settings.png`.
+
+Backend deployment: https://serbian-speaking-trainer-qxe8u3mae-suezerguts-projects.vercel.app ; frontend: https://serbian-speaking-trainer-kpibhmojr-suezerguts-projects.vercel.app . Основные адреса: https://serbotalk.app и https://serbian-speaking-trainer-api.vercel.app . Build не выполнял новых миграций, seed не менял существующие фразы.
+
+Для production browser smoke тестовые файлы получили явные параметры пути `/app` и auth storage key. Эти параметры меняют только тестовый запуск, не runtime/APK. Неудачный первоначальный запуск с неверным путём остановлен; результаты корректного запуска учитываются отдельно. Проверки используют настоящий опубликованный bundle, синтетические аккаунты и mock API, без реального перевода денег/AI.
+
+Production browser matrix: **16/16 passed** на основном домене (RU/EN вход, платежи, общие/личные фразы, desktop/mobile/shared Android). APK повторно скачан из GitHub и совпал по SHA-256 с Downloads. Финальная синхронизация копий проверяется после merge доказательств; runtime/source остаётся `9cb113d`.

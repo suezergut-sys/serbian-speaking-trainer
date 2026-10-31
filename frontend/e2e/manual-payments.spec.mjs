@@ -9,7 +9,7 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile'])
       if (layout === 'android') window.CapacitorCustomPlatform = { name: 'android' };
       localStorage.setItem('serbotalk.interface-language', language);
       localStorage.setItem(storageKey, JSON.stringify({ access_token: 'synthetic-only', refresh_token: 'synthetic-only', expires_at: 4102444800, token_type: 'bearer', user: { id: 'payment-user', email: 'payment@example.invalid', aud: 'authenticated', role: 'authenticated', app_metadata: {}, user_metadata: {} } }));
-    }, { language, layout, storageKey: 'sb-e2e-auth-auth-token' });
+    }, { language, layout, storageKey: process.env.AUTH_STORAGE_KEY ?? 'sb-e2e-auth-auth-token' });
     let payment, reports = 0, creates = 0;
     const options = { activation: { ru: 'Тестовые условия активации', en: 'Test activation terms' }, countries: { russia: ['sbp'], serbia: ['paypal'], other: ['paypal'] }, methods: { sbp: { available: true }, alta: { available: true, currencies: ['EUR', 'RSD'] }, paypal: { available: true } } };
     await page.route('**/api/**', async route => {
@@ -36,7 +36,7 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile'])
       else throw new Error(`Unexpected API ${path}`);
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
     });
-    await page.goto('/');
+    await page.goto(process.env.TRAINER_PAGE_PATH ?? '/');
     const nav = page.locator(layout === 'desktop' ? '.main-nav' : '.android-header nav');
     await nav.getByRole('button', { name: ru ? 'Премиум' : 'Premium', exact: true }).click();
     await page.getByRole('button', { name: ru ? 'КУПИТЬ' : 'BUY' }).click();
