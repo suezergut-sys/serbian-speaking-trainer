@@ -4,11 +4,11 @@ import { mkdir } from 'node:fs/promises';
 for (const layout of ['web', 'android']) for (const language of ['ru', 'en']) for (const personal of [false, true]) {
   test(`source language ${layout} ${language} personal=${personal}`, async ({ page }) => {
     await page.setViewportSize({ width: layout === 'android' ? 393 : 1366, height: 900 });
-    await page.addInitScript(({ layout, language }) => {
+    await page.addInitScript(({ layout, language, storageKey }) => {
       if (layout === 'android') window.CapacitorCustomPlatform = { name: 'android' };
       localStorage.setItem('serbotalk.interface-language', language);
-      localStorage.setItem('sb-e2e-auth-auth-token', JSON.stringify({ access_token: 'synthetic-only', refresh_token: 'synthetic-only', expires_at: 4102444800, token_type: 'bearer', user: { id: 'source-demo', email: 'demo@example.invalid', aud: 'authenticated', role: 'authenticated', app_metadata: {}, user_metadata: {} } }));
-    }, { layout, language });
+      localStorage.setItem(storageKey, JSON.stringify({ access_token: 'synthetic-only', refresh_token: 'synthetic-only', expires_at: 4102444800, token_type: 'bearer', user: { id: 'source-demo', email: 'demo@example.invalid', aud: 'authenticated', role: 'authenticated', app_metadata: {}, user_metadata: {} } }));
+    }, { layout, language, storageKey: process.env.AUTH_STORAGE_KEY ?? 'sb-e2e-auth-auth-token' });
     const versions = { ru: 'Я живу рядом с парком.', en: 'I live near the park.', hints_ru: [{ word_ru: 'парком', translation_sr: 'parka' }], hints_en: [{ word_ru: 'park', translation_sr: 'parka' }] };
     const topic = { id: personal ? 'custom-language' : 'bank', title_ru: personal ? 'Личная тема' : 'В банке', title_en: personal ? 'Personal topic' : 'At the bank', is_custom: personal, phrase_count: 1, likely_intents: [], suggested_vocabulary: [] };
     let starts = 0;
@@ -27,7 +27,7 @@ for (const layout of ['web', 'android']) for (const language of ['ru', 'en']) fo
       else throw new Error('Unexpected request: ' + path);
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
     });
-    await page.goto('/');
+    await page.goto(process.env.TRAINER_PAGE_PATH ?? '/');
     const phrase = page.locator('.interactive-phrase:visible');
     await expect(phrase).toHaveAttribute('aria-label', versions[language]);
     await expect(phrase.getByRole('button', { name: language === 'en' ? 'park' : 'парком', exact: true })).toBeVisible();
