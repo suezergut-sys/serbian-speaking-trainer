@@ -11,7 +11,7 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile'])
       localStorage.setItem(storageKey, JSON.stringify({ access_token: 'synthetic-only', refresh_token: 'synthetic-only', expires_at: 4102444800, token_type: 'bearer', user: { id: 'payment-user', email: 'payment@example.invalid', aud: 'authenticated', role: 'authenticated', app_metadata: {}, user_metadata: {} } }));
     }, { language, layout, storageKey: 'sb-e2e-auth-auth-token' });
     let payment, reports = 0, creates = 0;
-    const options = { activation: { ru: 'Тестовые условия активации', en: 'Test activation terms' }, countries: { russia: ['sbp', 'paypal'], serbia: ['alta', 'paypal'], other: ['paypal'] }, methods: { sbp: { available: true }, alta: { available: true, currencies: ['EUR', 'RSD'] }, paypal: { available: true } } };
+    const options = { activation: { ru: 'Тестовые условия активации', en: 'Test activation terms' }, countries: { russia: ['sbp'], serbia: ['paypal'], other: ['paypal'] }, methods: { sbp: { available: true }, alta: { available: true, currencies: ['EUR', 'RSD'] }, paypal: { available: true } } };
     await page.route('**/api/**', async route => {
       const request = route.request(), path = new URL(request.url()).pathname;
       let body;
@@ -49,7 +49,7 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile'])
     await select.press('Enter');
     await expect(select).toHaveValue('russia');
     await expect(form.getByRole('button', { name: /СБП|SBP/ })).toBeVisible();
-    await expect(form.getByRole('button', { name: /PayPal/ })).toBeVisible();
+    await expect(form.getByRole('button', { name: /PayPal/ })).toHaveCount(0);
     await form.getByRole('button', { name: /СБП|SBP/ }).click();
     await expect(form.getByText('500.00 RUB', { exact: true })).toBeVisible();
     await expect(form.getByText('+70000000000')).toBeVisible();
@@ -58,12 +58,8 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile'])
     await expect(form.locator('.payment-value').filter({ hasText: '+70000000000' }).getByRole('status')).not.toBeEmpty();
     await select.selectOption('serbia');
     await expect(form.getByText('+70000000000')).toHaveCount(0);
-    await form.getByRole('button', { name: /ALTA Banka/ }).click();
-    await expect(form.getByText('000-test-EUR-account')).toBeVisible();
-    await form.getByLabel(ru ? 'Валюта перевода ALTA' : 'ALTA transfer currency').selectOption('RSD');
-    await expect(form.getByText('000-test-EUR-account')).toHaveCount(0);
-    await form.getByRole('button', { name: /ALTA Banka/ }).click();
-    await expect(form.getByText('000-test-RSD-account')).toBeVisible();
+    await expect(form.getByRole('button', { name: /ALTA Banka|СБП|SBP/ })).toHaveCount(0);
+    await form.getByRole('button', { name: /PayPal/ }).click();
     await select.selectOption('other');
     await expect(form.getByRole('button', { name: /ALTA Banka|СБП|SBP/ })).toHaveCount(0);
     await form.getByRole('button', { name: /PayPal/ }).click();
@@ -93,6 +89,6 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile'])
     await page.reload();
     await nav.getByRole('button', { name: ru ? 'Премиум' : 'Premium', exact: true }).click();
     await expect(page.getByRole('button', { name: ru ? 'Создать тему' : 'Create topic', exact: true })).toBeVisible();
-    expect(creates).toBe(4);
+    expect(creates).toBe(3);
   });
 }

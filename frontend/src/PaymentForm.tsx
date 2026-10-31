@@ -3,11 +3,10 @@ import { getLanguage, t } from "./i18n";
 import { paymentRequest, type Country, type Payment, type PaymentOptions } from "./api/payments";
 import { countryLabels, methodLabels, statusLabels } from "./paymentLabels";
 import sbp from "./assets/payments/sbp.svg";
-import alta from "./assets/payments/alta.png";
 import paypal from "./assets/payments/paypal.svg";
 
-const logos = { sbp, alta, paypal };
-const descriptions = { sbp: "Перевод по номеру телефона", alta: "Банковский перевод", paypal: "Оплата через PayPal" };
+const logos = { sbp, paypal };
+const descriptions = { sbp: "Перевод по номеру телефона", paypal: "Оплата через PayPal" };
 
 function CopyValue({ label, value }: { label: string; value: string }) {
   const [message, setMessage] = useState("");
@@ -22,7 +21,6 @@ export function PaymentForm({ onClose, onGranted }: { onClose: () => void; onGra
   const [options, setOptions] = useState<PaymentOptions>();
   const [payment, setPayment] = useState<Payment>();
   const [country, setCountry] = useState<Country | "">("");
-  const [altaCurrency, setAltaCurrency] = useState("EUR");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -43,7 +41,6 @@ export function PaymentForm({ onClose, onGranted }: { onClose: () => void; onGra
       const current = payments[0];
       setPayment(current);
       setCountry(current?.country ?? "");
-      setAltaCurrency(current?.method === "alta" ? current.details.currency : config.methods.alta.currencies?.[0] ?? "EUR");
     }).catch(() => { if (!controller.signal.aborted) setError(true); });
     return () => controller.abort();
   }, [retry]);
@@ -76,32 +73,24 @@ export function PaymentForm({ onClose, onGranted }: { onClose: () => void; onGra
         void mutate(async () => {
           if (awaiting && payment) await paymentRequest(`/payments/${payment.id}/cancel`, "POST");
           setCountry(next); setPayment(undefined); setPaidAt(""); setAmount(""); setTransaction("");
-          setAltaCurrency(options.methods.alta.currencies?.[0] ?? "EUR");
         });
       }}><option value="">{t("Выберите страну")}</option>{Object.entries(countryLabels).map(([key, label]) => <option key={key} value={key}>{t(label)}</option>)}</select></label>
-      {country === "serbia" && canChoose && (options.methods.alta.currencies?.length ?? 0) > 1 && <label>{t("Валюта перевода ALTA")}
-        <select value={altaCurrency} disabled={busy} onChange={event => {
-          const currency = event.target.value;
-          void mutate(async () => {
-            if (awaiting && payment?.method === "alta") { await paymentRequest(`/payments/${payment.id}/cancel`, "POST"); setPayment(undefined); }
-            setAltaCurrency(currency);
-          });
-        }}>{options.methods.alta.currencies!.map(currency => <option key={currency} value={currency}>{currency}</option>)}</select></label>}
-      {country && canChoose && <div className="payment-methods">{options.countries[country].map(method => <div key={method}>
+      {country && canChoose && <div className="payment-methods">{options.countries[country].filter((method): method is "sbp" | "paypal" => method === "sbp" || method === "paypal").map(method => <div key={method}>
         <button type="button" className="payment-method" disabled={busy || !options.methods[method].available}
           aria-pressed={awaiting && payment?.method === method} onClick={() => void mutate(async () => {
-            setPayment(await paymentRequest<Payment>("/payments", "POST", { country, method, ...(method === "alta" ? { currency: altaCurrency } : {}) }));
+            setPayment(await paymentRequest<Payment>("/payments", "POST", { country, method }));
             setPaidAt(""); setAmount(""); setTransaction("");
           })}><span className="payment-logo"><img src={logos[method]} alt="" /></span><strong>{t(methodLabels[method])}</strong><span>{t(descriptions[method])}</span></button>
         {!options.methods[method].available && <small>{t("Способ недоступен: реквизиты или условия активации ещё не настроены.")}</small>}
       </div>)}</div>}
-      <p className="payment-note">{t("PayPal доступен для выбора в любой стране. Возможность перевода определяется PayPal.")}</p>
+      <p className="payment-note">{t("Для России — перевод в рублях в Банк Санкт-Петербург. Для остальных стран — PayPal. Возможность перевода определяется PayPal.")}</p>
     </>}
     {payment && <div className="payment-details" key={payment.id}>
       <p role="status"><strong>{t(statusLabels[payment.status])}</strong></p>
       <CopyValue label="Номер заявки" value={payment.id} />
       <p>{t(countryLabels[payment.country])} · {t(methodLabels[payment.method])}</p>
-      {(awaiting || reviewing) && <>
+      {payment.method === "alta" && (awaiting || reviewing) && <p role="status">{t("Этот способ больше не доступен для новых оплат. Если перевод уже выполнен, сообщите об оплате; иначе выберите другой способ.")}</p>}
+      {(awaiting || reviewing) && payment.method !== "alta" && <>
         <p>{payment.activation[language]}</p>
         <CopyValue label="Сумма к оплате" value={`${payment.details.amount} ${payment.details.currency}`} />
         <CopyValue label="Получатель" value={payment.details.recipient} />
@@ -109,7 +98,6 @@ export function PaymentForm({ onClose, onGranted }: { onClose: () => void; onGra
         {payment.details.bank && <CopyValue label="Банк получателя" value={payment.details.bank} />}
         {payment.details.account && <CopyValue label="Номер счёта" value={payment.details.account} />}
         {payment.details.bank_details && <CopyValue label="Банковские реквизиты" value={payment.details.bank_details} />}
-        {payment.method === "alta" && <CopyValue label="Назначение платежа" value={`Premium ${payment.id}`} />}
         {(payment.details.paypal || payment.details.paypal_url) && <CopyValue label="Получатель PayPal" value={payment.details.paypal || payment.details.paypal_url!} />}
         <p className="payment-instructions">{payment.details.instructions[language]}</p>
         {payment.method === "paypal" && <><p>{t("Оплачивайте покупку коммерческим платежом. Укажите номер заявки в комментарии, если PayPal его поддерживает.")}</p>

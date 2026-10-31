@@ -94,12 +94,12 @@ def test_payment_notification_api_uses_injected_settings(payment_api, db_session
     sent = []
     monkeypatch.setattr(notifications, "send_notification", lambda settings, text: sent.append(text))
     app.dependency_overrides[get_settings] = payment_notification_settings
-    created = payment_api.post("/api/payments", json={"country": "serbia", "method": "alta"}).json()
+    created = payment_api.post("/api/payments", json={"country": "serbia", "method": "paypal"}).json()
     response = payment_api.post(f'/api/payments/{created["id"]}/report', json=report_data())
     assert response.status_code == 200
     assert sent == []  # The fixture's DB override leaves the transaction to the test.
     db_session.commit()
-    assert len(sent) == 1 and "ALTA Banka" in sent[0] and "RSD" in sent[0]
+    assert len(sent) == 1 and "PayPal" in sent[0] and "EUR" in sent[0]
     assert "000-test" not in sent[0]
 
 
@@ -146,19 +146,19 @@ def test_missing_partial_settings_disable_methods(db_session):
 def test_matrix_snapshot_switch_and_retries(payment_api, db_session):
     options = payment_api.get("/api/payments/options")
     assert options.headers["cache-control"] == "no-store"
-    assert options.json()["countries"] == {"russia": ["sbp", "paypal"], "serbia": ["alta", "paypal"], "other": ["paypal"]}
+    assert options.json()["countries"] == {"russia": ["sbp"], "serbia": ["paypal"], "other": ["paypal"]}
     assert payment_api.post("/api/payments", json={"country": "other", "method": "sbp"}).status_code == 409
     first = payment_api.post("/api/payments", json={"country": "russia", "method": "sbp"}).json()
     again = payment_api.post("/api/payments", json={"country": "russia", "method": "sbp"}).json()
     assert first["id"] == again["id"]
-    second = payment_api.post("/api/payments", json={"country": "serbia", "method": "alta"}).json()
+    second = payment_api.post("/api/payments", json={"country": "serbia", "method": "paypal"}).json()
     assert first["id"] != second["id"]
     assert db_session.get(PaymentRequest, first["id"]).status == "cancelled"
-    assert second["details"]["account"] == "000-test"
+    assert second["details"]["paypal"] == "synthetic@example.invalid"
     config = configured()
-    config.methods["alta"].account = "changed"
+    config.methods["paypal"].paypal = "changed@example.invalid"
     app.dependency_overrides[get_settings] = lambda: Settings(_env_file=None, manual_payments=config)
-    assert payment_api.get("/api/payments").json()[0]["details"]["account"] == "000-test"
+    assert payment_api.get("/api/payments").json()[0]["details"]["paypal"] == "synthetic@example.invalid"
 
 
 def test_report_grants_provisional_access_and_admin_confirmation_is_idempotent(payment_api, db_session):
@@ -232,20 +232,27 @@ def test_offset_report_is_stored_as_utc(payment_api):
     assert payment_api.get("/api/payments").json()[0]["paid_at"] == "2026-10-25T12:00:00Z"
 
 
-def test_alta_currency_selects_matching_account(payment_api):
+@pytest.mark.parametrize("currency", ["EUR", "RSD", "RUB", None])
+def test_alta_is_disabled_even_with_configured_accounts(payment_api, currency):
+    options = payment_api.get("/api/payments/options").json()
+    assert set(options["methods"]) == {"sbp", "paypal"}
+    assert all("alta" not in methods for methods in options["countries"].values())
+    response = payment_api.post("/api/payments", json={"country": "serbia", "method": "alta", "currency": currency})
+    assert response.status_code == 409
+    assert response.json()["detail"] == "method_unavailable"
+
+
+def test_old_alta_history_can_be_reported_without_allowing_recreation(payment_api, db_session):
     config = configured()
-    config.methods["alta"].currency = "EUR"
-    from decimal import Decimal
-    config.methods["alta"].amount = Decimal("5.00")
-    config.alta_alternative = configured().methods["alta"].model_copy(update={"account": "synthetic-rsd-account"})
-    app.dependency_overrides[get_settings] = lambda: Settings(_env_file=None, manual_payments=config)
-    assert payment_api.get("/api/payments/options").json()["methods"]["alta"]["currencies"] == ["EUR", "RSD"]
-    first = payment_api.post("/api/payments", json={"country": "serbia", "method": "alta", "currency": "EUR"}).json()
-    second = payment_api.post("/api/payments", json={"country": "serbia", "method": "alta", "currency": "RSD"}).json()
-    assert first["id"] != second["id"]
-    assert first["details"]["account"] == "000-test"
-    assert second["details"]["account"] == "synthetic-rsd-account"
-    assert payment_api.post("/api/payments", json={"country": "serbia", "method": "alta", "currency": "RUB"}).status_code == 409
+    old = PaymentRequest(user_id=LEGACY_USER_ID, active_user_id=LEGACY_USER_ID,
+        country="serbia", method="alta", status="awaiting_payment",
+        details=config.methods["alta"].model_dump(mode="json"), activation=config.activation.model_dump())
+    db_session.add(old)
+    db_session.flush()
+    assert payment_api.post("/api/payments", json={"country": "serbia", "method": "alta"}).status_code == 409
+    assert payment_api.get("/api/payments").json()[0]["id"] == old.id
+    assert payment_api.post(f"/api/payments/{old.id}/report", json=report_data()).status_code == 200
+    assert db_session.get(User, LEGACY_USER_ID).access_tier == "premium"
 
 
 @pytest.mark.parametrize("decision", ["confirmed", "rejected", "cancelled"])

@@ -8,7 +8,7 @@ import { setLanguage } from "../i18n";
 vi.mock("../api/payments", () => ({ paymentRequest: vi.fn() }));
 const options: PaymentOptions = {
   activation: { ru: "Тестовый срок", en: "Test timeframe" },
-  countries: { russia: ["sbp", "paypal"], serbia: ["alta", "paypal"], other: ["paypal"] },
+  countries: { russia: ["sbp", "paypal"], serbia: ["paypal"], other: ["paypal"] },
   methods: { sbp: { available: true }, alta: { available: true }, paypal: { available: true } },
 };
 const payment: Payment = {
@@ -48,7 +48,8 @@ it.each(["ru", "en"] as const)("selects explicit country, resets method, copies 
   fireEvent.change(select, { target: { value: "serbia" } });
   await waitFor(() => expect(screen.queryByText("+70000000000")).not.toBeInTheDocument());
   expect(screen.queryByRole("button", { name: /SBP|СБП/ })).not.toBeInTheDocument();
-  expect(screen.getByRole("button", { name: /ALTA Banka/ })).toHaveAttribute("aria-pressed", "false");
+  expect(screen.queryByRole("button", { name: /ALTA Banka/ })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /PayPal/ })).toBeEnabled();
   fireEvent.change(select, { target: { value: "other" } });
   await waitFor(() => expect(screen.queryByRole("button", { name: /ALTA Banka/ })).not.toBeInTheDocument());
   fireEvent.click(screen.getByRole("button", { name: /PayPal/ }));
@@ -118,4 +119,15 @@ it.each(["ru", "en"] as const)("requires receipt confirmation in admin and refle
   fireEvent.click(screen.getByRole("button", { name: ru ? "Деньги получены — включить Premium" : "Money received — activate Premium" }));
   await screen.findByText(ru ? "Подтверждена" : "Confirmed");
   expect(vi.mocked(paymentRequest).mock.calls.filter(call => call[1] === "PATCH")).toHaveLength(1);
+});
+
+
+it.each(["ru", "en"] as const)("withholds retired ALTA bank details but preserves settlement (%s)", async language => {
+  setLanguage(language);
+  mockApi({ ...payment, method: "alta", country: "serbia", details: { ...payment.details, currency: "RSD", account: "retired-account-secret" } });
+  render(<PaymentForm onClose={vi.fn()} />);
+  await screen.findByText(/Этот способ больше|This method is no longer/);
+  expect(screen.queryByText("retired-account-secret")).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /ALTA Banka/ })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: language === "ru" ? "Я оплатил" : "I have paid" })).toBeEnabled();
 });

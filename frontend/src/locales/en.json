@@ -569,7 +569,6 @@
   "Перевод по номеру телефона": "Transfer by phone number",
   "Банковский перевод": "Bank transfer",
   "Оплата через PayPal": "Pay with PayPal",
-  "PayPal доступен для выбора в любой стране. Возможность перевода определяется PayPal.": "PayPal can be selected for any country. Transfer availability is determined by PayPal.",
   "Номер заявки": "Request number",
   "Сумма к оплате": "Amount due",
   "Получатель": "Recipient",
@@ -606,7 +605,6 @@
   "Не удалось скопировать. Выделите и скопируйте текст вручную.": "Copy failed. Select and copy the text manually.",
   "Копировать": "Copy",
   "Скопировано": "Copied",
-  "Валюта перевода ALTA": "ALTA transfer currency",
   "Premium включён автоматически. Заявка ожидает проверки, доступ может быть отозван.": "Premium was activated automatically. The request is awaiting verification and access may be revoked.",
   "Отклонить и отозвать доступ": "Reject and revoke access",
   "Отменить и отозвать доступ": "Cancel and revoke access",
@@ -623,5 +621,7 @@
   "Для аккаунта, использующего только веб-версию, бесплатный лимит — 20 фраз в сутки. Premium оформляется однократным платежом на сайте. После сообщения «Я оплатил» доступ предоставляется предварительно; администратор проверяет поступление и может отозвать предварительный доступ при отклонении заявки. Предоставленный через Android Premium при этом сохраняется.": "For web-only accounts, the free allowance is 20 phrases per day. Premium is available through a one-time payment on the website. Reporting a payment grants provisional access; an administrator verifies receipt and may revoke provisional access if the request is rejected. Premium granted through Android remains active.",
   "Фраза на выбранном языке недоступна. Повторите загрузку или выберите другую тему.": "The phrase is unavailable in the selected language. Reload or choose another topic.",
   "Русская версия": "Russian version",
-  "Английская версия": "English version"
+  "Английская версия": "English version",
+  "Этот способ больше не доступен для новых оплат. Если перевод уже выполнен, сообщите об оплате; иначе выберите другой способ.": "This method is no longer available for new payments. If you have already transferred the money, report the payment; otherwise choose another method.",
+  "Для России — перевод в рублях в Банк Санкт-Петербург. Для остальных стран — PayPal. Возможность перевода определяется PayPal.": "For Russia, pay in rubles to Bank Saint Petersburg. For other countries, use PayPal. Transfer availability is determined by PayPal."
 }

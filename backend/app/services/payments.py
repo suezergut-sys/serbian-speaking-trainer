@@ -10,7 +10,7 @@ from app.repositories.users import UserRepository
 from app.schemas.payments import PaymentChoice, PaymentConfig, PaymentDecision, PaymentReport
 from app.services.notifications import notify_after_commit
 
-COUNTRY_METHODS = {"russia": ["sbp", "paypal"], "serbia": ["alta", "paypal"], "other": ["paypal"]}
+COUNTRY_METHODS = {"russia": ["sbp"], "serbia": ["paypal"], "other": ["paypal"]}
 
 
 class PaymentError(Exception):
@@ -27,38 +27,34 @@ class PaymentService:
 
     def method_config(self, method: str, currency: str | None = None):
         item = self.config.methods.get(method)
-        if method == "alta" and currency and (not item or item.currency != currency):
-            alternative = self.config.alta_alternative
-            return alternative if alternative and alternative.currency == currency else None
         return item if item and (not currency or item.currency == currency) else None
 
     def available(self, method: str, currency: str | None = None) -> bool:
+        if method not in {"sbp", "paypal"}:
+            return False
         item = self.method_config(method, currency)
         activation = self.config.activation
         if not item or not activation or not all(text.strip() for text in (activation.ru, activation.en, item.recipient, item.instructions.ru, item.instructions.en)) or not item.amount or not item.currency:
             return False
         if method == "sbp":
             return item.currency == "RUB" and bool(item.phone and item.phone.strip() and item.bank and item.bank.strip())
-        if method == "alta":
-            return bool(item.account and item.account.strip() and item.bank_details and item.bank_details.strip())
         return item.currency == "EUR" and item.amount == 5 and bool((item.paypal and item.paypal.strip()) or item.paypal_url)
 
     def options(self) -> dict:
         return {"activation": self.config.activation, "countries": COUNTRY_METHODS,
-                "methods": {key: {"available": self.available(key) or (key == "alta" and any(self.available(key, c) for c in ("EUR", "RSD"))),
-                    "currencies": [c for c in ("EUR", "RSD", "RUB") if self.available(key, c)]} for key in ("sbp", "alta", "paypal")}}
+                "methods": {key: {"available": self.available(key)} for key in ("sbp", "paypal")}}
 
     def create(self, user: User, choice: PaymentChoice) -> PaymentRequest:
         locked = self.users.lock(user.id)
         if locked.access_tier == "premium":
             raise PaymentError("already_premium")
+        if choice.method not in COUNTRY_METHODS[choice.country] or not self.available(choice.method, choice.currency):
+            raise PaymentError("method_unavailable")
         active = self.repo.active(user.id)
         if active and active.country == choice.country and active.method == choice.method and (not choice.currency or active.details["currency"] == choice.currency):
             return active
         if active and active.status == "awaiting_review":
             raise PaymentError("awaiting_review")
-        if choice.method not in COUNTRY_METHODS[choice.country] or not self.available(choice.method, choice.currency):
-            raise PaymentError("method_unavailable")
         if active:
             active.status, active.active_user_id = "cancelled", None
             self.db.flush()

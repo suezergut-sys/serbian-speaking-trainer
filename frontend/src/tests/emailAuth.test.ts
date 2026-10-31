@@ -1,8 +1,10 @@
 import { afterEach, expect, it, vi } from "vitest";
+const native = vi.hoisted(() => vi.fn(() => false));
+vi.mock("@capacitor/core", () => ({ Capacitor: { isNativePlatform: native } }));
 const sdk = vi.hoisted(() => ({ signInWithOtp: vi.fn(), verifyOtp: vi.fn() }));
 vi.mock("../auth", () => ({ getSupabase: () => ({ auth: sdk }) }));
 import { isEmailOtpEnabled, requestEmailCode, verifyEmailCode } from "../emailAuth";
-afterEach(() => { vi.resetAllMocks(); vi.unstubAllEnvs(); });
+afterEach(() => { native.mockReturnValue(false); vi.resetAllMocks(); vi.unstubAllEnvs(); });
 
 it("requires an explicit rollout flag", () => {
   vi.stubEnv("VITE_EMAIL_OTP_ENABLED", "false"); expect(isEmailOtpEnabled()).toBe(false);
@@ -21,4 +23,13 @@ it("hides provider details and rejects a missing session", async () => {
   await expect(requestEmailCode("demo@example.invalid")).rejects.toThrow("Email code request failed");
   sdk.verifyOtp.mockResolvedValue({ data: { session: null }, error: null });
   await expect(verifyEmailCode("demo@example.invalid", "12345678")).rejects.toThrow("Email code verification failed");
+});
+
+it("offers email codes on web only, even if the Android environment enables the flag", () => {
+  vi.stubEnv("VITE_EMAIL_OTP_ENABLED", "true");
+  native.mockReturnValue(true);
+  expect(isEmailOtpEnabled()).toBe(false);
+  native.mockReturnValue(false);
+  vi.stubEnv("MODE", "android");
+  expect(isEmailOtpEnabled()).toBe(false);
 });
