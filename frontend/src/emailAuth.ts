@@ -1,7 +1,8 @@
+import { Capacitor } from "@capacitor/core";
 import { getSupabase } from "./auth";
 
 export function isEmailOtpEnabled(): boolean {
-  return import.meta.env.VITE_EMAIL_OTP_ENABLED === "true";
+  return !Capacitor.isNativePlatform() && import.meta.env.MODE !== "android" && import.meta.env.VITE_EMAIL_OTP_ENABLED === "true";
 }
 
 export async function requestEmailCode(email: string): Promise<void> {

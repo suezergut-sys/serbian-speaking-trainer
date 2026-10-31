@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { initializeAuth, isAuthConfigured, onAuthStateChange, signInWithGoogle } from "./auth";
-import { ReviewLogin } from "./ReviewLogin";
 import { EmailLogin } from "./EmailLogin";
 import { t } from "./i18n";
 
@@ -33,7 +32,7 @@ export function LandingLogin() {
     <p>{t("Войдите или зарегистрируйтесь, чтобы сохранять свой прогресс на всех устройствах.")}</p>
     {status === "loading" ? <p role="status">{t("Авторизация и загрузка...")}</p>
       : status === "signed-in" ? <a className="landing-cta" href="/app">{t("Продолжить тренировку")} <span aria-hidden="true">↗</span></a>
-      : <><button className="google-sign-in" type="button" disabled={busy || !isAuthConfigured()} onClick={() => void login()}>{t(busy ? "Открываем Google…" : "Войти через Google")}</button>{isAuthConfigured() && <><EmailLogin onSignedIn={() => window.location.assign("/app")} /><ReviewLogin onSignedIn={() => window.location.assign("/app")} /></>}</>}
+      : <><button className="google-sign-in" type="button" disabled={busy || !isAuthConfigured()} onClick={() => void login()}>{t(busy ? "Открываем Google…" : "Войти через Google")}</button>{isAuthConfigured() && <><EmailLogin onSignedIn={() => window.location.assign("/app")} /></>}</>}
     {error && <p className="error" role="alert">{t(error)}</p>}
     {!isAuthConfigured() && <p role="alert">{t("Вход временно недоступен. Попробуйте позже.")}</p>}
     <nav className="auth-legal" aria-label={t("Правовая информация")}><a href="/privacy">{t("Конфиденциальность")}</a><a href="/terms">{t("Условия")}</a><a href="/delete-account">{t("Удаление аккаунта")}</a></nav>

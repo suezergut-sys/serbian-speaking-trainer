@@ -13,7 +13,7 @@ export type Payment = {
   transaction_id: string | null; reviewed_by: string | null; reviewed_at: string | null;
   provisional_granted_at: string | null;
 };
-export type PaymentOptions = { activation: Localized | null; countries: Record<Country, Method[]>; methods: Record<Method, { available: boolean; currencies?: string[] }> };
+export type PaymentOptions = { activation: Localized | null; countries: Record<Country, Method[]>; methods: Record<"sbp" | "paypal", { available: boolean; currencies?: string[] }> & { alta?: { available: boolean; currencies?: string[] } } };
 export type AdminPayment = Payment & { email: string; display_name: string | null };
 
 export async function paymentRequest<T>(path: string, method = "GET", body?: unknown, signal?: AbortSignal): Promise<T> {
