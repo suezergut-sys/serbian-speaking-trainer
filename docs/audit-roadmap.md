@@ -6,7 +6,8 @@
 - [x] Проверочный вход отключён; Android Google-only, web сохраняет email-код. Номер 1.44/code54 отдельно согласован владельцем. [Доказательства и статусы](android-1.44-release.md).
 - [x] 502 backend/9 skips, 358 frontend, 16 browser scenarios, lint/typecheck/build/5 Node guards; APK/AAB metadata/API/assets/подписи и Downloads проверены. [PR #183](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/183), GitHub v1.44 и оба production deployment Ready на `9cb113d`, HTTP и настоящая owner-сессия RU/EN проверены. [Доказательства](android-1.44-release.md).
 - [x] Доказательства сохранены в [PR #184](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/184). Все 12 копий проверены чистыми на runtime `9cb113d`; после merge evidence выполняется повторный финальный контроль SHA/status. Recovery не потребовалось, прежние ветки сохранены.
-- [ ] Ручная приёмка владельцем и дальнейшая отправка в Google Play отдельно; заявка не отправляется.
+- [x] 31.10 владелец подтвердил работоспособность APK; AAB54/1.44 принят Console и сохранён в черновике Alpha release5 с RU/EN notes. Hash/metadata/«Изменения сохранены» проверены. [Доказательства](android-1.44-release.md).
+- [ ] Актуализация App access, production access application, отправка на проверку и rollout отдельно. Черновик1.44 не опубликован, действующий Alpha1.43 не остановлен.
 
 ## 30.10.2026 — материалы заявки на production access
 

@@ -18,7 +18,7 @@
 - [x] `pnpm android:cloud-apk` и подписанный `build-android-play-aab.ps1`: BUILD SUCCESSFUL. APK/AAB 1.44/code54/min24/target36; production API и HTTPS WebView, все 10 public assets совпали побайтно. Browser/Share plugins присутствуют, testlab/landing/секреты отсутствуют, reviewer API path в bundle отсутствует. Подписи сверены с предыдущим выпуском, bundletool validate/dump прошли. Копии в Downloads побайтно проверены.
 - [x] [PR #183](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/183) merged на `9cb113d32b6a24edcfd3303e237334deb0f99af4`. [GitHub v1.44](https://github.com/suezergut-sys/serbian-speaking-trainer/releases/tag/v1.44) содержит APK и AAB; tag/target и server size/digest совпадают с Downloads. Исходный runtime tree APK совпадает с merged SHA, различаются только документы.
 - [x] Backend `dpl_2WRKdm4QZPirWyEUF9kkxSBrN5Bv` и frontend `dpl_4vYzisom4KznPUUzGQBd54Dy38iv` Ready/production/main на `9cb113d`; API metadata и production aliases подтверждены. Health/app/privacy/delete-account HTTP200, anonymous payment options401; старый reviewer endpoint410/no-store, отсутствует в OpenAPI. Runtime error rows: 0/0 за проверенный интервал.
-- [ ] Физическая приёмка владельцем: Google OAuth нового/существующего аккаунта, возврат/перезапуск, Premium, RU/EN общие и личные фразы, микрофон/реальная речь и повторение. Автотесты с mocks эту приёмку не заменяют.
+- [x] Владелец подтвердил работоспособность подготовленного APK 31.10.2026 (см. дополнение ниже). Детальная матрица устройств/сценариев отдельно не предоставлена; автоматические mocks не выдаются за аппаратную проверку.
 - [ ] Play Console: актуализация инструкции доступа для Google-входа, загрузка финального AAB, заявка production access и публичный выпуск — отдельное поручение после ручной проверки.
 
 Исходники сборки, SHA runtime и последующие commits только с доказательствами фиксируются отдельно. Доказательства и бинарные артефакты хранятся в игнорируемом `artifacts/android-1.44-*`; секреты и аудио в Git не включаются.
@@ -48,3 +48,15 @@ Backend deployment: https://serbian-speaking-trainer-qxe8u3mae-suezerguts-projec
 Production browser matrix: **16/16 passed** на основном домене (RU/EN вход, платежи, общие/личные фразы, desktop/mobile/shared Android). APK повторно скачан из GitHub и совпал по SHA-256 с Downloads. Финальная синхронизация копий проверяется после merge доказательств; runtime/source остаётся `9cb113d`.
 
 Доказательства и воспроизводимый production smoke сохранены в [PR #184](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/184). Все12 копий проверены чистыми на runtime9cb113d; после merge доказательств повторяется проверка общего HEAD/main и пустого статуса. Recovery не потребовалось; ветки сохранены. Финальный SHA документации отличается от исходников deploy/APK, поэтому повторная сборка/deploy не выполняются.
+
+## 31.10.2026 — приёмка владельцем и загрузка AAB в Console
+
+Владелец сообщил: «я проверил, все работает» и отдельно поручил загрузить AAB. Это подтверждение пользовательской приёмки подготовленного APK; установку этой версии из Google Play пока не заявляем выполненной.
+
+- [x] Повторно проверен SHA-256 Downloads AAB: `9be18a1375e946e8e006f29fbc6efbf584e2e41d73b0302a1a57e98d30776d23`; новая сборка не выполнялась.
+- [x] Google Play обработал AAB как **54 (1.44)**, API24+/target36. Сохранён черновик существующего Alpha: `1.44 (54) — Google и двуязычные фразы`, release5, track4699717717392513131. RU/EN примечания заполнены (2/2), Console явно подтвердила «Изменения сохранены».
+- [x] Действующая опубликованная Alpha1.43 не приостановлена; группа участников и страны не менялись. Не нажимали отправку на проверку/внедрение. Загрузка в черновик не означает выпуск участникам или публике.
+- [ ] Production access ещё не запрошен/не открыт: Dashboard по-прежнему показывает выполненные условия теста и кнопку «Подать заявку», рабочая версия неактивна. После открытия доступа можно выбрать загруженный AAB из библиотеки для публичного выпуска.
+- [ ] Перед отправкой на проверку отдельно актуализировать App access для Google-only входа, затем review/rollout по поручению владельца. В этой задаче декларации и ревьюерские инструкции Console не менялись.
+
+Прямой URL сохранённого черновика: https://play.google.com/console/u/0/developers/6560020242950652568/app/4972357963448271381/tracks/4699717717392513131/releases/5/prepare . Доказательство вне Git: `artifacts/android-1.44-play-aab-draft.png` (принятый code54/name1.44 и подтверждение сохранения). Изменены только документы; выполнены проверка AAB hash, живая Console и diff check. Повторные тесты/build/deploy не требуются, APK/runtime source остаётся `9cb113d`.
