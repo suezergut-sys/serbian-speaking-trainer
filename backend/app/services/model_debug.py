@@ -10,6 +10,7 @@ from app.config import Settings
 from app.models import User
 from app.repositories.model_debug import ModelDebugRepository
 from app.schemas.model_debug import DebugPayload
+from app.services.failure_diagnostics import diagnostic_context
 
 
 def can_debug(user: User, settings: Settings) -> bool:
@@ -53,7 +54,7 @@ class DebugCapture:
                     if setting and setting.enabled:
                         self.generation = setting.generation
                 if self.generation is not None:
-                    self.request = DebugPayload(data=_clean(request, secret)).data
+                    self.request = DebugPayload(data={**_clean(request, secret), "_diagnostic_id": diagnostic_context.get()}).data
             except Exception:
                 self.generation = None  # Diagnostics must not break learning.
         self.started_at = datetime.now(timezone.utc)
@@ -77,7 +78,7 @@ class DebugCapture:
             http = raw.http_response
             if text_request:
                 import json
-                self.request = DebugPayload(data=_clean(json.loads(http.request.content), self.secret)).data
+                self.request = DebugPayload(data={**_clean(json.loads(http.request.content), self.secret), "_diagnostic_id": diagnostic_context.get()}).data
             try:
                 body = http.json()
             except ValueError:
@@ -116,6 +117,7 @@ class DebugCapture:
             error_json = None if error is None else DebugPayload(data=_clean({
                 "type": type(error).__name__, "status_code": getattr(error, "status_code", None),
                 "body": getattr(error, "body", None),
+                **({"failure": error.failure.model_dump(mode="json")} if hasattr(error, "failure") else {}),
             }, self.secret)).data
             with Session(self.context.engine) as db:
                 ModelDebugRepository(db, self.context.user_id).append(self.generation, dict(

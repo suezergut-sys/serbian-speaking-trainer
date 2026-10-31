@@ -188,7 +188,7 @@ def test_analysis_unavailable_preserves_progress_and_allows_same_request_retry(
 
     unavailable = api_client.post("/api/attempts", json=payload)
     assert unavailable.status_code == 503
-    assert unavailable.json()["detail"] == {
+    assert {k: v for k, v in unavailable.json()["detail"].items() if k != "failure"} == {
         "code": "analysis_unavailable",
         "message": "Answer analysis is temporarily unavailable. Please retry.",
         "retryable": True,

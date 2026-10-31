@@ -13,19 +13,29 @@ from app.request_metrics import measure_ai_call
 from app.services.ai_adapter import load_prompt
 from app.services.serbian_text import has_unexpected_letter_script
 from app.services.model_debug import capture_model_call
+from app.services.failure_diagnostics import DiagnosticFailure, diagnostic, classify_provider_error
 
 
-class TranscriptionServiceError(RuntimeError):
+class TranscriptionServiceError(DiagnosticFailure):
     """Safe application-level error for unavailable speech transcription."""
 
-    def __init__(self, code: str = "transcription_unavailable") -> None:
+    def __init__(self, code: str = "transcription_unavailable", failure=None) -> None:
         self.code = code if code in {
             "transcription_unavailable", "transcription_not_configured", "transcription_timeout",
             "transcription_connection", "transcription_empty", "transcription_invalid_response",
             "transcription_unexpected_script", "transcription_audio_rejected",
             "transcription_provider_auth", "transcription_rate_limit", "transcription_provider_error",
         } else "transcription_unavailable"
-        super().__init__(self.code)
+        if failure is None:
+            reasons = {"transcription_timeout": "timeout", "transcription_connection": "connection",
+                       "transcription_rate_limit": "rate_limit", "transcription_provider_auth": "authentication",
+                       "transcription_not_configured": "not_configured"}
+            if self.code in {"transcription_empty", "transcription_invalid_response", "transcription_unexpected_script"}:
+                failure = diagnostic("response_parse", "structured_output", "missing_output" if self.code == "transcription_empty" else "invalid_schema")
+            else:
+                failure = diagnostic("external_model", "configuration" if self.code == "transcription_not_configured" else "provider_request",
+                                     reasons.get(self.code, "provider_failure"), retryable=self.code not in {"transcription_provider_auth", "transcription_not_configured"})
+        super().__init__(self.code, failure)
 
 
 class TranscriptionProvider(Protocol):
@@ -68,8 +78,8 @@ class OpenAITranscriptionProvider:
             return FeedbackTranscript.model_validate({"text": response.text.strip()})
         except TranscriptionServiceError:
             raise
-        except Exception:
-            raise TranscriptionServiceError() from None
+        except Exception as exc:
+            raise TranscriptionServiceError(failure=classify_provider_error(exc)) from exc
 
     def transcribe(self, *, audio: bytes, filename: str, content_type: str) -> TranscriptionResponse:
         try:
@@ -118,7 +128,7 @@ class OpenAITranscriptionProvider:
                 401: "transcription_provider_auth", 403: "transcription_provider_auth",
                 429: "transcription_rate_limit",
             }.get(exc.status_code, "transcription_provider_error")
-            raise TranscriptionServiceError(code) from exc
+            raise TranscriptionServiceError(code, classify_provider_error(exc)) from exc
         except (ValidationError, AttributeError, TypeError) as exc:
             raise TranscriptionServiceError("transcription_invalid_response") from exc
         except Exception as exc:

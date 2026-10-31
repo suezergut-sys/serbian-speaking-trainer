@@ -1,4 +1,11 @@
 import logging
+from uuid import UUID, uuid4
+from fastapi.exceptions import ResponseValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from fastapi.exception_handlers import http_exception_handler
+from app.services.failure_diagnostics import DiagnosticFailure
+from sqlalchemy.exc import SQLAlchemyError
+from app.services.failure_diagnostics import diagnostic_context, diagnostic, record_failure
 from app.api.payments import router as payments_router
 from time import perf_counter
 
@@ -49,14 +56,64 @@ async def safe_review_login_validation(request: Request, exc: RequestValidationE
         return JSONResponse({"detail": "Invalid sign-in request"}, status_code=422, headers={"Cache-Control": "no-store"})
     return await request_validation_exception_handler(request, exc)
 
+@app.exception_handler(StarletteHTTPException)
+async def classified_http_failure(request: Request, exc: StarletteHTTPException):
+    if isinstance(exc.detail, dict) and "failure" in exc.detail:
+        response = await http_exception_handler(request, exc)
+        response.headers["Cache-Control"] = "no-store"
+        return response
+    cause = exc.__cause__ or exc.__context__
+    for _ in range(5):
+        if isinstance(cause, DiagnosticFailure):
+            record_failure(cause.failure)
+            detail = dict(exc.detail) if isinstance(exc.detail, dict) else {"message": "The operation could not be completed."}
+            detail.update(failure=cause.failure.model_dump(mode="json"), retryable=cause.failure.retryable)
+            return JSONResponse({"detail": detail}, status_code=exc.status_code, headers={**(exc.headers or {}), "Cache-Control": "no-store"})
+        if cause is None:
+            break
+        cause = cause.__cause__ or cause.__context__
+    return await http_exception_handler(request, exc)
+
+
+def failure_response(request: Request, *, stage: str, reason: str):
+    failure = diagnostic("response_return", stage, reason, retryable=stage == "persistence").model_copy(update={"diagnostic_id": getattr(request.state, "diagnostic_id", str(uuid4()))})
+    record_failure(failure)
+    return JSONResponse({"detail": {"code": "result_return_failed", "message": "The server could not return the result.",
+                                    "retryable": failure.retryable, "failure": failure.model_dump(mode="json")}},
+                        status_code=500, headers={"X-Request-ID": failure.diagnostic_id, "Cache-Control": "no-store"})
+
+
+@app.exception_handler(ResponseValidationError)
+async def response_validation_failed(request: Request, _exc: ResponseValidationError):
+    return failure_response(request, stage="serialization", reason="serialization_failed")
+
+
+@app.exception_handler(SQLAlchemyError)
+async def persistence_failed(request: Request, _exc: SQLAlchemyError):
+    return failure_response(request, stage="persistence", reason="persistence_failed")
+
+
+@app.exception_handler(DiagnosticFailure)
+async def service_failed(request: Request, exc: DiagnosticFailure):
+    failure = exc.failure.model_copy(update={"diagnostic_id": getattr(request.state, "diagnostic_id", exc.failure.diagnostic_id)})
+    record_failure(failure)
+    return JSONResponse({"detail": {"code": "operation_unavailable", "message": "The operation could not be completed.",
+                                    "retryable": failure.retryable, "failure": failure.model_dump(mode="json")}}, status_code=503, headers={"Cache-Control": "no-store"})
+
+
+@app.exception_handler(Exception)
+async def unhandled_return_failed(request: Request, _exc: Exception):
+    return failure_response(request, stage="server_return", reason="server_return_failed")
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost", "https://localhost", "capacitor://localhost"],
     allow_origin_regex=settings.cors_allowed_origin_regex,
     allow_credentials=False,
     allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "X-Interface-Language"],
-    expose_headers=["Server-Timing"],
+    allow_headers=["Content-Type", "Authorization", "X-Interface-Language", "X-Request-ID"],
+    expose_headers=["Server-Timing", "X-Request-ID"],
 )
 app.add_middleware(AudioUploadBodyLimitMiddleware)
 
@@ -64,6 +121,12 @@ app.add_middleware(AudioUploadBodyLimitMiddleware)
 @app.middleware("http")
 async def record_request_timing(request: Request, call_next):
     started = perf_counter()
+    try:
+        request_id = str(UUID(request.headers.get("X-Request-ID", "")))
+    except ValueError:
+        request_id = str(uuid4())
+    request.state.diagnostic_id = request_id
+    diagnostic_token = diagnostic_context.set(request_id)
     metrics, token = start_request_metrics()
     language_token = interface_language.set(parse_interface_language(request.headers.get("X-Interface-Language", "ru")))
     try:
@@ -71,9 +134,11 @@ async def record_request_timing(request: Request, call_next):
     finally:
         stop_request_metrics(token)
         interface_language.reset(language_token)
+        diagnostic_context.reset(diagnostic_token)
     total_ms = (perf_counter() - started) * 1000
     auth_ms = getattr(request.state, "auth_ms", 0.0)
     sync_ms = getattr(request.state, "user_sync_ms", 0.0)
+    response.headers["X-Request-ID"] = request_id
     response.headers["Server-Timing"] = (
         f"total;dur={total_ms:.1f}, auth;dur={auth_ms:.1f}, user_sync;dur={sync_ms:.1f}, "
         f"db;dur={metrics.db_ms:.1f}, db_queries;desc=\"{metrics.db_queries}\", "

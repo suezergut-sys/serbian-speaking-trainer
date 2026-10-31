@@ -74,6 +74,35 @@ describe("App", () => {
     expect(document.querySelector(".email-login") !== null).toBe(!native);
   });
 
+  it.each(["ru", "en"] as const)("shows classified checker failure and diagnostic ID without losing the draft (%s)", async language => {
+    localStorage.setItem("serbotalk.interface-language", language);
+    voiceMock.available = true;
+    const original = mockApi();
+    const id = "49d2c9b9-5978-402b-90d6-3822f88d1ae2";
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (input.toString().endsWith("/attempts")) return new Response(JSON.stringify({ detail: { code: "analysis_unavailable", failure: {
+        kind: "response_parse", stage: "grounding", reason: "non_lexical_correction", diagnostic_id: id, retryable: true,
+      } } }), { status: 503 });
+      const response = await original(input, init);
+      if (input.toString().endsWith("/sessions/start")) {
+        const body = await response.json();
+        return { ...response, json: async () => ({ ...body, exercise: { ...body.exercise,
+          source_versions: { ru: "Я хочу открыть счёт.", en: "I want to open an account.", hints_ru: [], hints_en: [] } } }) };
+      }
+      return response;
+    }));
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /В банке|At the bank/ }));
+    fireEvent.click(await screen.findByRole("button", { name: language === "en" ? "Answer aloud" : "Ответить голосом" }));
+    fireEvent.click(await screen.findByRole("button", { name: language === "en" ? "Finish recording" : "Завершить запись" }));
+    const answer = await screen.findByLabelText(language === "en" ? "Your answer" : "Ваш ответ");
+    fireEvent.change(answer, { target: { value: "Synthetic answer." } });
+    fireEvent.click(screen.getByRole("button", { name: language === "en" ? "Check answer" : "Проверить ответ" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(language === "en" ? "could not be processed" : "Не удалось обработать");
+    expect(screen.getByRole("alert")).toHaveTextContent(id);
+    expect(answer).toHaveValue("Synthetic answer.");
+  });
+
   it("switches login language and carries it into settings after authentication", async () => {
     vi.spyOn(auth, "initializeAuth").mockResolvedValue(null);
     vi.stubGlobal("fetch", mockApi());

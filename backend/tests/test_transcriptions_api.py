@@ -139,7 +139,9 @@ def test_reports_unavailable_transcription(api_client: TestClient) -> None:
     )
 
     assert response.status_code == 503
-    assert response.json() == {"detail": {"code": "transcription_not_configured"}}
+    assert response.json()["detail"]["code"] == "transcription_not_configured"
+    assert response.json()["detail"]["failure"]["kind"] == "external_model"
+    assert response.json()["detail"]["failure"]["reason"] == "not_configured"
 
 
 def test_rejects_oversized_request_before_multipart_can_spool(api_client: TestClient) -> None:

@@ -1,3 +1,4 @@
+from app.services.failure_diagnostics import DiagnosticFailure, classify_provider_error, record_failure
 from fastapi import UploadFile
 from typing import Literal
 from sqlalchemy.orm import Session
@@ -108,7 +109,8 @@ class TranscriptionService:
                 intended_sr_variants=[serbian_latin(v) for v in variants],
             ))
             changes = validate_analysis(raw, [serbian_latin(v) for v in variants], analysis)
-        except (AIServiceError, ValidationError, ValueError):
+        except (AIServiceError, ValidationError, ValueError) as exc:
+            record_failure(exc.failure if isinstance(exc, DiagnosticFailure) else classify_provider_error(exc))
             return TranscriptionResponse(text=raw, raw_text=raw, assistance_status="unavailable")
         receipt = self.receipts.add(exercise_id, raw, [c.model_dump() for c in changes], POLICY_VERSION)
         response = TranscriptionResponse(text=raw, raw_text=raw, transcription_id=receipt.id,

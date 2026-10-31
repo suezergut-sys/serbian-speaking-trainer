@@ -2,8 +2,11 @@ import type { Attempt, AttemptTimings, Exercise, PreparedReviewPhrase, ReviewPhr
 import { authenticatedFetch } from "../auth";
 import { apiUrl } from "./baseUrl";
 import { getLanguage } from "../i18n";
+import { parseFailure, failureOf, withClientFailure, type FailureDiagnostic } from "./failureDiagnostics";
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
+  let diagnosticId = crypto.randomUUID();
+  let readingBody = false;
   const controller = new AbortController();
   const onAbort = () => controller.abort();
   init?.signal?.addEventListener("abort", onAbort, { once: true });
@@ -13,17 +16,27 @@ async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   try {
     const headers = new Headers(init?.headers);
     headers.set("X-Interface-Language", getLanguage());
+    headers.set("X-Request-ID", diagnosticId);
     const response = await authenticatedFetch(apiUrl(url), { ...init, headers, signal: controller.signal });
+    const responseId = response.headers?.get("X-Request-ID");
+    if (responseId && /^[0-9a-f-]{36}$/i.test(responseId)) diagnosticId = responseId as ReturnType<typeof crypto.randomUUID>;
     if (!response.ok) {
       let detail: unknown;
       try { detail = (await response.json()).detail; } catch { /* Invalid error body. */ }
       throw new BackendError(response.status, detail);
     }
     if (response.status === 204) return undefined as T;
+    readingBody = true;
     return await response.json() as T;
   } catch (error) {
-    if (timedOut && !init?.signal?.aborted) throw new DOMException("Request timed out", "TimeoutError");
-    throw error;
+    if (init?.signal?.aborted) throw error;
+    if (error instanceof BackendError) {
+      if (error.failure) console.warn("SerboTalk request failure", error.failure);
+      throw error;
+    }
+    if (timedOut) throw withClientFailure(new DOMException("Request timed out", "TimeoutError"), "client_timeout", "timeout", diagnosticId);
+    if (failureOf(error)) throw error;
+    throw withClientFailure(error, readingBody ? "client_response_decode" : "client_network", readingBody ? "invalid_json" : "connection", diagnosticId);
   } finally {
     window.clearTimeout(timeout);
     init?.signal?.removeEventListener("abort", onAbort);
@@ -33,9 +46,11 @@ async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
 export class BackendError extends Error {
   readonly code?: string;
   readonly retryable?: boolean;
+  readonly failure?: FailureDiagnostic;
   constructor(public readonly status: number, public readonly detail?: unknown) {
     super(typeof detail === "object" && detail !== null && "message" in detail && typeof detail.message === "string" ? detail.message : `Backend returned ${status}`);
     if (typeof detail === "object" && detail !== null) {
+      if ("failure" in detail) this.failure = parseFailure(detail.failure);
       if ("code" in detail && typeof detail.code === "string") this.code = detail.code;
       if ("retryable" in detail && typeof detail.retryable === "boolean") this.retryable = detail.retryable;
     }
