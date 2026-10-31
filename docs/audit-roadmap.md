@@ -1,5 +1,13 @@
 # План улучшений по аудиту SerboTalk
 
+## 31.10.2026 — сбой проверки и классификация ошибок
+
+- [x] Owner text-only диагностика: внешний ответ200/completed, затем отклонение пунктуационного issue при grounding; аудио не извлекалось. [Диагноз](failure-diagnostics-2026-10-31.md).
+- [x] Три класса/этапы/причины/retryable/UUID, безопасные API/platform/owner diagnostics; post-model ошибки, STT, persistence/serialization и client network различаются. Prompt v5 и ограниченный retry с причиной; защита проверки сохранена.
+- [x] Backend518/9skips, frontend366, lint/typecheck/build; новые unit/integration tests с mock AI.
+- [ ] Browser matrix, публикация backend/web и реальная проверка прежнего сбоя; статусы отдельно в документе.
+- [ ] Отдельный будущий APK для новых UI-текстов/ID;1.44/code54 и Play не меняются.
+
 ## 31.10.2026 — production access: заявка отправлена
 
 - [x] По прямой команде владельца заполнены все три шага и отправлена заявка; Console подтвердила получение, дата31.10.2026 13:51 МСК. Точные ответы и screenshot сохранены, лимиты300символов проверены. [Доказательства](google-play-production-application-2026-10-30.md).

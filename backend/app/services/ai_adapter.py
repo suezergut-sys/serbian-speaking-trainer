@@ -17,12 +17,15 @@ from app.services.model_debug import capture_model_call
 from app.services.interface_language import interface_language
 from app.services.serbian_standard import validate_generated_serbian
 from app.services.hint_alignment import aligned_word_hints
+from app.services.failure_diagnostics import DiagnosticFailure, diagnostic, classify_provider_error
 
 PROMPTS_DIR = Path(__file__).resolve().parents[1] / "prompts"
 
 
-class AIServiceError(RuntimeError):
-    """Safe application-level error for an unavailable or invalid AI response."""
+class AIServiceError(DiagnosticFailure):
+    """Provider/parse failure with safe structured diagnostics."""
+    def __init__(self, message: str, failure=None):
+        super().__init__(message, failure or diagnostic("external_model", "provider_request", "provider_failure"))
 
 
 class StructuredAIProvider(Protocol):
@@ -51,6 +54,7 @@ class StructuredAIProvider(Protocol):
         intended_sr_variants: list[str],
         target_skills: list[dict[str, str]],
         timings: dict[str, object],
+        validation_feedback: str | None = None,
     ) -> AnswerAnalysis: ...
 
     def prepare_phrase(self, *, source_ru: str, canonical_sr: str | None = None) -> PhrasePreparation: ...
@@ -73,7 +77,7 @@ class OpenAIStructuredProvider:
     @property
     def client(self) -> OpenAI:
         if not self.is_available:
-            raise AIServiceError("OpenAI text generation is not configured")
+            raise AIServiceError("OpenAI text generation is not configured", diagnostic("external_model", "configuration", "not_configured", retryable=False))
         if self._client is None:
             self._client = OpenAI(
                 api_key=self.settings.openai_api_key,
@@ -126,10 +130,12 @@ class OpenAIStructuredProvider:
         intended_sr_variants: list[str],
         target_skills: list[dict[str, str]],
         timings: dict[str, object],
+        validation_feedback: str | None = None,
     ) -> AnswerAnalysis:
         payload = {
             "source_text": source_ru,
             "feedback_language": interface_language.get(),
+            "previous_validation_failure": validation_feedback,
             "transcript_sr": transcript_sr,
             "canonical_sr": canonical_sr,
             "intended_sr_variants": intended_sr_variants,
@@ -138,7 +144,7 @@ class OpenAIStructuredProvider:
             "target_level": "A2",
         }
         return self._parse(
-            prompt_name="answer_analyzer_v4.md",
+            prompt_name="answer_analyzer_v5.md",
             payload=payload,
             schema=ExplainedAnswerAnalysis,
         )
@@ -160,7 +166,7 @@ class OpenAIStructuredProvider:
     ):
         try:
             instructions = load_prompt(prompt_name)
-            if prompt_name == "answer_analyzer_v4.md" and interface_language.get() == "en":
+            if prompt_name in {"answer_analyzer_v4.md", "answer_analyzer_v5.md"} and interface_language.get() == "en":
                 instructions += "\n\n" + load_prompt("feedback_language_en_v1.md")
             instructions += "\n\n" + load_prompt("serbian_ekavica_v1.md")
             input_json = json.dumps(payload, ensure_ascii=False)
@@ -183,14 +189,21 @@ class OpenAIStructuredProvider:
                 else:
                     debug.received(response)
             parsed = response.output_parsed
+            if parsed is None and getattr(response, "status", None) == "incomplete":
+                raise AIServiceError("Model output incomplete", diagnostic("response_parse", "structured_output", "incomplete_output"))
+            if parsed is None and any(getattr(content, "type", None) == "refusal" for item in getattr(response, "output", []) for content in getattr(item, "content", [])):
+                raise AIServiceError("Model declined the request", diagnostic("external_model", "provider_request", "model_refusal", retryable=False))
             if parsed is None:
-                raise AIServiceError("OpenAI returned no structured output")
+                raise AIServiceError("OpenAI returned no structured output", diagnostic("response_parse", "structured_output", "missing_output"))
             result = schema.model_validate(parsed.model_dump() if hasattr(parsed, "model_dump") else parsed)
-            validate_generated_serbian(result)
+            try:
+                validate_generated_serbian(result)
+            except ValueError as exc:
+                raise AIServiceError("Generated Serbian violates policy", diagnostic("response_parse", "serbian_policy", "ekavica_violation")) from exc
             if isinstance(result, (PhrasePreparation, ExerciseGenerationResult)):
                 canonical = next(iter(result.intended_sr_variants), "")
                 if payload.get("canonical_sr") and canonical != payload["canonical_sr"]:
-                    raise AIServiceError("Canonical answer changed during hint preparation")
+                    raise AIServiceError("Canonical answer changed during hint preparation", diagnostic("response_parse", "grounding", "canonical_changed"))
                 source = str(payload.get("source_ru", getattr(result, "source_ru", "")))
                 result.word_hints = [WordHint.model_validate(item) for item in aligned_word_hints(
                     source, canonical, [hint.model_dump() for hint in result.word_hints])]
@@ -198,7 +211,7 @@ class OpenAIStructuredProvider:
         except AIServiceError:
             raise
         except Exception as exc:
-            raise AIServiceError("OpenAI request failed") from exc
+            raise AIServiceError("OpenAI request failed", classify_provider_error(exc)) from exc
 
 
 @lru_cache

@@ -324,3 +324,28 @@ def test_real_sdk_mock_http_captures_raw_body_before_validation(debug_engine, in
     finally:
         debug_context.reset(token)
         provider._client.close()
+
+
+def test_post_model_failure_has_owner_scoped_correlation_and_respects_disable(debug_engine):
+    from app.services.failure_diagnostics import diagnostic_context, diagnostic, record_failure
+    from uuid import uuid4
+    request_id = str(uuid4())
+    owner = debug_context.set(DebugContext("maxim", debug_engine))
+    token = diagnostic_context.set(request_id)
+    try:
+        mode(debug_engine, True)
+        failure = diagnostic("response_parse", "grounding", "non_lexical_correction")
+        record_failure(failure, attempt=1)
+        row = logs(debug_engine)[0]
+        assert row.operation == "application.failure"
+        assert row.request_json["_diagnostic_id"] == request_id
+        assert row.error_json["failure"]["reason"] == "non_lexical_correction"
+        assert row.error_json["failure"]["diagnostic_id"] == request_id
+        with Session(debug_engine) as db:
+            assert db.get(ModelDebugLog, row.id).audio_payload is None
+        mode(debug_engine, False)
+        record_failure(failure)
+        assert logs(debug_engine) == []
+    finally:
+        diagnostic_context.reset(token)
+        debug_context.reset(owner)

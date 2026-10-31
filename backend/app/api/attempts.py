@@ -11,6 +11,7 @@ from app.services.answer_analyzer import AnalysisUnavailableError
 from app.services.session_service import SessionCompletedError, SessionUnavailableError
 from app.api.dependencies import get_current_user
 from app.models import User
+from app.services.failure_diagnostics import record_failure
 
 router = APIRouter(prefix="/attempts", tags=["attempts"])
 
@@ -45,8 +46,10 @@ def create_attempt(
         raise HTTPException(status_code=409, detail={"code": "session_unavailable", "message": "Session is unavailable"}) from exc
     except AnalysisUnavailableError as exc:
         db.rollback()
+        record_failure(exc.failure)
         raise HTTPException(status_code=503, detail={
             "code": "analysis_unavailable",
             "message": "Answer analysis is temporarily unavailable. Please retry.",
-            "retryable": True,
+            "retryable": exc.failure.retryable,
+            "failure": exc.failure.model_dump(mode="json"),
         }) from exc

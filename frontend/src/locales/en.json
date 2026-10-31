@@ -623,5 +623,9 @@
   "Русская версия": "Russian version",
   "Английская версия": "English version",
   "Этот способ больше не доступен для новых оплат. Если перевод уже выполнен, сообщите об оплате; иначе выберите другой способ.": "This method is no longer available for new payments. If you have already transferred the money, report the payment; otherwise choose another method.",
-  "Для России — перевод в рублях в Банк Санкт-Петербург. Для остальных стран — PayPal. Возможность перевода определяется PayPal.": "For Russia, pay in rubles to Bank Saint Petersburg. For other countries, use PayPal. Transfer availability is determined by PayPal."
+  "Для России — перевод в рублях в Банк Санкт-Петербург. Для остальных стран — PayPal. Возможность перевода определяется PayPal.": "For Russia, pay in rubles to Bank Saint Petersburg. For other countries, use PayPal. Transfer availability is determined by PayPal.",
+  "Внешний сервис проверки не ответил успешно. Ответ сохранён.": "The external checking service could not complete the request. Your answer is saved.",
+  "Не удалось обработать ответ сервиса проверки. Ваш ответ сохранён.": "The checking service response could not be processed. Your answer is saved.",
+  "Не удалось получить результат проверки. Ваш ответ сохранён — повторите отправку.": "The checking result could not be received. Your answer is saved — submit it again.",
+  "Код диагностики": "Diagnostic ID"
 }

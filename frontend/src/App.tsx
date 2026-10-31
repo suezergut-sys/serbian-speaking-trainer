@@ -1,3 +1,4 @@
+import { failureOf } from "./api/failureDiagnostics";
 import { t, useLanguage, setLanguage, getLanguage, getLocale, topicText } from "./i18n";
 import { exerciseSource } from "./exerciseSource";
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
@@ -229,6 +230,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   const [topicExhausted, setTopicExhausted] = useState(false);
   const [preparingPhrase, setPreparingPhrase] = useState(false);
   const [error, setError] = useState<string>();
+  const [errorDiagnosticId, setErrorDiagnosticId] = useState<string>();
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
   const unexpectedScriptStreakRef = useRef(0);
   const [transcriptionBreakRecommended, setTranscriptionBreakRecommended] = useState(false);
@@ -337,7 +339,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       setChecking(false); setAdvancing(false); setPreparingPhrase(false);
       setStartupState("loading");
       setBackendState("checking");
-      setError(undefined);
+      setError(undefined); setErrorDiagnosticId(undefined);
       const [topicsResult, summaryResult] = await Promise.allSettled([
         fetchTopics(controller.signal), fetchReviewSummary(controller.signal),
       ]);
@@ -578,7 +580,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     const exerciseId = exercise.id;
     const controller = new AbortController();
     voiceControllerRef.current = controller;
-    setVoiceState("transcribing"); setError(undefined);
+    setVoiceState("transcribing"); setError(undefined); setErrorDiagnosticId(undefined);
     try {
       const recording = await recorder.finish();
       if (voiceEpochRef.current !== epoch) return;
@@ -602,7 +604,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       unexpectedScriptStreakRef.current = error instanceof BackendError && error.code === "transcription_unexpected_script" ? unexpectedScriptStreakRef.current + 1 : 0;
       setTranscriptionBreakRecommended(unexpectedScriptStreakRef.current >= 3);
       recorder.stop(); voiceRef.current = undefined; voiceTimingRef.current = undefined;
-      setVoiceState("error"); setError(transcriptionErrorMessage(error));
+      setVoiceState("error"); setErrorDiagnosticId(failureOf(error)?.diagnostic_id); setError(transcriptionErrorMessage(error));
     } finally {
       if (voiceEpochRef.current === epoch) voiceControllerRef.current = undefined;
     }
@@ -611,7 +613,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   async function startVoice() {
     if (!exercise || !voiceSupported) return;
     stopVoice(); voiceStartEditEpochRef.current = answerEditEpochRef.current;
-    setError(undefined); setVoiceState("connecting");
+    setError(undefined); setErrorDiagnosticId(undefined); setVoiceState("connecting");
     const epoch = voiceEpochRef.current;
     const recorder = new VoiceRecorder(); voiceRef.current = recorder;
     try { await recorder.start(); if (voiceEpochRef.current === epoch && voiceRef.current === recorder) setVoiceState("recording"); }
@@ -622,7 +624,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     voiceTimingRef.current = undefined;
     setHasTranscript(true);
     setVoiceState("idle");
-    setError(undefined);
+    setError(undefined); setErrorDiagnosticId(undefined);
   }
 
   async function startTraining(topicId: string) {
@@ -630,7 +632,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     invalidateFlow();
     stopVoice(); setAnswer(""); setAssistanceDraft(undefined); setHasTranscript(false); setAttempt(undefined); setWordHints({}); setActiveHint(undefined);
     setSession(undefined); setExercise(undefined); setCompletedCount(0); setSessionComplete(false); setTopicExhausted(false);
-    setPreparingPhrase(true); setError(undefined);
+    setPreparingPhrase(true); setError(undefined); setErrorDiagnosticId(undefined);
     const epoch = flowEpochRef.current;
     const controller = new AbortController();
     flowControllerRef.current = controller;
@@ -654,7 +656,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     startUiTiming("first_phrase");
     invalidateFlow(); stopVoice();
     setSession(undefined); setExercise(undefined); setCompletedCount(0); setSessionComplete(false); setTopicExhausted(false);
-    setSelectedTopic(undefined); setCustomTopic(""); setError(undefined);
+    setSelectedTopic(undefined); setCustomTopic(""); setError(undefined); setErrorDiagnosticId(undefined);
     if (!reviewPhraseCount) {
       setError("Пока нет фраз для повторения. Добавьте фразу ниже или выполните обычную тренировку.");
       return;
@@ -685,7 +687,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     startUiTiming("next_phrase");
     advancingRef.current = true;
     hintEpochRef.current += 1;
-    stopVoice(); setAdvancing(true); setError(undefined);
+    stopVoice(); setAdvancing(true); setError(undefined); setErrorDiagnosticId(undefined);
     const epoch = flowEpochRef.current;
     const request = nextExerciseRef.current?.sessionId === session.id ? nextExerciseRef.current : undefined;
     const id = request?.requestId ?? nextRequestIdRef.current ?? requestId();
@@ -738,7 +740,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     const id = pendingAttemptRef.current?.payload === payload ? pendingAttemptRef.current.id : requestId();
     pendingAttemptRef.current = { payload, id };
     checkingRef.current = true;
-    setChecking(true); setError(undefined); setActiveHint(undefined);
+    setChecking(true); setError(undefined); setErrorDiagnosticId(undefined); setActiveHint(undefined);
     const epoch = flowEpochRef.current;
     const controller = new AbortController();
     flowControllerRef.current = controller;
@@ -772,7 +774,14 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
     }
     catch (requestError) {
       if (flowEpochRef.current !== epoch) return;
-      if (requestError instanceof BackendError && requestError.status === 429) setError(`Дневной лимит фраз исчерпан. Новые фразы будут доступны ${resetTimeLabel(account.daily_usage.resets_at)}.`);
+      const failure = failureOf(requestError);
+      setErrorDiagnosticId(failure?.diagnostic_id);
+      if (failure) setError({
+        external_model: "Внешний сервис проверки не ответил успешно. Ответ сохранён.",
+        response_parse: "Не удалось обработать ответ сервиса проверки. Ваш ответ сохранён.",
+        response_return: "Не удалось получить результат проверки. Ваш ответ сохранён — повторите отправку.",
+      }[failure.kind]);
+      else if (requestError instanceof BackendError && requestError.status === 429) setError(`Дневной лимит фраз исчерпан. Новые фразы будут доступны ${resetTimeLabel(account.daily_usage.resets_at)}.`);
       else if (requestError instanceof BackendError && requestError.code === "analysis_unavailable") setError("Сервис проверки временно недоступен. Ответ сохранён на экране — попробуйте проверить ещё раз.");
       else if (requestError instanceof BackendError && requestError.code === "attempt_in_progress") setError("Проверка ещё выполняется. Ответ сохранён — попробуйте ещё раз через несколько секунд.");
       else if (requestError instanceof BackendError && requestError.code === "attempt_request_conflict") { pendingAttemptRef.current = undefined; setError("Ответ изменился во время проверки. Повторите отправку."); }
@@ -784,7 +793,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
   function resetTraining() {
     invalidateFlow();
     stopVoice(); setView("practice"); setSession(undefined); setExercise(undefined);
-    setAnswer(""); setAssistanceDraft(undefined); setHasTranscript(false); setAttempt(undefined); setError(undefined); setWordHints({}); setActiveHint(undefined); setCompletedCount(0); setSessionComplete(false); setTopicExhausted(false);
+    setAnswer(""); setAssistanceDraft(undefined); setHasTranscript(false); setAttempt(undefined); setError(undefined); setErrorDiagnosticId(undefined); setWordHints({}); setActiveHint(undefined); setCompletedCount(0); setSessionComplete(false); setTopicExhausted(false);
   }
 
   function returnToTopics() {
@@ -817,7 +826,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
       wordHintsRef.current = { ...wordHintsRef.current, [normalized]: opened };
       setWordHints(wordHintsRef.current);
     }
-    if (wordHintsRef.current[normalized]) setError(undefined);
+    if (wordHintsRef.current[normalized]) setError(undefined); setErrorDiagnosticId(undefined);
     const controller = new AbortController();
     hintRequestsRef.current.set(requestKey, controller);
     try {
@@ -904,7 +913,7 @@ function TrainerApp({ account, onAccountChange, onSignOut }: { account: CurrentU
           <TranscriptionAssistanceView draft={assistanceDraft} alphabet={alphabet} disabled={checking || voiceBusy} onToggle={toggleTranscriptionChange} />
           {!hasTranscript && (voiceState === "error" || !voiceSupported) && <button type="button" onClick={enterAnswerManually}>{t("Ввести ответ вручную")}</button>}
         </form> : renderFeedback(compact)}
-        {error && <p className="error" role="alert">{t(error)}</p>}
+        {error && <p className="error" role="alert">{t(error)}{errorDiagnosticId && <> <span>{t("Код диагностики")}: {errorDiagnosticId}</span></>}</p>}
       </div>
       <div className="exercise-controls">
         {!attempt ? <>

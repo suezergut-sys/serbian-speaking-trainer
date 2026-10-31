@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from difflib import SequenceMatcher
+from app.services.failure_diagnostics import DiagnosticFailure, diagnostic, classify_provider_error, record_failure
 
 from app.config import Settings, get_settings
 from app.db.topic_phrases_en import TOPIC_PHRASES_EN
@@ -11,8 +12,9 @@ from app.services.interface_language import interface_language
 from app.services.serbian_standard import is_ekavian_candidate, validate_generated_serbian
 
 
-class AnalysisUnavailableError(RuntimeError):
-    pass
+class AnalysisUnavailableError(DiagnosticFailure):
+    def __init__(self, failure=None):
+        super().__init__("Answer analysis unavailable", failure or diagnostic("external_model", "provider_request", "provider_failure"))
 
 
 class AnswerAnalyzer:
@@ -52,11 +54,12 @@ class AnswerAnalyzer:
             return self._exact_match(exact_variant, acceptable_variants, target_keys, timing)
 
         if not self.ai.is_available:
-            raise AnalysisUnavailableError
+            raise AnalysisUnavailableError(diagnostic("external_model", "configuration", "not_configured", retryable=False))
         evaluation_transcript = serbian_latin_for_evaluation(transcript_sr)
         # A structured response can still contradict the words that were actually transcribed.
         # Retry once before any score or learner-model update can be persisted.
-        for _ in range(2):
+        validation_feedback = None
+        for attempt_index in range(2):
             try:
                 analysis = AnswerAnalysis.model_validate(
                     self.ai.analyze_answer(
@@ -67,16 +70,21 @@ class AnswerAnalyzer:
                         intended_sr_variants=acceptable_variants,
                         target_skills=target_skills,
                         timings=self._timing_payload(timing),
+                        **({"validation_feedback": validation_feedback} if validation_feedback else {}),
                     )
                 )
                 validate_generated_serbian(analysis)
             except (AIServiceError, ValueError) as exc:
-                raise AnalysisUnavailableError from exc
-            if (self._response_is_grounded(analysis, evaluation_transcript, target_keys)
-                    and (analysis.verdict != "correct" or is_ekavian_candidate(evaluation_transcript))):
+                raise AnalysisUnavailableError(exc.failure if isinstance(exc, DiagnosticFailure) else classify_provider_error(exc)) from exc
+            validation_feedback = self._grounding_failure(analysis, evaluation_transcript, target_keys)
+            if validation_feedback is None and analysis.verdict == "correct" and not is_ekavian_candidate(evaluation_transcript):
+                validation_feedback = "dialect_verdict"
+            if validation_feedback is None:
                 break
+            failure = diagnostic("response_parse", "grounding", validation_feedback)
+            record_failure(failure, attempt=attempt_index + 1)
         else:
-            raise AnalysisUnavailableError
+            raise AnalysisUnavailableError(failure)
 
         fluency = self._local_fluency(timing, analysis.fluency_score)
         issues = analysis.issues
@@ -100,25 +108,27 @@ class AnswerAnalyzer:
         return self._ground_token_feedback(analysis, canonical_sr)
 
     @classmethod
-    def _response_is_grounded(
-        cls, analysis: AnswerAnalysis, transcript_sr: str, target_keys: list[str],
-    ) -> bool:
+    def _response_is_grounded(cls, analysis: AnswerAnalysis, transcript_sr: str, target_keys: list[str]) -> bool:
+        return cls._grounding_failure(analysis, transcript_sr, target_keys) is None
+
+    @classmethod
+    def _grounding_failure(cls, analysis: AnswerAnalysis, transcript_sr: str, target_keys: list[str]) -> str | None:
         transcript_words = f" {cls._normalize(transcript_sr)} "
         for issue in analysis.issues:
             evidence = cls._normalize(issue.evidence)
-            if (
-                (issue.skill_key is not None and issue.skill_key not in target_keys)
-                or issue.severity <= 0
-                or not evidence
-                or f" {evidence} " not in transcript_words
-                or (issue.correction is not None and evidence == cls._normalize(issue.correction))
-            ):
-                return False
+            if issue.skill_key is not None and issue.skill_key not in target_keys:
+                return "unknown_skill"
+            if issue.severity <= 0:
+                return "invalid_severity"
+            if not evidence or f" {evidence} " not in transcript_words:
+                return "unsupported_evidence"
+            if issue.correction is not None and evidence == cls._normalize(issue.correction):
+                return "non_lexical_correction"
         if analysis.verdict == "correct" and analysis.issues:
-            return False
+            return "contradictory_verdict"
         if analysis.verdict != "correct" and not analysis.issues:
-            return False
-        return True
+            return "missing_issue"
+        return None
 
     @classmethod
     def _ground_token_feedback(
