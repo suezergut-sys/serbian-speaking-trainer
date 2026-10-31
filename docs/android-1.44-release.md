@@ -14,7 +14,7 @@
 ## Проверки и доставка
 
 - [x] Реализация и целевые регрессии: запрет ALTA при старой конфигурации, защита от повторного create, сохранение/обработка исторической заявки; retired review endpoint; web email / native Google; RU/EN payment UI.
-- [ ] Полный backend/frontend gate, lint/typecheck/build и browser matrix.
+- [x] Backend/scripts 502 passed / 9 PostgreSQL skips; после удаления старого adapter 27 targeted passed. Frontend 358 tests/39 files (`--maxWorkers=2`), lint/typecheck/build; 5 Node guards; 16 browser scenarios RU/EN по входу, платежам, общим/личным фразам. AI/Auth/Telegram mocked. В первом параллельном с Gradle прогоне два прежних UI-теста завершились по таймауту; полный повтор с двумя workers прошёл без изменения runtime или их assertions. Логи `artifacts/android-1.44-*`.
 - [x] `pnpm android:cloud-apk` и подписанный `build-android-play-aab.ps1`: BUILD SUCCESSFUL. APK/AAB 1.44/code54/min24/target36; production API и HTTPS WebView, все 10 public assets совпали побайтно. Browser/Share plugins присутствуют, testlab/landing/секреты отсутствуют, reviewer API path в bundle отсутствует. Подписи сверены с предыдущим выпуском, bundletool validate/dump прошли. Копии в Downloads побайтно проверены.
 - [ ] Публикация исходников и GitHub APK release.
 - [ ] Обновление web/backend и проверка production.
@@ -34,3 +34,5 @@
 RU: Вход через Google. Улучшена работа русских и английских заданий и личных фраз. Включены последние исправления интерфейса и подсказок; Premium в Android активируется автоматически.
 
 EN: Sign in with Google. Improved Russian and English exercises and personal phrases. Includes the latest interface and hint fixes; Premium activates automatically on Android.
+
+Исходный commit проверенного runtime: `08c8da146e54edf03a4ceef6472f6a4ee45fc576`, [PR #183](https://github.com/suezergut-sys/serbian-speaking-trainer/pull/183). После сборки изменялись только доказательства; APK не пересобирается ради документации.
