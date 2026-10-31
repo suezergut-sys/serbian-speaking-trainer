@@ -5,7 +5,9 @@
 - [x] Owner text-only диагностика: внешний ответ200/completed, затем отклонение пунктуационного issue при grounding; аудио не извлекалось. [Диагноз](failure-diagnostics-2026-10-31.md).
 - [x] Три класса/этапы/причины/retryable/UUID, безопасные API/platform/owner diagnostics; post-model ошибки, STT, persistence/serialization и client network различаются. Prompt v5 и ограниченный retry с причиной; защита проверки сохранена.
 - [x] Backend518/9skips, frontend366, lint/typecheck/build; новые unit/integration tests с mock AI.
-- [ ] Browser matrix, публикация backend/web и реальная проверка прежнего сбоя; статусы отдельно в документе.
+- [x] PR #187 merged; backend/web production READY на `ed642fe`, alias/SHA/health/request-ID/Android CORS подтверждены; 12/12 production browser mock scenarios. [Доказательства](failure-diagnostics-2026-10-31.md).
+- [x] Ручные реальные AI-пробы исходного ответа: последний полный analyzer вернул correct/issues0 без DB writes; предыдущий всё ещё дал non_lexical_correction после retry. Диагностика готова, полного устранения недетерминированности не заявляем.
+- [ ] Приёмка владельцем через production API/устройство и дальнейший контроль отклонённых модельных ответов.
 - [ ] Отдельный будущий APK для новых UI-текстов/ID;1.44/code54 и Play не меняются.
 
 ## 31.10.2026 — production access: заявка отправлена
