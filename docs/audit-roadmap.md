@@ -1,5 +1,11 @@
 # План улучшений по аудиту SerboTalk
 
+## 01.11.2026 — Android1.45/Review access
+
+- [x] Номер1.45/code55 отдельно согласован; парольный вход восстановлен по новой команде, старые credentials/права сохранены. Backend543/9skips,frontend375,lint/typecheck/build,24+4 browser scenarios; APK/AAB,metadata/API/10assets/signatures/Downloads проверены. [Доказательства](android-1.45-release.md).
+- [ ] GitHub/backend/web/реальная проверка review sign-in, Open Testing AAB55/review — отдельные статусы в документе.
+- [ ] Приёмка устройства/установки из Play.
+
 ## 01.11.2026 — Open Testing1.44
 
 - [x] Production access одобрен и проверен в Console. Подготовлен Open Testing release1/AAB54, RU/EN notes,178 стран,unlimited testers,продолжение канала; отправка не выполнялась. [Доказательства](open-testing-2026-11-01.md).

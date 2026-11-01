@@ -1,7 +1,18 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, SecretStr
+
+
+class ReviewLoginRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    username: str = Field(min_length=1, max_length=100)
+    password: SecretStr = Field(min_length=1, max_length=1024)
+
+
+class ReviewLoginResponse(BaseModel):
+    access_token: str = Field(min_length=1)
+    refresh_token: str = Field(min_length=1)
 
 
 class SupabaseUserPayload(BaseModel):
