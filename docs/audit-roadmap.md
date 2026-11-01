@@ -3,7 +3,8 @@
 ## 01.11.2026 — Android1.45/Review access
 
 - [x] Номер1.45/code55 отдельно согласован; парольный вход восстановлен по новой команде, старые credentials/права сохранены. Backend543/9skips,frontend375,lint/typecheck/build,24+4 browser scenarios; APK/AAB,metadata/API/10assets/signatures/Downloads проверены. [Доказательства](android-1.45-release.md).
-- [ ] GitHub/backend/web/реальная проверка review sign-in, Open Testing AAB55/review — отдельные статусы в документе.
+- [x] PR #192 merged,c1cffbc; GitHub v1.45 APK/AAB digests, backend/web READY/alias/SHA и28 production browser mocks, HTTP/errors проверены. Настоящий прежний password sign-in/Premium/v1.45 прошёл. AAB55 принят Open Testing release2, instruction обновлена без смены credentials, Console подтвердил «Изменения на проверке». [Доказательства](android-1.45-release.md).
+- [ ] Автоматические проверки/решение Google/доступность Open Testing и последующая Play-install приёмка.
 - [ ] Приёмка устройства/установки из Play.
 
 ## 01.11.2026 — Open Testing1.44
