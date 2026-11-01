@@ -20,7 +20,7 @@ for (const layout of ['desktop', 'mobile', 'narrow', 'android']) {
       });
     });
     const russian = await measure();
-    await expect(page.locator('.review-login')).toHaveCount(0);
+    await expect(page.locator('.review-login')).toHaveCount(1);
     if (layout === 'android') await expect(page.locator('.email-login')).toHaveCount(0);
     await expect(ru).toHaveCSS('border-color', 'rgb(242, 189, 90)');
     await en.click();

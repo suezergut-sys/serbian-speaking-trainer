@@ -9,12 +9,25 @@ from app.services.auth_service import UserService
 
 from app.schemas.auth import AndroidPremiumClaim, UserPreferences
 
+from app.schemas.auth import ReviewLoginRequest, ReviewLoginResponse
+from app.config import Settings, get_settings
+from app.services.auth_service import AuthenticationUnavailableError
+from app.services.review_login import ReviewLoginService, ReviewLoginRateLimitError
+
 router = APIRouter(tags=["users"])
 
 
-@router.post("/auth/review-login", include_in_schema=False)
-def review_login() -> None:
-    raise HTTPException(410, "Review sign-in has been retired", headers={"Cache-Control": "no-store"})
+@router.post("/auth/review-login", response_model=ReviewLoginResponse)
+def review_login(payload: ReviewLoginRequest, response: Response, settings: Settings = Depends(get_settings)) -> ReviewLoginResponse:
+    response.headers["Cache-Control"] = "no-store"
+    try:
+        return ReviewLoginService(settings).sign_in(payload.username, payload.password.get_secret_value())
+    except PermissionError:
+        raise HTTPException(401, "Review sign-in failed", headers={"Cache-Control": "no-store"}) from None
+    except ReviewLoginRateLimitError:
+        raise HTTPException(429, "Try again later", headers={"Cache-Control": "no-store", "Retry-After": "60"}) from None
+    except AuthenticationUnavailableError:
+        raise HTTPException(503, "Review sign-in is unavailable", headers={"Cache-Control": "no-store"}) from None
 
 
 @router.get("/auth/me", response_model=CurrentUserResponse)

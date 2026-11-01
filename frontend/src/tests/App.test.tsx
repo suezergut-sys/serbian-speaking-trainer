@@ -55,6 +55,7 @@ vi.mock("../auth", () => ({
     return () => { authEvents.notify = undefined; };
   },
   signInWithGoogle: async () => undefined,
+  signInReviewAccount: async () => undefined,
   signOut: async () => undefined,
 }));
 
@@ -62,14 +63,14 @@ import App from "../App";
 import * as auth from "../auth";
 
 describe("App", () => {
-  it.each([false, true])("retains web email login but shows Google only on Android (native=%s)", async native => {
+  it.each([false, true])("retains web email login and restores dedicated review access alongside Google (native=%s)", async native => {
     vi.spyOn(Capacitor, "isNativePlatform").mockReturnValue(native);
     vi.spyOn(auth, "initializeAuth").mockResolvedValue(null);
     vi.stubEnv("VITE_EMAIL_OTP_ENABLED", "true");
     vi.stubGlobal("fetch", mockApi());
     render(<App />);
     expect(await screen.findByRole("button", { name: "Войти через Google" })).toBeInTheDocument();
-    expect(screen.queryByText("Вход для проверки")).not.toBeInTheDocument();
+    expect(screen.getByText("Вход для проверки")).toBeInTheDocument();
     expect(screen.queryByText("Войти по email") !== null).toBe(!native);
     expect(document.querySelector(".email-login") !== null).toBe(!native);
   });
