@@ -3,7 +3,7 @@
 ## 01.11.2026 — короткие коды оплаты
 
 - [x] Новые web-заявки:6 символов без0/O/1/I; уникальность PK, bounded collision retry/savepoint; старые номера и owner/admin проверки сохранены. [Доказательства](short-payment-codes-2026-11-01.md).
-- [ ] Финальные проверки, GitHub и production backend — отдельные статусы в документе.
+- [x] 36 backend payment/config/migration tests,14 RU/EN component tests,4 production-bundle browser scenarios с mock API, ESLint src/typecheck/build; PR #189 merged, backend READY/alias/SHA `dd0bdc1`, health200/auth401 и error logs=0. [Результаты и границы проверки](short-payment-codes-2026-11-01.md).
 - [ ] Ручная приёмка владельцем при следующей настоящей оплате. Android не пересобирается; изменение серверное, новых UI-строк нет.
 
 ## 31.10.2026 — сбой проверки и классификация ошибок
