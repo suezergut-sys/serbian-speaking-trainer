@@ -345,3 +345,84 @@ def test_concurrent_create_report_and_confirm(tmp_path, monkeypatch):
         assert len(sent) == 1
     finally:
         engine.dispose()
+
+
+@pytest.mark.parametrize("country,method", [("russia", "sbp"), ("serbia", "paypal"), ("other", "paypal")])
+def test_new_payment_codes_are_six_unambiguous_characters_and_stable(payment_api, country, method):
+    from app.repositories.payments import PAYMENT_CODE_ALPHABET
+    choice = {"country": country, "method": method}
+    created = payment_api.post("/api/payments", json=choice)
+    assert created.status_code == 200
+    code = created.json()["id"]
+    assert len(code) == 6 and set(code) <= set(PAYMENT_CODE_ALPHABET)
+    assert payment_api.post("/api/payments", json=choice).json()["id"] == code
+    assert payment_api.get("/api/payments").json()[0]["id"] == code
+    assert payment_api.post(f"/api/payments/{code}/report", json=report_data()).status_code == 200
+
+
+def test_payment_code_collision_retries_without_losing_old_request_or_transaction(db_session, monkeypatch):
+    from app.repositories import payments
+    user = db_session.get(User, LEGACY_USER_ID)
+    svc = PaymentService(db_session, configured())
+    monkeypatch.setattr(payments, "new_payment_code", lambda: "ABC234")
+    first = svc.create(user, PaymentChoice(country="russia", method="sbp"))
+    db_session.commit()
+    codes = iter(["ABC234", "DEF567"])
+    monkeypatch.setattr(payments, "new_payment_code", lambda: next(codes))
+    second = svc.create(user, PaymentChoice(country="other", method="paypal"))
+    assert second.id == "DEF567" and first.status == "cancelled"
+    db_session.rollback()
+    assert db_session.get(PaymentRequest, "DEF567") is None
+    assert db_session.get(PaymentRequest, "ABC234").status == "awaiting_payment"
+
+
+def test_new_payment_can_be_rolled_back_before_any_prior_write(db_session):
+    svc = PaymentService(db_session, configured())
+    payment = svc.create(db_session.get(User, LEGACY_USER_ID), PaymentChoice(country="russia", method="sbp"))
+    code = payment.id
+    db_session.rollback()
+    assert db_session.get(PaymentRequest, code) is None
+
+
+def test_legacy_uuid_reference_is_preserved_and_reportable(payment_api, db_session):
+    code = "f6786379-8046-4b2c-a4a5-84e50dc27211"
+    config = configured()
+    db_session.add(PaymentRequest(id=code, user_id=LEGACY_USER_ID, active_user_id=LEGACY_USER_ID,
+        country="russia", method="sbp", status="awaiting_payment", details=config.methods["sbp"].model_dump(mode="json"), activation=config.activation.model_dump()))
+    db_session.flush()
+    assert payment_api.post("/api/payments", json={"country": "russia", "method": "sbp"}).json()["id"] == code
+    assert payment_api.post(f"/api/payments/{code}/report", json=report_data()).status_code == 200
+
+
+def test_payment_code_exhaustion_is_bounded_and_rollback_preserves_active_request(db_session, monkeypatch):
+    from app.repositories import payments
+    user = db_session.get(User, LEGACY_USER_ID)
+    svc = PaymentService(db_session, configured())
+    monkeypatch.setattr(payments, "new_payment_code", lambda: "ABC234")
+    first = svc.create(user, PaymentChoice(country="russia", method="sbp"))
+    db_session.commit()
+    generated = []
+    def occupied():
+        generated.append(True)
+        return "ABC234"
+    monkeypatch.setattr(payments, "new_payment_code", occupied)
+    with pytest.raises(RuntimeError, match="unique payment code"):
+        svc.create(user, PaymentChoice(country="other", method="paypal"))
+    assert len(generated) == 10
+    db_session.rollback()
+    assert db_session.get(PaymentRequest, first.id).status == "awaiting_payment"
+
+
+def test_payment_code_retry_does_not_hide_other_integrity_errors(db_session, monkeypatch):
+    from sqlalchemy.exc import IntegrityError
+    from app.repositories import payments
+    generated = []
+    def candidate():
+        generated.append(True)
+        return "ABC234"
+    monkeypatch.setattr(payments, "new_payment_code", candidate)
+    with pytest.raises(IntegrityError):
+        payments.PaymentRepository(db_session).add(PaymentRequest(user_id="missing-user", active_user_id="missing-user",
+            country="russia", method="sbp", status="awaiting_payment", details={}, activation={}))
+    assert len(generated) == 1
+    db_session.rollback()
