@@ -131,3 +131,16 @@ it.each(["ru", "en"] as const)("withholds retired ALTA bank details but preserve
   expect(screen.queryByRole("button", { name: /ALTA Banka/ })).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: language === "ru" ? "Я оплатил" : "I have paid" })).toBeEnabled();
 });
+
+
+it.each(["ru", "en"] as const)("copies the complete six-character code (%s)", async language => {
+  setLanguage(language);
+  const shortPayment = { ...payment, id: "7K4M9P" };
+  mockApi(shortPayment);
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
+  render(<PaymentForm onClose={vi.fn()} />);
+  await screen.findByText("7K4M9P");
+  fireEvent.click(screen.getByRole("button", { name: language === "ru" ? "Копировать: Номер заявки" : "Copy: Request number" }));
+  expect(writeText).toHaveBeenCalledWith("7K4M9P");
+});

@@ -1,8 +1,18 @@
+import secrets
+
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models import User
 from app.models.payments import PaymentRequest
+
+
+PAYMENT_CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
+
+
+def new_payment_code() -> str:
+    return "".join(secrets.choice(PAYMENT_CODE_ALPHABET) for _ in range(6))
 
 
 class PaymentRepository:
@@ -22,6 +32,22 @@ class PaymentRepository:
         return list(self.db.execute(select(PaymentRequest, User).join(User, User.id == PaymentRequest.user_id).order_by(PaymentRequest.created_at.desc(), PaymentRequest.id).offset(offset).limit(50)))
 
     def add(self, payment: PaymentRequest) -> PaymentRequest:
-        self.db.add(payment)
-        self.db.flush()
-        return payment
+        # Existing IDs remain valid; newly issued references are easier to type.
+        # A savepoint handles concurrent primary-key collisions without rolling
+        # back the caller's transaction (including cancellation of an old request).
+        connection = self.db.connection()
+        if connection.dialect.name == "sqlite" and not connection.connection.driver_connection.in_transaction:
+            # sqlite3 legacy transaction control does not BEGIN for a SELECT;
+            # otherwise RELEASE SAVEPOINT could commit outside the outer unit of work.
+            connection.exec_driver_sql("BEGIN")
+        for _ in range(10):
+            payment.id = new_payment_code()
+            try:
+                with self.db.begin_nested():
+                    self.db.add(payment)
+                    self.db.flush()
+                return payment
+            except IntegrityError:
+                if self.get(payment.id) is None:
+                    raise
+        raise RuntimeError("Could not allocate a unique payment code")

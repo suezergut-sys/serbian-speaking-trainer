@@ -26,7 +26,7 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile'])
       else if (path === '/api/payments') {
         creates++;
         const { country, method, currency } = request.postDataJSON();
-        payment = { id: `synthetic-payment-${creates}`, user_id: 'payment-user', country, method, status: 'awaiting_payment', activation: options.activation,
+        payment = { id: `7K4M9${creates + 1}`, user_id: 'payment-user', country, method, status: 'awaiting_payment', activation: options.activation,
           details: { amount: method === 'sbp' ? '500.00' : method === 'alta' && currency === 'RSD' ? '600.00' : '5.00', currency: method === 'sbp' ? 'RUB' : currency ?? 'EUR', recipient: 'Synthetic Recipient',
             phone: method === 'sbp' ? '+70000000000' : null, bank: method === 'sbp' ? 'Synthetic Bank' : null, account: method === 'alta' ? `000-test-${currency}-account` : null, bank_details: method === 'alta' ? 'Synthetic bank details' : null,
             paypal: method === 'paypal' ? 'synthetic@example.invalid' : null, instructions: { ru: 'Тестовая инструкция', en: 'Test instruction' } } };
@@ -52,6 +52,10 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile'])
     await expect(form.getByRole('button', { name: /PayPal/ })).toHaveCount(0);
     await form.getByRole('button', { name: /СБП|SBP/ }).click();
     await expect(form.getByText('500.00 RUB', { exact: true })).toBeVisible();
+    await expect(form.getByText('7K4M92', { exact: true })).toBeVisible();
+    await form.getByText('7K4M92', { exact: true }).scrollIntoViewIfNeeded();
+    await mkdir('../artifacts/short-payment-codes', { recursive: true });
+    await page.screenshot({ path: `../artifacts/short-payment-codes/${language}-${layout}.png`, fullPage: true });
     await expect(form.getByText('+70000000000')).toBeVisible();
     await form.getByRole('button', { name: ru ? 'Копировать: Телефон получателя' : 'Copy: Recipient phone number' }).click();
     // Browser clipboard may require user permission: manual fallback must remain readable.
