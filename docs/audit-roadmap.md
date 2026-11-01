@@ -1,5 +1,11 @@
 # План улучшений по аудиту SerboTalk
 
+## 01.11.2026 — Open Testing1.44
+
+- [x] Production access одобрен и проверен в Console. Подготовлен Open Testing release1/AAB54, RU/EN notes,178 стран,unlimited testers,продолжение канала; отправка не выполнялась. [Доказательства](open-testing-2026-11-01.md).
+- [x] AAB hash/packaged Premium claim и11 backend+6frontend Android Premium tests прошли. Пересборка для Premium/скрытия оплаты не нужна.
+- [ ] Владелец выбирает и заполняет выделенный Google-аккаунт проверяющих; старая Review access instruction не работает. Затем актуализировать instruction/проверить pre-review/send; дождаться review и принять установку из Play.
+
 ## 01.11.2026 — короткие коды оплаты
 
 - [x] Новые web-заявки:6 символов без0/O/1/I; уникальность PK, bounded collision retry/savepoint; старые номера и owner/admin проверки сохранены. [Доказательства](short-payment-codes-2026-11-01.md).
