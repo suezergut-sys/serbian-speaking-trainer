@@ -15,6 +15,13 @@ function AppLink({ compact = false }: { compact?: boolean }) {
   return <a className={`landing-cta${compact ? " landing-cta--small" : ""}`} href="#sign-in">{t(compact ? "Открыть приложение" : "Начать говорить")} <span aria-hidden="true">↗</span></a>;
 }
 
+function GooglePlayLink() {
+  return <a className="landing-store" href="https://play.google.com/apps/testing/com.serbiantalk.trainer" target="_blank" rel="noopener noreferrer">
+    <img className="landing-store__logo" src="/landing/google-play.png" alt="" width="26" height="29" />
+    <span>Google Play{" "}<small>{t("Открытое тестирование")}</small></span>
+  </a>;
+}
+
 export function LandingPage() {
   const language = useLanguage();
   useEffect(() => {
@@ -36,7 +43,7 @@ export function LandingPage() {
           <p className="landing-eyebrow"><span />{t("ОТ ЗНАКОМЫХ СЛОВ — К ЖИВОЙ РЕЧИ")}</p>
           <h1>{t("Вы уже знаете слова.")}<br /><span>{t("Пора заговорить.")}</span></h1>
           <p className="landing-lead">{t("Сербский для повседневной жизни. Простые фразы, ваш голос и практика, которая помогает словам складываться в речь.")}</p>
-          <div className="landing-actions"><AppLink /><a className="landing-store" href="#get-app"><img className="landing-store__logo" src="/landing/google-play.png" alt="" width="26" height="29" /><span>Google Play<small>{t("Скоро")}</small></span></a></div>
+          <div className="landing-actions"><AppLink /><GooglePlayLink /></div>
           <p className="landing-hero-note">{t("Для уровня A1–A2 · В браузере и на Android")}</p>
           <a className="landing-explore" href="#how">{t("Заглянуть внутрь")} <span aria-hidden="true">↓</span></a>
         </div>
@@ -51,7 +58,7 @@ export function LandingPage() {
       <section id="how" className="landing-how landing-wrap"><div className="landing-section-heading"><div><p className="landing-eyebrow">{t("МЕНЬШЕ ТЕОРИИ. БОЛЬШЕ ВАШЕГО ГОЛОСА.")}</p><h2>{t("Ваш следующий разговор")}<br /><em>{t("начинается здесь.")}</em></h2></div><p>{t("Одна бытовая ситуация. Одна фраза за другой. Практика в вашем темпе.")}</p></div>
         <div className="landing-steps">{screenshots.map(item => <article key={item.id}><div className="landing-step-title"><span>{item.number}</span><h3>{t(item.title)}</h3></div><p>{t(item.text)}</p><div className="landing-phone"><img src={`/landing/screens/phone/${language}-${item.id}.jpg`} alt={t(item.alt)} width="1280" height="2772" loading="lazy" /></div></article>)}</div>
       </section>
-      <section id="get-app" className="landing-bottom landing-wrap"><span className="landing-eyebrow">{t("НЕБОЛЬШАЯ ПРАКТИКА. НАСТОЯЩИЙ РАЗГОВОР.")}</span><h2>{t("Дайте словам")} <em>{t("свой голос.")}</em></h2><p>{t("Начните с простой фразы. Например, с кофе.")}</p><LandingLogin /><div className="landing-actions"><div className="landing-store landing-store--pending" role="note"><img className="landing-store__logo" src="/landing/google-play.png" alt="" width="26" height="29" /><span>Google Play<small>{t("Ссылка появится после публикации")}</small></span></div></div></section>
+      <section id="get-app" className="landing-bottom landing-wrap"><span className="landing-eyebrow">{t("НЕБОЛЬШАЯ ПРАКТИКА. НАСТОЯЩИЙ РАЗГОВОР.")}</span><h2>{t("Дайте словам")} <em>{t("свой голос.")}</em></h2><p>{t("Начните с простой фразы. Например, с кофе.")}</p><LandingLogin /><div className="landing-actions"><GooglePlayLink /></div><p>{t("Присоединитесь к открытому тестированию, затем установите приложение из Google Play.")}</p></section>
     </main>
     <footer className="landing-footer landing-wrap"><a className="landing-brand" href="#top">Serbo<span>Talk</span></a><span>{t("Сербский. Своими словами.")}</span><div><a href="/privacy" target="_blank" rel="noopener noreferrer">{t("Конфиденциальность")}</a><a href="/terms" target="_blank" rel="noopener noreferrer">{t("Условия использования")}</a></div></footer>
   </div>;

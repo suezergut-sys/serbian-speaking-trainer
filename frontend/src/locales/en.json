@@ -627,5 +627,7 @@
   "Внешний сервис проверки не ответил успешно. Ответ сохранён.": "The external checking service could not complete the request. Your answer is saved.",
   "Не удалось обработать ответ сервиса проверки. Ваш ответ сохранён.": "The checking service response could not be processed. Your answer is saved.",
   "Не удалось получить результат проверки. Ваш ответ сохранён — повторите отправку.": "The checking result could not be received. Your answer is saved — submit it again.",
-  "Код диагностики": "Diagnostic ID"
+  "Код диагностики": "Diagnostic ID",
+  "Открытое тестирование": "Open testing",
+  "Присоединитесь к открытому тестированию, затем установите приложение из Google Play.": "Join the open test, then install the app from Google Play."
 }

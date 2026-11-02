@@ -39,3 +39,10 @@ URL выпуска: https://play.google.com/console/u/0/developers/6560020242950
 EN: «Restored review access with username and password. Premium activates automatically on Android. Improved answer-checking error diagnostics; your answer is kept for retry.»
 
 Сборка содержит накопленные web-изменения без повторного backfill/миграций. Source SHA APK/deploy и последующие evidence-only commits фиксируются после публикации отдельно. Доказательства вне Git `artifacts/android-1.45-*`; перед работой все12 копий чистые на599e75a, recovery не требовался. После evidence merge повторяется синхронизация.
+
+
+## 02.11.2026 — открытый тест доступен
+
+- [x] Console Open Testing показывает1.45/code55 доступной неограниченному числу тестировщиков,178 стран,дата выпуска2ноября19:14 по Console. Ожидание pre-review/решения выше — историческое состояние.
+- [x] Public opt-in URL открывает страницу SerboTalk/Become a tester; [ссылки и интеграция лендинга](landing-open-testing-2026-11-02.md).
+- [ ] Физическая установка из Play и приёмка владельцем/внешними пользователями по-прежнему отдельно. APK/AAB/deploy этой записью не пересобираются.
