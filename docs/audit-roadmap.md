@@ -3,14 +3,15 @@
 ## 02.11.2026 — открытый тест опубликован, ссылка на лендинге
 
 - [x] В Console подтверждены доступные1.45/55,178 стран/unlimited; opt-in страница работает. Две CTA/инструкция RU/EN на лендинге,2component/8browser scenarios. [Доказательства](landing-open-testing-2026-11-02.md).
-- [ ] Финальные lint/typecheck/build, GitHub/deploy и production-проверка.
+- [x] ESLint src/typecheck/build,PR #194 merged; web READY/alias/SHA d7b45fe,HTTP200,8 production browser scenarios и настоящая owner-страница с обеими ссылками проверены, runtime errors0. [Доказательства](landing-open-testing-2026-11-02.md).
 - [ ] Приёмка установки из Play/внешних пользователей и production release отдельно.
 
 ## 01.11.2026 — Android1.45/Review access
 
 - [x] Номер1.45/code55 отдельно согласован; парольный вход восстановлен по новой команде, старые credentials/права сохранены. Backend543/9skips,frontend375,lint/typecheck/build,24+4 browser scenarios; APK/AAB,metadata/API/10assets/signatures/Downloads проверены. [Доказательства](android-1.45-release.md).
 - [x] PR #192 merged,c1cffbc; GitHub v1.45 APK/AAB digests, backend/web READY/alias/SHA и28 production browser mocks, HTTP/errors проверены. Настоящий прежний password sign-in/Premium/v1.45 прошёл. AAB55 принят Open Testing release2, instruction обновлена без смены credentials, Console подтвердил «Изменения на проверке». [Доказательства](android-1.45-release.md).
-- [ ] Автоматические проверки/решение Google/доступность Open Testing и последующая Play-install приёмка.
+- [x] Google выпустил Open Testing1.45/55: доступен unlimited testers/178 стран, Console проверена02.11.2026.
+- [ ] Последующая Play-install приёмка владельцем/внешними пользователями.
 - [ ] Приёмка устройства/установки из Play.
 
 ## 01.11.2026 — Open Testing1.44
