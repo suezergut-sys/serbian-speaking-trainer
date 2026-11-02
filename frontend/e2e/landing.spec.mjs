@@ -9,13 +9,21 @@ for (const language of ['ru', 'en']) for (const layout of ['desktop', 'mobile', 
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.route('**/api/**', () => { throw new Error('Landing must not call the API'); });
-    await page.goto('/landing.html');
+    await page.goto(process.env.LANDING_PAGE_PATH ?? '/landing.html');
     await expect(page.getByRole('heading', { level: 1 })).toContainText(language === 'en' ? 'Now speak them.' : 'Пора заговорить.');
     for (const img of await page.locator('.landing-phone img').all()) {
       await img.scrollIntoViewIfNeeded();
       await expect.poll(() => img.evaluate(el => el.complete && el.naturalWidth === 1280 && el.naturalHeight === 2772)).toBe(true);
     }
     await expect(page.locator('.landing-store__logo')).toHaveCount(2);
+    const playLinks = page.getByRole('link', { name: language === 'ru' ? 'Google Play Открытое тестирование' : 'Google Play Open testing', exact: true });
+    await expect(playLinks).toHaveCount(2);
+    for (const link of await playLinks.all()) {
+      await expect(link).toHaveAttribute('href', 'https://play.google.com/apps/testing/com.serbiantalk.trainer');
+      await expect(link).toHaveAttribute('target', '_blank');
+      await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    }
+    await expect(page.getByText(language === 'ru' ? 'Присоединитесь к открытому тестированию, затем установите приложение из Google Play.' : 'Join the open test, then install the app from Google Play.', { exact: true })).toBeVisible();
     for (const logo of await page.locator('.landing-store__logo').all()) {
       await expect.poll(() => logo.evaluate(el => el.complete && el.naturalWidth === 520 && el.naturalHeight === 582)).toBe(true);
     }

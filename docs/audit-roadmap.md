@@ -1,5 +1,11 @@
 # План улучшений по аудиту SerboTalk
 
+## 02.11.2026 — открытый тест опубликован, ссылка на лендинге
+
+- [x] В Console подтверждены доступные1.45/55,178 стран/unlimited; opt-in страница работает. Две CTA/инструкция RU/EN на лендинге,2component/8browser scenarios. [Доказательства](landing-open-testing-2026-11-02.md).
+- [ ] Финальные lint/typecheck/build, GitHub/deploy и production-проверка.
+- [ ] Приёмка установки из Play/внешних пользователей и production release отдельно.
+
 ## 01.11.2026 — Android1.45/Review access
 
 - [x] Номер1.45/code55 отдельно согласован; парольный вход восстановлен по новой команде, старые credentials/права сохранены. Backend543/9skips,frontend375,lint/typecheck/build,24+4 browser scenarios; APK/AAB,metadata/API/10assets/signatures/Downloads проверены. [Доказательства](android-1.45-release.md).

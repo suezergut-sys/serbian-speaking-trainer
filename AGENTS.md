@@ -49,7 +49,7 @@
 
 ## Web-first и Android-релизы
 
-- Текущая собранная Android-версия — `1.45` (`versionCode 55`), отдельно согласована владельцем 01.11.2026: восстановлен прежний парольный Review access для Google Play, автоматический Android Premium сохранён. Результаты: `docs/android-1.45-release.md`. Предыдущая сборка — `1.44`/code54; активная Google Play Alpha — `1.43`/code53. Production access одобрен;1.45/code55 загружена в Open Testing release2 и отправлена на проверку, решение Google/Play-install приёмка отдельно. Обычные доработки web не меняют Android versionCode/versionName/package.json.
+- Текущая собранная Android-версия — `1.45` (`versionCode 55`), отдельно согласована владельцем 01.11.2026: восстановлен прежний парольный Review access для Google Play, автоматический Android Premium сохранён. Результаты: `docs/android-1.45-release.md`. Предыдущая сборка — `1.44`/code54; активная Google Play Alpha — `1.43`/code53. Production access одобрен;1.45/code55 опубликована в Open Testing release2 (Console проверена02.11.2026), Play-install приёмка и production отдельно. Обычные доработки web не меняют Android versionCode/versionName/package.json.
 - Не синхронизируй Android-проект, не собирай APK и не повышай Android-версию без отдельной явной команды пользователя.
 - Дорабатывай и проверяй функции сначала в web-приложении. Изменения, которые должны войти в будущий Android-релиз, накапливай в `docs/android-release-backlog.md`.
 - По команде на Android-релиз перенеси и проверь весь накопленный набор, после чего согласуй следующий номер версии отдельно, учитывая запрет на `2.x`.
